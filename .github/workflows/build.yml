@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Tests (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  macos:
+    name: Audio Unit (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      # The default generator (Unix Makefiles) with the compiler of the Command Line Tools, as on a Mac without Xcode.
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Sign ad hoc
+        run: |
+          cd "build/TonwerkSynth_artefacts/Release"
+          for bundle in "AU/Tonwerk Synth.component" "VST3/Tonwerk Synth.vst3" "Standalone/Tonwerk Synth.app"; do
+            codesign --force --deep --sign - "$bundle"
+          done
+      - name: Validate with auval
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "build/TonwerkSynth_artefacts/Release/AU/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -a | grep -i tonwerk || true
+          auval -strict -v aumu Twsy Bvlp
+      - name: Package
+        run: |
+          cd "build/TonwerkSynth_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Synth.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Synth.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-VST3.zip"
+          ditto -c -k --keepParent "Standalone/Tonwerk Synth.app" "$GITHUB_WORKSPACE/Tonwerk-Synth-App.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tonwerk-synth-macos
+          path: Tonwerk-Synth-*.zip
+          retention-days: 30
