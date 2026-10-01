@@ -1,9 +1,15 @@
 name: Release
 
-# A tag like v0.2.0 builds the plugin on macOS and attaches it to a GitHub release of that name.
+# A tag like v0.2.0 builds the plugin on macOS and attaches it to a GitHub release of that name. Started by hand with
+# a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed).
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version ohne v, z. B. 0.2.0"
+        required: true
 
 permissions:
   contents: write
@@ -14,7 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Version from the tag
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+        run: |
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       # The plugin's version comes from the tag, so Logic sees each release as a new one.
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTONWERK_VERSION="$VERSION"
@@ -46,7 +56,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "$ZIP" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
+          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
           Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel.
 
           Installieren: Zip laden, im Terminal
