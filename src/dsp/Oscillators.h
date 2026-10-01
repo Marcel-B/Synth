@@ -3,6 +3,7 @@
 #include "Patch.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 
@@ -129,6 +130,105 @@ private:
     double phase = 0.0;
 };
 
+/** White noise from a small fast generator, so voices need no shared buffer. */
+class Noise
+{
+public:
+    explicit Noise(uint32_t seed = 0x9e3779b9u) : state(seed) {}
+
+    double next()
+    {
+        state ^= state << 13;
+        state ^= state >> 17;
+        state ^= state << 5;
+        return (double) state / 2147483648.0 - 1.0;
+    }
+
+private:
+    uint32_t state;
+};
+
+/**
+ * Sample and hold: a random value from -1 to 1, held for a step and replaced at the next. Each voice draws its own
+ * values from a seed of its own, and starts a step with its note, as the LFO does.
+ */
+class SampleHold
+{
+public:
+    SampleHold() : random(nextSeed()) {}
+
+    void reset()
+    {
+        phase = 0.0;
+        value = random.next();
+    }
+
+    /** Advances by `samples` and returns the value at the start of that stretch. */
+    double advance(double rate, double sampleRate, int samples)
+    {
+        const double now = value;
+        phase += rate * samples / sampleRate;
+        if (phase >= 1.0)
+        {
+            phase -= std::floor(phase);
+            value = random.next();
+        }
+        return now;
+    }
+
+private:
+    /** Voices made one after another get different seeds, so the notes of a chord do not move in step. */
+    static uint32_t nextSeed()
+    {
+        static std::atomic<uint32_t> count { 0 };
+        return 0x2545f491u * (count.fetch_add(1) * 2u + 1u);
+    }
+
+    Noise random;
+    double phase = 0.0;
+    double value = 0.0;
+};
+
+/**
+ * A triangle wavefolder: the signal driven by `gain`, offset by `bias`, and every part beyond ±1 mirrored back, so
+ * a louder input gets more folds instead of clipping. Within ±1 at gain 1 and no bias it passes unchanged.
+ *
+ * Folding makes harmonics far above the note, which alias at the plain sample rate. Each sample is folded twice,
+ * once at the point halfway from the previous one, and the two averaged: a cheap twofold oversampling that takes the
+ * worst of it off. An offset leaves DC behind, which a highpass at 10 Hz removes.
+ */
+class Wavefolder
+{
+public:
+    void prepare(double sampleRate) { pole = 1.0 - kTwoPi * 10.0 / sampleRate; }
+
+    void reset() { previous = dcIn = dcOut = 0.0; }
+
+    double process(double x, double gain, double bias)
+    {
+        const double halfway = 0.5 * (previous + x);
+        previous = x;
+        const double folded = 0.5 * (fold(halfway * gain + bias) + fold(x * gain + bias));
+        const double y = folded - dcIn + pole * dcOut;
+        dcIn = folded;
+        dcOut = y;
+        return y;
+    }
+
+    static double fold(double v)
+    {
+        double t = (v + 1.0) / 4.0;
+        t -= std::floor(t);
+        return 1.0 - 4.0 * std::abs(t - 0.5);
+    }
+
+private:
+    double pole = 0.9987;
+    double previous = 0.0;
+    double dcIn = 0.0;
+    double dcOut = 0.0;
+};
+
 /**
  * Web Audio's BiquadFilterNode, with its coefficients from the Audio EQ Cookbook as the specification gives them.
  * Its quirk matters for the sound: for low- and highpass, Q is the resonance peak in decibels, not the cookbook's Q.
@@ -194,23 +294,5 @@ public:
 private:
     double b0 = 1.0, b1 = 0.0, b2 = 0.0, a1 = 0.0, a2 = 0.0;
     double z1 = 0.0, z2 = 0.0;
-};
-
-/** White noise from a small fast generator, so voices need no shared buffer. */
-class Noise
-{
-public:
-    explicit Noise(uint32_t seed = 0x9e3779b9u) : state(seed) {}
-
-    double next()
-    {
-        state ^= state << 13;
-        state ^= state >> 17;
-        state ^= state << 5;
-        return (double) state / 2147483648.0 - 1.0;
-    }
-
-private:
-    uint32_t state;
 };
 } // namespace tonwerk

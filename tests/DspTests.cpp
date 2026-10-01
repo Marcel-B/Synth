@@ -151,6 +151,96 @@ public:
         // A square LFO at 1 Hz: the first half second wide, the second narrow, by the whole room (0.25 - 0.02).
         expectWithinAbsoluteError(dutyBetween(0.1, 0.4), 0.48, 0.02);
         expectWithinAbsoluteError(dutyBetween(0.6, 0.9), 0.02, 0.02);
+
+        runFoldAndSampleHold();
+    }
+
+    /** Crossings of zero going up between two times: the frequency of a plain wave, times the length. */
+    static int risingCrossings(const std::vector<float>& samples, double start, double end)
+    {
+        int count = 0;
+        for (size_t i = (size_t) (start * kRate) + 1; i < (size_t) (end * kRate); ++i)
+            count += samples[i - 1] <= 0.0f && samples[i] > 0.0f ? 1 : 0;
+        return count;
+    }
+
+    /** A sine at 100 Hz, full level, through an open filter, nothing moving. */
+    static AnalogPatch plainSine()
+    {
+        AnalogPatch patch;
+        patch.osc1 = { Wave::sine, 0, 0.0f, 1.0f };
+        patch.osc2.level = 0.0f;
+        patch.filter = { FilterType::lowpass, 18000.0f, 0.0f, 0.0f, 0.0f };
+        patch.ampEnv = { 0.0f, 0.01f, 1.0f, 0.01f };
+        patch.lfo.depth = 0.0f;
+        patch.volume = 1.0f;
+        return patch;
+    }
+
+    void runFoldAndSampleHold()
+    {
+        beginTest("Within range and without gain or offset the folder passes the signal");
+        for (double v : { -1.0, -0.5, 0.0, 0.3, 1.0 })
+            expectWithinAbsoluteError(Wavefolder::fold(v), v, 1.0e-12);
+        expectWithinAbsoluteError(Wavefolder::fold(1.5), 0.5, 1.0e-12);
+        expectWithinAbsoluteError(Wavefolder::fold(-2.5), 0.5, 1.0e-12);
+
+        beginTest("Folding turns a sine into more crossings, without getting louder");
+        const double pitch = noteFrequencyToPitch(100.0);
+        auto patch = plainSine();
+        AnalogVoice plainVoice;
+        const auto plain = renderNote(plainVoice, patch, pitch, 1.0f, 1.0, 1.0);
+        patch.fold.amount = 0.5f; // Driven 4.5 times: five folds each way per cycle.
+        AnalogVoice foldedVoice;
+        const auto folded = renderNote(foldedVoice, patch, pitch, 1.0f, 1.0, 1.0);
+        expectWithinAbsoluteError(risingCrossings(plain, 0.5, 1.0), 50, 1);
+        expectGreaterThan(risingCrossings(folded, 0.5, 1.0), 4 * 50);
+        expectLessThan(peakOf(folded, (size_t) (0.5 * kRate)), 1.1f);
+        expect(allFinite(folded));
+
+        beginTest("An offset folds unevenly but leaves no DC");
+        patch.fold = { 0.3f, 0.5f, 0.0f };
+        AnalogVoice offsetVoice;
+        const auto offset = renderNote(offsetVoice, patch, pitch, 1.0f, 1.0, 1.0);
+        double sum = 0.0;
+        for (size_t i = (size_t) (0.5 * kRate); i < (size_t) kRate; ++i)
+            sum += offset[i];
+        expectWithinAbsoluteError(sum / (0.5 * kRate), 0.0, 0.01);
+
+        beginTest("The filter envelope drives the folder while it is open");
+        patch.fold = { 0.0f, 0.0f, 1.0f };
+        patch.filterEnv = { 0.0f, 0.2f, 0.0f, 0.1f };
+        AnalogVoice envVoice;
+        const auto enveloped = renderNote(envVoice, patch, pitch, 1.0f, 1.0, 1.0);
+        expectGreaterThan(risingCrossings(enveloped, 0.0, 0.05), 2 * 5);
+        expectWithinAbsoluteError(risingCrossings(enveloped, 0.6, 1.0), 40, 1);
+
+        beginTest("Sample and hold steps the pitch, holding each step");
+        patch = plainSine();
+        patch.sampleHold.pitch = 1.0f;
+        patch.sampleHold.rate = 4.0f;
+        AnalogVoice stepVoice;
+        const auto stepped = renderNote(stepVoice, patch, pitch, 1.0f, 2.0, 2.0);
+        std::vector<int> steps;
+        for (int k = 0; k < 8; ++k)
+        {
+            const double start = k * 0.25;
+            const int first = risingCrossings(stepped, start + 0.01, start + 0.125);
+            const int second = risingCrossings(stepped, start + 0.125, start + 0.24);
+            // Each step is one frequency, within an octave of the note: 50 to 200 Hz, 5.75 to 23 crossings.
+            expectLessOrEqual(std::abs(first - second), 2);
+            expectGreaterOrEqual(first, 5);
+            expectLessOrEqual(first, 24);
+            steps.push_back(first + second);
+        }
+        const auto [low, high] = std::minmax_element(steps.begin(), steps.end());
+        expectGreaterThan(*high - *low, 4, "the steps should differ");
+
+        beginTest("Each voice draws its own values");
+        SampleHold a, b;
+        a.reset();
+        b.reset();
+        expect(! juce::approximatelyEqual(a.advance(1.0, kRate, 1), b.advance(1.0, kRate, 1)));
     }
 
     static double noteFrequencyToPitch(double hz) { return 69.0 + 12.0 * std::log2(hz / 440.0); }

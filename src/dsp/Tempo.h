@@ -18,14 +18,17 @@ inline double divisionSeconds(int division, double bpm)
 }
 
 /**
- * The patch as the voices and the effects play it at `bpm`: a synced LFO gets the rate of its note value, a synced
- * delay its time. Everything downstream only knows rates and times, so sync needs nothing in the DSP itself. The LFOs
- * still start with each note, as in Tonwerk, so a synced LFO runs in time but not on the beat.
+ * The patch as the voices and the effects play it at `bpm`: a synced LFO or sample and hold gets the rate of its note
+ * value, a synced delay its time. Everything downstream only knows rates and times, so sync needs nothing in the DSP
+ * itself. The LFOs and the sample and hold still start with each note, as in Tonwerk, so they run in time but not on
+ * the beat.
  */
 inline Patch withTempo(Patch patch, double bpm)
 {
     if (patch.analog.lfo.sync)
         patch.analog.lfo.rate = (float) (1.0 / divisionSeconds(patch.analog.lfo.division, bpm));
+    if (patch.analog.sampleHold.sync)
+        patch.analog.sampleHold.rate = (float) (1.0 / divisionSeconds(patch.analog.sampleHold.division, bpm));
     if (patch.fm.lfo.sync)
         patch.fm.lfo.rate = (float) (1.0 / divisionSeconds(patch.fm.lfo.division, bpm));
     if (patch.fx.delay.sync)

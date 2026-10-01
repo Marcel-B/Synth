@@ -102,6 +102,22 @@ public:
         expect(samePatch(patchFromJson(juce::JSON::parse(juce::JSON::toString(syncedJson))), synced));
         expect(! patchToJson(Patch {})["lfo"].hasProperty("sync"));
 
+        beginTest("Wavefolder and sample and hold survive JSON and are left out when off");
+        Patch shaped;
+        shaped.analog.fold = { 0.4f, -0.25f, 0.5f };
+        shaped.analog.sampleHold.filter = 0.6f;
+        shaped.analog.sampleHold.pitch = 0.1f;
+        shaped.analog.sampleHold.sync = true;
+        shaped.analog.sampleHold.division = 10;
+        const auto shapedJson = patchToJson(shaped);
+        expectEquals(shapedJson["sampleHold"].getProperty("division", {}).toString(), juce::String("1/8"));
+        expect(samePatch(patchFromJson(juce::JSON::parse(juce::JSON::toString(shapedJson))), shaped));
+        expect(! patchToJson(Patch {}).hasProperty("fold"));
+        expect(! patchToJson(Patch {}).hasProperty("sampleHold"));
+        // A sound from Tonwerk knows neither: importing it turns both off.
+        const auto fromTonwerk = patchFromJson(juce::JSON::parse(R"({ "engine": "analog" })"), shaped);
+        expect(isZero(fromTonwerk.analog.fold.amount) && isZero(fromTonwerk.analog.sampleHold.filter));
+
         beginTest("Ratios are halves, as Tonwerk's slider sets them");
         const auto ratio = patchFromJson(juce::JSON::parse(R"({ "engine": "fm", "ops": [ { "ratio": 2.3 } ] })"));
         expect(same(ratio.fm.ops[0].ratio, 2.5f));

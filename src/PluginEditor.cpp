@@ -377,6 +377,17 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                   { "lfo.target", "Ziel", 2 },
                                                   { "lfo.depth", "Tiefe" } }));
     auto& mix = add(analogSections, new Section(state, "Mischung", { { "noise", "Rauschen" }, { "volume", "Volume" } }));
+    // The plugin's own two, in the room the browser's layout leaves beside the first oscillator and the filter.
+    auto& fold = add(analogSections, new Section(state, "Wavefolder",
+                                                 { { "fold.amount", "Menge" },
+                                                   { "fold.symmetry", "Symmetrie" },
+                                                   { "fold.env", utf8("Hüllkurve") } }));
+    auto& sampleHold = add(analogSections, new Section(state, "Sample & Hold",
+                                                       { { "sh.sync", "Sync" },
+                                                         { "sh.rate", "Tempo", 1, "sh.sync", false },
+                                                         { "sh.division", "Notenwert", 2, "sh.sync", true },
+                                                         { "sh.filter", "Filter" },
+                                                         { "sh.pitch", utf8("Tonhöhe") } }));
 
     // FM: the algorithm with feedback, the LFO, then the four operators with their envelopes.
     auto& algorithm = add(fmSections, new Section(state, "Algorithmus",
@@ -416,7 +427,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                                                  { "fx.reverb.decay", utf8("Länge") } });
     addAndMakeVisible(*fxSection);
 
-    analogRows = { { &osc1, fxSection.get() }, { &osc2, &filter }, { &filterEnv, &ampEnv, &lfo, &mix } };
+    analogRows = { { &osc1, &fold, fxSection.get() }, { &osc2, &filter, &sampleHold }, { &filterEnv, &ampEnv, &lfo, &mix } };
     fmRows = { { &algorithm, &fmLfo, fxSection.get() }, { operators[0], operators[1] }, { operators[2], operators[3] } };
 
     addAndMakeVisible(keyboard);
@@ -458,7 +469,12 @@ void TonwerkSynthEditor::layoutRows(const std::vector<Row>& rows, juce::Rectangl
                 section->setBounds(line.removeFromRight(section->preferredWidth()));
                 continue;
             }
-            section->setBounds(line.removeFromLeft(section->preferredWidth()));
+            // The last one in a row ends with the row when less than a knob's room would be left beside it.
+            const int width = section->preferredWidth();
+            const bool last = section == row.back() || (row.back() == fxSection.get() && section == row[row.size() - 2]);
+            const int right = row.back() == fxSection.get() ? fxSection->preferredWidth() + kGap : 0;
+            const bool fills = last && line.getWidth() - right - width < kSlot;
+            section->setBounds(line.removeFromLeft(fills ? line.getWidth() - right : width));
             line.removeFromLeft(kGap);
         }
     }

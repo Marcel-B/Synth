@@ -28,7 +28,7 @@ struct ParameterDescriptor
     juce::String unit;
     std::function<float(const Patch&)> get;
     std::function<void(Patch&, float)> set;
-    /** The version hint hosts get; parameters added after the first release have 2. */
+    /** The version hint hosts get: 1 for the first release's parameters, 2 for 0.2.0's, 3 for 0.3.0's. */
     int version = 1;
 };
 
