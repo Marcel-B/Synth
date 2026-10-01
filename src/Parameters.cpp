@@ -132,6 +132,20 @@ std::vector<ParameterDescriptor> build()
     b.number("fx.delay.tone", "Delay Ton", ranges::tone, [](Patch& p) -> float& { return p.fx.delay.tone; }, 3000.0f, "Hz");
     b.number("fx.reverb.mix", "Hall Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.reverb.mix; });
     b.number("fx.reverb.decay", utf8("Hall Länge"), ranges::reverbDecay, [](Patch& p) -> float& { return p.fx.reverb.decay; }, 2.0f, "s");
+
+    // Added after the first release: appended, so the parameters before them keep their places in saved projects.
+    const auto first = b.list.size();
+    juce::StringArray divisions;
+    for (const auto& division : kDivisions)
+        divisions.add(division.label);
+    b.toggle("lfo.sync", "LFO Sync", [](Patch& p) -> bool& { return p.analog.lfo.sync; });
+    b.choice<int>("lfo.division", "LFO Teilung", divisions, [](Patch& p) -> int& { return p.analog.lfo.division; });
+    b.toggle("fm.lfo.sync", "FM LFO Sync", [](Patch& p) -> bool& { return p.fm.lfo.sync; });
+    b.choice<int>("fm.lfo.division", "FM LFO Teilung", divisions, [](Patch& p) -> int& { return p.fm.lfo.division; });
+    b.toggle("fx.delay.sync", "Delay Sync", [](Patch& p) -> bool& { return p.fx.delay.sync; });
+    b.choice<int>("fx.delay.division", "Delay Teilung", divisions, [](Patch& p) -> int& { return p.fx.delay.division; });
+    for (auto i = first; i < b.list.size(); ++i)
+        b.list[i].version = 2;
     return std::move(b.list);
 }
 } // namespace
@@ -148,8 +162,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     const Patch defaults;
     for (const auto& d : descriptors())
     {
-        // Version 1 for every parameter: Logic's Audio Units need the hint, and a parameter added later gets 2.
-        const juce::ParameterID id { d.id, 1 };
+        // Logic's Audio Units need the version hint; parameters added after the first release have 2.
+        const juce::ParameterID id { d.id, d.version };
         const float value = d.get(defaults);
         switch (d.type)
         {

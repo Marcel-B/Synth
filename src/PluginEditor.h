@@ -44,6 +44,12 @@ public:
         juce::String id;
         juce::String label;
         int slots = 1;
+        /**
+         * A switch parameter this control depends on: it is shown only while the switch is `whenOn`. Two neighbours
+         * with the same switch, one for each state, take turns in one place (a rate knob and its note value).
+         */
+        juce::String when = {};
+        bool whenOn = false;
     };
 
     Section(juce::AudioProcessorValueTreeState& state, const juce::String& title, std::initializer_list<Item> items);
@@ -52,8 +58,32 @@ public:
     void resized() override;
 
 private:
+    /** Where each control goes, in slots from the left, and how wide; a pair taking turns shares one place. */
+    std::vector<std::pair<int, int>> places() const;
+
     juce::String title;
     std::vector<std::unique_ptr<Control>> controls;
+    std::vector<Item> items;
+    std::vector<std::unique_ptr<juce::ParameterAttachment>> switches;
+};
+
+/**
+ * An oscilloscope of what the plugin plays, like Tonwerk's on its instruments page: triggered on a rising zero
+ * crossing so a held note stands still, quiet sounds scaled up to be seen.
+ */
+class ScopeView : public juce::Component, private juce::Timer
+{
+public:
+    explicit ScopeView(const ScopeBuffer& source);
+    void paint(juce::Graphics&) override;
+    /** Takes the newest samples and draws them; the timer does this while the view is on screen. */
+    void refresh();
+
+private:
+    void timerCallback() override;
+
+    const ScopeBuffer& source;
+    std::array<float, 2048> samples {};
 };
 
 class TonwerkSynthEditor : public juce::AudioProcessorEditor
@@ -100,6 +130,7 @@ private:
     std::vector<Row> fmRows;
 
     juce::MidiKeyboardComponent keyboard;
+    ScopeView scope;
     std::unique_ptr<juce::FileChooser> chooser;
     /** The presets in the menu, by item id - 1. */
     juce::Array<PresetLibrary::Preset> menuPresets;

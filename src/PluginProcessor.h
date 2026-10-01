@@ -5,6 +5,7 @@
 #include "PresetLibrary.h"
 #include "dsp/AnalogVoice.h"
 #include "dsp/FmVoice.h"
+#include "dsp/Tempo.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -38,6 +39,39 @@ private:
     Engine engine = Engine::analog;
     AnalogVoice analog;
     FmVoice fm;
+};
+
+/**
+ * The last samples the plugin played, for the oscilloscope: written by the audio thread, read by the editor's timer.
+ * Atomics per sample, so the reader never sees a torn value; a trace that mixes two blocks is fine for a picture.
+ */
+class ScopeBuffer
+{
+public:
+    static constexpr int kSize = 4096;
+
+    void write(const float* samples, int count)
+    {
+        int at = position.load(std::memory_order_relaxed);
+        for (int i = 0; i < count; ++i)
+        {
+            data[(size_t) at].store(samples[i], std::memory_order_relaxed);
+            at = (at + 1) % kSize;
+        }
+        position.store(at, std::memory_order_release);
+    }
+
+    /** The newest `count` samples, oldest first. */
+    void read(float* out, int count) const
+    {
+        const int end = position.load(std::memory_order_acquire);
+        for (int i = 0; i < count; ++i)
+            out[i] = data[(size_t) ((end - count + i + kSize) % kSize)].load(std::memory_order_relaxed);
+    }
+
+private:
+    std::array<std::atomic<float>, kSize> data {};
+    std::atomic<int> position { 0 };
 };
 
 class TonwerkSynthProcessor : public juce::AudioProcessor, private juce::Timer
@@ -83,8 +117,12 @@ public:
 
     juce::String presetName() const { return state.state.getProperty("presetName", {}).toString(); }
 
+    /** The host's tempo as last seen, for the sync display. */
+    double tempo() const { return bpm.load(); }
+
     juce::AudioProcessorValueTreeState state;
     juce::MidiKeyboardState keyboardState;
+    ScopeBuffer scope;
     PresetLibrary library;
 
 private:
@@ -96,6 +134,7 @@ private:
     EffectsChain effects;
     juce::AudioBuffer<float> voiceBuffer;
     int currentProgram = 0;
+    std::atomic<double> bpm { kDefaultBpm };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TonwerkSynthProcessor)
 };
