@@ -104,7 +104,11 @@ void TonwerkSynthProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     const int count = buffer.getNumSamples();
     keyboardState.processNextMidiBuffer(midi, 0, count, true);
 
-    shared.patch = reader.read();
+    if (auto* host = getPlayHead())
+        if (const auto position = host->getPosition())
+            if (const auto hostBpm = position->getBpm(); hostBpm && *hostBpm > 0.0)
+                bpm.store(*hostBpm);
+    shared.patch = withTempo(reader.read(), bpm.load());
     for (const auto metadata : midi)
     {
         const auto message = metadata.getMessage();
@@ -119,6 +123,7 @@ void TonwerkSynthProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
     buffer.clear();
     effects.process(shared.patch.fx, voiceBuffer.getReadPointer(0), buffer, 0, count);
+    scope.write(buffer.getReadPointer(0), count);
     midi.clear();
 }
 

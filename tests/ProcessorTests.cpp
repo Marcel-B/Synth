@@ -1,5 +1,7 @@
 #include "PatchJson.h"
+#include "PluginEditor.h"
 #include "PluginProcessor.h"
+#include "dsp/Tempo.h"
 
 #include <juce_core/juce_core.h>
 
@@ -101,8 +103,104 @@ public:
         expectEquals(processor.presetName(), juce::String("FM Blech"));
         expectEquals(processor.currentPatchJson().getProperty("engine", {}).toString(), juce::String("fm"));
 
+        beginTest("The oscilloscope sees what is played and draws it");
+        processor.setCurrentProgram(0);
+        juce::MidiBuffer note;
+        note.addEvent(juce::MidiMessage::noteOn(1, 57, (juce::uint8) 110), 0);
+        render(note, 30);
+        std::array<float, 1024> seen {};
+        processor.scope.read(seen.data(), (int) seen.size());
+        float loudest = 0.0f;
+        for (float sample : seen)
+            loudest = std::max(loudest, std::abs(sample));
+        expectGreaterThan(loudest, 0.05f);
+        ScopeView view(processor.scope);
+        view.setSize(300, 72);
+        view.refresh();
+        const auto image = view.createComponentSnapshot(view.getLocalBounds(), true, 1.0f);
+        // The trace is drawn in the accent green; count the columns it reaches.
+        int columns = 0;
+        for (int x = 0; x < image.getWidth(); ++x)
+        {
+            bool green = false;
+            for (int y = 0; y < image.getHeight(); ++y)
+            {
+                const auto pixel = image.getPixelAt(x, y);
+                green = green || (pixel.getGreen() > 120 && pixel.getRed() < 100);
+            }
+            columns += green ? 1 : 0;
+        }
+        expectGreaterThan(columns, 250);
+        // For a look at it: TONWERK_SCOPE_PNG=/path/scope.png
+        if (const auto path = juce::SystemStats::getEnvironmentVariable("TONWERK_SCOPE_PNG", {}); path.isNotEmpty())
+        {
+            juce::FileOutputStream out { juce::File(path) };
+            out.setPosition(0);
+            out.truncate();
+            juce::PNGImageFormat().writeImageToStream(image, out);
+        }
+        juce::MidiBuffer noteOff;
+        noteOff.addEvent(juce::MidiMessage::noteOff(1, 57), 0);
+        render(noteOff, 1);
+
         processor.releaseResources();
     }
 };
+
+class TempoTests : public juce::UnitTest
+{
+public:
+    TempoTests() : juce::UnitTest("Tempo sync", "Plugin") {}
+
+    void runTest() override
+    {
+        beginTest("Synced LFOs take the rate of their note value");
+        Patch patch;
+        patch.analog.lfo.sync = true;
+        patch.analog.lfo.division = kQuarter;
+        patch.fm.lfo.sync = true;
+        patch.fm.lfo.division = 10; // 1/8
+        const auto at120 = withTempo(patch, 120.0);
+        expectWithinAbsoluteError(at120.analog.lfo.rate, 2.0f, 1.0e-4f);
+        expectWithinAbsoluteError(at120.fm.lfo.rate, 4.0f, 1.0e-4f);
+
+        beginTest("A synced delay repeats on its note value, up to the line's length");
+        patch.fx.delay.sync = true;
+        patch.fx.delay.division = kDottedEighth;
+        expectWithinAbsoluteError(withTempo(patch, 100.0).fx.delay.time, 0.45f, 1.0e-4f);
+        patch.fx.delay.division = 0; // 4/1 at 60 bpm: 16 s, more than the line holds.
+        expectWithinAbsoluteError(withTempo(patch, 60.0).fx.delay.time, (float) kMaxDelaySeconds, 1.0e-4f);
+
+        beginTest("Free LFOs and delays keep their own values");
+        Patch free;
+        free.analog.lfo.rate = 3.3f;
+        free.fx.delay.time = 0.7f;
+        const auto same = withTempo(free, 90.0);
+        expectWithinAbsoluteError(same.analog.lfo.rate, 3.3f, 1.0e-6f);
+        expectWithinAbsoluteError(same.fx.delay.time, 0.7f, 1.0e-6f);
+
+        beginTest("The host's tempo reaches the delay");
+        struct FixedTempo : juce::AudioPlayHead
+        {
+            juce::Optional<PositionInfo> getPosition() const override
+            {
+                PositionInfo info;
+                info.setBpm(90.0);
+                return info;
+            }
+        } host;
+        TonwerkSynthProcessor processor;
+        processor.setPlayHead(&host);
+        processor.setPlayConfigDetails(0, 2, 48000.0, 256);
+        processor.prepareToPlay(48000.0, 256);
+        juce::AudioBuffer<float> buffer(2, 256);
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+        expectWithinAbsoluteError(processor.tempo(), 90.0, 1.0e-9);
+        processor.setPlayHead(nullptr);
+    }
+};
+
+static TempoTests tempoTests;
 
 static ProcessorTests processorTests;

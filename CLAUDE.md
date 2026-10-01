@@ -17,7 +17,7 @@ cmake --build build --target TonwerkSynth_Standalone      # also TonwerkSynth_VS
 scripts/install-macos.sh                                  # on the Mac: Release build, ad-hoc signing, install, auval
 ```
 
-The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's default generators, never require the Xcode generator, an AUv3 app extension or a signing identity. CI (`build.yml`) runs the tests on Linux and on macOS, builds the universal AU there, signs it ad hoc and runs `auval -strict -v aumu Twsy Bvlp`. Warnings come from `juce_recommended_warning_flags`; keep the build free of them.
+The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's default generators, never require the Xcode generator, an AUv3 app extension or a signing identity. Releases: pushing a tag `v*` runs `release.yml`, which builds with `-DTONWERK_VERSION` from the tag, signs ad hoc, runs auval and attaches a zip (plugins, app, `scripts/install-release.sh` as `install.sh`, which removes the quarantine flag) to a GitHub release. CI (`build.yml`) runs the tests on Linux and on macOS, builds the universal AU there, signs it ad hoc and runs `auval -strict -v aumu Twsy Bvlp`. Warnings come from `juce_recommended_warning_flags`; keep the build free of them.
 
 ## Architecture
 
@@ -26,6 +26,8 @@ The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's def
 - `PatchJson.cpp` reads and writes Tonwerk's patch JSON the way its `normalizePatch` does (missing fields take the melody's default, ranges clamp, `engine` absent means analog). Importing one engine keeps the other's settings.
 - `Parameters.cpp` has one table (`descriptors()`) of every patch field as a host parameter; layout, reading a `Patch` from the parameters each block (`ParameterReader`) and writing an imported patch (`writePatch`) all come from it. A new field is one entry there. Parameter ids are part of saved Logic projects: never rename or remove one; a new parameter gets version hint 2.
 - `PluginProcessor.cpp`: a `juce::Synthesiser` with 16 `SynthVoice`s rendering mono into a buffer, then `EffectsChain` (delay, `juce::dsp::Convolution` reverb) into stereo. Voices read the shared patch every block, so knobs act on sounding notes. The reverb's impulse is made on the message thread (timer), never on the audio thread.
+- Tempo sync (`dsp/Tempo.h`, `withTempo`): the processor turns a synced LFO's note value into a rate and a synced delay's into a time, from the play head's BPM (120 without one), before the voices and effects see the patch; the DSP knows only rates and times. Sync and division are this plugin's own fields; Tonwerk's JSON lacks them, `patchToJson` writes them only when sync is on.
+- `ScopeBuffer` (processor) holds the last 4096 output samples as atomics; `ScopeView` in the editor reads them at 30 Hz and triggers on a rising zero crossing, as Tonwerk's `SynthScope.vue` does.
 - `PresetLibrary.cpp`: factory sounds (the host's programs) and imported ones in `presets.json` under Application Support, plus Tonwerk's address in `settings.json`. `fetchFromTonwerk` calls Tonwerk's `GET /api/logic/synths/presets` (no login, reached over Tailscale).
 - `PluginEditor.cpp`: sections of knobs per engine, the engine switch, the preset menu and the import/export buttons, an on-screen keyboard. Strings with umlauts go through `utf8()` / `String::fromUTF8`, since `juce::String` reads a plain `const char*` as ASCII.
 

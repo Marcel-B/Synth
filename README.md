@@ -7,17 +7,36 @@ Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, 
 ![Analog-Engine](docs/analog.png)
 ![FM-Engine](docs/fm.png)
 
+![Oszilloskop](docs/oszilloskop.png)
+
 ## Was drin ist
 
-**Analog**: zwei Oszillatoren (Sinus, Dreieck, Sägezahn, Rechteck/Puls) mit Oktave, Verstimmung und Pegel, Rauschen, Filter (Tiefpass, Hochpass, Bandpass) mit Resonanz, Keytracking und eigener Hüllkurve, Lautstärke-Hüllkurve, LFO auf Tonhöhe, Filter oder Lautstärke. Der Puls hat eine Pulsbreite, die der LFO und beide Hüllkurven bewegen können (PWM).
+**Analog**: zwei Oszillatoren (Sinus, Dreieck, Sägezahn, Rechteck/Puls) mit Oktave, Verstimmung und Pegel, Rauschen, Filter (Tiefpass, Hochpass, Bandpass) mit Resonanz, Keytracking und eigener Hüllkurve, Lautstärke-Hüllkurve, LFO auf Tonhöhe, Filter oder Lautstärke, frei oder im Songtempo. Der Puls hat eine Pulsbreite, die der LFO und beide Hüllkurven bewegen können (PWM).
 
-**FM**: vier Sinus-Operatoren wie beim Yamaha TX81Z, dessen acht Algorithmen, Feedback auf Operator 4, eine Hüllkurve pro Operator, Anschlagsdynamik pro Operator, LFO auf Tonhöhe, Modulationsindex oder Lautstärke.
+**FM**: vier Sinus-Operatoren wie beim Yamaha TX81Z, dessen acht Algorithmen, Feedback auf Operator 4, eine Hüllkurve pro Operator, Anschlagsdynamik pro Operator, LFO auf Tonhöhe, Modulationsindex oder Lautstärke, frei oder im Songtempo.
 
-**Effekte**: Delay mit Tiefpass in der Rückkopplung und Hall, beide als Send.
+**Effekte**: Delay mit Tiefpass in der Rückkopplung und Hall, beide als Send. Das Delay läuft frei oder im Songtempo.
+
+**Tempo-Sync**: Mit **Sync** folgen LFO und Delay dem Tempo von Logic. Statt Hz oder Sekunden wählst du einen Notenwert von 4/1 bis 1/32, auch punktiert und triolisch. Ohne Host-Tempo (in der App) gelten 120 BPM. Der LFO beginnt wie in Tonwerk mit jeder Note neu. Er läuft also im Tempo, aber nicht auf den Schlag genau.
+
+**Oszilloskop**: unten rechts neben der Tastatur. Es zeigt die Wellenform dessen, was das Plugin gerade spielt, und steht bei einem gehaltenen Ton still.
 
 16 Stimmen, Pitchbend ±2 Halbtöne, Sustain-Pedal. Jeder Regler ist ein Parameter, den Logic automatisieren kann und mit dem Projekt speichert. Eine Tastatur unten im Fenster spielt das Plugin auch ohne MIDI-Keyboard an.
 
-## Installieren auf dem Mac
+## Herunterladen
+
+Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
+
+```sh
+cd ~/Downloads/Tonwerk-Synth-*-macOS
+zsh install.sh
+```
+
+Die Plugins sind nur ad hoc signiert, denn eine Signatur mit Apple Developer ID kostet ein Entwicklerkonto. Deshalb versieht macOS alles aus dem Netz mit einer Quarantäne-Markierung, und Logic lädt so markierte Plugins nicht. `install.sh` entfernt die Markierung (`xattr -dr com.apple.quarantine`), kopiert die Dateien an ihren Platz und prüft die Audio Unit mit `auval`. Wer lieber von Hand installiert, ruft vorher selbst `xattr -dr com.apple.quarantine` auf den entpackten Ordner auf.
+
+Ein neues Release entsteht, wenn ein Tag wie `v0.2.0` gepusht wird. Die Action `release.yml` baut dann, testet, prüft mit `auval` und hängt das Zip an. Die Versionsnummer des Plugins kommt aus dem Tag, so erkennt Logic eine neue Version.
+
+## Selbst bauen auf dem Mac
 
 Ein volles Xcode ist nicht nötig, die Command Line Tools reichen:
 
@@ -34,13 +53,7 @@ In Logic: neue Software-Instrument-Spur, im Kanalzug **Instrument → AU-Instrum
 
 Entfernen: `scripts/install-macos.sh --uninstall`.
 
-Ohne selbst zu bauen: Jeder Lauf der GitHub Action legt die fertigen Dateien als Artefakt `tonwerk-synth-macos` ab (Actions → Lauf → Artifacts). Nach dem Entpacken muss macOS' Quarantäne-Markierung weg, sonst lädt Logic die Audio Unit nicht:
-
-```sh
-xattr -dr com.apple.quarantine "Tonwerk Synth.component"
-cp -R "Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
-killall -9 AudioComponentRegistrar
-```
+Zwischenstände ohne Release: Jeder Lauf der Action `build.yml` legt die Dateien auch als Artefakt `tonwerk-synth-macos` ab (Actions → Lauf → Artifacts). Für sie gilt dasselbe wie für Releases, die Quarantäne-Markierung muss weg.
 
 ## Klänge aus Tonwerk
 

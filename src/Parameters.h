@@ -28,6 +28,8 @@ struct ParameterDescriptor
     juce::String unit;
     std::function<float(const Patch&)> get;
     std::function<void(Patch&, float)> set;
+    /** The version hint hosts get; parameters added after the first release have 2. */
+    int version = 1;
 };
 
 const std::vector<ParameterDescriptor>& descriptors();

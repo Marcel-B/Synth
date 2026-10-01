@@ -18,6 +18,28 @@ enum class AnalogLfoTarget { pitch, filter, amp };
 enum class FmLfoTarget { pitch, index, amp };
 enum class Engine { analog, fm };
 
+/**
+ * A note value the LFOs and the delay can follow instead of their own rate or time, when synced to the host's tempo.
+ * Tonwerk has no tempo sync; its JSON leaves these fields out and keeps the free values.
+ */
+struct Division
+{
+    const char* label;
+    /** Length in quarter notes. */
+    double beats;
+};
+
+inline constexpr std::array<Division, 16> kDivisions { {
+    { "4/1", 16.0 },   { "2/1", 8.0 },      { "1/1", 4.0 },    { "1/2.", 3.0 },
+    { "1/2", 2.0 },    { "1/2T", 4.0 / 3 }, { "1/4.", 1.5 },   { "1/4", 1.0 },
+    { "1/4T", 2.0 / 3 }, { "1/8.", 0.75 }, { "1/8", 0.5 },    { "1/8T", 1.0 / 3 },
+    { "1/16.", 0.375 }, { "1/16", 0.25 },  { "1/16T", 1.0 / 6 }, { "1/32", 0.125 },
+} };
+
+/** Indices into `kDivisions`: a quarter for the LFOs, the dotted eighth that delays are usually set to. */
+inline constexpr int kQuarter = 7;
+inline constexpr int kDottedEighth = 9;
+
 /** Times in seconds, sustain as a share of the peak. */
 struct Envelope
 {
@@ -70,6 +92,9 @@ struct AnalogPatch
         float rate = 5.5f;
         AnalogLfoTarget target = AnalogLfoTarget::pitch;
         float depth = 0.1f;
+        /** Follow the host's tempo at `division` instead of `rate`. */
+        bool sync = false;
+        int division = kQuarter;
     } lfo;
     float volume = 0.8f;
 };
@@ -103,6 +128,8 @@ struct FmPatch
         float rate = 5.5f;
         FmLfoTarget target = FmLfoTarget::pitch;
         float depth = 0.1f;
+        bool sync = false;
+        int division = kQuarter;
     } lfo;
     float volume = 0.7f;
 };
@@ -117,6 +144,9 @@ struct Effects
         float feedback = 0.35f;
         /** Hz of the lowpass in the loop. */
         float tone = 4000.0f;
+        /** Repeat at `division` of the host's tempo instead of `time`. */
+        bool sync = false;
+        int division = kDottedEighth;
     } delay;
     struct
     {

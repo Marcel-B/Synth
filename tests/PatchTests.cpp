@@ -90,6 +90,18 @@ public:
         const auto old = patchFromJson(juce::JSON::parse(R"({ "osc2": { "wave": "square", "pwm": 0.5 } })"));
         expect(old.analog.osc2.pwmLfo);
 
+        beginTest("Tempo sync survives a trip through JSON and is left out when off");
+        Patch synced;
+        synced.analog.lfo.sync = true;
+        synced.analog.lfo.division = 11;
+        synced.fx.delay.sync = true;
+        synced.fx.delay.division = 3;
+        const auto syncedJson = patchToJson(synced);
+        expectEquals(syncedJson["lfo"].getProperty("division", {}).toString(), juce::String("1/8T"));
+        expectEquals(syncedJson["fx"]["delay"].getProperty("division", {}).toString(), juce::String("1/2."));
+        expect(samePatch(patchFromJson(juce::JSON::parse(juce::JSON::toString(syncedJson))), synced));
+        expect(! patchToJson(Patch {})["lfo"].hasProperty("sync"));
+
         beginTest("Ratios are halves, as Tonwerk's slider sets them");
         const auto ratio = patchFromJson(juce::JSON::parse(R"({ "engine": "fm", "ops": [ { "ratio": 2.3 } ] })"));
         expect(same(ratio.fm.ops[0].ratio, 2.5f));

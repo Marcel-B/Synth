@@ -1,10 +1,11 @@
 #include "EffectsChain.h"
 
+#include "dsp/Tempo.h"
+
 namespace tonwerk
 {
 namespace
 {
-constexpr double kMaxDelaySeconds = 1.5;
 constexpr float kReverbLevel = 0.15f;
 } // namespace
 

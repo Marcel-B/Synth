@@ -1,0 +1,57 @@
+name: Release
+
+# A tag like v0.2.0 builds the plugin on macOS and attaches it to a GitHub release of that name.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      # The plugin's version comes from the tag, so Logic sees each release as a new one.
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTONWERK_VERSION="$VERSION"
+      - name: Build
+        run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package
+        run: |
+          ARTEFACTS="build/TonwerkSynth_artefacts/Release"
+          DIR="Tonwerk-Synth-$VERSION-macOS"
+          mkdir "$DIR"
+          cp -R "$ARTEFACTS/AU/Tonwerk Synth.component" "$ARTEFACTS/VST3/Tonwerk Synth.vst3" \
+            "$ARTEFACTS/Standalone/Tonwerk Synth.app" "$DIR/"
+          for bundle in "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app; do
+            codesign --force --deep --sign - "$bundle"
+          done
+          cp scripts/install-release.sh "$DIR/install.sh"
+          ditto -c -k --keepParent "$DIR" "$DIR.zip"
+          echo "ZIP=$DIR.zip" >> "$GITHUB_ENV"
+      - name: Validate with auval
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -strict -v aumu Twsy Bvlp
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$ZIP" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
+          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel.
+
+          Installieren: Zip laden, im Terminal
+          `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`
+
+          Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README.
+          NOTES
+          )"

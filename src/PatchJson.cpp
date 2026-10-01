@@ -36,6 +36,26 @@ juce::var property(const juce::var& object, const char* name)
     return object.isObject() ? object.getProperty(name, {}) : juce::var();
 }
 
+bool flag(const juce::var& value, bool fallback) { return value.isBool() ? (bool) value : fallback; }
+
+/** A note value by its label ("1/8."), as written by `divisionJson`. */
+int division(const juce::var& value, int fallback)
+{
+    for (size_t i = 0; i < kDivisions.size(); ++i)
+        if (value.toString() == kDivisions[i].label)
+            return (int) i;
+    return fallback;
+}
+
+/** Tempo sync is this plugin's own; Tonwerk ignores the two fields, so they are only written when sync is on. */
+void writeSync(juce::DynamicObject& json, bool sync, int index)
+{
+    if (! sync)
+        return;
+    json.setProperty("sync", true);
+    json.setProperty("division", kDivisions[(size_t) juce::jlimit(0, (int) kDivisions.size() - 1, index)].label);
+}
+
 Envelope envelopeOf(const juce::var& raw, const Envelope& fallback)
 {
     return {
@@ -83,6 +103,8 @@ AnalogPatch analogOf(const juce::var& raw)
     patch.lfo.rate = number(property(lfo, "rate"), ranges::rate, fallback.lfo.rate);
     patch.lfo.target = choice(property(lfo, "target"), kAnalogTargets, fallback.lfo.target);
     patch.lfo.depth = number(property(lfo, "depth"), ranges::depth, fallback.lfo.depth);
+    patch.lfo.sync = flag(property(lfo, "sync"), fallback.lfo.sync);
+    patch.lfo.division = division(property(lfo, "division"), fallback.lfo.division);
     patch.volume = number(property(raw, "volume"), ranges::volume, fallback.volume);
     return patch;
 }
@@ -111,6 +133,8 @@ FmPatch fmOf(const juce::var& raw)
     patch.lfo.rate = number(property(lfo, "rate"), ranges::rate, fallback.lfo.rate);
     patch.lfo.target = choice(property(lfo, "target"), kFmTargets, fallback.lfo.target);
     patch.lfo.depth = number(property(lfo, "depth"), ranges::depth, fallback.lfo.depth);
+    patch.lfo.sync = flag(property(lfo, "sync"), fallback.lfo.sync);
+    patch.lfo.division = division(property(lfo, "division"), fallback.lfo.division);
     patch.volume = number(property(raw, "volume"), ranges::volume, fallback.volume);
     return patch;
 }
@@ -125,6 +149,8 @@ Effects effectsOf(const juce::var& raw)
     fx.delay.time = number(property(delay, "time"), ranges::delayTime, fallback.delay.time);
     fx.delay.feedback = number(property(delay, "feedback"), ranges::delayFeedback, fallback.delay.feedback);
     fx.delay.tone = number(property(delay, "tone"), ranges::tone, fallback.delay.tone);
+    fx.delay.sync = flag(property(delay, "sync"), fallback.delay.sync);
+    fx.delay.division = division(property(delay, "division"), fallback.delay.division);
     fx.reverb.mix = number(property(reverb, "mix"), ranges::mix, fallback.reverb.mix);
     fx.reverb.decay = number(property(reverb, "decay"), ranges::reverbDecay, fallback.reverb.decay);
     return fx;
@@ -157,14 +183,15 @@ juce::var oscillatorJson(const Oscillator& osc)
     return json.get();
 }
 
-template <typename Target, size_t Count>
-juce::var lfoJson(Wave wave, float rate, Target target, const char* const (&targets)[Count], float depth)
+template <typename Lfo, size_t Count>
+juce::var lfoJson(const Lfo& lfo, const char* const (&targets)[Count])
 {
     auto json = object();
-    json->setProperty("wave", kWaves[(int) wave]);
-    json->setProperty("rate", rate);
-    json->setProperty("target", targets[(int) target]);
-    json->setProperty("depth", depth);
+    json->setProperty("wave", kWaves[(int) lfo.wave]);
+    json->setProperty("rate", lfo.rate);
+    json->setProperty("target", targets[(int) lfo.target]);
+    json->setProperty("depth", lfo.depth);
+    writeSync(*json, lfo.sync, lfo.division);
     return json.get();
 }
 } // namespace
@@ -208,7 +235,7 @@ juce::var patchToJson(const Patch& patch)
             ops.add(opJson.get());
         }
         json->setProperty("ops", ops);
-        json->setProperty("lfo", lfoJson(fm.lfo.wave, fm.lfo.rate, fm.lfo.target, kFmTargets, fm.lfo.depth));
+        json->setProperty("lfo", lfoJson(fm.lfo, kFmTargets));
         json->setProperty("volume", fm.volume);
     }
     else
@@ -227,8 +254,7 @@ juce::var patchToJson(const Patch& patch)
         json->setProperty("filter", filter.get());
         json->setProperty("filterEnv", envelopeJson(analog.filterEnv));
         json->setProperty("ampEnv", envelopeJson(analog.ampEnv));
-        json->setProperty(
-            "lfo", lfoJson(analog.lfo.wave, analog.lfo.rate, analog.lfo.target, kAnalogTargets, analog.lfo.depth));
+        json->setProperty("lfo", lfoJson(analog.lfo, kAnalogTargets));
         json->setProperty("volume", analog.volume);
     }
     auto fx = object();
@@ -237,6 +263,7 @@ juce::var patchToJson(const Patch& patch)
     delay->setProperty("time", patch.fx.delay.time);
     delay->setProperty("feedback", patch.fx.delay.feedback);
     delay->setProperty("tone", patch.fx.delay.tone);
+    writeSync(*delay, patch.fx.delay.sync, patch.fx.delay.division);
     auto reverb = object();
     reverb->setProperty("mix", patch.fx.reverb.mix);
     reverb->setProperty("decay", patch.fx.reverb.decay);

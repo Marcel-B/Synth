@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(TonwerkSynth VERSION 0.1.0 LANGUAGES C CXX)
+# A release passes its tag's version (-DTONWERK_VERSION=0.2.0); Logic takes a higher version as a new plugin.
+set(TONWERK_VERSION "0.2.0" CACHE STRING "Plugin version")
+project(TonwerkSynth VERSION ${TONWERK_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

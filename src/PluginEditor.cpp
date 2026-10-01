@@ -14,15 +14,16 @@ const juce::Colour kAccent { 0xff10b981 };
 const juce::Colour kError { 0xfff87171 };
 
 constexpr int kMargin = 12;
-constexpr int kSlot = 58;
+constexpr int kSlot = 56;
 constexpr int kSectionPadding = 8;
 constexpr int kSectionTitle = 20;
 constexpr int kRowHeight = 112;
 constexpr int kGap = 8;
 constexpr int kTopBar = 32;
 constexpr int kMessage = 20;
-constexpr int kKeyboard = 64;
-constexpr int kWidth = 1080;
+constexpr int kKeyboard = 72;
+constexpr int kScopeWidth = 300;
+constexpr int kWidth = 1272;
 
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 } // namespace
@@ -147,21 +148,61 @@ void Control::resized()
         toggle->setBounds(area.withSizeKeepingCentre(26, 26).withY(area.getY() + 12));
 }
 
-Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle, std::initializer_list<Item> items)
-    : title(sectionTitle)
+Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle, std::initializer_list<Item> list)
+    : title(sectionTitle), items(list)
 {
     for (const auto& item : items)
     {
         controls.push_back(std::make_unique<Control>(state, item.id, item.label, item.slots));
         addAndMakeVisible(*controls.back());
     }
+    juce::StringArray switchIds;
+    for (const auto& item : items)
+        if (item.when.isNotEmpty())
+            switchIds.addIfNotAlreadyThere(item.when);
+    for (const auto& id : switchIds)
+    {
+        auto* parameter = state.getParameter(id);
+        jassert(parameter != nullptr);
+        switches.push_back(std::make_unique<juce::ParameterAttachment>(*parameter, [this, id](float value) {
+            for (size_t i = 0; i < items.size(); ++i)
+                if (items[i].when == id)
+                    controls[i]->setVisible((value > 0.5f) == items[i].whenOn);
+        }));
+        switches.back()->sendInitialUpdate();
+    }
+}
+
+std::vector<std::pair<int, int>> Section::places() const
+{
+    std::vector<std::pair<int, int>> result;
+    int at = 0;
+    for (size_t i = 0; i < items.size(); ++i)
+    {
+        const bool sharesPlace = i > 0 && items[i].when.isNotEmpty() && items[i].when == items[i - 1].when
+                                 && items[i].whenOn != items[i - 1].whenOn;
+        if (sharesPlace)
+        {
+            auto& previous = result.back();
+            const int width = std::max(previous.second, items[i].slots);
+            at += width - previous.second;
+            previous.second = width;
+            result.push_back(previous);
+        }
+        else
+        {
+            result.push_back({ at, items[i].slots });
+            at += items[i].slots;
+        }
+    }
+    return result;
 }
 
 int Section::preferredWidth() const
 {
     int slots = 0;
-    for (const auto& control : controls)
-        slots += control->slots();
+    for (const auto& [at, width] : places())
+        slots = std::max(slots, at + width);
     return slots * kSlot + 2 * kSectionPadding;
 }
 
@@ -183,8 +224,67 @@ void Section::resized()
     auto area = getLocalBounds().reduced(kSectionPadding, 0);
     area.removeFromTop(kSectionTitle);
     area.removeFromBottom(kSectionPadding);
-    for (auto& control : controls)
-        control->setBounds(area.removeFromLeft(control->slots() * kSlot));
+    const auto where = places();
+    for (size_t i = 0; i < controls.size(); ++i)
+        controls[i]->setBounds(area.getX() + where[i].first * kSlot, area.getY(), where[i].second * kSlot, area.getHeight());
+}
+
+ScopeView::ScopeView(const ScopeBuffer& buffer) : source(buffer) { startTimerHz(30); }
+
+void ScopeView::timerCallback()
+{
+    if (isShowing())
+        refresh();
+}
+
+void ScopeView::refresh()
+{
+    source.read(samples.data(), (int) samples.size());
+    repaint();
+}
+
+void ScopeView::paint(juce::Graphics& g)
+{
+    const auto bounds = getLocalBounds().toFloat();
+    g.setColour(kPanel);
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(kBorder);
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+    const auto area = bounds.reduced(6.0f);
+    g.drawHorizontalLine(juce::roundToInt(area.getCentreY()), area.getX(), area.getRight());
+
+    // Half the samples are shown; the trigger is looked for in the first half, so the view always has enough after it.
+    const int length = (int) samples.size();
+    const int shown = length / 2;
+    int start = 0;
+    for (int i = 1; i < length - shown; ++i)
+    {
+        if (samples[(size_t) i - 1] <= 0.0f && samples[(size_t) i] > 0.0f)
+        {
+            start = i;
+            break;
+        }
+    }
+    float peak = 0.0f;
+    for (float sample : samples)
+        peak = std::max(peak, std::abs(sample));
+    // Quiet sounds are scaled up to be seen, but not a hum of noise to full height.
+    if (peak <= 0.02f)
+        return;
+    const float scale = 0.9f / peak;
+    juce::Path trace;
+    const int width = juce::roundToInt(area.getWidth());
+    for (int x = 0; x <= width; ++x)
+    {
+        const float sample = samples[(size_t) (start + std::min(shown - 1, x * shown / std::max(1, width)))] * scale;
+        const float y = area.getCentreY() - sample * area.getHeight() / 2.0f;
+        if (x == 0)
+            trace.startNewSubPath(area.getX(), y);
+        else
+            trace.lineTo(area.getX() + (float) x, y);
+    }
+    g.setColour(kAccent);
+    g.strokePath(trace, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 
 Section& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, Section* section)
@@ -197,7 +297,8 @@ Section& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, S
 TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
     : AudioProcessorEditor(owner),
       processor(owner),
-      keyboard(owner.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
+      keyboard(owner.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
+      scope(owner.scope)
 {
     setLookAndFeel(&lookAndFeel);
     auto& state = processor.state;
@@ -270,7 +371,9 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                      { "ampEnv.release", "Release" } }));
     auto& lfo = add(analogSections, new Section(state, "LFO",
                                                 { { "lfo.wave", "Welle", 2 },
-                                                  { "lfo.rate", "Tempo" },
+                                                  { "lfo.sync", "Sync" },
+                                                  { "lfo.rate", "Tempo", 1, "lfo.sync", false },
+                                                  { "lfo.division", "Notenwert", 2, "lfo.sync", true },
                                                   { "lfo.target", "Ziel", 2 },
                                                   { "lfo.depth", "Tiefe" } }));
     auto& mix = add(analogSections, new Section(state, "Mischung", { { "noise", "Rauschen" }, { "volume", "Volume" } }));
@@ -282,7 +385,9 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                     { "fm.volume", "Volume" } }));
     auto& fmLfo = add(fmSections, new Section(state, "LFO",
                                               { { "fm.lfo.wave", "Welle", 2 },
-                                                { "fm.lfo.rate", "Tempo" },
+                                                { "fm.lfo.sync", "Sync" },
+                                                { "fm.lfo.rate", "Tempo", 1, "fm.lfo.sync", false },
+                                                { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
                                                 { "fm.lfo.target", "Ziel", 2 },
                                                 { "fm.lfo.depth", "Tiefe" } }));
     std::vector<Section*> operators;
@@ -302,7 +407,9 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
 
     fxSection = std::make_unique<Section>(state, "Effekte",
                                           std::initializer_list<Section::Item> { { "fx.delay.mix", "Delay" },
-                                                                                 { "fx.delay.time", "Zeit" },
+                                                                                 { "fx.delay.sync", "Sync" },
+                                                                                 { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
+                                                                                 { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true },
                                                                                  { "fx.delay.feedback", "Feedback" },
                                                                                  { "fx.delay.tone", "Ton" },
                                                                                  { "fx.reverb.mix", "Hall" },
@@ -313,6 +420,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
     fmRows = { { &algorithm, &fmLfo, fxSection.get() }, { operators[0], operators[1] }, { operators[2], operators[3] } };
 
     addAndMakeVisible(keyboard);
+    addAndMakeVisible(scope);
     keyboard.setAvailableRange(24, 108);
 
     refreshPresets();
@@ -377,8 +485,11 @@ void TonwerkSynthEditor::resized()
     message.setBounds(area.removeFromTop(kMessage));
     area.removeFromTop(kGap);
 
-    keyboard.setBounds(area.removeFromBottom(kKeyboard));
-    // C1 to C8: 50 white keys across the whole width.
+    auto bottom = area.removeFromBottom(kKeyboard);
+    scope.setBounds(bottom.removeFromRight(kScopeWidth));
+    bottom.removeFromRight(kGap);
+    keyboard.setBounds(bottom);
+    // C1 to C8: 50 white keys across the keyboard's width.
     keyboard.setKeyWidth((float) keyboard.getWidth() / 50.0f);
     area.removeFromBottom(kGap);
     const bool fm = fmButton.getToggleState();
