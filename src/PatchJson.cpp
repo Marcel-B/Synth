@@ -106,6 +106,16 @@ AnalogPatch analogOf(const juce::var& raw)
     patch.lfo.sync = flag(property(lfo, "sync"), fallback.lfo.sync);
     patch.lfo.division = division(property(lfo, "division"), fallback.lfo.division);
     patch.volume = number(property(raw, "volume"), ranges::volume, fallback.volume);
+    const auto fold = property(raw, "fold");
+    patch.fold.amount = number(property(fold, "amount"), ranges::level, fallback.fold.amount);
+    patch.fold.symmetry = number(property(fold, "symmetry"), ranges::bipolar, fallback.fold.symmetry);
+    patch.fold.env = number(property(fold, "env"), ranges::bipolar, fallback.fold.env);
+    const auto sh = property(raw, "sampleHold");
+    patch.sampleHold.rate = number(property(sh, "rate"), ranges::rate, fallback.sampleHold.rate);
+    patch.sampleHold.sync = flag(property(sh, "sync"), fallback.sampleHold.sync);
+    patch.sampleHold.division = division(property(sh, "division"), fallback.sampleHold.division);
+    patch.sampleHold.filter = number(property(sh, "filter"), ranges::depth, fallback.sampleHold.filter);
+    patch.sampleHold.pitch = number(property(sh, "pitch"), ranges::depth, fallback.sampleHold.pitch);
     return patch;
 }
 
@@ -256,6 +266,24 @@ juce::var patchToJson(const Patch& patch)
         json->setProperty("ampEnv", envelopeJson(analog.ampEnv));
         json->setProperty("lfo", lfoJson(analog.lfo, kAnalogTargets));
         json->setProperty("volume", analog.volume);
+        // The folder and the sample and hold are this plugin's own, written only when they sound, like tempo sync.
+        if (analog.fold.amount > 0.0f || ! isZero(analog.fold.symmetry) || ! isZero(analog.fold.env))
+        {
+            auto fold = object();
+            fold->setProperty("amount", analog.fold.amount);
+            fold->setProperty("symmetry", analog.fold.symmetry);
+            fold->setProperty("env", analog.fold.env);
+            json->setProperty("fold", fold.get());
+        }
+        if (analog.sampleHold.filter > 0.0f || analog.sampleHold.pitch > 0.0f)
+        {
+            auto sh = object();
+            sh->setProperty("rate", analog.sampleHold.rate);
+            writeSync(*sh, analog.sampleHold.sync, analog.sampleHold.division);
+            sh->setProperty("filter", analog.sampleHold.filter);
+            sh->setProperty("pitch", analog.sampleHold.pitch);
+            json->setProperty("sampleHold", sh.get());
+        }
     }
     auto fx = object();
     auto delay = object();

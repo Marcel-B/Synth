@@ -146,6 +146,19 @@ std::vector<ParameterDescriptor> build()
     b.choice<int>("fx.delay.division", "Delay Teilung", divisions, [](Patch& p) -> int& { return p.fx.delay.division; });
     for (auto i = first; i < b.list.size(); ++i)
         b.list[i].version = 2;
+
+    // Added in 0.3.0.
+    const auto third = b.list.size();
+    b.number("fold.amount", "Wavefolder Menge", ranges::level, [](Patch& p) -> float& { return p.analog.fold.amount; });
+    b.number("fold.symmetry", "Wavefolder Symmetrie", ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.symmetry; });
+    b.number("fold.env", utf8("Wavefolder Filter-Hüllk."), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.env; });
+    b.number("sh.rate", "S&H Tempo", ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
+    b.toggle("sh.sync", "S&H Sync", [](Patch& p) -> bool& { return p.analog.sampleHold.sync; });
+    b.choice<int>("sh.division", "S&H Teilung", divisions, [](Patch& p) -> int& { return p.analog.sampleHold.division; });
+    b.number("sh.filter", "S&H Filter", ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.filter; });
+    b.number("sh.pitch", utf8("S&H Tonhöhe"), ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
+    for (auto i = third; i < b.list.size(); ++i)
+        b.list[i].version = 3;
     return std::move(b.list);
 }
 } // namespace

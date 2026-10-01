@@ -164,6 +164,11 @@ public:
         expectWithinAbsoluteError(at120.analog.lfo.rate, 2.0f, 1.0e-4f);
         expectWithinAbsoluteError(at120.fm.lfo.rate, 4.0f, 1.0e-4f);
 
+        beginTest("A synced sample and hold steps on its note value");
+        patch.analog.sampleHold.sync = true;
+        patch.analog.sampleHold.division = kSixteenth;
+        expectWithinAbsoluteError(withTempo(patch, 120.0).analog.sampleHold.rate, 8.0f, 1.0e-4f);
+
         beginTest("A synced delay repeats on its note value, up to the line's length");
         patch.fx.delay.sync = true;
         patch.fx.delay.division = kDottedEighth;

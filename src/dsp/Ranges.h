@@ -28,6 +28,8 @@ inline constexpr Range release { 0.01f, 6 };
 inline constexpr Range rate { 0.1f, 20 };
 inline constexpr Range depth { 0, 1 };
 inline constexpr Range volume { 0, 1 };
+// The plugin's own, without a counterpart in Tonwerk.
+inline constexpr Range bipolar { -1, 1 };
 
 inline constexpr Range algorithm { 1, 8 };
 inline constexpr Range feedback { 0, 1 };

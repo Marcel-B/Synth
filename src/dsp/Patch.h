@@ -39,6 +39,7 @@ inline constexpr std::array<Division, 16> kDivisions { {
 /** Indices into `kDivisions`: a quarter for the LFOs, the dotted eighth that delays are usually set to. */
 inline constexpr int kQuarter = 7;
 inline constexpr int kDottedEighth = 9;
+inline constexpr int kSixteenth = 13;
 
 /** Times in seconds, sustain as a share of the peak. */
 struct Envelope
@@ -97,6 +98,31 @@ struct AnalogPatch
         int division = kQuarter;
     } lfo;
     float volume = 0.8f;
+    /**
+     * A wavefolder between the oscillators and the filter. This plugin's own, Tonwerk has none: its JSON leaves the
+     * field out, and a sound from Tonwerk plays with the folder off.
+     */
+    struct
+    {
+        /** 0 is off; at 1 the mix is driven eight times over and folded back into range. */
+        float amount = 0.0f;
+        /** An offset before folding, -1 to 1, for the even harmonics. */
+        float symmetry = 0.0f;
+        /** How far the filter envelope adds to the amount, -1 to 1. */
+        float env = 0.0f;
+    } fold;
+    /** Sample and hold: a new random value at every step, held until the next. Also this plugin's own. */
+    struct
+    {
+        /** Steps per second. */
+        float rate = 8.0f;
+        bool sync = false;
+        int division = kSixteenth;
+        /** How far it moves the cutoff, at 1 up to two octaves either way. */
+        float filter = 0.0f;
+        /** How far it moves the pitch, at 1 up to an octave either way. */
+        float pitch = 0.0f;
+    } sampleHold;
 };
 
 struct Operator

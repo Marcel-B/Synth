@@ -10,7 +10,8 @@ namespace tonwerk
  * One note of the analog engine, after Tonwerk's synth.ts: two oscillators and noise into a filter, an envelope each
  * for loudness and cutoff, an LFO. The browser builds a graph of nodes per note; this computes the same thing sample by
  * sample. Pitch, cutoff and pulse widths follow their modulation every `kControlSamples` samples, the sound itself runs
- * at the full rate.
+ * at the full rate. Beyond the browser it has a wavefolder before the filter and a sample and hold for cutoff and
+ * pitch, both off in every sound from Tonwerk.
  *
  * The patch is read on every block rather than kept from the note's start, so automation and the editor's knobs are
  * heard while a note sounds; in the browser an edit only reached the next note.
@@ -25,6 +26,7 @@ public:
         sampleRate = newSampleRate;
         ampEnv.prepare(sampleRate);
         filterEnv.prepare(sampleRate);
+        folder.prepare(sampleRate);
     }
 
     void start(double newPitch, float newVelocity, const AnalogPatch& patch)
@@ -38,6 +40,8 @@ public:
         osc1.reset();
         osc2.reset();
         lfo.reset();
+        sampleHold.reset();
+        folder.reset();
         filter.reset();
     }
 
@@ -66,6 +70,11 @@ public:
         const bool lfoRuns = patch.lfo.depth > 0.0f || widths1.lfo > 0.0 || widths2.lfo > 0.0;
         const double tracked =
             patch.filter.cutoff * std::pow(2.0, patch.filter.keyTrack * (pitch - 60.0) / 12.0);
+        const auto& sh = patch.sampleHold;
+        const bool sampling = sh.filter > 0.0f || sh.pitch > 0.0f;
+        const auto& fold = patch.fold;
+        // Off exactly when untouched, so every sound from Tonwerk passes as before.
+        const bool folding = fold.amount > 0.0f || ! isZero(fold.env) || ! isZero(fold.symmetry);
 
         for (int done = 0; done < count;)
         {
@@ -85,6 +94,12 @@ public:
                     case AnalogLfoTarget::amp: tremolo = 1.0 - depth / 2.0 + depth / 2.0 * lfoValue; break;
                 }
             }
+            if (sampling)
+            {
+                const double step = sampleHold.advance(sh.rate, sampleRate, chunk);
+                filterCents += sh.filter * 2400.0 * step;
+                pitchCents += sh.pitch * 1200.0 * step;
+            }
             filter.set(patch.filter.type,
                        std::max(20.0, tracked) * centsToRatio(filterCents),
                        patch.filter.resonance,
@@ -95,6 +110,7 @@ public:
             const double width1 = widths1.at(lfoValue, ampShape, filterShape);
             const double width2 = widths2.at(lfoValue, ampShape, filterShape);
             const double pitchRatio = centsToRatio(pitchCents);
+            const double foldGain = 1.0 + 7.0 * std::clamp(fold.amount + fold.env * filterShape, 0.0, 1.0);
             const double frequency1 = frequency * std::pow(2.0, patch.osc1.octave) * centsToRatio(patch.osc1.detune) * pitchRatio;
             const double frequency2 = frequency * std::pow(2.0, patch.osc2.octave) * centsToRatio(patch.osc2.detune) * pitchRatio;
 
@@ -107,6 +123,8 @@ public:
                     sum += patch.osc2.level * osc2.next(patch.osc2.wave, frequency2, sampleRate, width2);
                 if (patch.noise > 0.0f)
                     sum += patch.noise * noise.next();
+                if (folding)
+                    sum = folder.process(sum, foldGain, fold.symmetry);
                 filterEnv.next();
                 const double level = ampEnv.next();
                 out[done + i] += (float) (filter.process(sum) * level * peak * tremolo);
@@ -162,6 +180,8 @@ private:
     BlepOscillator osc1;
     BlepOscillator osc2;
     Lfo lfo;
+    SampleHold sampleHold;
+    Wavefolder folder;
     Biquad filter;
     Noise noise;
 };
