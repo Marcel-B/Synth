@@ -17,7 +17,7 @@ cmake --build build --target TonwerkSynth_Standalone      # also TonwerkSynth_VS
 scripts/install-macos.sh                                  # on the Mac: Release build, ad-hoc signing, install, auval
 ```
 
-The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's default generators, never require the Xcode generator, an AUv3 app extension or a signing identity. Releases: pushing a tag `v*` runs `release.yml`, which builds with `-DTONWERK_VERSION` from the tag, signs ad hoc, runs auval and attaches a zip (plugins, app, `scripts/install-release.sh` as `install.sh`, which removes the quarantine flag) to a GitHub release. CI (`build.yml`) runs the tests on Linux and on macOS, builds the universal AU there, signs it ad hoc and runs `auval -strict -v aumu Twsy Bvlp`. Warnings come from `juce_recommended_warning_flags`; keep the build free of them.
+The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's default generators, never require the Xcode generator, an AUv3 app extension or a signing identity. Releases: pushing a tag `v*` runs `release.yml` (or starting it by hand with a version, which then makes the tag; the cloud sessions cannot push tags), which builds with `-DTONWERK_VERSION` from the tag, signs ad hoc, runs auval and attaches a zip (plugins, app, `scripts/install-release.sh` as `install.sh`, which removes the quarantine flag) to a GitHub release. CI (`build.yml`) runs the tests on Linux and on macOS, builds the universal AU there, signs it ad hoc and runs `auval -strict -v aumu Twsy Bvlp`. Warnings come from `juce_recommended_warning_flags`; keep the build free of them.
 
 ## Architecture
 
