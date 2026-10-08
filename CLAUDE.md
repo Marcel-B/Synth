@@ -32,6 +32,10 @@ The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's def
 - `PresetLibrary.cpp`: factory sounds (the host's programs) and imported ones in `presets.json` under Application Support, plus Tonwerk's address in `settings.json`. `fetchFromTonwerk` calls Tonwerk's `GET /api/logic/synths/presets` (no login, reached over Tailscale).
 - `PluginEditor.cpp`: sections of knobs per engine, the engine switch, the preset menu and the import/export buttons, an on-screen keyboard. Strings with umlauts go through `utf8()` / `String::fromUTF8`, since `juce::String` reads a plain `const char*` as ASCII.
 
+## Chrome Glitch
+
+A second plugin in the same CMake project: `ChromeGlitch` (audio effect, `aufx ChGl Bvlp`, sources in `glitch/src/`, tests in `tests/GlitchTests.cpp` inside `TonwerkSynthTests`). It is built, signed, validated with auval, installed and released alongside the synth. `GlitchEngine.h` is plain C++: ticks (grid lines of the host tempo in sync, random 40-250 ms gaps otherwise, the chaos share of those also in sync) roll for a stutter (replays the last slice, later repeats maybe pitched, never wrapping inside a repeat) or a dropout; every change crossfades over 1.5 ms; the crusher is full during a glitch and light between. The dice reseed on each transport start so bounces repeat. Its parameter ids follow the same never-rename rule; they start at version hint 1. The test app defines `CHROME_GLITCH_NO_ENTRY` because both plugins define `createPluginFilter`.
+
 ## Conventions
 
 - Commit messages and branch names are German; code and comments English; UI strings German.

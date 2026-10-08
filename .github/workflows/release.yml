@@ -39,6 +39,9 @@ jobs:
           mkdir "$DIR"
           cp -R "$ARTEFACTS/AU/Tonwerk Synth.component" "$ARTEFACTS/VST3/Tonwerk Synth.vst3" \
             "$ARTEFACTS/Standalone/Tonwerk Synth.app" "$DIR/"
+          GLITCH="build/ChromeGlitch_artefacts/Release"
+          cp -R "$GLITCH/AU/Chrome Glitch.component" "$GLITCH/VST3/Chrome Glitch.vst3" \
+            "$GLITCH/Standalone/Chrome Glitch.app" "$DIR/"
           for bundle in "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app; do
             codesign --force --deep --sign - "$bundle"
           done
@@ -49,15 +52,17 @@ jobs:
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
           auval -strict -v aumu Twsy Bvlp
+          auval -strict -v aufx ChGl Bvlp
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
-          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel.
+          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei ist der Effekt Chrome Glitch.
 
           Installieren: Zip laden, im Terminal
           `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`
