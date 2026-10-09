@@ -9,13 +9,18 @@ namespace
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
 std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* name, float min, float max, float initial,
-                                                  const char* unit = "", float centre = 0.0f)
+                                                  const char* unit, float centre = 0.0f)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID { id, 1 }, utf8(name), range, initial,
-                                                       juce::AudioParameterFloatAttributes().withLabel(unit));
+    // Whole milliseconds and semitones are fine enough; the raw float shows as "49.9999962".
+    const juce::String suffix = juce::String(" ") + unit;
+    auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
+    auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
+    return std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
 /** Chances and amounts show as percent, as Logic's own effects do. */

@@ -224,6 +224,15 @@ public:
                     expect(std::isfinite(buffer.getSample(0, n)));
             }
 
+            // Logic shows these texts in the knobs' value fields.
+            auto text = [&](const char* id, float value) {
+                auto* parameter = processor.state.getParameter(id);
+                return parameter->getText(parameter->convertTo0to1(value), 32);
+            };
+            expectEquals(text("stutterLength", 49.9999962f), juce::String("50 ms"));
+            expectEquals(text("dropoutLength", 100.0f), juce::String("100 ms"));
+            expectEquals(text("pitchRange", 24.0f), juce::String("24 HT"));
+
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
             expect(editor != nullptr && editor->getWidth() > 0);
         }
