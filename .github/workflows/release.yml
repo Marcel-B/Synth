@@ -45,6 +45,9 @@ jobs:
           DISTORTION="build/TonwerkDistortion_artefacts/Release"
           cp -R "$DISTORTION/AU/Tonwerk Distortion.component" "$DISTORTION/VST3/Tonwerk Distortion.vst3" \
             "$DISTORTION/Standalone/Tonwerk Distortion.app" "$DIR/"
+          WAVETABLE="build/TonwerkWavetable_artefacts/Release"
+          cp -R "$WAVETABLE/AU/Tonwerk Wavetable.component" "$WAVETABLE/VST3/Tonwerk Wavetable.vst3" \
+            "$WAVETABLE/Standalone/Tonwerk Wavetable.app" "$DIR/"
           for bundle in "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app; do
             codesign --force --deep --sign - "$bundle"
           done
@@ -57,17 +60,19 @@ jobs:
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Wavetable.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
           auval -strict -v aumu Twsy Bvlp
           auval -strict -v aufx ChGl Bvlp
           auval -strict -v aufx TwDs Bvlp
+          auval -strict -v aumu TwWt Bvlp
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
-          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind die Effekte Chrome Glitch und Tonwerk Distortion.
+          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind der Wavetable-Synth Tonwerk Wavetable und die Effekte Chrome Glitch und Tonwerk Distortion.
 
           Installieren: Zip laden, im Terminal
           `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`
