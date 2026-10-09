@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Baut Tonwerk Synth, Tonwerk Wavetable und die Effekte Chrome Glitch und Tonwerk Distortion auf dem Mac und installiert sie für Logic
+# Baut Tonwerk Analog, Tonwerk FM, Tonwerk Wavetable, das bisherige Tonwerk Synth und die Effekte Chrome Glitch und Tonwerk Distortion auf dem Mac und installiert sie für Logic
 # (Audio Unit) und andere Hosts (VST3).
 # Braucht nur die Command Line Tools (xcode-select --install) und CMake (brew install cmake), kein volles Xcode.
 #
@@ -9,6 +9,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 NAME="Tonwerk Synth"
+ANALOG="Tonwerk Analog"
+FM="Tonwerk FM"
 GLITCH="Chrome Glitch"
 DISTORTION="Tonwerk Distortion"
 WAVETABLE="Tonwerk Wavetable"
@@ -17,6 +19,8 @@ VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
 
 if [[ "${1:-}" == "--uninstall" ]]; then
+  rm -rf "$COMPONENTS/$ANALOG.component" "$VST3/$ANALOG.vst3" "$APPS/$ANALOG.app"
+  rm -rf "$COMPONENTS/$FM.component" "$VST3/$FM.vst3" "$APPS/$FM.app"
   rm -rf "$COMPONENTS/$NAME.component" "$VST3/$NAME.vst3" "$APPS/$NAME.app"
   rm -rf "$COMPONENTS/$GLITCH.component" "$VST3/$GLITCH.vst3" "$APPS/$GLITCH.app"
   rm -rf "$COMPONENTS/$DISTORTION.component" "$VST3/$DISTORTION.vst3" "$APPS/$DISTORTION.app"
@@ -33,7 +37,7 @@ cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF
 cmake --build build-release --config Release --parallel "$(sysctl -n hw.ncpu)"
 
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for target in TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE"; do
+for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE"; do
   ARTEFACTS="build-release/${target%%:*}_artefacts/Release"
   PRODUCT="${target#*:}"
   # Ohne Entwicklerkonto reicht eine Ad-hoc-Signatur: Apple Silicon lädt keinen unsignierten Code, und Logic prüft
@@ -52,7 +56,8 @@ killall -9 AudioComponentRegistrar 2>/dev/null || true
 sleep 2
 echo
 echo "Prüfe die Audio Units mit auval …"
-if auval -v aumu Twsy Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aufx ChGl Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu Twsy Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aufx ChGl Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwDs Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwWt Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "auval: bestanden."
 else
@@ -60,5 +65,6 @@ else
   exit 1
 fi
 echo
-echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $NAME oder $WAVETABLE."
+echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM oder $WAVETABLE."
+echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH oder $DISTORTION."

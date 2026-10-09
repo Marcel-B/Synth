@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -36,7 +36,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
       - name: Sign ad hoc
         run: |
-          for dir in "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
+          for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
             "TonwerkWavetable:Tonwerk Wavetable"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
@@ -47,6 +47,8 @@ jobs:
       - name: Validate with auval
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "build/TonwerkAnalog_artefacts/Release/AU/Tonwerk Analog.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkFM_artefacts/Release/AU/Tonwerk FM.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkSynth_artefacts/Release/AU/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/ChromeGlitch_artefacts/Release/AU/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkDistortion_artefacts/Release/AU/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
@@ -54,6 +56,8 @@ jobs:
           killall -9 AudioComponentRegistrar || true
           sleep 3
           auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable || true
+          auval -strict -v aumu TwAn Bvlp
+          auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
           auval -strict -v aufx ChGl Bvlp
           auval -strict -v aufx TwDs Bvlp
@@ -64,6 +68,12 @@ jobs:
           ditto -c -k --keepParent "AU/Tonwerk Synth.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Synth.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-VST3.zip"
           ditto -c -k --keepParent "Standalone/Tonwerk Synth.app" "$GITHUB_WORKSPACE/Tonwerk-Synth-App.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkAnalog_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Analog.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Analog-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Analog.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Analog-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkFM_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk FM.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-FM-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk FM.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-FM-VST3.zip"
           cd "$GITHUB_WORKSPACE/build/ChromeGlitch_artefacts/Release"
           ditto -c -k --keepParent "AU/Chrome Glitch.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chrome-Glitch-AU.zip"
           ditto -c -k --keepParent "VST3/Chrome Glitch.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chrome-Glitch-VST3.zip"

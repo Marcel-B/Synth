@@ -25,23 +25,14 @@ else()
     set(TONWERK_FORMATS VST3 Standalone)
 endif()
 
-juce_add_plugin(TonwerkSynth
-    PRODUCT_NAME "Tonwerk Synth"
-    COMPANY_NAME "b-velop"
-    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerksynth
-    PLUGIN_MANUFACTURER_CODE Bvlp
-    PLUGIN_CODE Twsy
-    FORMATS ${TONWERK_FORMATS}
-    IS_SYNTH TRUE
-    NEEDS_MIDI_INPUT TRUE
-    NEEDS_MIDI_OUTPUT FALSE
-    IS_MIDI_EFFECT FALSE
-    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    AU_MAIN_TYPE kAudioUnitType_MusicDevice
-    VST3_CATEGORIES Instrument Synth
-    # deploy/install-macos.sh copies and signs; copying here would need write access to the plug-in folders.
-    COPY_PLUGIN_AFTER_BUILD FALSE)
+set(TONWERK_DEFINITIONS
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0)
+
+# The Night City look the plugins share: colours, panels, knobs, the oscilloscope (common/).
+set(TONWERK_UI_SOURCES common/NightCity.cpp)
 
 set(TONWERK_SOURCES
     src/dsp/Defaults.cpp
@@ -52,17 +43,37 @@ set(TONWERK_SOURCES
     src/PluginProcessor.cpp
     src/PresetLibrary.cpp)
 
-set(TONWERK_DEFINITIONS
-    JUCE_WEB_BROWSER=0
-    JUCE_USE_CURL=0
-    JUCE_VST3_CAN_REPLACE_VST2=0
-    JUCE_DISPLAY_SPLASH_SCREEN=0)
+# Tonwerk's two browser synthesizers, each its own instrument (src/, built twice with a different edition), and the
+# first plugin, which plays both and stays for the Logic projects made with it.
+function(tonwerk_add_synth target product bundle code edition)
+    juce_add_plugin(${target}
+        PRODUCT_NAME "${product}"
+        COMPANY_NAME "b-velop"
+        COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+        BUNDLE_ID ${bundle}
+        PLUGIN_MANUFACTURER_CODE Bvlp
+        PLUGIN_CODE ${code}
+        FORMATS ${TONWERK_FORMATS}
+        IS_SYNTH TRUE
+        NEEDS_MIDI_INPUT TRUE
+        NEEDS_MIDI_OUTPUT FALSE
+        IS_MIDI_EFFECT FALSE
+        EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+        AU_MAIN_TYPE kAudioUnitType_MusicDevice
+        VST3_CATEGORIES Instrument Synth
+        # scripts/install-macos.sh copies and signs; copying here would need write access to the plug-in folders.
+        COPY_PLUGIN_AFTER_BUILD FALSE)
+    target_sources(${target} PRIVATE ${TONWERK_SOURCES} ${TONWERK_UI_SOURCES})
+    target_include_directories(${target} PRIVATE common)
+    target_compile_definitions(${target} PUBLIC ${TONWERK_DEFINITIONS} TONWERK_EDITION=${edition})
+    target_link_libraries(${target}
+        PRIVATE juce::juce_audio_utils juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+endfunction()
 
-target_sources(TonwerkSynth PRIVATE ${TONWERK_SOURCES})
-target_compile_definitions(TonwerkSynth PUBLIC ${TONWERK_DEFINITIONS})
-target_link_libraries(TonwerkSynth
-    PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+tonwerk_add_synth(TonwerkAnalog "Tonwerk Analog" de.bvelop.tonwerkanalog TwAn analog)
+tonwerk_add_synth(TonwerkFM "Tonwerk FM" de.bvelop.tonwerkfm TwFm fm)
+tonwerk_add_synth(TonwerkSynth "Tonwerk Synth" de.bvelop.tonwerksynth Twsy combined)
 
 # Chrome Glitch: an audio effect from the same repository, for a voice whose speech chrome fails (glitch/).
 juce_add_plugin(ChromeGlitch
@@ -114,7 +125,8 @@ set(TONWERK_DISTORTION_SOURCES
     distortion/src/DistortionEditor.cpp
     distortion/src/DistortionProcessor.cpp)
 
-target_sources(TonwerkDistortion PRIVATE ${TONWERK_DISTORTION_SOURCES})
+target_sources(TonwerkDistortion PRIVATE ${TONWERK_DISTORTION_SOURCES} ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkDistortion PRIVATE common)
 target_compile_definitions(TonwerkDistortion PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkDistortion
     PRIVATE juce::juce_audio_utils juce::juce_dsp
@@ -144,9 +156,9 @@ set(TONWERK_WAVETABLE_SOURCES
     wavetable/src/WavetablePresets.cpp
     wavetable/src/WavetableProcessor.cpp)
 
-target_sources(TonwerkWavetable PRIVATE ${TONWERK_WAVETABLE_SOURCES})
+target_sources(TonwerkWavetable PRIVATE ${TONWERK_WAVETABLE_SOURCES} ${TONWERK_UI_SOURCES})
 # The sub oscillator and the noise come from the synth's DSP (src/dsp/Oscillators.h).
-target_include_directories(TonwerkWavetable PRIVATE src)
+target_include_directories(TonwerkWavetable PRIVATE src common)
 target_compile_definitions(TonwerkWavetable PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkWavetable
     PRIVATE juce::juce_audio_utils juce::juce_dsp
@@ -159,17 +171,19 @@ if(TONWERK_TESTS)
     juce_add_console_app(TonwerkSynthTests PRODUCT_NAME "Tonwerk Synth Tests")
     target_sources(TonwerkSynthTests PRIVATE
         ${TONWERK_SOURCES}
+        ${TONWERK_UI_SOURCES}
         tests/Main.cpp
         tests/DspTests.cpp
         tests/PatchTests.cpp
         tests/ProcessorTests.cpp
+        tests/EditionTests.cpp
         ${CHROME_GLITCH_SOURCES}
         tests/GlitchTests.cpp
         ${TONWERK_DISTORTION_SOURCES}
         tests/DistortionTests.cpp
         ${TONWERK_WAVETABLE_SOURCES}
         tests/WavetableTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src glitch/src distortion/src wavetable/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"

@@ -3,12 +3,15 @@
 #include "EffectsChain.h"
 #include "Parameters.h"
 #include "PresetLibrary.h"
+#include "ScopeBuffer.h"
 #include "dsp/AnalogVoice.h"
 #include "dsp/FmVoice.h"
 #include "dsp/Tempo.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
+
+#include <optional>
 
 namespace tonwerk
 {
@@ -41,47 +44,23 @@ private:
     FmVoice fm;
 };
 
+using tonwerkui::ScopeBuffer;
+
 /**
- * The last samples the plugin played, for the oscilloscope: written by the audio thread, read by the editor's timer.
- * Atomics per sample, so the reader never sees a torn value; a trace that mixes two blocks is fine for a picture.
+ * Tonwerk Analog, Tonwerk FM or Tonwerk Synth, by `edition`: the same voices, effects and preset library, with the
+ * edition's parameters and factory sounds. The one-engine editions always play their engine, whatever a sound says.
  */
-class ScopeBuffer
-{
-public:
-    static constexpr int kSize = 4096;
-
-    void write(const float* samples, int count)
-    {
-        int at = position.load(std::memory_order_relaxed);
-        for (int i = 0; i < count; ++i)
-        {
-            data[(size_t) at].store(samples[i], std::memory_order_relaxed);
-            at = (at + 1) % kSize;
-        }
-        position.store(at, std::memory_order_release);
-    }
-
-    /** The newest `count` samples, oldest first. */
-    void read(float* out, int count) const
-    {
-        const int end = position.load(std::memory_order_acquire);
-        for (int i = 0; i < count; ++i)
-            out[i] = data[(size_t) ((end - count + i + kSize) % kSize)].load(std::memory_order_relaxed);
-    }
-
-private:
-    std::array<std::atomic<float>, kSize> data {};
-    std::atomic<int> position { 0 };
-};
-
 class TonwerkSynthProcessor : public juce::AudioProcessor, private juce::Timer
 {
 public:
+    /** First, so the parameters below are made for it. */
+    const Edition edition;
+
     static constexpr int kVoices = 16;
     /** The pitch wheel's reach in semitones, either way. */
     static constexpr double kBendRange = 2.0;
 
-    TonwerkSynthProcessor();
+    explicit TonwerkSynthProcessor(Edition edition = Edition::combined);
     ~TonwerkSynthProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -93,7 +72,7 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
-    const juce::String getName() const override { return JucePlugin_Name; }
+    const juce::String getName() const override { return editionName(edition); }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
@@ -110,8 +89,15 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
-    /** Takes over a sound in Tonwerk's JSON; on the message thread. */
-    void applyPatch(const juce::var& json, const juce::String& name);
+    /** The plugin's name for an edition. */
+    static juce::String editionName(Edition edition);
+    /** The engine the edition plays, or none for Tonwerk Synth, which plays the one the sound names. */
+    std::optional<Engine> fixedEngine() const;
+    /** Whether a sound in Tonwerk's JSON is one this edition plays: Tonwerk Analog takes no FM sounds. */
+    bool plays(const juce::var& json) const;
+
+    /** Takes over a sound in Tonwerk's JSON, unless the edition does not play it; on the message thread. */
+    bool applyPatch(const juce::var& json, const juce::String& name);
     /** The current sound in Tonwerk's JSON, for saving to a file. */
     juce::var currentPatchJson() const;
 
@@ -127,6 +113,8 @@ public:
 
 private:
     void timerCallback() override;
+    /** The parameters' patch, on the edition's engine. */
+    Patch readPatch() const;
 
     ParameterReader reader;
     SharedState shared;

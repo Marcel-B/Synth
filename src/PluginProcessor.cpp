@@ -67,17 +67,78 @@ void SynthVoice::renderNextBlock(juce::AudioBuffer<float>& buffer, int start, in
         clearCurrentNote();
 }
 
-TonwerkSynthProcessor::TonwerkSynthProcessor()
+namespace
+{
+/** The saved state's root; Tonwerk Synth keeps its first one, so its projects load. */
+juce::Identifier stateType(Edition edition)
+{
+    switch (edition)
+    {
+        case Edition::analog:
+            return "TonwerkAnalog";
+        case Edition::fm:
+            return "TonwerkFM";
+        case Edition::combined:
+            break;
+    }
+    return "TonwerkSynth";
+}
+} // namespace
+
+TonwerkSynthProcessor::TonwerkSynthProcessor(Edition pluginEdition)
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      state(*this, nullptr, "TonwerkSynth", createParameterLayout()),
+      edition(pluginEdition),
+      state(*this, nullptr, stateType(pluginEdition), createParameterLayout(pluginEdition)),
       reader(state)
 {
     for (int i = 0; i < kVoices; ++i)
         synth.addVoice(new SynthVoice(shared));
     synth.addSound(new AnySound());
-    shared.patch = reader.read();
-    state.state.setProperty("presetName", PresetLibrary::factoryPresets()[0].name, nullptr);
+    shared.patch = readPatch();
+    state.state.setProperty("presetName", PresetLibrary::factoryPresets(edition)[0].name, nullptr);
     startTimerHz(10);
+}
+
+juce::String TonwerkSynthProcessor::editionName(Edition edition)
+{
+    switch (edition)
+    {
+        case Edition::analog:
+            return "Tonwerk Analog";
+        case Edition::fm:
+            return "Tonwerk FM";
+        case Edition::combined:
+            break;
+    }
+    return "Tonwerk Synth";
+}
+
+std::optional<Engine> TonwerkSynthProcessor::fixedEngine() const
+{
+    switch (edition)
+    {
+        case Edition::analog:
+            return Engine::analog;
+        case Edition::fm:
+            return Engine::fm;
+        case Edition::combined:
+            break;
+    }
+    return std::nullopt;
+}
+
+bool TonwerkSynthProcessor::plays(const juce::var& json) const
+{
+    const auto engine = fixedEngine();
+    return ! engine || patchFromJson(json).engine == *engine;
+}
+
+Patch TonwerkSynthProcessor::readPatch() const
+{
+    auto patch = reader.read();
+    if (const auto engine = fixedEngine())
+        patch.engine = *engine;
+    return patch;
 }
 
 TonwerkSynthProcessor::~TonwerkSynthProcessor() { stopTimer(); }
@@ -95,7 +156,7 @@ void TonwerkSynthProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     voiceBuffer.setSize(1, samplesPerBlock);
     keyboardState.reset();
     // The room belongs to the sample rate; load it now rather than on the timer, so the first note already has it.
-    effects.loadRoom(EffectsChain::roomFor(reader.read().fx));
+    effects.loadRoom(EffectsChain::roomFor(readPatch().fx));
 }
 
 void TonwerkSynthProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
@@ -108,7 +169,7 @@ void TonwerkSynthProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         if (const auto position = host->getPosition())
             if (const auto hostBpm = position->getBpm(); hostBpm && *hostBpm > 0.0)
                 bpm.store(*hostBpm);
-    shared.patch = withTempo(reader.read(), bpm.load());
+    shared.patch = withTempo(readPatch(), bpm.load());
     for (const auto metadata : midi)
     {
         const auto message = metadata.getMessage();
@@ -130,16 +191,16 @@ void TonwerkSynthProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 void TonwerkSynthProcessor::timerCallback()
 {
     // The reverb's room allocates, so it is computed here and never on the audio thread.
-    effects.loadRoom(EffectsChain::roomFor(reader.read().fx));
+    effects.loadRoom(EffectsChain::roomFor(readPatch().fx));
 }
 
 juce::AudioProcessorEditor* TonwerkSynthProcessor::createEditor() { return new TonwerkSynthEditor(*this); }
 
-int TonwerkSynthProcessor::getNumPrograms() { return PresetLibrary::factoryPresets().size(); }
+int TonwerkSynthProcessor::getNumPrograms() { return PresetLibrary::factoryPresets(edition).size(); }
 
 void TonwerkSynthProcessor::setCurrentProgram(int index)
 {
-    const auto presets = PresetLibrary::factoryPresets();
+    const auto presets = PresetLibrary::factoryPresets(edition);
     if (! juce::isPositiveAndBelow(index, presets.size()))
         return;
     currentProgram = index;
@@ -148,17 +209,20 @@ void TonwerkSynthProcessor::setCurrentProgram(int index)
 
 const juce::String TonwerkSynthProcessor::getProgramName(int index)
 {
-    const auto presets = PresetLibrary::factoryPresets();
+    const auto presets = PresetLibrary::factoryPresets(edition);
     return juce::isPositiveAndBelow(index, presets.size()) ? presets[index].name : juce::String();
 }
 
-void TonwerkSynthProcessor::applyPatch(const juce::var& json, const juce::String& name)
+bool TonwerkSynthProcessor::applyPatch(const juce::var& json, const juce::String& name)
 {
-    writePatch(state, patchFromJson(json, reader.read()));
+    if (! plays(json))
+        return false;
+    writePatch(state, patchFromJson(json, readPatch()));
     state.state.setProperty("presetName", name, nullptr);
+    return true;
 }
 
-juce::var TonwerkSynthProcessor::currentPatchJson() const { return patchToJson(reader.read()); }
+juce::var TonwerkSynthProcessor::currentPatchJson() const { return patchToJson(readPatch()); }
 
 void TonwerkSynthProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
@@ -174,4 +238,12 @@ void TonwerkSynthProcessor::setStateInformation(const void* data, int sizeInByte
 }
 } // namespace tonwerk
 
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new tonwerk::TonwerkSynthProcessor(); }
+#ifndef TONWERK_EDITION
+    #define TONWERK_EDITION combined
+#endif
+
+// Each of the three plugins is this file built with its own edition (CMakeLists.txt).
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new tonwerk::TonwerkSynthProcessor(tonwerk::Edition::TONWERK_EDITION);
+}

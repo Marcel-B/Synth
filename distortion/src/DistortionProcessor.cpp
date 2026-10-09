@@ -104,6 +104,8 @@ void DistortionProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         voices[(size_t) ch].update(settings);
     }
 
+    if (channels > 0)
+        scopeIn.write(buffer.getReadPointer(0), buffer.getNumSamples());
     juce::dsp::AudioBlock<float> whole(buffer.getArrayOfWritePointers(), (size_t) channels,
                                        (size_t) buffer.getNumSamples());
     // A host may send more than it announced; the oversampler only has room for the announced block.
@@ -127,6 +129,8 @@ void DistortionProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                 samples[n] = voice.process(samples[n]);
         }
     }
+    if (channels > 0)
+        scopeOut.write(buffer.getReadPointer(0), buffer.getNumSamples());
 }
 
 juce::AudioProcessorEditor* DistortionProcessor::createEditor()

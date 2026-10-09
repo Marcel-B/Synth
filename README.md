@@ -1,13 +1,24 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugin für Logic Pro: ein Instrument mit einer **Analog**- und einer **FM**-Engine, dazu Delay und Hall. Dazu kommen der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, der Klang des BOSS DS-1 (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, der Klang des BOSS DS-1 (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
-![Analog-Engine](docs/analog.png)
-![FM-Engine](docs/fm.png)
+![Tonwerk Analog](docs/analog.png)
+![Tonwerk FM](docs/fm.png)
 
-![Oszilloskop](docs/oszilloskop.png)
+## Zwei Plugins statt einem
+
+Bis 0.3.0 waren beide Engines ein Plugin, **Tonwerk Synth**, mit einem Umschalter oben. Jetzt ist jede Engine ein eigenes Instrument: **Tonwerk Analog** (`aumu TwAn Bvlp`) und **Tonwerk FM** (`aumu TwFm Bvlp`). Jedes hat nur seine eigenen Regler (Logic zeigt bei der Automation also keine fremden mehr) und seine eigenen Werksklänge:
+
+- **Tonwerk Analog**: Tonwerks Analog Lead, Pad, Bass und Leitton, dazu Acid (resonanter 303-artiger Bass), Wobble (Filter-LFO auf Achteln im Songtempo, etwas Wavefolder), Falt-Lead (Wavefolder mit Hüllkurve, Delay punktierte Achtel), Zufall (Sample & Hold auf Sechzehnteln am Filter) und Streicher (langsame Hüllkurven, PWM, Hall).
+- **Tonwerk FM**: Tonwerks FM Blech, E-Piano, Bass und Leitton, dazu Glocke, Marimba, Orgel (vier Träger als Zugriegel) und Zupf.
+
+Die aus Tonwerk oder Dateien übernommenen Klänge teilen sich beide Plugins (dieselbe `presets.json`); jedes zeigt im Menü nur die seiner Engine. Lädst du in Tonwerk Analog eine Datei mit FM-Klängen, landen sie im Menü von Tonwerk FM.
+
+**Alte Projekte:** Tonwerk Synth bleibt installiert und lädt seine Projekte wie bisher, mit beiden Engines und den acht alten Werksklängen auf denselben Programmnummern (die neuen hängen dahinter). Es hat ebenfalls die neue Oberfläche. Für neue Spuren nimmst du Tonwerk Analog oder Tonwerk FM. Eine alte Spur ziehst du um, indem du in Tonwerk Synth **Speichern** drückst und die Datei im neuen Plugin mit **Datei laden** öffnest.
+
+**Oberfläche:** alle Tonwerk-Plugins sehen jetzt aus wie Tonwerk Wavetable: fast schwarz, Gelb, Cyan und Rot aus Cyberpunk 2077, Paneele mit abgeschnittener Ecke, Bildschirme mit Scanlines. Jede Hüllkurve zeigt ihre Form, Tonwerk FM zeichnet den gewählten Algorithmus (Träger gelb, Modulatoren cyan, die Rückkopplung an Operator 4) und schreibt über jede Operator-Hüllkurve, was der Operator gerade tut („TRÄGER“, „MOD → 1“). Werte stehen als ganze Zahlen mit Einheit da: Zeiten in ms, Pegel und Mengen in %, die Filter-Hüllkurve in Halbtönen (HT), langsame LFO-Raten mit einer Nachkommastelle.
 
 ## Was drin ist
 
@@ -21,7 +32,7 @@ Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, 
 
 **Tempo-Sync**: Mit **Sync** folgen LFO, Sample & Hold und Delay dem Tempo von Logic. Statt Hz oder Sekunden wählst du einen Notenwert von 4/1 bis 1/32, auch punktiert und triolisch. Ohne Host-Tempo (in der App) gelten 120 BPM. Der LFO beginnt wie in Tonwerk mit jeder Note neu. Er läuft also im Tempo, aber nicht auf den Schlag genau.
 
-**Oszilloskop**: unten rechts neben der Tastatur. Es zeigt die Wellenform dessen, was das Plugin gerade spielt, und steht bei einem gehaltenen Ton still.
+**Oszilloskop**: unten rechts neben der Tastatur, in beiden Plugins. Es zeigt die Wellenform dessen, was das Plugin gerade spielt, und steht bei einem gehaltenen Ton still.
 
 16 Stimmen, Pitchbend ±2 Halbtöne, Sustain-Pedal. Jeder Regler ist ein Parameter, den Logic automatisieren kann und mit dem Projekt speichert. Eine Tastatur unten im Fenster spielt das Plugin auch ohne MIDI-Keyboard an.
 
@@ -50,7 +61,9 @@ Alle Übergänge werden über 1,5 ms überblendet, es knackt also nur, wo es sol
 
 Der dritte Baustein aus diesem Repository: die Schaltung des orangen BOSS DS-1, Stufe für Stufe nachgerechnet. Er liegt in Logic unter **Audio-FX → Audio Units → b-velop → Tonwerk Distortion** und wird mit den anderen beiden gebaut, installiert und veröffentlicht.
 
-Die Regler sind die des Pedals, in derselben Reihenfolge:
+![Tonwerk Distortion](docs/distortion.png)
+
+Oben zeigt ein Oszilloskop den Ausgang (gelb) über dem Eingang (cyan); so siehst du, wie Dist die Welle eckig macht. Die Regler sind die des Pedals, in derselben Reihenfolge:
 
 - **Level**: die Lautstärke danach, −30 bis +12 dB. Bei 0 dB liegt eine voll verzerrte Note bei Tone in der Mitte um −6 dBFS.
 - **Tone**: 0 % dunkel, 100 % hell. In der Mitte entsteht die typische Delle um 500 Hz (etwa 8 dB unter Bässen und Höhen), die den DS-1 nach „Wand“ klingen lässt.
@@ -113,7 +126,7 @@ scripts/install-macos.sh
 
 Das Skript baut eine Universal-Binary (Apple Silicon und Intel), signiert sie ad hoc, kopiert die Audio Unit nach `~/Library/Audio/Plug-Ins/Components`, das VST3 nach `~/Library/Audio/Plug-Ins/VST3` und die App nach `~/Applications`, und prüft die Audio Unit mit Apples `auval`. Der erste Lauf lädt JUCE herunter und dauert ein paar Minuten.
 
-In Logic: neue Software-Instrument-Spur, im Kanalzug **Instrument → AU-Instrumente → b-velop → Tonwerk Synth**. Taucht es nicht auf, im Plug-in-Manager (Logic Pro → Einstellungen → Plug-in-Manager) „Tonwerk Synth" suchen und **Erneut scannen** wählen.
+In Logic: neue Software-Instrument-Spur, im Kanalzug **Instrument → AU-Instrumente → b-velop → Tonwerk Analog** (oder Tonwerk FM). Taucht es nicht auf, im Plug-in-Manager (Logic Pro → Einstellungen → Plug-in-Manager) „Tonwerk“ suchen und **Erneut scannen** wählen.
 
 Entfernen: `scripts/install-macos.sh --uninstall`.
 
@@ -121,12 +134,12 @@ Zwischenstände ohne Release: Jeder Lauf der Action `build.yml` legt die Dateien
 
 ## Klänge aus Tonwerk
 
-Das Menü oben listet die **Werksklänge** (Tonwerks Startklänge pro Spurart, für beide Engines) und die übernommenen Klänge.
+Das Menü oben listet die **Werksklänge** (Tonwerks Startklänge pro Spurart und die des Plugins) und die übernommenen Klänge der Engine des Plugins.
 
-- **Aus Tonwerk laden** fragt nach Tonwerks Adresse, so wie sie im Browser steht (z. B. `https://<mac>.<tailnet>.ts.net:8443`), und übernimmt alle dort gespeicherten Klänge. Die Adresse wird gemerkt. Gleichnamige Klänge werden ersetzt, ein zweiter Abruf bringt die Liste also auf den Stand von Tonwerk.
+- **Aus Tonwerk laden** fragt nach Tonwerks Adresse, so wie sie im Browser steht (z. B. `https://<mac>.<tailnet>.ts.net:8443`), und übernimmt alle dort gespeicherten Klänge, die analogen für Tonwerk Analog, die FM-Klänge für Tonwerk FM. Die Adresse wird gemerkt. Gleichnamige Klänge werden ersetzt, ein zweiter Abruf bringt die Liste also auf den Stand von Tonwerk.
 - **Datei laden** liest eine JSON-Datei: einen Klang, wie ihn **Speichern** schreibt (`{ "name", "patch" }`), Tonwerks ganze Liste (die Antwort von `GET /api/logic/synths/presets`) oder einen nackten Patch.
 - **Speichern** schreibt den aktuellen Klang als JSON im Format von Tonwerk.
-- **Löschen** entfernt einen übernommenen Klang aus der Liste des Plugins, in Tonwerk bleibt er.
+- **Löschen** entfernt einen übernommenen Klang aus der Liste der Plugins, in Tonwerk bleibt er.
 
 Die übernommenen Klänge liegen in `~/Library/Application Support/Tonwerk Synth/presets.json` und stehen in jedem Projekt zur Verfügung. Was ein Logic-Projekt spielt, speichert Logic mit dem Projekt; ein späterer Abruf aus Tonwerk ändert es nicht.
 
@@ -139,20 +152,20 @@ Die Klangerzeugung rechnet nach, was Tonwerks Web-Audio-Graph tut: dieselben Wel
 - Die Oszillatoren sind mit PolyBLEP bandbegrenzt, Web Audio rechnet die Wellen anders; im Klang sollte das nicht auffallen, in den höchsten Lagen vielleicht ein wenig.
 - Wavefolder und Sample & Hold hat nur das Plugin. Der Wavefolder rechnet mit einfacher zweifacher Überabtastung, bei hohen Tönen und viel Menge kann er trotzdem etwas Aliasing erzeugen.
 
-**Getestet und ungetestet:** Das Plugin wurde unter Linux gebaut und getestet (Klangerzeugung, Presets, Parameter, Zustand) und die Oberfläche dort angesehen. `auval` läuft in der GitHub Action auf einem Mac. Version 0.2.0 läuft in Logic auf deinem MacBook. Wavefolder und Sample & Hold (ab 0.3.0) sind dort noch nicht gehört. Ob es genau wie der Browser klingt, ist nur mit den Ohren zu prüfen.
+**Getestet und ungetestet:** Das Plugin wurde unter Linux gebaut und getestet (Klangerzeugung, Presets, Parameter, Zustand) und die Oberfläche dort angesehen. `auval` läuft in der GitHub Action auf einem Mac. Version 0.2.0 läuft in Logic auf deinem MacBook. Wavefolder und Sample & Hold (ab 0.3.0) sind dort noch nicht gehört, ebenso wenig die Aufteilung in Tonwerk Analog und Tonwerk FM, die neuen Werksklänge (im Test: jeder klingt, keiner übersteuert) und die neue Oberfläche (unter Linux als Bild angesehen). Ob es genau wie der Browser klingt, ist nur mit den Ohren zu prüfen.
 
 ## Entwickeln
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --target TonwerkSynthTests && ctest --test-dir build --output-on-failure
-cmake --build build --target TonwerkSynth_Standalone   # die App zum Ausprobieren
+cmake --build build --target TonwerkAnalog_Standalone  # die App zum Ausprobieren, ebenso TonwerkFM_Standalone
 cmake --build build --target ChromeGlitch_Standalone   # der Effekt als App, mit dem Mikrofon als Eingang
 cmake --build build --target TonwerkDistortion_Standalone
 cmake --build build --target TonwerkWavetable_Standalone
 ```
 
-Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
+Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
 
 ## Lizenz
 
