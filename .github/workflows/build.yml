@@ -18,8 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 \
-            TonwerkWavetable_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
