@@ -64,6 +64,62 @@ target_link_libraries(TonwerkSynth
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Chrome Glitch: an audio effect from the same repository, for a voice whose speech chrome fails (glitch/).
+juce_add_plugin(ChromeGlitch
+    PRODUCT_NAME "Chrome Glitch"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.chromeglitch
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE ChGl
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Distortion
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(CHROME_GLITCH_SOURCES
+    glitch/src/GlitchEditor.cpp
+    glitch/src/GlitchProcessor.cpp)
+
+target_sources(ChromeGlitch PRIVATE ${CHROME_GLITCH_SOURCES})
+target_compile_definitions(ChromeGlitch PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(ChromeGlitch
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
+# Tonwerk Distortion: the circuit of BOSS's DS-1 as an audio effect (distortion/).
+juce_add_plugin(TonwerkDistortion
+    PRODUCT_NAME "Tonwerk Distortion"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkdistortion
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwDs
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Distortion
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_DISTORTION_SOURCES
+    distortion/src/DistortionEditor.cpp
+    distortion/src/DistortionProcessor.cpp)
+
+target_sources(TonwerkDistortion PRIVATE ${TONWERK_DISTORTION_SOURCES})
+target_compile_definitions(TonwerkDistortion PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkDistortion
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -74,11 +130,18 @@ if(TONWERK_TESTS)
         tests/Main.cpp
         tests/DspTests.cpp
         tests/PatchTests.cpp
-        tests/ProcessorTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src)
+        tests/ProcessorTests.cpp
+        ${CHROME_GLITCH_SOURCES}
+        tests/GlitchTests.cpp
+        ${TONWERK_DISTORTION_SOURCES}
+        tests/DistortionTests.cpp)
+    target_include_directories(TonwerkSynthTests PRIVATE src glitch/src distortion/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
+        # Each plugin defines the factory a host calls; the tests make their processors themselves.
+        CHROME_GLITCH_NO_ENTRY=1
+        TONWERK_DISTORTION_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

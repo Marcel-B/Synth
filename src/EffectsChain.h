@@ -47,7 +47,11 @@ private:
     double glideFast = 0.0;
     double glideSlow = 0.0;
 
-    juce::dsp::Convolution reverb;
+    /**
+     * Non-uniform: the first 2048 samples of the room convolve in Logic's small blocks, the rest in partitions of 2048.
+     * Uniform partitions of the block size cost an 8 s room about nine times as much, close to half a core at 128 samples.
+     */
+    juce::dsp::Convolution reverb { juce::dsp::Convolution::NonUniform { 2048 } };
     juce::AudioBuffer<float> reverbBuffer;
     std::atomic<int> loaded { 0 };
     int reverbTail = 0;

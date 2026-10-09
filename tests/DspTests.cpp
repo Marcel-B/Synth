@@ -384,6 +384,50 @@ public:
                 tail = std::max(tail, std::abs(out.getSample(1, i)));
         }
         expectGreaterThan(tail, 0.0f);
+
+        beginTest("A long room still falls 60 dB over its decay in small blocks");
+        {
+            // An 8 s room at Logic's 128 samples goes through the convolution's head and its tail partitions; the
+            // tail has to ring on as before, at -60 dB per decay.
+            fx = {};
+            fx.reverb.mix = 1.0f;
+            fx.reverb.decay = 8.0f;
+            EffectsChain longRoom;
+            const int block = 128;
+            longRoom.prepare(kRate, block);
+            longRoom.loadRoom(EffectsChain::roomFor(fx));
+            juce::AudioBuffer<float> chunk(2, block);
+            std::vector<float> quiet((std::size_t) block, 0.0f);
+            std::vector<float> spike((std::size_t) block, 0.0f);
+            spike[0] = 1.0f;
+            // Feed clicks until the new impulse is in, as above; the click that first rings is the one measured.
+            double around1s = 0.0, around4s = 0.0;
+            bool ringing = false;
+            for (int attempt = 0; attempt < 1000 && ! ringing; ++attempt)
+            {
+                juce::Thread::sleep(5);
+                longRoom.process(fx, spike.data(), chunk, 0, block);
+                ringing = chunk.getMagnitude(0, 1, block - 1) > 0.0f;
+            }
+            expect(ringing);
+            const int count = (int) (4.5 * kRate) / block;
+            for (int b = 1; b < count; ++b)
+            {
+                longRoom.process(fx, quiet.data(), chunk, 0, block);
+                const double seconds = b * block / kRate;
+                for (int i = 0; i < block; ++i)
+                {
+                    const double energy = (double) chunk.getSample(0, i) * chunk.getSample(0, i);
+                    if (seconds >= 0.9 && seconds < 1.1)
+                        around1s += energy;
+                    else if (seconds >= 3.9 && seconds < 4.1)
+                        around4s += energy;
+                }
+            }
+            // 3 s of an 8 s fall to -60 dB is 22.5 dB.
+            const double drop = 10.0 * std::log10(around1s / around4s);
+            expectWithinAbsoluteError(drop, 22.5, 3.0);
+        }
     }
 };
 
