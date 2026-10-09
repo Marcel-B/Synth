@@ -40,6 +40,10 @@ A second plugin in the same CMake project: `ChromeGlitch` (audio effect, `aufx C
 
 A third plugin in the same CMake project: `TonwerkDistortion` (audio effect, `aufx TwDs Bvlp`, sources in `distortion/src/`, tests in `tests/DistortionTests.cpp` inside `TonwerkSynthTests`), built, signed, validated, installed and released like the other two. `Ds1Circuit.h` is plain C++: BOSS DS-1's circuit with ElectroSmash's part values, in volts (1.0 = 1 V at the jack). `Drive` (booster, op-amp stage, rails, diode clipper from a Shockley table) runs 4x oversampled through `juce::dsp::Oversampling` (polyphase IIR) with first-order ADAA on both clippers; `Voice` (tone blend, level, DC block) runs at the host rate. The op-amp's slew rate is deliberately left out (it aliased more than all the clipping). Keep CPU low: the test logs the real-time factor. Parameter ids start at version hint 1; the test app defines `TONWERK_DISTORTION_NO_ENTRY`.
 
+## Tonwerk Wavetable
+
+A fourth plugin in the same CMake project: `TonwerkWavetable` (instrument, `aumu TwWt Bvlp`, sources in `wavetable/src/`, tests in `tests/WavetableTests.cpp` inside `TonwerkSynthTests`), built, signed, validated, installed and released like the others. A wavetable synth in the manner of Serum, for dubstep basses; nothing of Serum's (tables, presets, art) is copied. `Wavetables.cpp` computes every table from a formula at load (64 frames, one band-limited copy per octave, shared by all instances); `WaveDsp.h` and `WaveEngine.h` are plain C++ (envelopes, LFOs, TPT state variable filter, comb, voices, poly/mono/legato, matrix). Modulation runs every 32 samples with ramps in between; keep it that way for CPU. The sub oscillator and noise come from `src/dsp/Oscillators.h`. `readSettings()` reads the parameters in the order `createParameterLayout()` adds them: a new parameter goes at the end of both. Factory sounds are in `WavetablePresets.cpp` as changes from the defaults. Parameter ids and menu orders start at version hint 1; the test app defines `TONWERK_WAVETABLE_NO_ENTRY`.
+
 ## Conventions
 
 - Commit messages and branch names are German; code and comments English; UI strings German.
