@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Installiert Tonwerk Synth und Chrome Glitch aus einem Release-Download (liegt im Zip neben den Plugins).
+# Installiert Tonwerk Synth, Chrome Glitch und Tonwerk Distortion aus einem Release-Download (liegt im Zip neben den Plugins).
 #
 #   cd ~/Downloads/Tonwerk-Synth-<version>-macOS && zsh install.sh
 #
@@ -10,13 +10,14 @@ set -euo pipefail
 cd "$(dirname "$0")"
 NAME="Tonwerk Synth"
 GLITCH="Chrome Glitch"
+DISTORTION="Tonwerk Distortion"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
 VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
 
 xattr -dr com.apple.quarantine . 2>/dev/null || true
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for PRODUCT in "$NAME" "$GLITCH"; do
+for PRODUCT in "$NAME" "$GLITCH" "$DISTORTION"; do
   rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
   cp -R "$PRODUCT.component" "$COMPONENTS/"
   cp -R "$PRODUCT.vst3" "$VST3/"
@@ -26,11 +27,12 @@ done
 # macOS merkt sich Audio Units; ohne Neustart des Registrars sieht Logic eine neue Version erst nach dem Abmelden.
 killall -9 AudioComponentRegistrar 2>/dev/null || true
 sleep 2
-if auval -v aumu Twsy Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aufx ChGl Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
+if auval -v aumu Twsy Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aufx ChGl Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aufx TwDs Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "Installiert und von auval geprüft."
 else
   echo "Installiert, aber auval ist fehlgeschlagen. Das Protokoll steht in /tmp/tonwerk-auval.log"
   exit 1
 fi
 echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $NAME."
-echo "Den Effekt auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH."
+echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH oder $DISTORTION."

@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3 ChromeGlitch_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -36,7 +36,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
       - name: Sign ad hoc
         run: |
-          for dir in "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch"; do
+          for dir in "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
@@ -48,11 +48,13 @@ jobs:
           mkdir -p ~/Library/Audio/Plug-Ins/Components
           cp -R "build/TonwerkSynth_artefacts/Release/AU/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/ChromeGlitch_artefacts/Release/AU/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkDistortion_artefacts/Release/AU/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion || true
           auval -strict -v aumu Twsy Bvlp
           auval -strict -v aufx ChGl Bvlp
+          auval -strict -v aufx TwDs Bvlp
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -62,6 +64,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/ChromeGlitch_artefacts/Release"
           ditto -c -k --keepParent "AU/Chrome Glitch.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chrome-Glitch-AU.zip"
           ditto -c -k --keepParent "VST3/Chrome Glitch.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chrome-Glitch-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkDistortion_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Distortion.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Distortion-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Distortion.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Distortion-VST3.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: tonwerk-synth-macos
