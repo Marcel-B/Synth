@@ -31,7 +31,7 @@ Ein Audio-Effekt aus demselben Repository, für eine Gesangsspur, deren „Sprac
 
 ![Chrome Glitch](docs/chrome-glitch.png)
 
-Oben rechts sitzt ein kleiner **Monitor**: Solange die Stimme sauber ist, zeigt er „CHROME OK“. Bei jedem Glitch flimmert er mit zerrissenen Balken und Rauschen und zeigt „STÖRUNG“, „KEIN SIGNAL“ (Aussetzer) oder „EINGEFROREN“. Auch Glitches, die kürzer als ein Bild sind, lassen ihn aufflackern.
+Oben rechts sitzt ein kleiner **Monitor**: Solange die Stimme sauber ist, zeigt er „CHROME OK“. Bei jedem Glitch flimmert er mit zerrissenen Balken und Rauschen und zeigt „INTERFERENCE“ (Stottern), „NO SIGNAL“ (Aussetzer) oder „FROZEN“ (Einfrieren). Die Texte im Monitor sind bewusst englisch, wie die Anzeigen im Spiel. Auch Glitches, die kürzer als ein Bild sind, lassen ihn aufflackern.
 
 Der Effekt arbeitet ohne Latenz auf dem, was gerade hereinkommt. An jedem Schritt des Rasters (im Songtempo) oder zu zufälligen Momenten (40–250 ms auseinander) würfelt er, ob etwas passiert:
 

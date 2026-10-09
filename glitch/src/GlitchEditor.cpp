@@ -249,12 +249,16 @@ void GlitchMonitor::paint(juce::Graphics& g)
     paintPanel(g, getLocalBounds(), "Monitor");
     const auto screen = getLocalBounds().reduced(8).withTrimmedTop(18);
     const auto area = screen.toFloat();
+    // Rounded like the glass of an old tube screen.
+    const float corner = 8.0f;
+    juce::Path glass;
+    glass.addRoundedRectangle(area, corner);
     g.setColour(kScreen);
-    g.fillRect(area);
+    g.fillPath(glass);
 
     {
         juce::Graphics::ScopedSaveState clip(g);
-        g.reduceClipRegion(screen);
+        g.reduceClipRegion(glass);
 
         // Scanlines and a slow bright band rolling down, as on an old screen.
         g.setColour(kCyan.withAlpha(0.05f));
@@ -292,28 +296,29 @@ void GlitchMonitor::paint(juce::Graphics& g)
             if (event == (int) GlitchEngine::Event::dropout)
             {
                 g.setColour(juce::Colours::black.withAlpha(0.5f * intensity));
-                g.fillRect(area);
+                g.fillPath(glass);
             }
 
             // The label flickers: some frames it drops out, and its colours split further the stronger the glitch.
             if (random.nextFloat() > 0.3f * intensity)
             {
-                const char* label = event == (int) GlitchEngine::Event::dropout  ? "KEIN SIGNAL"
-                                    : event == (int) GlitchEngine::Event::freeze ? "EINGEFROREN"
-                                                                                 : "STÖRUNG";
-                const auto text = utf8(label);
+                const juce::String text = event == (int) GlitchEngine::Event::dropout  ? "NO SIGNAL"
+                                          : event == (int) GlitchEngine::Event::freeze ? "FROZEN"
+                                                                                       : "INTERFERENCE";
                 const int split = 1 + (int) (3.0f * intensity * random.nextFloat());
+                // Squeezed rather than cut when a word is wider than the small screen.
+                const auto line = screen.reduced(4, 0);
                 g.setColour(kRed.withAlpha(intensity));
-                g.drawText(text, screen.translated(-split, 0), juce::Justification::centred);
+                g.drawFittedText(text, line.translated(-split, 0), juce::Justification::centred, 1, 0.7f);
                 g.setColour(kCyan.withAlpha(intensity));
-                g.drawText(text, screen.translated(split, 0), juce::Justification::centred);
+                g.drawFittedText(text, line.translated(split, 0), juce::Justification::centred, 1, 0.7f);
                 g.setColour(kYellow.withAlpha(std::max(0.4f, intensity)));
-                g.drawText(text, screen, juce::Justification::centred);
+                g.drawFittedText(text, line, juce::Justification::centred, 1, 0.7f);
             }
         }
     }
 
     g.setColour((intensity > 0.0f && frame % 2 == 0 ? kRed : kCyan).withAlpha(0.6f));
-    g.drawRect(area, 1.0f);
+    g.strokePath(glass, juce::PathStrokeType(1.0f));
 }
 } // namespace chromeglitch
