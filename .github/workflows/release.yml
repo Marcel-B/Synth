@@ -39,6 +39,11 @@ jobs:
           mkdir "$DIR"
           cp -R "$ARTEFACTS/AU/Tonwerk Synth.component" "$ARTEFACTS/VST3/Tonwerk Synth.vst3" \
             "$ARTEFACTS/Standalone/Tonwerk Synth.app" "$DIR/"
+          for synth in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM"; do
+            FROM="build/${synth%%:*}_artefacts/Release"
+            PRODUCT="${synth#*:}"
+            cp -R "$FROM/AU/$PRODUCT.component" "$FROM/VST3/$PRODUCT.vst3" "$FROM/Standalone/$PRODUCT.app" "$DIR/"
+          done
           GLITCH="build/ChromeGlitch_artefacts/Release"
           cp -R "$GLITCH/AU/Chrome Glitch.component" "$GLITCH/VST3/Chrome Glitch.vst3" \
             "$GLITCH/Standalone/Chrome Glitch.app" "$DIR/"
@@ -57,12 +62,16 @@ jobs:
       - name: Validate with auval
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Analog.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk FM.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Wavetable.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
+          auval -strict -v aumu TwAn Bvlp
+          auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
           auval -strict -v aufx ChGl Bvlp
           auval -strict -v aufx TwDs Bvlp
@@ -72,7 +81,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
-          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind der Wavetable-Synth Tonwerk Wavetable und die Effekte Chrome Glitch und Tonwerk Distortion.
+          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind die Synths Tonwerk Analog, Tonwerk FM und Tonwerk Wavetable, das bisherige Tonwerk Synth für ältere Projekte und die Effekte Chrome Glitch und Tonwerk Distortion.
 
           Installieren: Zip laden, im Terminal
           `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`

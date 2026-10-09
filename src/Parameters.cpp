@@ -159,9 +159,71 @@ std::vector<ParameterDescriptor> build()
     b.number("sh.pitch", utf8("S&H Tonhöhe"), ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
     for (auto i = third; i < b.list.size(); ++i)
         b.list[i].version = 3;
+
+    // The ids say where a parameter belongs: `fm.` for the FM engine, `fx.` for the effects, the rest is analog.
+    for (auto& d : b.list)
+        d.part = d.id == "engine"        ? Part::engine
+                 : d.id.startsWith("fm.") ? Part::fm
+                 : d.id.startsWith("fx.") ? Part::effects
+                                          : Part::analog;
     return std::move(b.list);
 }
+
+/** Numbers as the knobs and Logic show them: whole, with their unit. */
+struct Text
+{
+    std::function<juce::String(float, int)> toText;
+    std::function<float(const juce::String&)> fromText;
+};
+
+juce::String whole(float value, const juce::String& unit) { return juce::String(juce::roundToInt(value)) + " " + unit; }
+
+Text textFor(const ParameterDescriptor& d)
+{
+    auto plain = [](const juce::String& text) { return text.getFloatValue(); };
+    if (d.unit == "s")
+        return { [](float v, int) { return whole(v * 1000.0f, "ms"); },
+                 [](const juce::String& text) {
+                     // Milliseconds unless seconds are written out: "350", "350 ms", "1.2 s".
+                     const auto t = text.trim();
+                     const bool seconds = t.endsWithIgnoreCase("s") && ! t.endsWithIgnoreCase("ms");
+                     return t.getFloatValue() / (seconds ? 1.0f : 1000.0f);
+                 } };
+    if (d.unit == "Hz")
+        // The LFOs' slow rates need their tenths; cutoff and tone do not.
+        return { [](float v, int) { return (v < 9.95f ? juce::String(v, 1) : juce::String(juce::roundToInt(v))) + " Hz"; },
+                 plain };
+    if (d.unit == "Okt")
+        return { [](float v, int) { return whole(v * 12.0f, "HT"); },
+                 [](const juce::String& text) { return text.getFloatValue() / 12.0f; } };
+    if (d.unit.isNotEmpty())
+        return { [unit = d.unit](float v, int) { return whole(v, unit); }, plain };
+    if (d.id.endsWith(".ratio"))
+        return { [](float v, int) {
+                    const bool half = ! juce::approximatelyEqual(v, std::round(v));
+                    return juce::String(v, half ? 1 : 0) + juce::String::fromUTF8(" ×");
+                },
+                 plain };
+    if (d.max <= 1.0f)
+        return { [](float v, int) { return whole(v * 100.0f, "%"); },
+                 [](const juce::String& text) { return text.getFloatValue() / 100.0f; } };
+    return { [](float v, int) { return juce::String(juce::roundToInt(v)); }, plain };
+}
 } // namespace
+
+bool hasPart(Edition edition, Part part)
+{
+    switch (edition)
+    {
+        case Edition::analog:
+            return part == Part::analog || part == Part::effects;
+        case Edition::fm:
+            return part == Part::fm || part == Part::effects;
+        case Edition::combined:
+            break;
+    }
+    return true;
+}
 
 const std::vector<ParameterDescriptor>& descriptors()
 {
@@ -169,12 +231,14 @@ const std::vector<ParameterDescriptor>& descriptors()
     return list;
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
+juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Edition edition)
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     const Patch defaults;
     for (const auto& d : descriptors())
     {
+        if (! hasPart(edition, d.part))
+            continue;
         // Logic's Audio Units need the version hint; parameters added after the first release have 2.
         const juce::ParameterID id { d.id, d.version };
         const float value = d.get(defaults);
@@ -187,12 +251,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                     range.setSkewForCentre(d.centre);
                 if (d.id.endsWith(".ratio"))
                     range.interval = 0.5f;
+                const auto text = textFor(d);
                 layout.add(std::make_unique<juce::AudioParameterFloat>(
-                    id, d.name, range, value, juce::AudioParameterFloatAttributes().withLabel(d.unit)));
+                    id, d.name, range, value,
+                    juce::AudioParameterFloatAttributes().withStringFromValueFunction(text.toText).withValueFromStringFunction(text.fromText)));
                 break;
             }
             case Type::integer:
-                layout.add(std::make_unique<juce::AudioParameterInt>(id, d.name, (int) d.min, (int) d.max, (int) value));
+                // The oscillators' octaves, the only whole numbers.
+                layout.add(std::make_unique<juce::AudioParameterInt>(
+                    id, d.name, (int) d.min, (int) d.max, (int) value,
+                    juce::AudioParameterIntAttributes()
+                        .withStringFromValueFunction([](int v, int) { return juce::String(v) + " Okt"; })
+                        .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
                 break;
             case Type::choice:
                 layout.add(std::make_unique<juce::AudioParameterChoice>(id, d.name, d.choices, (int) value));
@@ -208,10 +279,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 ParameterReader::ParameterReader(juce::AudioProcessorValueTreeState& state)
 {
     for (const auto& d : descriptors())
-    {
         values.push_back(state.getRawParameterValue(d.id));
-        jassert(values.back() != nullptr);
-    }
 }
 
 Patch ParameterReader::read() const
@@ -219,7 +287,8 @@ Patch ParameterReader::read() const
     Patch patch;
     const auto& list = descriptors();
     for (size_t i = 0; i < list.size(); ++i)
-        list[i].set(patch, values[i]->load(std::memory_order_relaxed));
+        if (values[i] != nullptr)
+            list[i].set(patch, values[i]->load(std::memory_order_relaxed));
     return patch;
 }
 

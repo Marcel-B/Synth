@@ -97,7 +97,7 @@ public:
         render(allOff, 1);
 
         beginTest("Factory programs switch the sound");
-        expectEquals(processor.getNumPrograms(), 8);
+        expectEquals(processor.getNumPrograms(), 17);
         processor.setCurrentProgram(4);
         expectEquals(processor.getProgramName(4), juce::String("FM Blech"));
         expectEquals(processor.presetName(), juce::String("FM Blech"));
@@ -118,17 +118,17 @@ public:
         view.setSize(300, 72);
         view.refresh();
         const auto image = view.createComponentSnapshot(view.getLocalBounds(), true, 1.0f);
-        // The trace is drawn in the accent green; count the columns it reaches.
+        // The trace is drawn in Night City's yellow; count the columns it reaches.
         int columns = 0;
         for (int x = 0; x < image.getWidth(); ++x)
         {
-            bool green = false;
+            bool yellow = false;
             for (int y = 0; y < image.getHeight(); ++y)
             {
                 const auto pixel = image.getPixelAt(x, y);
-                green = green || (pixel.getGreen() > 120 && pixel.getRed() < 100);
+                yellow = yellow || (pixel.getRed() > 200 && pixel.getGreen() > 200 && pixel.getBlue() < 100);
             }
-            columns += green ? 1 : 0;
+            columns += yellow ? 1 : 0;
         }
         expectGreaterThan(columns, 250);
         // For a look at it: TONWERK_SCOPE_PNG=/path/scope.png

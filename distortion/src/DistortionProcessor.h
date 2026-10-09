@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Ds1Circuit.h"
+#include "ScopeBuffer.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -49,6 +50,8 @@ public:
     Settings readSettings() const;
 
     juce::AudioProcessorValueTreeState state;
+    /** The first channel before and after, for the editor's oscilloscope. */
+    tonwerkui::ScopeBuffer scopeIn, scopeOut;
 
 private:
     /** Two stages of 2x: 4x. 2x lets a high note fold back 20 dB more; 8x halves the speed for little more. */

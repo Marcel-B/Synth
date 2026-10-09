@@ -2,296 +2,264 @@
 
 namespace tonwerk
 {
+using namespace tonwerkui;
+using namespace tonwerkui::colours;
+
 namespace
 {
-const juce::Colour kBackground { 0xff17191c };
-const juce::Colour kPanel { 0xff22262b };
-const juce::Colour kBorder { 0xff343a41 };
-const juce::Colour kText { 0xffe6e8eb };
-const juce::Colour kMuted { 0xff9aa3ad };
-/** Tonwerk's accent, Aura's green. */
-const juce::Colour kAccent { 0xff10b981 };
-const juce::Colour kError { 0xfff87171 };
-
-constexpr int kMargin = 12;
-constexpr int kSlot = 56;
-constexpr int kSectionPadding = 8;
-constexpr int kSectionTitle = 20;
-constexpr int kRowHeight = 112;
-constexpr int kGap = 8;
-constexpr int kTopBar = 32;
-constexpr int kMessage = 20;
-constexpr int kKeyboard = 72;
+constexpr int kEnvelopeDisplay = 130;
+constexpr int kAlgorithmDisplay = 200;
+constexpr int kBottom = 72;
 constexpr int kScopeWidth = 300;
-constexpr int kWidth = 1272;
 
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
+/** Room for the steps an envelope takes, so a short attack still shows. */
+float shareOf(float seconds, float longest) { return std::sqrt(std::max(0.0f, seconds) / longest); }
 } // namespace
 
-TonwerkLookAndFeel::TonwerkLookAndFeel()
+EnvelopeView::EnvelopeView(juce::AudioProcessorValueTreeState& state, const juce::String& prefix)
 {
-    setColour(juce::ResizableWindow::backgroundColourId, kBackground);
-    setColour(juce::Label::textColourId, kText);
-    setColour(juce::Slider::textBoxTextColourId, kMuted);
-    setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::Slider::rotarySliderFillColourId, kAccent);
-    setColour(juce::Slider::rotarySliderOutlineColourId, kBorder);
-    setColour(juce::Slider::thumbColourId, kText);
-    setColour(juce::ComboBox::backgroundColourId, kPanel.brighter(0.05f));
-    setColour(juce::ComboBox::outlineColourId, kBorder);
-    setColour(juce::ComboBox::textColourId, kText);
-    setColour(juce::ComboBox::arrowColourId, kMuted);
-    setColour(juce::PopupMenu::backgroundColourId, kPanel);
-    setColour(juce::PopupMenu::textColourId, kText);
-    setColour(juce::PopupMenu::highlightedBackgroundColourId, kAccent.withAlpha(0.35f));
-    setColour(juce::PopupMenu::headerTextColourId, kMuted);
-    setColour(juce::TextButton::buttonColourId, kPanel.brighter(0.05f));
-    setColour(juce::TextButton::buttonOnColourId, kAccent);
-    setColour(juce::TextButton::textColourOffId, kText);
-    setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-    setColour(juce::ToggleButton::tickColourId, kAccent);
-    setColour(juce::ToggleButton::tickDisabledColourId, kMuted);
-    setColour(juce::ToggleButton::textColourId, kText);
-    setColour(juce::AlertWindow::backgroundColourId, kPanel);
-    setColour(juce::AlertWindow::textColourId, kText);
-    setColour(juce::TextEditor::backgroundColourId, kBackground);
-    setColour(juce::TextEditor::textColourId, kText);
-    setColour(juce::TextEditor::outlineColourId, kBorder);
-    setColour(juce::TextEditor::focusedOutlineColourId, kAccent);
-}
-
-void TonwerkLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float position,
-                                          float start, float end, juce::Slider& slider)
-{
-    const auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(4.0f);
-    const float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-    const auto centre = bounds.getCentre();
-    const float line = 3.0f;
-    const float arcRadius = radius - line / 2.0f;
-    const float angle = start + position * (end - start);
-
-    juce::Path track;
-    track.addCentredArc(centre.x, centre.y, arcRadius, arcRadius, 0.0f, start, end, true);
-    g.setColour(slider.findColour(juce::Slider::rotarySliderOutlineColourId));
-    g.strokePath(track, juce::PathStrokeType(line, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-    // Ranges around zero (detune, envelope amounts) fill from the middle, so the knob shows which way they go.
-    const auto& range = slider.getNormalisableRange();
-    const bool bipolar = range.start < 0.0 && range.end > 0.0;
-    const float from = bipolar ? start + (float) range.convertTo0to1(0.0) * (end - start) : start;
-    juce::Path value;
-    value.addCentredArc(centre.x, centre.y, arcRadius, arcRadius, 0.0f, from, angle, true);
-    g.setColour(slider.findColour(juce::Slider::rotarySliderFillColourId));
-    g.strokePath(value, juce::PathStrokeType(line, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-    const float inner = radius * 0.62f;
-    g.setColour(kPanel.brighter(0.12f));
-    g.fillEllipse(centre.x - inner, centre.y - inner, inner * 2.0f, inner * 2.0f);
-    const juce::Point<float> tip = centre.getPointOnCircumference(inner * 0.85f, angle);
-    g.setColour(kText);
-    g.drawLine({ centre.getPointOnCircumference(inner * 0.3f, angle), tip }, 2.0f);
-}
-
-Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& parameterId, const juce::String& label, int slotCount)
-    : width(slotCount)
-{
-    name.setText(label, juce::dontSendNotification);
-    name.setJustificationType(juce::Justification::centred);
-    name.setFont(juce::FontOptions(12.0f));
-    name.setColour(juce::Label::textColourId, kMuted);
-    addAndMakeVisible(name);
-
-    const auto* parameter = state.getParameter(parameterId);
-    jassert(parameter != nullptr);
-    if (auto* choice = dynamic_cast<const juce::AudioParameterChoice*>(parameter))
+    const char* stages[] = { ".attack", ".decay", ".sustain", ".release" };
+    for (std::size_t i = 0; i < values.size(); ++i)
     {
-        menu = std::make_unique<juce::ComboBox>();
-        menu->addItemList(choice->choices, 1);
-        addAndMakeVisible(*menu);
-        menuAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state, parameterId, *menu);
+        values[i] = state.getRawParameterValue(prefix + stages[i]);
+        jassert(values[i] != nullptr);
     }
-    else if (dynamic_cast<const juce::AudioParameterBool*>(parameter) != nullptr)
-    {
-        toggle = std::make_unique<juce::ToggleButton>();
-        addAndMakeVisible(*toggle);
-        toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
-    }
-    else
-    {
-        slider = std::make_unique<juce::Slider>(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow);
-        slider->setTextBoxStyle(juce::Slider::TextBoxBelow, false, kSlot, 16);
-        // The text box is made before this control has a parent, so it cannot take these from the editor's look.
-        slider->setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-        slider->setColour(juce::Slider::textBoxTextColourId, kMuted);
-        slider->setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::transparentBlack);
-        addAndMakeVisible(*slider);
-        sliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, parameterId, *slider);
-        // Two decimals are enough for every knob; Hz and cents read better whole.
-        const auto unit = parameter->getLabel();
-        const int decimals = unit == "Hz" || unit == "ct" ? 0 : 2;
-        slider->textFromValueFunction = [decimals, unit](double value) {
-            return juce::String(value, decimals) + (unit.isNotEmpty() ? " " + unit : juce::String());
-        };
-        slider->updateText();
-    }
+    setInterceptsMouseClicks(false, false);
 }
 
-void Control::resized()
+void EnvelopeView::setCaption(const juce::String& text, bool lit)
 {
-    auto area = getLocalBounds();
-    name.setBounds(area.removeFromTop(16));
-    if (slider)
-        slider->setBounds(area);
-    if (menu)
-        menu->setBounds(area.withSizeKeepingCentre(area.getWidth() - 4, 24).withY(area.getY() + 14));
-    if (toggle)
-        toggle->setBounds(area.withSizeKeepingCentre(26, 26).withY(area.getY() + 12));
-}
-
-Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle, std::initializer_list<Item> list)
-    : title(sectionTitle), items(list)
-{
-    for (const auto& item : items)
-    {
-        controls.push_back(std::make_unique<Control>(state, item.id, item.label, item.slots));
-        addAndMakeVisible(*controls.back());
-    }
-    juce::StringArray switchIds;
-    for (const auto& item : items)
-        if (item.when.isNotEmpty())
-            switchIds.addIfNotAlreadyThere(item.when);
-    for (const auto& id : switchIds)
-    {
-        auto* parameter = state.getParameter(id);
-        jassert(parameter != nullptr);
-        switches.push_back(std::make_unique<juce::ParameterAttachment>(*parameter, [this, id](float value) {
-            for (size_t i = 0; i < items.size(); ++i)
-                if (items[i].when == id)
-                    controls[i]->setVisible((value > 0.5f) == items[i].whenOn);
-        }));
-        switches.back()->sendInitialUpdate();
-    }
-}
-
-std::vector<std::pair<int, int>> Section::places() const
-{
-    std::vector<std::pair<int, int>> result;
-    int at = 0;
-    for (size_t i = 0; i < items.size(); ++i)
-    {
-        const bool sharesPlace = i > 0 && items[i].when.isNotEmpty() && items[i].when == items[i - 1].when
-                                 && items[i].whenOn != items[i - 1].whenOn;
-        if (sharesPlace)
-        {
-            auto& previous = result.back();
-            const int width = std::max(previous.second, items[i].slots);
-            at += width - previous.second;
-            previous.second = width;
-            result.push_back(previous);
-        }
-        else
-        {
-            result.push_back({ at, items[i].slots });
-            at += items[i].slots;
-        }
-    }
-    return result;
-}
-
-int Section::preferredWidth() const
-{
-    int slots = 0;
-    for (const auto& [at, width] : places())
-        slots = std::max(slots, at + width);
-    return slots * kSlot + 2 * kSectionPadding;
-}
-
-void Section::paint(juce::Graphics& g)
-{
-    const auto bounds = getLocalBounds().toFloat();
-    g.setColour(kPanel);
-    g.fillRoundedRectangle(bounds, 6.0f);
-    g.setColour(kBorder);
-    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
-    g.setColour(kAccent);
-    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
-    g.drawText(title, getLocalBounds().reduced(kSectionPadding, 0).removeFromTop(kSectionTitle),
-               juce::Justification::centredLeft);
-}
-
-void Section::resized()
-{
-    auto area = getLocalBounds().reduced(kSectionPadding, 0);
-    area.removeFromTop(kSectionTitle);
-    area.removeFromBottom(kSectionPadding);
-    const auto where = places();
-    for (size_t i = 0; i < controls.size(); ++i)
-        controls[i]->setBounds(area.getX() + where[i].first * kSlot, area.getY(), where[i].second * kSlot, area.getHeight());
-}
-
-ScopeView::ScopeView(const ScopeBuffer& buffer) : source(buffer) { startTimerHz(30); }
-
-void ScopeView::timerCallback()
-{
-    if (isShowing())
-        refresh();
-}
-
-void ScopeView::refresh()
-{
-    source.read(samples.data(), (int) samples.size());
+    if (text == caption && lit == captionLit)
+        return;
+    caption = text;
+    captionLit = lit;
     repaint();
 }
 
-void ScopeView::paint(juce::Graphics& g)
+void EnvelopeView::update()
 {
-    const auto bounds = getLocalBounds().toFloat();
-    g.setColour(kPanel);
-    g.fillRoundedRectangle(bounds, 6.0f);
-    g.setColour(kBorder);
-    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
-    const auto area = bounds.reduced(6.0f);
-    g.drawHorizontalLine(juce::roundToInt(area.getCentreY()), area.getX(), area.getRight());
-
-    // Half the samples are shown; the trigger is looked for in the first half, so the view always has enough after it.
-    const int length = (int) samples.size();
-    const int shown = length / 2;
-    int start = 0;
-    for (int i = 1; i < length - shown; ++i)
+    bool changed = false;
+    for (std::size_t i = 0; i < values.size(); ++i)
     {
-        if (samples[(size_t) i - 1] <= 0.0f && samples[(size_t) i] > 0.0f)
-        {
-            start = i;
-            break;
-        }
+        const float value = values[i]->load();
+        changed = changed || std::abs(value - shown[i]) > 1.0e-4f;
+        shown[i] = value;
     }
-    float peak = 0.0f;
-    for (float sample : samples)
-        peak = std::max(peak, std::abs(sample));
-    // Quiet sounds are scaled up to be seen, but not a hum of noise to full height.
-    if (peak <= 0.02f)
-        return;
-    const float scale = 0.9f / peak;
-    juce::Path trace;
-    const int width = juce::roundToInt(area.getWidth());
-    for (int x = 0; x <= width; ++x)
-    {
-        const float sample = samples[(size_t) (start + std::min(shown - 1, x * shown / std::max(1, width)))] * scale;
-        const float y = area.getCentreY() - sample * area.getHeight() / 2.0f;
-        if (x == 0)
-            trace.startNewSubPath(area.getX(), y);
-        else
-            trace.lineTo(area.getX() + (float) x, y);
-    }
-    g.setColour(kAccent);
-    g.strokePath(trace, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    if (changed)
+        repaint();
 }
 
-Section& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, Section* section)
+void EnvelopeView::paint(juce::Graphics& g)
 {
-    owner.emplace_back(section);
-    addChildComponent(*section);
-    return *section;
+    const auto area = getLocalBounds().toFloat().reduced(1.0f);
+    const auto glass = paintScreen(g, area);
+    juce::Graphics::ScopedSaveState clip(g);
+    g.reduceClipRegion(glass);
+    if (caption.isNotEmpty())
+    {
+        g.setFont(mono(10.0f));
+        g.setColour(captionLit ? yellow : cyan.withAlpha(0.8f));
+        g.drawText(caption, area.reduced(8.0f, 4.0f).toNearestInt(), juce::Justification::topRight);
+    }
+    if (shown[0] < 0.0f)
+        return;
+
+    const auto inner = area.reduced(8.0f, 10.0f).withTrimmedTop(caption.isNotEmpty() ? 8.0f : 0.0f);
+    const float attack = shareOf(shown[0], 4.0f), decay = shareOf(shown[1], 4.0f), release = shareOf(shown[3], 6.0f);
+    const float hold = 0.35f;
+    const float scale = inner.getWidth() / std::max(0.01f, attack + decay + hold + release);
+    const float sustainY = inner.getBottom() - shown[2] * inner.getHeight();
+    auto x = [&](float share) { return inner.getX() + share * scale; };
+
+    juce::Path curve;
+    curve.startNewSubPath(inner.getX(), inner.getBottom());
+    curve.lineTo(x(attack), inner.getY());
+    // Decay and release fall the way Web Audio's setTargetAtTime does: fast first, then slower.
+    constexpr int steps = 24;
+    for (int i = 1; i <= steps; ++i)
+    {
+        const float t = (float) i / steps;
+        const float fall = (1.0f - std::exp(-4.0f * t)) / (1.0f - std::exp(-4.0f));
+        curve.lineTo(x(attack + decay * t), inner.getY() + fall * (sustainY - inner.getY()));
+    }
+    curve.lineTo(x(attack + decay + hold), sustainY);
+    for (int i = 1; i <= steps; ++i)
+    {
+        const float t = (float) i / steps;
+        const float fall = (1.0f - std::exp(-4.0f * t)) / (1.0f - std::exp(-4.0f));
+        curve.lineTo(x(attack + decay + hold + release * t), sustainY + fall * (inner.getBottom() - sustainY));
+    }
+
+    auto filled = curve;
+    filled.closeSubPath();
+    g.setColour(yellow.withAlpha(0.08f));
+    g.fillPath(filled);
+    g.setColour(yellow.withAlpha(0.25f));
+    g.strokePath(curve, juce::PathStrokeType(5.0f));
+    g.setColour(yellow);
+    g.strokePath(curve, juce::PathStrokeType(1.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+}
+
+EnvelopeSection::EnvelopeSection(juce::AudioProcessorValueTreeState& state, const juce::String& heading,
+                                 const juce::String& prefix, std::vector<Row> rows, Display room)
+    : Section(state, heading, std::move(rows), {}, room),
+      view(state, prefix)
+{
+    addAndMakeVisible(view);
+}
+
+void EnvelopeSection::resized()
+{
+    Section::resized();
+    view.setBounds(displayArea().reduced(0, 4));
+}
+
+AlgorithmView::AlgorithmView(juce::AudioProcessorValueTreeState& state)
+    : value(state.getRawParameterValue("fm.algorithm"))
+{
+    jassert(value != nullptr);
+    setInterceptsMouseClicks(false, false);
+}
+
+void AlgorithmView::update()
+{
+    const int now = juce::roundToInt(value->load());
+    if (now != shown)
+    {
+        shown = now;
+        repaint();
+    }
+}
+
+void AlgorithmView::paint(juce::Graphics& g)
+{
+    const auto area = getLocalBounds().toFloat().reduced(1.0f);
+    const auto glass = paintScreen(g, area);
+    if (! juce::isPositiveAndBelow(shown, (int) kAlgorithms.size()))
+        return;
+    juce::Graphics::ScopedSaveState clip(g);
+    g.reduceClipRegion(glass);
+    const auto& algorithm = kAlgorithms[(std::size_t) shown];
+
+    // Carriers on the bottom row, every modulator one row above the highest it feeds.
+    std::array<int, 4> level {};
+    for (int pass = 0; pass < 4; ++pass)
+        for (int m = 0; m < algorithm.modCount; ++m)
+        {
+            const auto [from, to] = algorithm.mods[(std::size_t) m];
+            level[(std::size_t) from] = std::max(level[(std::size_t) from], level[(std::size_t) to] + 1);
+        }
+    const int levels = *std::max_element(level.begin(), level.end()) + 1;
+
+    const auto inner = area.reduced(10.0f).withTrimmedBottom(14.0f);
+    const float box = std::min(40.0f, inner.getHeight() / (float) levels * 0.7f);
+    const float rowStep = levels > 1 ? (inner.getHeight() - box) / (float) (levels - 1) : 0.0f;
+    std::array<juce::Point<float>, 4> centre {};
+    for (int i = 0; i < algorithm.carrierCount; ++i)
+    {
+        const float offset = (float) i - (float) (algorithm.carrierCount - 1) / 2.0f;
+        centre[(std::size_t) algorithm.carriers[(std::size_t) i]] = { inner.getCentreX() + offset * box * 2.0f,
+                                                                      inner.getBottom() - box / 2.0f };
+    }
+    for (int l = 1; l < levels; ++l)
+    {
+        // Above the middle of what each one feeds; two over the same place stand side by side.
+        std::vector<std::pair<int, float>> row;
+        for (int op = 0; op < 4; ++op)
+        {
+            if (level[(std::size_t) op] != l)
+                continue;
+            float sum = 0.0f;
+            int count = 0;
+            for (int m = 0; m < algorithm.modCount; ++m)
+                if (algorithm.mods[(std::size_t) m][0] == op)
+                {
+                    sum += centre[(std::size_t) algorithm.mods[(std::size_t) m][1]].x;
+                    ++count;
+                }
+            row.emplace_back(op, count > 0 ? sum / (float) count : inner.getCentreX());
+        }
+        for (std::size_t i = 0; i < row.size(); ++i)
+        {
+            int same = 0, before = 0;
+            for (std::size_t j = 0; j < row.size(); ++j)
+                if (std::abs(row[j].second - row[i].second) < 1.0f)
+                {
+                    ++same;
+                    before += j < i ? 1 : 0;
+                }
+            const float offset = (float) before - (float) (same - 1) / 2.0f;
+            centre[(std::size_t) row[i].first] = { row[i].second + offset * box * 1.6f,
+                                                   inner.getBottom() - box / 2.0f - rowStep * (float) l };
+        }
+    }
+
+    g.setColour(cyan.withAlpha(0.6f));
+    for (int m = 0; m < algorithm.modCount; ++m)
+    {
+        const auto from = centre[(std::size_t) algorithm.mods[(std::size_t) m][0]];
+        const auto to = centre[(std::size_t) algorithm.mods[(std::size_t) m][1]];
+        g.drawLine(from.x, from.y + box / 2.0f, to.x, to.y - box / 2.0f, 1.5f);
+    }
+    // What is heard: the carriers into one line along the bottom.
+    const float out = area.getBottom() - 12.0f;
+    float left = inner.getRight(), right = inner.getX();
+    for (int i = 0; i < algorithm.carrierCount; ++i)
+    {
+        const auto c = centre[(std::size_t) algorithm.carriers[(std::size_t) i]];
+        g.setColour(yellow.withAlpha(0.6f));
+        g.drawLine(c.x, c.y + box / 2.0f, c.x, out, 1.5f);
+        left = std::min(left, c.x);
+        right = std::max(right, c.x);
+    }
+    g.drawLine(left, out, right, out, 1.5f);
+    // Operator 4 feeds back into itself: a loop out of its right side and back in at the top.
+    const auto four = centre[3];
+    juce::Path loop;
+    loop.startNewSubPath(four.x + box / 2.0f, four.y);
+    loop.lineTo(four.x + box / 2.0f + 10.0f, four.y);
+    loop.lineTo(four.x + box / 2.0f + 10.0f, four.y - box / 2.0f - 10.0f);
+    loop.lineTo(four.x, four.y - box / 2.0f - 10.0f);
+    loop.lineTo(four.x, four.y - box / 2.0f);
+    g.setColour(cyan.withAlpha(0.6f));
+    g.strokePath(loop.createPathWithRoundedCorners(4.0f), juce::PathStrokeType(1.5f));
+
+    g.setFont(mono(14.0f));
+    for (int op = 0; op < 4; ++op)
+    {
+        const auto bounds = juce::Rectangle<float>(box, box).withCentre(centre[(std::size_t) op]);
+        const bool carrier = isCarrier(algorithm, op);
+        g.setColour(carrier ? yellow : screen);
+        g.fillRect(bounds);
+        g.setColour(carrier ? yellow : cyan);
+        g.drawRect(bounds, 1.5f);
+        g.setColour(carrier ? screen : cyan);
+        g.drawText(juce::String(op + 1), bounds, juce::Justification::centred);
+    }
+}
+
+AlgorithmSection::AlgorithmSection(juce::AudioProcessorValueTreeState& state)
+    : Section(state, "Algorithmus", { { { "fm.algorithm", "Operatoren", 3 } }, { { "fm.feedback", "Feedback" }, { "fm.volume", utf8("Lautstärke") } } },
+              {}, { kAlgorithmDisplay }),
+      view(state)
+{
+    addAndMakeVisible(view);
+}
+
+void AlgorithmSection::resized()
+{
+    Section::resized();
+    view.setBounds(displayArea().reduced(0, 4));
+}
+
+template <typename SectionType, typename... Args>
+SectionType& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, Args&&... args)
+{
+    auto section = std::make_unique<SectionType>(processor.state, std::forward<Args>(args)...);
+    auto& result = *section;
+    owner.push_back(std::move(section));
+    addChildComponent(result);
+    return result;
 }
 
 TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
@@ -303,21 +271,20 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
     setLookAndFeel(&lookAndFeel);
     auto& state = processor.state;
 
-    title.setText("Tonwerk Synth", juce::dontSendNotification);
-    title.setFont(juce::FontOptions(18.0f, juce::Font::bold));
-    addAndMakeVisible(title);
-
-    for (auto* button : { &analogButton, &fmButton })
+    if (processor.edition == Edition::combined)
     {
-        button->setClickingTogglesState(false);
-        addAndMakeVisible(*button);
+        for (auto* button : { &analogButton, &fmButton })
+        {
+            button->setClickingTogglesState(false);
+            addAndMakeVisible(*button);
+        }
+        analogButton.setConnectedEdges(juce::Button::ConnectedOnRight);
+        fmButton.setConnectedEdges(juce::Button::ConnectedOnLeft);
+        engineAttachment = std::make_unique<juce::ParameterAttachment>(
+            *state.getParameter("engine"), [this](float value) { showEngine(value > 0.5f ? Engine::fm : Engine::analog); });
+        analogButton.onClick = [this] { engineAttachment->setValueAsCompleteGesture(0.0f); };
+        fmButton.onClick = [this] { engineAttachment->setValueAsCompleteGesture(1.0f); };
     }
-    analogButton.setConnectedEdges(juce::Button::ConnectedOnRight);
-    fmButton.setConnectedEdges(juce::Button::ConnectedOnLeft);
-    engineAttachment = std::make_unique<juce::ParameterAttachment>(
-        *state.getParameter("engine"), [this](float value) { showEngine(value > 0.5f ? Engine::fm : Engine::analog); });
-    analogButton.onClick = [this] { engineAttachment->setValueAsCompleteGesture(0.0f); };
-    fmButton.onClick = [this] { engineAttachment->setValueAsCompleteGesture(1.0f); };
 
     presets.setTextWhenNothingSelected("Klang");
     presets.onChange = [this] { presetChosen(); };
@@ -333,183 +300,242 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
     for (auto* button : { &tonwerkButton, &importButton, &exportButton, &deleteButton })
         addAndMakeVisible(*button);
 
-    message.setFont(juce::FontOptions(13.0f));
-    message.setColour(juce::Label::textColourId, kMuted);
+    message.setFont(mono(11.0f));
+    message.setColour(juce::Label::textColourId, cyan.withAlpha(0.8f));
+    message.setMinimumHorizontalScale(0.8f);
     addAndMakeVisible(message);
 
-    // Analog: the oscillators each with their pulse width and its three sources, then filter, envelopes and LFO.
-    auto oscillator = [&](const char* prefix, const char* name) {
-        const juce::String p(prefix);
-        return new Section(state, name,
-                           { { (p + ".wave"), "Welle", 2 },
-                             { (p + ".octave"), "Oktave" },
-                             { (p + ".detune"), "Verstimm." },
-                             { (p + ".level"), "Pegel" },
-                             { (p + ".width"), "Pulsbreite" },
-                             { (p + ".pwm"), "PWM LFO" },
-                             { (p + ".pwmLfo"), "LFO an" },
-                             { (p + ".pwmAmpEnv"), "PWM Amp" },
-                             { (p + ".pwmFilterEnv"), "PWM Filt." } });
-    };
-    auto& osc1 = add(analogSections, oscillator("osc1", "Oszillator 1"));
-    auto& osc2 = add(analogSections, oscillator("osc2", "Oszillator 2"));
-    auto& filter = add(analogSections, new Section(state, "Filter",
-                                                   { { "filter.type", "Typ", 2 },
-                                                     { "filter.cutoff", "Cutoff" },
-                                                     { "filter.resonance", "Resonanz" },
-                                                     { "filter.envAmount", utf8("Hüllkurve") },
-                                                     { "filter.keyTrack", "Keytrack" } }));
-    auto& filterEnv = add(analogSections, new Section(state, utf8("Filter-Hüllkurve"),
-                                                      { { "filterEnv.attack", "Attack" },
-                                                        { "filterEnv.decay", "Decay" },
-                                                        { "filterEnv.sustain", "Sustain" },
-                                                        { "filterEnv.release", "Release" } }));
-    auto& ampEnv = add(analogSections, new Section(state, utf8("Lautstärke-Hüllkurve"),
-                                                   { { "ampEnv.attack", "Attack" },
-                                                     { "ampEnv.decay", "Decay" },
-                                                     { "ampEnv.sustain", "Sustain" },
-                                                     { "ampEnv.release", "Release" } }));
-    auto& lfo = add(analogSections, new Section(state, "LFO",
-                                                { { "lfo.wave", "Welle", 2 },
-                                                  { "lfo.sync", "Sync" },
-                                                  { "lfo.rate", "Tempo", 1, "lfo.sync", false },
-                                                  { "lfo.division", "Notenwert", 2, "lfo.sync", true },
-                                                  { "lfo.target", "Ziel", 2 },
-                                                  { "lfo.depth", "Tiefe" } }));
-    auto& mix = add(analogSections, new Section(state, "Mischung", { { "noise", "Rauschen" }, { "volume", "Volume" } }));
-    // The plugin's own two, in the room the browser's layout leaves beside the first oscillator and the filter.
-    auto& fold = add(analogSections, new Section(state, "Wavefolder",
-                                                 { { "fold.amount", "Menge" },
-                                                   { "fold.symmetry", "Symmetrie" },
-                                                   { "fold.env", utf8("Hüllkurve") } }));
-    auto& sampleHold = add(analogSections, new Section(state, "Sample & Hold",
-                                                       { { "sh.sync", "Sync" },
-                                                         { "sh.rate", "Tempo", 1, "sh.sync", false },
-                                                         { "sh.division", "Notenwert", 2, "sh.sync", true },
-                                                         { "sh.filter", "Filter" },
-                                                         { "sh.pitch", utf8("Tonhöhe") } }));
-
-    // FM: the algorithm with feedback, the LFO, then the four operators with their envelopes.
-    auto& algorithm = add(fmSections, new Section(state, "Algorithmus",
-                                                  { { "fm.algorithm", "Operatoren", 3 },
-                                                    { "fm.feedback", "Feedback" },
-                                                    { "fm.volume", "Volume" } }));
-    auto& fmLfo = add(fmSections, new Section(state, "LFO",
-                                              { { "fm.lfo.wave", "Welle", 2 },
-                                                { "fm.lfo.sync", "Sync" },
-                                                { "fm.lfo.rate", "Tempo", 1, "fm.lfo.sync", false },
-                                                { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
-                                                { "fm.lfo.target", "Ziel", 2 },
-                                                { "fm.lfo.depth", "Tiefe" } }));
-    std::vector<Section*> operators;
-    for (int i = 1; i <= 4; ++i)
+    if (hasPart(processor.edition, Part::analog))
     {
-        const juce::String p = "fm.op" + juce::String(i);
-        operators.push_back(&add(fmSections, new Section(state, "Operator " + juce::String(i),
-                                                         { { p + ".ratio", "Ratio" },
-                                                           { p + ".detune", "Verstimm." },
-                                                           { p + ".level", "Pegel" },
-                                                           { p + ".velocity", "Anschlag" },
-                                                           { p + ".env.attack", "Attack" },
-                                                           { p + ".env.decay", "Decay" },
-                                                           { p + ".env.sustain", "Sustain" },
-                                                           { p + ".env.release", "Release" } })));
+        // The oscillators with their pulse width and its three sources, filter, envelopes, LFO and the plugin's own two.
+        auto oscillator = [&](const juce::String& p, const char* name) -> Section& {
+            return add<Section>(analogSections, name,
+                                std::vector<Section::Row> { { { p + ".wave", "Welle", 2 },
+                                                              { p + ".octave", "Oktave" },
+                                                              { p + ".detune", "Verstimm." },
+                                                              { p + ".level", "Pegel" } },
+                                                            { { p + ".width", "Pulsbreite" },
+                                                              { p + ".pwm", "PWM LFO" },
+                                                              { p + ".pwmLfo", "LFO" },
+                                                              { p + ".pwmAmpEnv", "PWM Amp" },
+                                                              { p + ".pwmFilterEnv", "PWM Filt." } } });
+        };
+        auto& osc1 = oscillator("osc1", "Oszillator 1");
+        auto& osc2 = oscillator("osc2", "Oszillator 2");
+        auto& filter = add<Section>(analogSections, "Filter",
+                                    std::vector<Section::Row> { { { "filter.type", "Typ", 2 },
+                                                                  { "filter.cutoff", "Cutoff" },
+                                                                  { "filter.resonance", "Resonanz" } },
+                                                                { { "filter.envAmount", utf8("Hüllkurve") },
+                                                                  { "filter.keyTrack", "Keytrack" } } });
+        auto& sampleHold = add<Section>(analogSections, "Sample & Hold",
+                                        std::vector<Section::Row> { { { "sh.sync", "Sync" },
+                                                                      { "sh.rate", "Tempo", 1, "sh.sync", false },
+                                                                      { "sh.division", "Notenwert", 2, "sh.sync", true } },
+                                                                    { { "sh.filter", "Filter" },
+                                                                      { "sh.pitch", utf8("Tonhöhe") } } });
+        auto envelope = [&](const char* title, const juce::String& p) -> EnvelopeSection& {
+            auto& section = add<EnvelopeSection>(analogSections, utf8(title), p,
+                                                 std::vector<Section::Row> { { { p + ".attack", "Attack" },
+                                                                               { p + ".decay", "Decay" },
+                                                                               { p + ".sustain", "Sustain" },
+                                                                               { p + ".release", "Release" } } },
+                                                 Section::Display { kEnvelopeDisplay, 0 });
+            envelopes.push_back(&section.view);
+            return section;
+        };
+        auto& filterEnv = envelope("FILTER-HÜLLKURVE", "filterEnv");
+        auto& ampEnv = envelope("LAUTSTÄRKE-HÜLLKURVE", "ampEnv");
+        auto& fold = add<Section>(analogSections, "Wavefolder",
+                                  std::vector<Section::Row> { { { "fold.amount", "Menge" },
+                                                                { "fold.symmetry", "Symmetrie" },
+                                                                { "fold.env", utf8("Hüllkurve") } } });
+        auto& mix = add<Section>(analogSections, "Mischung",
+                                 std::vector<Section::Row> { { { "noise", "Rauschen" }, { "volume", utf8("Lautstärke") } } });
+        auto& lfo = add<Section>(analogSections, "LFO",
+                                 std::vector<Section::Row> { { { "lfo.wave", "Welle", 2 },
+                                                               { "lfo.sync", "Sync" },
+                                                               { "lfo.rate", "Tempo", 1, "lfo.sync", false },
+                                                               { "lfo.division", "Notenwert", 2, "lfo.sync", true },
+                                                               { "lfo.target", "Ziel", 2 },
+                                                               { "lfo.depth", "Tiefe" } } });
+        auto& fx = add<Section>(analogSections, "Effekte",
+                                std::vector<Section::Row> { { { "fx.delay.mix", "Delay" },
+                                                              { "fx.delay.sync", "Sync" },
+                                                              { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
+                                                              { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true },
+                                                              { "fx.delay.feedback", "Feedback" },
+                                                              { "fx.delay.tone", "Ton" },
+                                                              { "fx.reverb.mix", "Hall" },
+                                                              { "fx.reverb.decay", utf8("Länge") } } });
+        analogRows = { { &osc1, &osc2, &filter, &sampleHold }, { &filterEnv, &ampEnv, &fold, &mix }, { &lfo, &fx } };
     }
 
-    fxSection = std::make_unique<Section>(state, "Effekte",
-                                          std::initializer_list<Section::Item> { { "fx.delay.mix", "Delay" },
-                                                                                 { "fx.delay.sync", "Sync" },
-                                                                                 { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
-                                                                                 { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true },
-                                                                                 { "fx.delay.feedback", "Feedback" },
-                                                                                 { "fx.delay.tone", "Ton" },
-                                                                                 { "fx.reverb.mix", "Hall" },
-                                                                                 { "fx.reverb.decay", utf8("Länge") } });
-    addAndMakeVisible(*fxSection);
+    if (hasPart(processor.edition, Part::fm))
+    {
+        // The algorithm with feedback and volume, the LFO, the effects, then the four operators with their envelopes.
+        algorithmSection = &add<AlgorithmSection>(fmSections);
+        auto& lfo = add<Section>(fmSections, "LFO",
+                                 std::vector<Section::Row> { { { "fm.lfo.wave", "Welle", 2 }, { "fm.lfo.target", "Ziel", 2 } },
+                                                             { { "fm.lfo.sync", "Sync" },
+                                                               { "fm.lfo.rate", "Tempo", 1, "fm.lfo.sync", false },
+                                                               { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
+                                                               { "fm.lfo.depth", "Tiefe" } } });
+        auto& fx = add<Section>(fmSections, "Effekte",
+                                std::vector<Section::Row> { { { "fx.delay.mix", "Delay" },
+                                                              { "fx.delay.sync", "Sync" },
+                                                              { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
+                                                              { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true } },
+                                                            { { "fx.delay.feedback", "Feedback" },
+                                                              { "fx.delay.tone", "Ton" },
+                                                              { "fx.reverb.mix", "Hall" },
+                                                              { "fx.reverb.decay", utf8("Länge") } } });
+        Row operators;
+        for (int i = 1; i <= 4; ++i)
+        {
+            const juce::String p = "fm.op" + juce::String(i);
+            auto& section = add<EnvelopeSection>(fmSections, "Operator " + juce::String(i), p + ".env",
+                                                 std::vector<Section::Row> { { { p + ".ratio", "Ratio" },
+                                                                               { p + ".detune", "Verstimm." },
+                                                                               { p + ".level", "Pegel" },
+                                                                               { p + ".velocity", "Anschlag" } },
+                                                                             { { p + ".env.attack", "Attack" },
+                                                                               { p + ".env.decay", "Decay" },
+                                                                               { p + ".env.sustain", "Sustain" },
+                                                                               { p + ".env.release", "Release" } } },
+                                                 Section::Display { 0, kRow });
+            envelopes.push_back(&section.view);
+            operatorViews.emplace_back(&section.view, i - 1);
+            operators.push_back(&section);
+        }
+        fmRows = { { algorithmSection, &lfo, &fx }, operators };
+    }
 
-    analogRows = { { &osc1, &fold, fxSection.get() }, { &osc2, &filter, &sampleHold }, { &filterEnv, &ampEnv, &lfo, &mix } };
-    fmRows = { { &algorithm, &fmLfo, fxSection.get() }, { operators[0], operators[1] }, { operators[2], operators[3] } };
-
+    keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffcfccc0));
+    keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, panel);
+    keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, border);
+    keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, cyan.withAlpha(0.3f));
+    keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, yellow.withAlpha(0.7f));
+    keyboard.setColour(juce::MidiKeyboardComponent::shadowColourId, juce::Colours::transparentBlack);
+    keyboard.setAvailableRange(24, 108);
+    scope.setCaption("OSZILLOSKOP");
     addAndMakeVisible(keyboard);
     addAndMakeVisible(scope);
-    keyboard.setAvailableRange(24, 108);
 
     refreshPresets();
-    showEngine(processor.state.getParameter("engine")->getValue() > 0.5f ? Engine::fm : Engine::analog);
-    setSize(kWidth, kMargin * 2 + kTopBar + kGap + kMessage + 3 * kRowHeight + 4 * kGap + kKeyboard);
+    const auto fixed = processor.fixedEngine();
+    showEngine(fixed ? *fixed : (state.getParameter("engine")->getValue() > 0.5f ? Engine::fm : Engine::analog));
+    timerCallback();
+    startTimerHz(30);
 }
 
 TonwerkSynthEditor::~TonwerkSynthEditor() { setLookAndFeel(nullptr); }
 
-void TonwerkSynthEditor::paint(juce::Graphics& g) { g.fillAll(kBackground); }
-
-void TonwerkSynthEditor::showEngine(Engine engine)
+int TonwerkSynthEditor::heightFor(Engine which) const
 {
-    const bool fm = engine == Engine::fm;
+    int height = 2 * kMargin + kHeader + kBottom;
+    for (const auto& row : which == Engine::fm ? fmRows : analogRows)
+    {
+        int tallest = 0;
+        for (auto* section : row)
+            tallest = std::max(tallest, section->preferredHeight());
+        height += tallest + kGap;
+    }
+    return height;
+}
+
+void TonwerkSynthEditor::showEngine(Engine which)
+{
+    engine = which;
+    const bool fm = which == Engine::fm;
     analogButton.setToggleState(! fm, juce::dontSendNotification);
     fmButton.setToggleState(fm, juce::dontSendNotification);
     for (auto& section : analogSections)
         section->setVisible(! fm);
     for (auto& section : fmSections)
         section->setVisible(fm);
-    resized();
+    // The engines need different heights; only Tonwerk Synth switches, and the host follows the new size.
+    if (getWidth() == kWidth && getHeight() == heightFor(which))
+        resized();
+    else
+        setSize(kWidth, heightFor(which));
 }
 
-void TonwerkSynthEditor::layoutRows(const std::vector<Row>& rows, juce::Rectangle<int> area)
+void TonwerkSynthEditor::paint(juce::Graphics& g)
 {
-    for (const auto& row : rows)
-    {
-        auto line = area.removeFromTop(kRowHeight);
-        area.removeFromTop(kGap);
-        for (auto* section : row)
-        {
-            // The effects keep their place at the right of the first row whichever engine plays.
-            if (section == fxSection.get())
-            {
-                section->setBounds(line.removeFromRight(section->preferredWidth()));
-                continue;
-            }
-            // The last one in a row ends with the row when less than a knob's room would be left beside it.
-            const int width = section->preferredWidth();
-            const bool last = section == row.back() || (row.back() == fxSection.get() && section == row[row.size() - 2]);
-            const int right = row.back() == fxSection.get() ? fxSection->preferredWidth() + kGap : 0;
-            const bool fills = last && line.getWidth() - right - width < kSlot;
-            section->setBounds(line.removeFromLeft(fills ? line.getWidth() - right : width));
-            line.removeFromLeft(kGap);
-        }
-    }
+    g.fillAll(background);
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
+    paintTitle(g, header, TonwerkSynthProcessor::editionName(processor.edition).toUpperCase());
 }
 
 void TonwerkSynthEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto top = area.removeFromTop(kTopBar);
-    title.setBounds(top.removeFromLeft(140));
-    analogButton.setBounds(top.removeFromLeft(70));
-    fmButton.setBounds(top.removeFromLeft(70));
-    top.removeFromLeft(16);
-    deleteButton.setBounds(top.removeFromRight(80));
-    top.removeFromRight(6);
-    exportButton.setBounds(top.removeFromRight(90));
-    top.removeFromRight(6);
-    importButton.setBounds(top.removeFromRight(100));
-    top.removeFromRight(6);
-    tonwerkButton.setBounds(top.removeFromRight(150));
-    top.removeFromRight(12);
-    presets.setBounds(top);
-    area.removeFromTop(kGap);
-    message.setBounds(area.removeFromTop(kMessage));
-    area.removeFromTop(kGap);
+    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    // The title is painted; the room after it is the switch (Tonwerk Synth only) and the message.
+    header.removeFromLeft(processor.edition == Edition::combined ? 215 : 230);
+    if (processor.edition == Edition::combined)
+    {
+        analogButton.setBounds(header.removeFromLeft(64));
+        fmButton.setBounds(header.removeFromLeft(64));
+        header.removeFromLeft(12);
+    }
+    deleteButton.setBounds(header.removeFromRight(70));
+    header.removeFromRight(4);
+    exportButton.setBounds(header.removeFromRight(84));
+    header.removeFromRight(4);
+    importButton.setBounds(header.removeFromRight(90));
+    header.removeFromRight(4);
+    tonwerkButton.setBounds(header.removeFromRight(130));
+    header.removeFromRight(8);
+    presets.setBounds(header.removeFromRight(220));
+    header.removeFromRight(8);
+    message.setBounds(header);
 
-    auto bottom = area.removeFromBottom(kKeyboard);
+    auto bottom = area.removeFromBottom(kBottom);
     scope.setBounds(bottom.removeFromRight(kScopeWidth));
     bottom.removeFromRight(kGap);
     keyboard.setBounds(bottom);
     // C1 to C8: 50 white keys across the keyboard's width.
     keyboard.setKeyWidth((float) keyboard.getWidth() / 50.0f);
     area.removeFromBottom(kGap);
-    const bool fm = fmButton.getToggleState();
-    layoutRows(fm ? fmRows : analogRows, area);
+
+    for (const auto& row : engine == Engine::fm ? fmRows : analogRows)
+    {
+        switch (row.size())
+        {
+            case 2: layoutRow(area, { row[0], row[1] }); break;
+            case 3: layoutRow(area, { row[0], row[1], row[2] }); break;
+            case 4: layoutRow(area, { row[0], row[1], row[2], row[3] }); break;
+            default: jassertfalse; break;
+        }
+    }
+}
+
+void TonwerkSynthEditor::timerCallback()
+{
+    for (auto* view : envelopes)
+        view->update();
+    if (algorithmSection == nullptr)
+        return;
+    algorithmSection->view.update();
+    // What each operator does in the current algorithm, in the corner of its envelope.
+    const int index = algorithmSection->view.algorithm();
+    if (! juce::isPositiveAndBelow(index, (int) kAlgorithms.size()))
+        return;
+    const auto& algorithm = kAlgorithms[(std::size_t) index];
+    for (auto [view, op] : operatorViews)
+    {
+        juce::String role;
+        if (isCarrier(algorithm, op))
+            role = utf8("TRÄGER");
+        for (int m = 0; m < algorithm.modCount; ++m)
+            if (algorithm.mods[(std::size_t) m][0] == op)
+                role += (role.isEmpty() ? juce::String(utf8("MOD → ")) : juce::String(" ")) + juce::String(algorithm.mods[(std::size_t) m][1] + 1);
+        if (op == 3)
+            role += " + FB";
+        view->setCaption(role, isCarrier(algorithm, op));
+    }
 }
 
 void TonwerkSynthEditor::refreshPresets()
@@ -528,9 +554,9 @@ void TonwerkSynthEditor::refreshPresets()
         }
     };
     juce::Array<PresetLibrary::Preset> tonwerk, files;
-    for (const auto& preset : processor.library.imported())
+    for (const auto& preset : processor.library.importedFor(processor.edition))
         (preset.source == "tonwerk" ? tonwerk : files).add(preset);
-    addGroup(utf8("Werksklänge"), PresetLibrary::factoryPresets());
+    addGroup(utf8("Werksklänge"), PresetLibrary::factoryPresets(processor.edition));
     addGroup("Aus Tonwerk", tonwerk);
     addGroup("Aus Dateien", files);
 
@@ -557,8 +583,13 @@ void TonwerkSynthEditor::presetChosen()
 
 void TonwerkSynthEditor::setMessage(const juce::String& text, bool error)
 {
-    message.setColour(juce::Label::textColourId, error ? kError : kMuted);
+    message.setColour(juce::Label::textColourId, error ? red : cyan.withAlpha(0.8f));
     message.setText(text, juce::dontSendNotification);
+}
+
+juce::String TonwerkSynthEditor::otherPlugin() const
+{
+    return TonwerkSynthProcessor::editionName(processor.edition == Edition::fm ? Edition::analog : Edition::fm);
 }
 
 void TonwerkSynthEditor::fetchFromTonwerk()
@@ -589,11 +620,18 @@ void TonwerkSynthEditor::fetchFromTonwerk()
                     safe->setMessage(fetched.getErrorMessage(), true);
                     return;
                 }
-                const int count = safe->processor.library.add(sounds, "tonwerk");
+                // All go into the library both plugins share; this one counts what it plays.
+                safe->processor.library.add(sounds, "tonwerk");
                 safe->refreshPresets();
-                safe->setMessage(count == 0 ? utf8("In Tonwerk sind noch keine Klänge gespeichert.")
-                                            : juce::String(count) + utf8(count == 1 ? " Klang aus Tonwerk übernommen."
-                                                                                    : " Klänge aus Tonwerk übernommen."));
+                int count = 0;
+                for (const auto& sound : sounds)
+                    count += safe->processor.plays(sound.patch) ? 1 : 0;
+                auto text = count == 0 ? utf8("In Tonwerk sind noch keine passenden Klänge gespeichert.")
+                                       : juce::String(count) + utf8(count == 1 ? " Klang aus Tonwerk übernommen."
+                                                                               : " Klänge aus Tonwerk übernommen.");
+                if (count < sounds.size())
+                    text += utf8(" Die übrigen stehen in ") + safe->otherPlugin() + ".";
+                safe->setMessage(text);
             });
         });
     }),
@@ -617,11 +655,23 @@ void TonwerkSynthEditor::importFile()
                                  return;
                              }
                              safe->processor.library.add(sounds, "file");
-                             safe->processor.applyPatch(sounds[0].patch, sounds[0].name);
+                             juce::Array<NamedPatch> playable;
+                             for (const auto& sound : sounds)
+                                 if (safe->processor.plays(sound.patch))
+                                     playable.add(sound);
                              safe->refreshPresets();
-                             safe->setMessage(sounds.size() == 1
-                                                  ? utf8("Klang „") + sounds[0].name + utf8("“ geladen.")
-                                                  : juce::String(sounds.size()) + utf8(" Klänge geladen."));
+                             if (playable.isEmpty())
+                             {
+                                 safe->setMessage(utf8("Die Datei hat nur Klänge für ") + safe->otherPlugin()
+                                                      + utf8("; dort stehen sie jetzt im Menü."),
+                                                  true);
+                                 return;
+                             }
+                             safe->processor.applyPatch(playable[0].patch, playable[0].name);
+                             safe->refreshPresets();
+                             safe->setMessage(playable.size() == 1
+                                                  ? utf8("Klang „") + playable[0].name + utf8("“ geladen.")
+                                                  : juce::String(playable.size()) + utf8(" Klänge geladen."));
                          });
 }
 
@@ -660,7 +710,7 @@ void TonwerkSynthEditor::deletePreset()
                                      .withIconType(juce::MessageBoxIconType::QuestionIcon)
                                      .withTitle(utf8("Klang löschen"))
                                      .withMessage(utf8("„") + name
-                                                  + utf8("“ aus der Liste des Plugins löschen? In Tonwerk bleibt er."))
+                                                  + utf8("“ aus der Liste der Tonwerk-Plugins löschen? In Tonwerk bleibt er."))
                                      .withButton(utf8("Löschen"))
                                      .withButton("Abbrechen")
                                      .withAssociatedComponent(this),

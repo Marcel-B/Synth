@@ -157,13 +157,27 @@ public:
         const juce::TemporaryFile folder;
         PresetLibrary library(folder.getFile());
 
-        beginTest("Eight factory sounds, four per engine");
+        beginTest("Each plugin has its engine's factory sounds; Tonwerk Synth has all, its first eight unmoved");
+        auto count = [](Edition edition, Engine engine) {
+            int n = 0;
+            for (const auto& preset : PresetLibrary::factoryPresets(edition))
+                n += patchFromJson(preset.patch).engine == engine ? 1 : 0;
+            return n;
+        };
+        expectEquals(PresetLibrary::factoryPresets(Edition::analog).size(), 9);
+        expectEquals(count(Edition::analog, Engine::analog), 9);
+        expectEquals(PresetLibrary::factoryPresets(Edition::fm).size(), 8);
+        expectEquals(count(Edition::fm, Engine::fm), 8);
         const auto factory = PresetLibrary::factoryPresets();
-        expectEquals(factory.size(), 8);
-        int fm = 0;
+        expectEquals(factory.size(), 17);
+        expectEquals(factory[0].name, juce::String("Analog Lead"));
+        expectEquals(factory[3].name, juce::String("Analog Leitton"));
+        expectEquals(factory[4].name, juce::String("FM Blech"));
+        expectEquals(factory[7].name, juce::String("FM Leitton"));
+        juce::StringArray names;
         for (const auto& preset : factory)
-            fm += patchFromJson(preset.patch).engine == Engine::fm ? 1 : 0;
-        expectEquals(fm, 4);
+            names.addIfNotAlreadyThere(preset.name);
+        expectEquals(names.size(), factory.size(), "every name once");
 
         beginTest("Imported sounds are kept, sorted, and replaced by name");
         juce::Array<NamedPatch> fromTonwerk;
@@ -179,6 +193,16 @@ public:
         expectEquals(other.imported()[1].name, juce::String("pad"));
         expectEquals(other.imported()[1].source, juce::String("file"));
         expect(same(patchFromJson(other.imported()[1].patch).analog.volume, 0.3f));
+
+        beginTest("Tonwerk Analog's menu has the analog sounds, Tonwerk FM's the FM ones");
+        juce::Array<NamedPatch> fm;
+        fm.add({ "Glocke", juce::JSON::parse(R"({ "engine": "fm" })") });
+        library.add(fm, "tonwerk");
+        expectEquals(library.importedFor(Edition::combined).size(), 3);
+        expectEquals(library.importedFor(Edition::analog).size(), 2);
+        expectEquals(library.importedFor(Edition::fm).size(), 1);
+        expectEquals(library.importedFor(Edition::fm)[0].name, juce::String("Glocke"));
+        expect(library.remove("Glocke"));
 
         beginTest("Removing one leaves the rest");
         expect(other.remove("BASS"));

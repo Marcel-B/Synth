@@ -9,6 +9,15 @@
 namespace tonwerk
 {
 /**
+ * Which plugin a build is: Tonwerk Analog and Tonwerk FM each play one engine and have only its parameters; Tonwerk
+ * Synth, the first plugin, plays both and stays for the Logic projects made with it.
+ */
+enum class Edition { combined, analog, fm };
+
+/** What a parameter belongs to: the engine switch (Tonwerk Synth only), one engine, or the effects both have. */
+enum class Part { engine, analog, fm, effects };
+
+/**
  * Every field of a `Patch` as a host parameter, so Logic can automate it and saves it with the project. One table
  * (`descriptors()`) is the source for the parameter layout, for reading a patch out of the parameters on every audio
  * block, and for writing an imported patch into them; a field added to the patch needs one entry there.
@@ -30,13 +39,24 @@ struct ParameterDescriptor
     std::function<void(Patch&, float)> set;
     /** The version hint hosts get: 1 for the first release's parameters, 2 for 0.2.0's, 3 for 0.3.0's. */
     int version = 1;
+    Part part = Part::analog;
 };
+
+/** Whether `edition` has the parameters of `part`. */
+bool hasPart(Edition edition, Part part);
 
 const std::vector<ParameterDescriptor>& descriptors();
 
-juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+/**
+ * The edition's parameters, shown as whole numbers with their units (times in ms, levels in %, the filter envelope in
+ * semitones); the values themselves keep Tonwerk's units.
+ */
+juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Edition edition = Edition::combined);
 
-/** The parameters' current values, read without locks: one atomic per parameter, looked up once. */
+/**
+ * The parameters' current values, read without locks: one atomic per parameter, looked up once. Fields the edition
+ * has no parameter for keep the patch's defaults.
+ */
 class ParameterReader
 {
 public:

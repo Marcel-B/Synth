@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Parameters.h"
 #include "PatchJson.h"
 
 #include <juce_core/juce_core.h>
@@ -28,7 +29,14 @@ public:
     explicit PresetLibrary(juce::File folder = defaultFolder());
 
     static juce::File defaultFolder();
-    static juce::Array<Preset> factoryPresets();
+    /**
+     * The edition's own sounds: Tonwerk's starting sounds of its engine, then this plugin's. Tonwerk Synth has both
+     * engines', its first eight in their old order.
+     */
+    static juce::Array<Preset> factoryPresets(Edition edition = Edition::combined);
+
+    /** The imported sounds the edition plays: Tonwerk Analog's menu leaves out the FM ones, and the other way round. */
+    juce::Array<Preset> importedFor(Edition edition) const;
 
     /** The imported sounds, sorted by name, as last loaded from or saved to the file. */
     const juce::Array<Preset>& imported() const { return presets; }

@@ -258,8 +258,44 @@ public:
             expectEquals(text("level", -6.0000002f), juce::String("-6 dB"));
             expectEquals(text("input", 12.0f), juce::String("12 dB"));
 
+            beginTest("The oscilloscope sees the input and the clipped output");
+            juce::AudioBuffer<float> buffer(2, kBlock);
+            juce::MidiBuffer midi;
+            const auto wave = sine(220.0f, 0.3f, kBlock * 20);
+            for (int b = 0; b < 20; ++b)
+            {
+                for (int ch = 0; ch < 2; ++ch)
+                    buffer.copyFrom(ch, 0, wave.data() + b * kBlock, kBlock);
+                processor.processBlock(buffer, midi);
+            }
+            std::array<float, 2048> in {}, out {};
+            processor.scopeIn.read(in.data(), (int) in.size());
+            processor.scopeOut.read(out.data(), (int) out.size());
+            auto peak = [](const std::array<float, 2048>& samples) {
+                float result = 0.0f;
+                for (float sample : samples)
+                    result = std::max(result, std::abs(sample));
+                return result;
+            };
+            expectWithinAbsoluteError(peak(in), 0.3f, 0.01f);
+            expectGreaterThan(peak(out), 0.05f);
+
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
             expect(editor != nullptr && editor->getWidth() > 0);
+            for (auto* child : editor->getChildren())
+                expect(editor->getLocalBounds().contains(child->getBounds()));
+            // For a look at it: TONWERK_EDITOR_PNG_DIR=/path
+            if (const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {}); dir.isNotEmpty())
+            {
+                for (auto* child : editor->getChildren())
+                    if (auto* view = dynamic_cast<tonwerkui::ScopeView*>(child))
+                        view->refresh();
+                const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 1.0f);
+                juce::FileOutputStream file { juce::File(dir).getChildFile("Tonwerk Distortion.png") };
+                file.setPosition(0);
+                file.truncate();
+                juce::PNGImageFormat().writeImageToStream(image, file);
+            }
         }
     }
 };
