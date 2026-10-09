@@ -47,11 +47,16 @@ public:
     Settings readSettings() const;
 
     juce::AudioProcessorValueTreeState state;
-    /** Whether a glitch sounded in the last block, for the editor's light. */
+    /** Whether a glitch sounded in the last block, for the editor's monitor. */
     std::atomic<bool> glitching { false };
+    /** Set when a glitch starts; the monitor takes it back, so even one shorter than its frame flickers. */
+    std::atomic<bool> glitchStarted { false };
+    /** The latest glitch's `GlitchEngine::Event`, as an int. */
+    std::atomic<int> lastEvent { 0 };
 
 private:
     GlitchEngine engine;
+    std::uint32_t eventsSeen = 0;
 
     struct Values
     {

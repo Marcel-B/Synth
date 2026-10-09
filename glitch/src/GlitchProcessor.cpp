@@ -125,6 +125,12 @@ void ChromeGlitchProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     engine.process(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), buffer.getNumSamples(), readSettings(),
                    transport);
     glitching = engine.isGlitching();
+    if (engine.eventsStarted() != eventsSeen)
+    {
+        eventsSeen = engine.eventsStarted();
+        lastEvent = (int) engine.lastEvent();
+        glitchStarted = true;
+    }
 }
 
 juce::AudioProcessorEditor* ChromeGlitchProcessor::createEditor()

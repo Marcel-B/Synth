@@ -114,8 +114,16 @@ public:
         untilRandomTick = 0;
     }
 
+    enum class Event { none, stutter, dropout, freeze };
+
     /** True while a stutter, dropout or freeze sounds. */
     bool isGlitching() const { return state != State::idle; }
+    /**
+     * How many glitches have started so far, and the kind of the latest. A glitch can begin and end inside one block,
+     * so a display that only asked `isGlitching()` after each block would miss it.
+     */
+    std::uint32_t eventsStarted() const { return started; }
+    Event lastEvent() const { return last; }
 
     void process(float* const* channels, int numChannels, int numSamples, const Settings& s, const Transport& t)
     {
@@ -189,6 +197,8 @@ public:
                 else if (rng.uniform() < s.dropoutChance * amount)
                 {
                     state = State::dropout;
+                    ++started;
+                    last = Event::dropout;
                     dropoutRemaining = std::max(1, (int) (s.dropoutMs * 0.001 * sampleRate));
                 }
             }
@@ -282,6 +292,8 @@ private:
         playbackRate = 1.0;
         state = State::stutter;
         frozen = freeze;
+        ++started;
+        last = freeze ? Event::freeze : Event::stutter;
     }
 
     void nextRepeat(const Settings& s)
@@ -313,6 +325,8 @@ private:
 
     State state = State::idle;
     bool frozen = false;
+    std::uint32_t started = 0;
+    Event last = Event::none;
     int sliceLength = 1;
     /** A repeat's length before pitch: the slice, shortened by each acceleration. */
     int repeatSpan = 1;
