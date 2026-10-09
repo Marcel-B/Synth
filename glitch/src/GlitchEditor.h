@@ -6,7 +6,7 @@
 
 namespace chromeglitch
 {
-/** Dark like Tonwerk Synth, with a cold cyan for the chrome. */
+/** Night City: near black, the yellow, cyan and red of Cyberpunk 2077's interface. */
 class GlitchLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -47,6 +47,26 @@ private:
     std::vector<std::unique_ptr<Control>> controls;
 };
 
+/**
+ * A small screen that shows the chrome's state: a calm scanline picture while the voice is clean, torn bars, colour
+ * split text and noise while it glitches, fading out over a few frames so even a short glitch is seen.
+ */
+class GlitchMonitor : public juce::Component
+{
+public:
+    /** Called at the editor's frame rate with what the processor reports. */
+    void update(bool glitching, bool started, int event);
+    /** 1 while a glitch shows, falling to 0 after it. */
+    float level() const { return intensity; }
+    void paint(juce::Graphics&) override;
+
+private:
+    float intensity = 0.0f;
+    int event = 0;
+    int frame = 0;
+    juce::Random random;
+};
+
 class ChromeGlitchEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -55,6 +75,7 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    GlitchMonitor& getMonitor() { return monitor; }
 
 private:
     void timerCallback() override;
@@ -66,8 +87,7 @@ private:
     Section dropout;
     Section damage;
     Section timing;
-    /** The light in the title, on while a glitch sounds; it falls off slowly so short ones are seen. */
-    float light = 0.0f;
+    GlitchMonitor monitor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChromeGlitchEditor)
 };

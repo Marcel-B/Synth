@@ -236,6 +236,41 @@ public:
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
             expect(editor != nullptr && editor->getWidth() > 0);
         }
+
+        beginTest("The monitor flickers for every glitch, however short, then calms down");
+        {
+            ChromeGlitchProcessor processor;
+            processor.setPlayConfigDetails(2, 2, kRate, kBlock);
+            processor.prepareToPlay(kRate, kBlock);
+            for (const auto& [id, value] : { std::pair { "amount", 1.0f }, { "stutterChance", 1.0f }, { "sync", 0.0f } })
+                processor.state.getParameter(id)->setValueNotifyingHost(value);
+            juce::AudioBuffer<float> buffer(2, kBlock);
+            juce::MidiBuffer midi;
+            for (int i = 0; i < 100 && ! processor.glitchStarted; ++i)
+            {
+                for (int n = 0; n < kBlock; ++n)
+                {
+                    buffer.setSample(0, n, std::sin((float) (i * kBlock + n) * 0.05f));
+                    buffer.setSample(1, n, 0.0f);
+                }
+                processor.processBlock(buffer, midi);
+            }
+            expect(processor.glitchStarted.load());
+            expectEquals(processor.lastEvent.load(), (int) GlitchEngine::Event::stutter);
+
+            ChromeGlitchEditor editor(processor);
+            auto& monitor = editor.getMonitor();
+            expect(! monitor.getBounds().isEmpty());
+            expectEquals(monitor.level(), 0.0f);
+            // A glitch that began and ended between two frames still lights the screen.
+            monitor.update(false, true, (int) GlitchEngine::Event::dropout);
+            expectEquals(monitor.level(), 1.0f);
+            expect(editor.createComponentSnapshot(editor.getLocalBounds()).isValid());
+            for (int frame = 0; frame < 30; ++frame)
+                monitor.update(false, false, 0);
+            expectEquals(monitor.level(), 0.0f);
+            expect(editor.createComponentSnapshot(editor.getLocalBounds()).isValid());
+        }
     }
 };
 
