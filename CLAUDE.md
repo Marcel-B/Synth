@@ -36,6 +36,10 @@ The Mac has only the Command Line Tools, no Xcode: keep the build on CMake's def
 
 A second plugin in the same CMake project: `ChromeGlitch` (audio effect, `aufx ChGl Bvlp`, sources in `glitch/src/`, tests in `tests/GlitchTests.cpp` inside `TonwerkSynthTests`). It is built, signed, validated with auval, installed and released alongside the synth. `GlitchEngine.h` is plain C++: ticks (grid lines of the host tempo in sync, random 40-250 ms gaps otherwise, the chaos share of those also in sync) roll for a stutter (replays the last slice, later repeats maybe pitched, never wrapping inside a repeat) or a dropout; every change crossfades over 1.5 ms; the crusher is full during a glitch and light between. The dice reseed on each transport start so bounces repeat. Its parameter ids follow the same never-rename rule; they start at version hint 1. The test app defines `CHROME_GLITCH_NO_ENTRY` because both plugins define `createPluginFilter`.
 
+## Tonwerk Distortion
+
+A third plugin in the same CMake project: `TonwerkDistortion` (audio effect, `aufx TwDs Bvlp`, sources in `distortion/src/`, tests in `tests/DistortionTests.cpp` inside `TonwerkSynthTests`), built, signed, validated, installed and released like the other two. `Ds1Circuit.h` is plain C++: BOSS DS-1's circuit with ElectroSmash's part values, in volts (1.0 = 1 V at the jack). `Drive` (booster, op-amp stage, rails, diode clipper from a Shockley table) runs 4x oversampled through `juce::dsp::Oversampling` (polyphase IIR) with first-order ADAA on both clippers; `Voice` (tone blend, level, DC block) runs at the host rate. The op-amp's slew rate is deliberately left out (it aliased more than all the clipping). Keep CPU low: the test logs the real-time factor. Parameter ids start at version hint 1; the test app defines `TONWERK_DISTORTION_NO_ENTRY`.
+
 ## Conventions
 
 - Commit messages and branch names are German; code and comments English; UI strings German.

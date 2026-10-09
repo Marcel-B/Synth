@@ -42,6 +42,9 @@ jobs:
           GLITCH="build/ChromeGlitch_artefacts/Release"
           cp -R "$GLITCH/AU/Chrome Glitch.component" "$GLITCH/VST3/Chrome Glitch.vst3" \
             "$GLITCH/Standalone/Chrome Glitch.app" "$DIR/"
+          DISTORTION="build/TonwerkDistortion_artefacts/Release"
+          cp -R "$DISTORTION/AU/Tonwerk Distortion.component" "$DISTORTION/VST3/Tonwerk Distortion.vst3" \
+            "$DISTORTION/Standalone/Tonwerk Distortion.app" "$DIR/"
           for bundle in "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app; do
             codesign --force --deep --sign - "$bundle"
           done
@@ -53,16 +56,18 @@ jobs:
           mkdir -p ~/Library/Audio/Plug-Ins/Components
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
           auval -strict -v aumu Twsy Bvlp
           auval -strict -v aufx ChGl Bvlp
+          auval -strict -v aufx TwDs Bvlp
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
-          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei ist der Effekt Chrome Glitch.
+          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind die Effekte Chrome Glitch und Tonwerk Distortion.
 
           Installieren: Zip laden, im Terminal
           `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`
