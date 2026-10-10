@@ -30,9 +30,15 @@ public:
     static int roomFor(const Effects& fx);
     int loadedRoom() const { return loaded.load(); }
     void loadRoom(int tenths);
+    /**
+     * Whether the loaded room plays yet: the convolution builds it on a background thread and takes it over in a later
+     * block. The tests wait for it, so a sound measures the same in every run. On the audio thread.
+     */
+    bool roomPlaying() const;
 
     /** The impulse itself, for the tests: stereo noise falling to 1/1000 over `decay` seconds. */
     static juce::AudioBuffer<float> makeImpulse(double sampleRate, double decay, juce::Random& random);
+    static int impulseLength(double sampleRate, double decay);
 
 private:
     double sampleRate = 48000.0;

@@ -444,7 +444,7 @@ public:
             {
                 const auto sound = juce::String::fromUTF8(presets[(std::size_t) i].name.c_str());
                 const auto single = play(nullptr, i, { { 0.0, 1.0, 60 } }, 1.5);
-                // Dry: the hall's impulse is new noise every time, so its peaks differ from run to run.
+                // Dry: the chord's own peaks, without the hall's and the delay's.
                 auto dry = presets[(std::size_t) i].patch;
                 dry.fx.delayMix = dry.fx.reverbMix = 0.0f;
                 const auto chord = play(&dry, -1, { { 0.0, 1.0, 48 }, { 0.0, 1.0, 60 }, { 0.0, 1.0, 64 }, { 0.0, 1.0, 67, 127 } }, 1.5);

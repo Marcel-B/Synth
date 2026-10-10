@@ -96,6 +96,8 @@ private:
     MatrixSection matrix;
     juce::MidiKeyboardComponent keyboard;
     juce::String shownPreset;
+    /** The program numbers in the order the menu shows them. */
+    std::vector<int> menu;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WavetableEditor)
 };

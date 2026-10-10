@@ -5,13 +5,15 @@ namespace tonwerkwave
 namespace
 {
 // Menu indices, named so the sounds below read as what they are.
-constexpr float syncTable = 1, pwmTable = 2, vowel = 3, fmGrowl = 4;
+constexpr float syncTable = 1, pwmTable = 2, vowel = 3, fmGrowl = 4, harmonic = 6, combTable = 7, bitcrush = 8,
+                rough = 9;
 constexpr float warpSync = 1, warpFm = 4;
-constexpr float low12 = 0, low24 = 1, high12 = 2, comb = 5;
-constexpr float sine = 0, triangle = 1, square = 4, random = 5;
-constexpr float quarter = 6, eighth = 9, eighthTriplet = 10, sixteenth = 11, sixteenthTriplet = 12;
-constexpr float lfo1 = 1, lfo2 = 2, env2 = 4, macro1 = 10;
-constexpr float aPosition = 1, aWarp = 2, aPitch = 3, cutoffTarget = 13;
+constexpr float low12 = 0, low24 = 1, high12 = 2, notch = 4, comb = 5;
+constexpr float sine = 0, triangle = 1, rampDown = 2, square = 4, random = 5;
+constexpr float half = 3, quarter = 6, eighth = 9, eighthTriplet = 10, sixteenth = 11, sixteenthTriplet = 12;
+constexpr float lfo1 = 1, lfo2 = 2, env2 = 4, env3 = 5, velocity = 6, modWheel = 7, macro1 = 10;
+constexpr float aPosition = 1, aWarp = 2, aPitch = 3, bPosition = 6, bPitch = 8, noiseTarget = 12, cutoffTarget = 13,
+                ampTarget = 16;
 constexpr float mono = 1, legato = 2;
 constexpr float soft = 0, hard = 1, tube = 3;
 // Positions in the basic table: sine, triangle, saw, square.
@@ -21,10 +23,10 @@ constexpr float sawPosition = 2.0f / 3.0f, squarePosition = 1.0f;
 const std::vector<FactoryPreset>& factoryPresets()
 {
     static const std::vector<FactoryPreset> presets {
-        { "Init", {} },
+        { "Init", "", {} },
         // The classic: a saw and a square an octave down through a closed, resonant lowpass, opened by an LFO on the
         // eighths. Makro 1 opens the filter further.
-        { "Wobble 1/8",
+        { "Wobble 1/8", "Bässe",
           { { "aPosition", sawPosition }, { "aUnison", 3 }, { "aDetune", 15 }, { "aWidth", 0.3f },
             { "bOn", 1 }, { "bPosition", squarePosition }, { "bOctave", -1 }, { "bLevel", 0.5f },
             { "subOn", 1 }, { "subOctave", 0 },
@@ -35,7 +37,7 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "voiceMode", legato }, { "glide", 60 }, { "env1Release", 80 },
             { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.45f }, { "master", -8 } } },
         // Triplet wobble: the LFO moves the FM table as well as the filter, so the tone talks while it opens.
-        { "Wobble Triolen",
+        { "Wobble Triolen", "Bässe",
           { { "aTable", fmGrowl }, { "aPosition", 0.3f }, { "aUnison", 2 }, { "aDetune", 10 },
             { "subOn", 1 }, { "subOctave", 0 },
             { "filterMode", low24 }, { "cutoff", 200 }, { "resonance", 0.35f },
@@ -44,9 +46,9 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod2Source", lfo1 }, { "mod2Target", aPosition }, { "mod2Amount", 0.5f },
             { "mod3Source", macro1 }, { "mod3Target", cutoffTarget }, { "mod3Amount", 0.3f },
             { "voiceMode", legato }, { "glide", 50 }, { "env1Release", 80 },
-            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.55f }, { "master", -9 } } },
+            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.55f }, { "master", -6 } } },
         // Two saws a few cents apart beating against each other, a slow drift on the filter, a clean sub.
-        { "Reese",
+        { "Reese", "Bässe",
           { { "aPosition", sawPosition }, { "aUnison", 4 }, { "aDetune", 22 }, { "aWidth", 0.5f },
             { "bOn", 1 }, { "bPosition", sawPosition }, { "bFine", 9 }, { "bLevel", 0.7f },
             { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.55f },
@@ -55,9 +57,9 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod1Source", lfo2 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.15f }, { "mod1Bipolar", 1 },
             { "mod2Source", macro1 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.4f },
             { "voiceMode", legato }, { "glide", 120 }, { "env1Release", 150 },
-            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.3f }, { "distMix", 0.6f }, { "master", -9 } } },
+            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.3f }, { "distMix", 0.6f }, { "master", -10 } } },
         // The vowel table swept from a to u on the quarters with FM from a sine: "yoi".
-        { "Growl Yoi",
+        { "Growl Yoi", "Bässe",
           { { "aTable", vowel }, { "aWarpMode", warpFm }, { "aWarp", 0.35f }, { "bOctave", 1 },
             { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.5f },
             { "filterMode", low12 }, { "cutoff", 3000 }, { "resonance", 0.2f },
@@ -66,9 +68,9 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod2Source", lfo1 }, { "mod2Target", aWarp }, { "mod2Amount", 0.4f },
             { "mod3Source", macro1 }, { "mod3Target", aWarp }, { "mod3Amount", 0.4f },
             { "voiceMode", legato }, { "glide", 50 }, { "env1Release", 80 },
-            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.6f }, { "master", -10 } } },
+            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.6f }, { "master", -6 } } },
         // FM table and FM from a saw, through a comb tuned to the note: metallic, hollow, moving on the sixteenths.
-        { "Growl FM",
+        { "Growl FM", "Bässe",
           { { "aTable", fmGrowl }, { "aPosition", 0.2f }, { "aUnison", 2 }, { "aDetune", 8 }, { "aWidth", 0.4f },
             { "aWarpMode", warpFm }, { "aWarp", 0.2f }, { "bPosition", sawPosition },
             { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.5f },
@@ -80,7 +82,7 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 80 },
             { "distOn", 1 }, { "distMode", hard }, { "distDrive", 0.5f }, { "master", -10 } } },
         // A synced saw an octave up, the sync sweeping on the sixteenths, thinned by a highpass: a tearout screech.
-        { "Screech",
+        { "Screech", "Leads",
           { { "aTable", syncTable }, { "aPosition", 0.5f }, { "aOctave", 1 }, { "aUnison", 3 }, { "aDetune", 18 },
             { "aWidth", 0.6f }, { "aWarpMode", warpSync }, { "aWarp", 0.3f },
             { "filterMode", high12 }, { "cutoff", 200 }, { "resonance", 0.2f },
@@ -88,9 +90,9 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 0.5f },
             { "mod2Source", lfo1 }, { "mod2Target", aWarp }, { "mod2Amount", 0.4f },
             { "voiceMode", legato }, { "glide", 30 }, { "env1Release", 60 },
-            { "distOn", 1 }, { "distMode", hard }, { "distDrive", 0.7f }, { "master", -12 } } },
+            { "distOn", 1 }, { "distMode", hard }, { "distDrive", 0.7f }, { "master", -7 } } },
         // Riddim: a narrow pulse chopped by a square LFO on sixteenth triplets.
-        { "Riddim",
+        { "Riddim", "Bässe",
           { { "aTable", pwmTable }, { "aPosition", 0.4f }, { "aUnison", 2 }, { "aDetune", 6 },
             { "subOn", 1 }, { "subOctave", 0 },
             { "filterMode", low24 }, { "cutoff", 150 }, { "resonance", 0.3f },
@@ -98,9 +100,9 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod1Source", lfo1 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.45f },
             { "mod2Source", macro1 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.3f },
             { "voiceMode", legato }, { "glide", 20 }, { "env1Release", 60 },
-            { "distOn", 1 }, { "distMode", hard }, { "distDrive", 0.4f }, { "master", -9 } } },
+            { "distOn", 1 }, { "distMode", hard }, { "distDrive", 0.4f }, { "master", -8 } } },
         // The vowel table moved by a random LFO on the sixteenths: the bass babbles.
-        { "Talking Bass",
+        { "Talking Bass", "Bässe",
           { { "aTable", vowel }, { "aUnison", 2 }, { "aDetune", 6 },
             { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.5f },
             { "filterMode", low12 }, { "cutoff", 1500 }, { "resonance", 0.3f },
@@ -109,29 +111,232 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 1.0f },
             { "mod2Source", lfo2 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.25f },
             { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 80 },
-            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.4f }, { "master", -9 } } },
+            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.4f }, { "master", -8 } } },
         // A fast fall in pitch from two octaves up: the laser of a drop's fill.
-        { "Laser",
+        { "Laser", "Effekte",
           { { "aPosition", sawPosition }, { "aUnison", 3 }, { "aDetune", 10 },
             { "filterMode", low12 }, { "cutoff", 6000 },
             { "env1Decay", 250 }, { "env1Sustain", 0 }, { "env1Release", 100 },
             { "env2Attack", 0 }, { "env2Decay", 180 }, { "env2Sustain", 0 },
             { "mod1Source", env2 }, { "mod1Target", aPitch }, { "mod1Amount", 1.0f },
-            { "voiceMode", mono }, { "master", -10 } } },
+            { "voiceMode", mono }, { "master", 1 } } },
         // Just the low end: a sine sub with a little sine on top and a touch of tube for small speakers.
-        { "Sub Bass",
+        { "Sub Bass", "Bässe",
           { { "aLevel", 0.35f }, { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.8f },
             { "filterMode", low24 }, { "cutoff", 200 },
             { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 60 },
-            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.2f }, { "distMix", 0.3f }, { "master", -6 } } },
+            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.2f }, { "distMix", 0.3f }, { "master", -8 } } },
         // Seven and five detuned saws an octave apart, wide: chords for the melodic side of dubstep.
-        { "Supersaw",
+        { "Supersaw", "Leads",
           { { "aPosition", sawPosition }, { "aUnison", 7 }, { "aDetune", 35 }, { "aBlend", 0.85f }, { "aWidth", 1 },
             { "bOn", 1 }, { "bPosition", sawPosition }, { "bOctave", 1 }, { "bUnison", 5 }, { "bDetune", 25 },
             { "bWidth", 1 }, { "bLevel", 0.4f },
             { "filterMode", low24 }, { "cutoff", 5000 },
             { "env1Attack", 10 }, { "env1Decay", 600 }, { "env1Sustain", 0.8f }, { "env1Release", 400 },
-            { "master", -12 } } },
+            { "master", -7 } } },
+        // Since 0.4.0. Pitch moves by 24 semitones and the cutoff by 120 at 100 %, so 0.008 on the pitch is a vibrato
+        // of a fifth of a semitone and 0.1 on the cutoff an octave.
+        // FM from a comb table into the rough table, through a notch sweeping on the eighths: a neuro bass that snarls.
+        { "Neuro", "Bässe",
+          { { "aTable", rough }, { "aPosition", 0.4f }, { "aUnison", 2 }, { "aDetune", 12 },
+            { "aWarpMode", warpFm }, { "aWarp", 0.15f }, { "bTable", combTable }, { "bPosition", 0.5f },
+            { "subOn", 1 }, { "subOctave", 0 }, { "subLevel", 0.5f },
+            { "filterMode", notch }, { "cutoff", 900 }, { "resonance", 0.5f },
+            { "lfo1Shape", triangle }, { "lfo1Division", eighth },
+            { "lfo2Shape", random }, { "lfo2Division", sixteenth },
+            { "mod1Source", lfo1 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.3f },
+            { "mod2Source", lfo2 }, { "mod2Target", aWarp }, { "mod2Amount", 0.25f },
+            { "mod3Source", lfo1 }, { "mod3Target", aPosition }, { "mod3Amount", 0.4f },
+            { "mod4Source", macro1 }, { "mod4Target", aWarp }, { "mod4Amount", 0.4f },
+            { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 80 },
+            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.5f }, { "master", -6 } } },
+        // A sine that drops an octave in a moment and rings, saturated so it carries on small speakers.
+        { "808", "Bässe",
+          { { "aLevel", 0.9f }, { "filterOn", 0 },
+            { "env1Decay", 1500 }, { "env1Sustain", 0 }, { "env1Release", 150 },
+            { "env2Attack", 0 }, { "env2Decay", 60 }, { "env2Sustain", 0 },
+            { "mod1Source", env2 }, { "mod1Target", aPitch }, { "mod1Amount", 0.5f },
+            { "voiceMode", mono }, { "glide", 50 },
+            { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.35f }, { "distMix", 0.5f }, { "master", -7 } } },
+        // A saw and a square an octave down through a lowpass that snaps shut after each note, wider when struck hard.
+        { "Pluck-Bass", "Bässe",
+          { { "aPosition", sawPosition }, { "aUnison", 2 }, { "aDetune", 8 },
+            { "bOn", 1 }, { "bPosition", squarePosition }, { "bOctave", -1 }, { "bLevel", 0.4f },
+            { "filterMode", low24 }, { "cutoff", 120 }, { "resonance", 0.3f }, { "filterDrive", 0.2f },
+            { "env1Decay", 400 }, { "env1Sustain", 0.5f }, { "env1Release", 80 },
+            { "env2Attack", 0 }, { "env2Decay", 160 }, { "env2Sustain", 0 },
+            { "mod1Source", env2 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.45f },
+            { "mod2Source", velocity }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.1f },
+            { "master", -2 } } },
+        // Wide, detuned pulses and saws that scoop up into each note, as the rave hoover does.
+        { "Hoover", "Leads",
+          { { "aTable", pwmTable }, { "aPosition", 0.3f }, { "aUnison", 7 }, { "aDetune", 45 }, { "aBlend", 0.9f },
+            { "aWidth", 1 },
+            { "bOn", 1 }, { "bPosition", sawPosition }, { "bOctave", -1 }, { "bUnison", 5 }, { "bDetune", 40 },
+            { "bWidth", 1 }, { "bLevel", 0.6f },
+            { "filterMode", low12 }, { "cutoff", 3500 }, { "resonance", 0.15f },
+            { "env2Attack", 0 }, { "env2Decay", 250 }, { "env2Sustain", 0 },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 0.4f }, { "lfo2Retrigger", 0 },
+            { "mod1Source", env2 }, { "mod1Target", aPitch }, { "mod1Amount", -0.06f },
+            { "mod2Source", env2 }, { "mod2Target", bPitch }, { "mod2Amount", -0.06f },
+            { "mod3Source", lfo2 }, { "mod3Target", aPosition }, { "mod3Amount", 0.3f }, { "mod3Bipolar", 1 },
+            { "voiceMode", legato }, { "glide", 120 }, { "env1Release", 200 },
+            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.3f }, { "master", -10 } } },
+        // Detuned saws with a square an octave up, gliding, with a light vibrato.
+        { "Future-Lead", "Leads",
+          { { "aPosition", sawPosition }, { "aUnison", 5 }, { "aDetune", 22 }, { "aWidth", 0.7f },
+            { "bOn", 1 }, { "bPosition", squarePosition }, { "bOctave", 1 }, { "bLevel", 0.3f },
+            { "filterMode", low24 }, { "cutoff", 7000 }, { "resonance", 0.15f },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 5.5f },
+            { "mod1Source", lfo2 }, { "mod1Target", aPitch }, { "mod1Amount", 0.006f }, { "mod1Bipolar", 1 },
+            { "mod2Source", lfo2 }, { "mod2Target", bPitch }, { "mod2Amount", 0.006f }, { "mod2Bipolar", 1 },
+            { "voiceMode", legato }, { "glide", 70 }, { "env1Attack", 5 }, { "env1Release", 150 },
+            { "master", -8 } } },
+        // The sync table swept by an envelope at each note: the lead tears open and settles.
+        { "Sync-Lead", "Leads",
+          { { "aTable", syncTable }, { "aPosition", 0.15f }, { "aUnison", 2 }, { "aDetune", 10 },
+            { "filterMode", low12 }, { "cutoff", 9000 },
+            { "env2Attack", 0 }, { "env2Decay", 500 }, { "env2Sustain", 0.2f },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 5.5f },
+            { "mod1Source", env2 }, { "mod1Target", aPosition }, { "mod1Amount", 0.6f },
+            { "mod2Source", macro1 }, { "mod2Target", aPosition }, { "mod2Amount", 0.4f },
+            { "mod3Source", lfo2 }, { "mod3Target", aPitch }, { "mod3Amount", 0.006f }, { "mod3Bipolar", 1 },
+            { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 150 },
+            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.3f }, { "master", -11 } } },
+        // The vowel table moving slowly through a, e, i, o, u on the half notes; the mod wheel moves it further.
+        { "Vokal-Lead", "Leads",
+          { { "aTable", vowel }, { "aUnison", 3 }, { "aDetune", 12 },
+            { "filterMode", low12 }, { "cutoff", 6000 },
+            { "lfo1Shape", triangle }, { "lfo1Division", half },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 5.0f },
+            { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 0.75f },
+            { "mod2Source", lfo2 }, { "mod2Target", aPitch }, { "mod2Amount", 0.006f }, { "mod2Bipolar", 1 },
+            { "mod3Source", modWheel }, { "mod3Target", aPosition }, { "mod3Amount", 0.25f },
+            { "voiceMode", legato }, { "glide", 60 }, { "env1Release", 150 }, { "master", -5 } } },
+        // A pulse whose width breathes slowly, through a soft lowpass that opens with the velocity.
+        { "PWM-Lead", "Leads",
+          { { "aTable", pwmTable }, { "aPosition", 0.2f }, { "aUnison", 3 }, { "aDetune", 10 },
+            { "filterMode", low24 }, { "cutoff", 2500 }, { "resonance", 0.25f },
+            { "lfo1Sync", 0 }, { "lfo1Rate", 0.6f }, { "lfo1Shape", triangle },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 5.5f },
+            { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 0.5f },
+            { "mod2Source", lfo2 }, { "mod2Target", aPitch }, { "mod2Amount", 0.005f }, { "mod2Bipolar", 1 },
+            { "mod3Source", velocity }, { "mod3Target", cutoffTarget }, { "mod3Amount", 0.15f },
+            { "voiceMode", mono }, { "glide", 30 }, { "env1Attack", 5 }, { "env1Release", 150 }, { "master", -10 } } },
+        // Bands of harmonics drifting slowly up and down in two layers an octave apart.
+        { "Harmonische Fläche", "Flächen",
+          { { "aTable", harmonic }, { "aPosition", 0.25f }, { "aUnison", 4 }, { "aDetune", 14 }, { "aWidth", 1 },
+            { "bOn", 1 }, { "bTable", harmonic }, { "bPosition", 0.55f }, { "bOctave", 1 }, { "bUnison", 3 },
+            { "bDetune", 18 }, { "bWidth", 1 }, { "bLevel", 0.35f },
+            { "filterMode", low12 }, { "cutoff", 6000 },
+            { "env1Attack", 900 }, { "env1Decay", 1500 }, { "env1Sustain", 0.85f }, { "env1Release", 1800 },
+            { "lfo1Sync", 0 }, { "lfo1Rate", 0.12f }, { "lfo1Retrigger", 0 }, { "lfo1Shape", triangle },
+            { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 0.35f },
+            { "mod2Source", lfo1 }, { "mod2Target", bPosition }, { "mod2Amount", -0.3f },
+            { "mod3Source", macro1 }, { "mod3Target", aPosition }, { "mod3Amount", 0.4f }, { "master", -10 } } },
+        // The comb table's notches moving slowly: a phaser built into the wave.
+        { "Kamm-Fläche", "Flächen",
+          { { "aTable", combTable }, { "aPosition", 0.2f }, { "aUnison", 5 }, { "aDetune", 18 }, { "aWidth", 1 },
+            { "filterMode", low24 }, { "cutoff", 4000 },
+            { "env1Attack", 700 }, { "env1Release", 1500 },
+            { "lfo1Sync", 0 }, { "lfo1Rate", 0.2f }, { "lfo1Retrigger", 0 },
+            { "mod1Source", lfo1 }, { "mod1Target", aPosition }, { "mod1Amount", 0.6f }, { "master", -13 } } },
+        // Saw chords ducking on every beat, as if a kick drum pushed them away; in time with the song.
+        { "Pump-Akkorde", "Flächen",
+          { { "aPosition", sawPosition }, { "aUnison", 7 }, { "aDetune", 30 }, { "aWidth", 1 },
+            { "bOn", 1 }, { "bPosition", sawPosition }, { "bOctave", 1 }, { "bUnison", 3 }, { "bDetune", 20 },
+            { "bLevel", 0.3f },
+            { "filterMode", low24 }, { "cutoff", 3500 },
+            { "env1Attack", 10 }, { "env1Release", 300 },
+            { "lfo1Shape", rampDown }, { "lfo1Division", quarter }, { "lfo1Retrigger", 0 },
+            { "mod1Source", lfo1 }, { "mod1Target", ampTarget }, { "mod1Amount", -0.9f }, { "master", -10 } } },
+        // Rough, detuned saws under a closed lowpass that opens over a few seconds of the chord.
+        { "Dunkle Fläche", "Flächen",
+          { { "aTable", rough }, { "aPosition", 0.2f }, { "aUnison", 6 }, { "aDetune", 20 }, { "aWidth", 1 },
+            { "bOn", 1 }, { "bPosition", sawPosition }, { "bOctave", -1 }, { "bUnison", 3 }, { "bDetune", 15 },
+            { "bLevel", 0.5f },
+            { "filterMode", low24 }, { "cutoff", 500 }, { "resonance", 0.25f },
+            { "env1Attack", 1200 }, { "env1Release", 2000 },
+            { "env3Attack", 3000 }, { "env3Decay", 1000 }, { "env3Sustain", 1 },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 0.15f }, { "lfo2Retrigger", 0 },
+            { "mod1Source", env3 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.15f },
+            { "mod2Source", lfo2 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.05f }, { "mod2Bipolar", 1 },
+            { "master", -17 } } },
+        // Saws through a lowpass that closes within a quarter of a second: the plucked chord of melodic dubstep.
+        { "Pluck", "Plucks",
+          { { "aPosition", sawPosition }, { "aUnison", 3 }, { "aDetune", 12 }, { "aWidth", 0.6f },
+            { "bOn", 1 }, { "bPosition", squarePosition }, { "bOctave", 1 }, { "bLevel", 0.25f },
+            { "filterMode", low24 }, { "cutoff", 400 }, { "resonance", 0.25f },
+            { "env1Decay", 450 }, { "env1Sustain", 0 }, { "env1Release", 350 },
+            { "env2Decay", 220 },
+            { "mod1Source", env2 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.45f },
+            { "mod2Source", velocity }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.1f }, { "master", -5 } } },
+        // A band of harmonics that starts high and sinks within a moment, over a sine an octave up: glassy.
+        { "Glas-Pluck", "Plucks",
+          { { "aTable", harmonic }, { "aPosition", 0.45f }, { "aUnison", 2 }, { "aDetune", 8 },
+            { "bOn", 1 }, { "bOctave", 1 }, { "bLevel", 0.5f },
+            { "filterMode", low12 }, { "cutoff", 9000 },
+            { "env1Decay", 700 }, { "env1Sustain", 0 }, { "env1Release", 600 },
+            { "env2Decay", 250 },
+            { "mod1Source", env2 }, { "mod1Target", aPosition }, { "mod1Amount", 0.3f }, { "master", -4 } } },
+        // Crushed waves, a few levels deep, for chiptune arpeggios.
+        { "Bit-Arp", "Plucks",
+          { { "aTable", bitcrush }, { "aPosition", 0.55f },
+            { "bOn", 1 }, { "bTable", bitcrush }, { "bPosition", 0.8f }, { "bOctave", 1 }, { "bLevel", 0.3f },
+            { "filterOn", 0 },
+            { "env1Decay", 250 }, { "env1Sustain", 0.25f }, { "env1Release", 120 },
+            { "env2Decay", 150 },
+            { "mod1Source", env2 }, { "mod1Target", aPosition }, { "mod1Amount", 0.3f }, { "master", -5 } } },
+        // A slightly crushed wave with a sine an octave up, opening with each key.
+        { "Bit-Keys", "Tasten",
+          { { "aTable", bitcrush }, { "aPosition", 0.3f }, { "aUnison", 2 }, { "aDetune", 8 },
+            { "bOn", 1 }, { "bOctave", 1 }, { "bLevel", 0.35f },
+            { "filterMode", low12 }, { "cutoff", 4500 },
+            { "env1Decay", 1200 }, { "env1Sustain", 0.35f }, { "env1Release", 350 },
+            { "env2Decay", 400 },
+            { "mod1Source", env2 }, { "mod1Target", cutoffTarget }, { "mod1Amount", 0.2f }, { "master", -13 } } },
+        // A sine bent by FM from a sine, bright for a moment after each key, with a gentle tremolo.
+        { "Digi-Piano", "Tasten",
+          { { "aWarpMode", warpFm }, { "aWarp", 0.1f },
+            { "env1Decay", 2500 }, { "env1Sustain", 0 }, { "env1Release", 400 },
+            { "env2Decay", 600 },
+            { "lfo2Sync", 0 }, { "lfo2Rate", 4.5f },
+            { "mod1Source", env2 }, { "mod1Target", aWarp }, { "mod1Amount", 0.35f },
+            { "mod2Source", lfo2 }, { "mod2Target", ampTarget }, { "mod2Amount", -0.2f }, { "master", -11 } } },
+        // FM from a sine at a ratio between the harmonics: a struck, inharmonic bell.
+        { "Digi-Glocke", "Glocken",
+          { { "aWarpMode", warpFm }, { "aWarp", 0.45f }, { "bOctave", 1 }, { "bSemi", 2 },
+            { "env1Decay", 2500 }, { "env1Sustain", 0 }, { "env1Release", 1500 },
+            { "env2Decay", 800 },
+            { "mod1Source", env2 }, { "mod1Target", aWarp }, { "mod1Amount", 0.3f }, { "master", -13 } } },
+        // Saws and noise rising an octave and opening over four seconds: hold it into the drop.
+        { "Riser", "Effekte",
+          { { "aPosition", sawPosition }, { "aUnison", 5 }, { "aDetune", 30 }, { "aWidth", 1 },
+            { "noise", 0.3f },
+            { "filterMode", low24 }, { "cutoff", 300 }, { "resonance", 0.3f },
+            { "env2Attack", 4000 }, { "env2Sustain", 1 },
+            { "mod1Source", env2 }, { "mod1Target", aPitch }, { "mod1Amount", 0.5f },
+            { "mod2Source", env2 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.5f },
+            { "mod3Source", env2 }, { "mod3Target", noiseTarget }, { "mod3Amount", 0.3f },
+            { "voiceMode", mono }, { "env1Release", 500 }, { "master", -6 } } },
+        // The riser backwards: high and open at the start, falling and closing over three seconds.
+        { "Downlifter", "Effekte",
+          { { "aPosition", sawPosition }, { "aUnison", 5 }, { "aDetune", 30 }, { "aWidth", 1 },
+            { "noise", 0.2f },
+            { "filterMode", low24 }, { "cutoff", 300 }, { "resonance", 0.3f },
+            { "env2Attack", 0 }, { "env2Decay", 3000 }, { "env2Sustain", 0 },
+            { "mod1Source", env2 }, { "mod1Target", aPitch }, { "mod1Amount", 0.5f },
+            { "mod2Source", env2 }, { "mod2Target", cutoffTarget }, { "mod2Amount", 0.5f },
+            { "mod3Source", env2 }, { "mod3Target", noiseTarget }, { "mod3Amount", 0.3f },
+            { "voiceMode", mono }, { "env1Release", 500 }, { "master", -6 } } },
+        // A square wailing up and down a fifth.
+        { "Sirene", "Effekte",
+          { { "aPosition", squarePosition },
+            { "filterMode", low12 }, { "cutoff", 2500 },
+            { "lfo1Sync", 0 }, { "lfo1Rate", 0.7f }, { "lfo1Shape", triangle },
+            { "mod1Source", lfo1 }, { "mod1Target", aPitch }, { "mod1Amount", 0.3f },
+            { "voiceMode", mono },
+            { "distOn", 1 }, { "distMode", soft }, { "distDrive", 0.3f }, { "master", -11 } } },
     };
     return presets;
 }

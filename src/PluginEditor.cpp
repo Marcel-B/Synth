@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include "PresetCategories.h"
+
 namespace tonwerk
 {
 using namespace tonwerkui;
@@ -556,7 +558,19 @@ void TonwerkSynthEditor::refreshPresets()
     juce::Array<PresetLibrary::Preset> tonwerk, files;
     for (const auto& preset : processor.library.importedFor(processor.edition))
         (preset.source == "tonwerk" ? tonwerk : files).add(preset);
-    addGroup(utf8("Werksklänge"), PresetLibrary::factoryPresets(processor.edition));
+    // The factory sounds under their groups' headings, then the imported ones by where they came from.
+    const auto factory = PresetLibrary::factoryPresets(processor.edition);
+    juce::String group;
+    const auto categoryOf = [&factory](int n) { return factory.getReference(n).category.toRawUTF8(); };
+    for (const int i : menuOrder(factory.size(), categoryOf))
+    {
+        const auto& preset = factory.getReference(i);
+        if (preset.category != group)
+            presets.addSectionHeading(preset.category);
+        group = preset.category;
+        menuPresets.add(preset);
+        presets.addItem(preset.name, menuPresets.size());
+    }
     addGroup("Aus Tonwerk", tonwerk);
     addGroup("Aus Dateien", files);
 

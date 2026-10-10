@@ -105,6 +105,8 @@ public:
     /** Sets every parameter to the patch and names it; on the message thread. */
     void applyPatch(const DxPatch& patch, const juce::String& name);
     juce::String presetName() const { return state.state.getProperty("presetName", {}).toString(); }
+    /** Whether the hall plays the current sound's room yet (`EffectsChain::roomPlaying`); for the tests. */
+    bool roomPlaying() const { return effects.roomPlaying(); }
 
     /** Where imported banks live: ~/Library/Application Support/Tonwerk DX/SysEx on the Mac. */
     static juce::File sysexFolder();

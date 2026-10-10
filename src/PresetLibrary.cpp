@@ -1,5 +1,7 @@
 #include "PresetLibrary.h"
 
+#include "FactorySounds.h"
+
 namespace tonwerk
 {
 PresetLibrary::PresetLibrary(juce::File presetFolder) : folder(std::move(presetFolder)) { reload(); }
@@ -14,156 +16,28 @@ juce::File PresetLibrary::defaultFolder()
         .getChildFile("Tonwerk Synth");
 }
 
-namespace
-{
-Envelope env(float attack, float decay, float sustain, float release) { return { attack, decay, sustain, release }; }
-
-Operator op(float ratio, float level, Envelope envelope, float velocity = 0.7f)
-{
-    return { ratio, 0.0f, level, velocity, envelope };
-}
-
-/** Sounds of the plugin's own, beyond Tonwerk's four per engine; they also show the wavefolder, S&H and sync. */
-std::vector<std::pair<const char*, Patch>> ownAnalog()
-{
-    std::vector<std::pair<const char*, Patch>> result;
-    auto add = [&result](const char* name, auto shape) {
-        Patch p;
-        p.engine = Engine::analog;
-        p.analog = defaultAnalog(Kind::bass);
-        p.analog.lfo.depth = 0.0f;
-        shape(p);
-        result.emplace_back(name, p);
-    };
-    add("Analog Acid", [](Patch& p) {
-        auto& a = p.analog;
-        a.osc1 = { Wave::sawtooth, 0, 0.0f, 0.8f };
-        a.osc2.level = 0.0f;
-        a.filter = { FilterType::lowpass, 320.0f, 14.0f, 3.5f, 0.5f };
-        a.filterEnv = env(0.002f, 0.18f, 0.0f, 0.1f);
-        a.ampEnv = env(0.002f, 0.25f, 0.8f, 0.06f);
-        a.volume = 0.6f;
-        p.fx.delay = { 0.2f, 0.35f, 0.3f, 3000.0f, true, 10 };
-    });
-    add("Analog Wobble", [](Patch& p) {
-        auto& a = p.analog;
-        a.osc2 = { Wave::square, -1, 0.0f, 0.6f };
-        a.filter = { FilterType::lowpass, 500.0f, 8.0f, 0.5f, 0.3f };
-        a.ampEnv = env(0.005f, 0.3f, 0.9f, 0.1f);
-        a.lfo = { Wave::sine, 4.0f, AnalogLfoTarget::filter, 0.9f, true, 10 };
-        a.fold.amount = 0.25f;
-        a.volume = 0.6f;
-    });
-    add("Analog Falt-Lead", [](Patch& p) {
-        auto& a = p.analog;
-        a.osc1 = { Wave::triangle, 0, 0.0f, 0.8f };
-        a.osc2 = { Wave::sine, 1, 0.0f, 0.3f };
-        a.fold = { 0.6f, 0.2f, 0.4f };
-        a.filter = { FilterType::lowpass, 5000.0f, 2.0f, 1.0f, 0.5f };
-        a.filterEnv = env(0.005f, 0.6f, 0.3f, 0.3f);
-        a.ampEnv = env(0.01f, 0.4f, 0.8f, 0.25f);
-        a.lfo = { Wave::sine, 5.5f, AnalogLfoTarget::pitch, 0.1f };
-        a.volume = 0.55f;
-        p.fx.delay = { 0.25f, 0.35f, 0.35f, 4000.0f, true, kDottedEighth };
-        p.fx.reverb = { 0.2f, 2.5f };
-    });
-    add("Analog Zufall", [](Patch& p) {
-        auto& a = p.analog;
-        a.osc1 = { Wave::square, 0, 0.0f, 0.7f, 0.3f };
-        a.osc2 = { Wave::sawtooth, 0, 7.0f, 0.4f };
-        a.filter = { FilterType::lowpass, 1200.0f, 10.0f, 1.0f, 0.5f };
-        a.filterEnv = env(0.005f, 0.2f, 0.2f, 0.2f);
-        a.ampEnv = env(0.005f, 0.2f, 0.7f, 0.2f);
-        a.sampleHold.sync = true;
-        a.sampleHold.division = kSixteenth;
-        a.sampleHold.filter = 0.6f;
-        // The random steps differ with each voice's seed; on unlucky ones resonance and steps peaked near 1.4 at 0.55.
-        a.volume = 0.45f;
-        p.fx.reverb = { 0.25f, 2.0f };
-    });
-    add("Analog Streicher", [](Patch& p) {
-        auto& a = p.analog;
-        a.osc1 = { Wave::square, 0, 0.0f, 0.6f, 0.5f, 0.4f, true };
-        a.osc2 = { Wave::sawtooth, 0, 6.0f, 0.5f };
-        a.filter = { FilterType::lowpass, 2200.0f, 1.0f, 0.5f, 0.4f };
-        a.filterEnv = env(0.6f, 1.5f, 0.7f, 1.2f);
-        a.ampEnv = env(0.5f, 1.0f, 0.85f, 1.2f);
-        a.lfo = { Wave::triangle, 0.8f, AnalogLfoTarget::pitch, 0.08f };
-        a.volume = 0.45f;
-        p.fx.reverb = { 0.35f, 3.5f };
-    });
-    return result;
-}
-
-std::vector<std::pair<const char*, Patch>> ownFm()
-{
-    std::vector<std::pair<const char*, Patch>> result;
-    auto add = [&result](const char* name, auto shape) {
-        Patch p;
-        p.engine = Engine::fm;
-        p.fm.lfo.depth = 0.0f;
-        shape(p);
-        result.emplace_back(name, p);
-    };
-    add("FM Glocke", [](Patch& p) {
-        p.fm.algorithm = 5;
-        p.fm.feedback = 0.0f;
-        p.fm.ops = { op(1.0f, 0.7f, env(0.002f, 4.0f, 0.0f, 3.0f)), op(3.5f, 0.45f, env(0.002f, 2.0f, 0.0f, 2.0f)),
-                     op(2.0f, 0.35f, env(0.002f, 3.0f, 0.0f, 2.5f)), op(7.0f, 0.25f, env(0.002f, 1.0f, 0.0f, 1.0f)) };
-        p.fm.volume = 0.55f;
-        p.fx.reverb = { 0.3f, 3.0f };
-    });
-    add("FM Marimba", [](Patch& p) {
-        p.fm.algorithm = 5;
-        p.fm.feedback = 0.0f;
-        p.fm.ops = { op(1.0f, 0.8f, env(0.001f, 0.6f, 0.0f, 0.4f)), op(4.0f, 0.35f, env(0.001f, 0.08f, 0.0f, 0.08f)),
-                     op(3.0f, 0.25f, env(0.001f, 0.35f, 0.0f, 0.3f)), op(10.0f, 0.2f, env(0.001f, 0.05f, 0.0f, 0.05f)) };
-        p.fm.volume = 0.6f;
-        p.fx.reverb = { 0.15f, 1.5f };
-    });
-    add("FM Orgel", [](Patch& p) {
-        p.fm.algorithm = 8;
-        p.fm.feedback = 0.2f;
-        const auto held = env(0.005f, 0.1f, 1.0f, 0.08f);
-        p.fm.ops = { op(0.5f, 0.5f, held, 0.2f), op(1.0f, 0.6f, held, 0.2f), op(2.0f, 0.35f, held, 0.2f),
-                     op(3.0f, 0.25f, held, 0.2f) };
-        p.fm.lfo = { Wave::sine, 6.0f, FmLfoTarget::pitch, 0.06f };
-        p.fm.volume = 0.4f;
-        p.fx.reverb = { 0.2f, 2.0f };
-    });
-    add("FM Zupf", [](Patch& p) {
-        p.fm.algorithm = 4;
-        p.fm.feedback = 0.3f;
-        p.fm.ops = { op(1.0f, 0.85f, env(0.001f, 0.9f, 0.0f, 0.3f)), op(2.0f, 0.4f, env(0.001f, 0.3f, 0.0f, 0.2f)),
-                     op(1.0f, 0.3f, env(0.001f, 0.2f, 0.0f, 0.1f)), op(5.0f, 0.2f, env(0.001f, 0.1f, 0.0f, 0.1f)) };
-        p.fm.volume = 0.6f;
-        p.fx.delay = { 0.2f, 0.35f, 0.35f, 4000.0f, true, kDottedEighth };
-    });
-    return result;
-}
-} // namespace
-
 juce::Array<PresetLibrary::Preset> PresetLibrary::factoryPresets(Edition edition)
 {
     struct Entry
     {
         const char* name;
         Kind kind;
+        const char* category;
     };
     // The names say what Tonwerk plays them on: lead for the melody, pads for chords, and the guide tones.
-    const Entry analog[] = { { "Analog Lead", Kind::melody },
-                             { "Analog Pad", Kind::chords },
-                             { "Analog Bass", Kind::bass },
-                             { "Analog Leitton", Kind::guideTones } };
-    const Entry fm[] = { { "FM Blech", Kind::melody },
-                         { "FM E-Piano", Kind::chords },
-                         { "FM Bass", Kind::bass },
-                         { "FM Leitton", Kind::guideTones } };
+    const Entry analog[] = { { "Analog Lead", Kind::melody, "Leads" },
+                             { "Analog Pad", Kind::chords, "Flächen" },
+                             { "Analog Bass", Kind::bass, "Bässe" },
+                             { "Analog Leitton", Kind::guideTones, "Leads" } };
+    const Entry fm[] = { { "FM Blech", Kind::melody, "Bläser & Streicher" },
+                         { "FM E-Piano", Kind::chords, "Tasten" },
+                         { "FM Bass", Kind::bass, "Bässe" },
+                         { "FM Leitton", Kind::guideTones, "Leads" } };
     const bool withAnalog = edition != Edition::fm;
     const bool withFm = edition != Edition::analog;
     juce::Array<Preset> result;
-    auto add = [&result](const char* name, const Patch& patch) {
-        result.add({ juce::String::fromUTF8(name), patchToJson(patch), "factory" });
+    auto add = [&result](const char* name, const char* category, const Patch& patch) {
+        result.add({ juce::String::fromUTF8(name), patchToJson(patch), "factory", juce::String::fromUTF8(category) });
     };
     if (withAnalog)
     {
@@ -172,7 +46,7 @@ juce::Array<PresetLibrary::Preset> PresetLibrary::factoryPresets(Edition edition
             Patch patch;
             patch.engine = Engine::analog;
             patch.analog = defaultAnalog(entry.kind);
-            add(entry.name, patch);
+            add(entry.name, entry.category, patch);
         }
     }
     if (withFm)
@@ -182,16 +56,16 @@ juce::Array<PresetLibrary::Preset> PresetLibrary::factoryPresets(Edition edition
             Patch patch;
             patch.engine = Engine::fm;
             patch.fm = defaultFm(entry.kind);
-            add(entry.name, patch);
+            add(entry.name, entry.category, patch);
         }
     }
     // After Tonwerk's, so Tonwerk Synth's programs keep their numbers.
     if (withAnalog)
-        for (const auto& [name, patch] : ownAnalog())
-            add(name, patch);
+        for (const auto& sound : factorySounds(Engine::analog))
+            add(sound.name, sound.category, sound.patch);
     if (withFm)
-        for (const auto& [name, patch] : ownFm())
-            add(name, patch);
+        for (const auto& sound : factorySounds(Engine::fm))
+            add(sound.name, sound.category, sound.patch);
     return result;
 }
 

@@ -105,6 +105,8 @@ public:
 
     /** The host's tempo as last seen, for the sync display. */
     double tempo() const { return bpm.load(); }
+    /** Whether the hall plays the current sound's room yet (`EffectsChain::roomPlaying`); for the tests. */
+    bool roomPlaying() const { return effects.roomPlaying(); }
 
     juce::AudioProcessorValueTreeState state;
     juce::MidiKeyboardState keyboardState;

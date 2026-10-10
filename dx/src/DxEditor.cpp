@@ -1,6 +1,7 @@
 #include "DxEditor.h"
 
 #include "DxPresets.h"
+#include "PresetCategories.h"
 
 namespace tonwerkdx
 {
@@ -512,7 +513,19 @@ void DxEditor::refreshPresets()
             presets.addItem(utf8(sound.name.c_str()), (int) menuPatches.size());
         }
     };
-    addGroup(utf8("Werksklänge"), factoryPresets());
+    // The factory sounds under their groups' headings, then each imported bank under its name.
+    const auto& factory = factoryPresets();
+    int group = -1;
+    for (const int i : menuOrder((int) factory.size(), [&factory](int n) { return factory[(std::size_t) n].category; }))
+    {
+        const auto& sound = factory[(std::size_t) i];
+        const int category = categoryIndex(sound.category);
+        if (category != group && category >= 0)
+            presets.addSectionHeading(utf8(sound.category));
+        group = category;
+        menuPatches.push_back(sound);
+        presets.addItem(utf8(sound.name.c_str()), (int) menuPatches.size());
+    }
     for (const auto& bank : DxProcessor::banks())
         addGroup(bank.name, bank.voices);
 

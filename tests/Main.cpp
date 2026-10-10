@@ -8,7 +8,12 @@ int main()
     juce::ScopedJuceInitialiser_GUI juce;
     juce::UnitTestRunner runner;
     runner.setAssertOnFailure(false);
-    runner.runAllTests();
+    // TONWERK_TEST_CATEGORY=Presets runs one category, e.g. while tuning sounds.
+    const auto category = juce::SystemStats::getEnvironmentVariable("TONWERK_TEST_CATEGORY", {});
+    if (category.isNotEmpty())
+        runner.runTestsInCategory(category);
+    else
+        runner.runAllTests();
     int failures = 0;
     for (int i = 0; i < runner.getNumResults(); ++i)
         failures += runner.getResult(i)->failures;
