@@ -77,7 +77,8 @@ std::vector<std::pair<const char*, Patch>> ownAnalog()
         a.sampleHold.sync = true;
         a.sampleHold.division = kSixteenth;
         a.sampleHold.filter = 0.6f;
-        a.volume = 0.55f;
+        // The random steps differ with each voice's seed; on unlucky ones resonance and steps peaked near 1.4 at 0.55.
+        a.volume = 0.45f;
         p.fx.reverb = { 0.25f, 2.0f };
     });
     add("Analog Streicher", [](Patch& p) {

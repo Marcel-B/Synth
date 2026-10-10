@@ -13,7 +13,7 @@ Requires CMake 3.22+ and a C++20 compiler; JUCE 8 comes through `FetchContent` (
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug     # add -DFETCHCONTENT_SOURCE_DIR_JUCE=<clone> to reuse a local JUCE
 cmake --build build --target TonwerkSynthTests && ctest --test-dir build --output-on-failure
-cmake --build build --target TonwerkAnalog_Standalone     # also TonwerkFM_*, TonwerkSynth_*, *_VST3, *_AU (macOS only)
+cmake --build build --target TonwerkAnalog_Standalone     # also TonwerkFM_*, TonwerkDX_*, TonwerkSynth_*, *_VST3, *_AU (macOS only)
 scripts/install-macos.sh                                  # on the Mac: Release build, ad-hoc signing, install, auval
 ```
 
@@ -46,9 +46,13 @@ A third plugin in the same CMake project: `TonwerkDistortion` (audio effect, `au
 
 A fourth plugin in the same CMake project: `TonwerkWavetable` (instrument, `aumu TwWt Bvlp`, sources in `wavetable/src/`, tests in `tests/WavetableTests.cpp` inside `TonwerkSynthTests`), built, signed, validated, installed and released like the others. A wavetable synth in the manner of Serum, for dubstep basses; nothing of Serum's (tables, presets, art) is copied. `Wavetables.cpp` computes every table from a formula at load (64 frames, one band-limited copy per octave, shared by all instances); `WaveDsp.h` and `WaveEngine.h` are plain C++ (envelopes, LFOs, TPT state variable filter, comb, voices, poly/mono/legato, matrix). Modulation runs every 32 samples with ramps in between; keep it that way for CPU. The sub oscillator and noise come from `src/dsp/Oscillators.h`. `readSettings()` reads the parameters in the order `createParameterLayout()` adds them: a new parameter goes at the end of both. Factory sounds are in `WavetablePresets.cpp` as changes from the defaults. Parameter ids and menu orders start at version hint 1; the test app defines `TONWERK_WAVETABLE_NO_ENTRY`.
 
+## Tonwerk DX
+
+A fifth plugin in the same CMake project: `TonwerkDX` (instrument, `aumu TwDx Bvlp`, sources in `dx/src/`, tests in `tests/DxTests.cpp` inside `TonwerkSynthTests`), built, signed, validated, installed and released like the others. Six operators in the DX7's 32 algorithms (Tonwerk FM stays at four so Tonwerk's JSON stays 1:1). `DxEngine.h` is plain C++ in the DX7's units: levels and rates 0 to 99, a level step 0.75 dB, envelopes in the log domain, envelopes and LFO every 32 samples with gain ramps between, a sine table; keep it that way for CPU. `DxSysex.h` reads DX7 banks and single voices the user owns (pitch EG, keyboard level scaling and fixed frequencies are dropped); imported files live in Application Support/Tonwerk DX/SysEx. Factory sounds (`DxPresets.cpp`) are the plugin's own, never copies of Yamaha's ROM; new ones go at the end. `DxProcessor.cpp` has one table (`parameters()`) of every patch field; ids start at version hint 1. The delay and hall are the synth's `EffectsChain`. The test app defines `TONWERK_DX_NO_ENTRY`.
+
 ## Conventions
 
 - Commit messages and branch names are German; code and comments English; UI strings German.
 - Comments explain why. Tests (`tests/`, JUCE `UnitTest`s run by `TonwerkSynthTests`) come with every change; DSP tests measure the sound (levels, duty cycle, envelope timing), not implementation details.
 - 0.2.0 runs in Logic on Marcel's MacBook (his screenshot, 2026-10-01); anything newer has not been heard there unless a commit or the README says so. Say what was and was not tested.
-- `TONWERK_EDITOR_PNG_DIR=<dir>` makes the tests write a PNG of each synth and the distortion editor, for looking at the UI without a Mac.
+- `TONWERK_EDITOR_PNG_DIR=<dir>` makes the tests write a PNG of each synth (DX included) and the distortion editor, for looking at the UI without a Mac.
