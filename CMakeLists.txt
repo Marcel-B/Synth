@@ -164,6 +164,37 @@ target_link_libraries(TonwerkWavetable
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk DX: six operators and the DX7's 32 algorithms, with Tonwerk's delay and hall (dx/).
+juce_add_plugin(TonwerkDX
+    PRODUCT_NAME "Tonwerk DX"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkdx
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwDx
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_DX_SOURCES
+    dx/src/DxEditor.cpp
+    dx/src/DxPresets.cpp
+    dx/src/DxProcessor.cpp)
+
+# The effects are the synth's own (src/EffectsChain.cpp); the tests have them already.
+target_sources(TonwerkDX PRIVATE ${TONWERK_DX_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkDX PRIVATE src common)
+target_compile_definitions(TonwerkDX PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkDX
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -182,8 +213,10 @@ if(TONWERK_TESTS)
         ${TONWERK_DISTORTION_SOURCES}
         tests/DistortionTests.cpp
         ${TONWERK_WAVETABLE_SOURCES}
-        tests/WavetableTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src)
+        tests/WavetableTests.cpp
+        ${TONWERK_DX_SOURCES}
+        tests/DxTests.cpp)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -191,6 +224,7 @@ if(TONWERK_TESTS)
         CHROME_GLITCH_NO_ENTRY=1
         TONWERK_DISTORTION_NO_ENTRY=1
         TONWERK_WAVETABLE_NO_ENTRY=1
+        TONWERK_DX_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
