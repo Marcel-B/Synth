@@ -22,6 +22,12 @@ public:
 
     /** Takes a mono block of voices and writes dry plus effects into both channels of `out`. */
     void process(const Effects& fx, const float* in, juce::AudioBuffer<float>& out, int start, int count);
+    /**
+     * The same for a stereo source: each side passes dry to its channel, the sends take the middle of the two. With
+     * both sides the same block it is the mono version, sample for sample.
+     */
+    void process(const Effects& fx, const float* inLeft, const float* inRight, juce::AudioBuffer<float>& out, int start,
+                 int count);
 
     /**
      * The room the reverb needs for `fx`, in tenths of a second, or 0 when it is off. The impulse is computed and loaded

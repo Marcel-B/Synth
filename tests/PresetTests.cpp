@@ -1,6 +1,8 @@
 #include "DxPresets.h"
 #include "Loudness.h"
 #include "DxProcessor.h"
+#include "GranularPresets.h"
+#include "GranularProcessor.h"
 #include "PluginProcessor.h"
 #include "PresetCategories.h"
 #include "PresetLibrary.h"
@@ -36,6 +38,8 @@ bool roomPlaying(const juce::AudioProcessor& processor)
         return synth->roomPlaying();
     if (const auto* dx = dynamic_cast<const tonwerkdx::DxProcessor*>(&processor))
         return dx->roomPlaying();
+    if (const auto* granular = dynamic_cast<const tonwerkgrain::GranularProcessor*>(&processor))
+        return granular->roomPlaying();
     return true;
 }
 
@@ -211,12 +215,16 @@ std::vector<Instrument> instruments()
                      [] { return std::make_unique<tonwerkwave::WavetableProcessor>(); },
                      [](int i) { return tonwerkwave::factoryPresets()[(std::size_t) i].category; },
                      [](int i) { return i == 0; } });
+    list.push_back({ "Tonwerk Granular", (int) tonwerkgrain::factoryPresets().size(),
+                     [] { return std::make_unique<tonwerkgrain::GranularProcessor>(); },
+                     [](int i) { return tonwerkgrain::factoryPresets()[(std::size_t) i].category; },
+                     [](int i) { return i == 0; } });
     return list;
 }
 } // namespace
 
 /**
- * The factory sounds of all four instruments, side by side: each in a group of the menu, every name once, and all
+ * The factory sounds of all five instruments, side by side: each in a group of the menu, every name once, and all
  * about equally loud the way they are played, so switching presets does not jump in level.
  */
 class PresetTests : public juce::UnitTest

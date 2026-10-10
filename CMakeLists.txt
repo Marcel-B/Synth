@@ -201,6 +201,38 @@ target_link_libraries(TonwerkDX
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Granular: clouds of grains from its own sources or a file of the user's, with Tonwerk's delay and hall (granular/).
+juce_add_plugin(TonwerkGranular
+    PRODUCT_NAME "Tonwerk Granular"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkgranular
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwGr
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_GRANULAR_SOURCES
+    granular/src/GrainSources.cpp
+    granular/src/GranularEditor.cpp
+    granular/src/GranularPresets.cpp
+    granular/src/GranularProcessor.cpp)
+
+# The envelopes, LFO shapes and filter come from Tonwerk Wavetable's DSP (wavetable/src/WaveDsp.h), the effects from the synth.
+target_sources(TonwerkGranular PRIVATE ${TONWERK_GRANULAR_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkGranular PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkGranular PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkGranular
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -222,9 +254,11 @@ if(TONWERK_TESTS)
         tests/WavetableTests.cpp
         ${TONWERK_DX_SOURCES}
         tests/DxTests.cpp
+        ${TONWERK_GRANULAR_SOURCES}
+        tests/GranularTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -233,6 +267,7 @@ if(TONWERK_TESTS)
         TONWERK_DISTORTION_NO_ENTRY=1
         TONWERK_WAVETABLE_NO_ENTRY=1
         TONWERK_DX_NO_ENTRY=1
+        TONWERK_GRANULAR_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

@@ -80,12 +80,18 @@ void EffectsChain::loadRoom(int tenths)
 
 void EffectsChain::process(const Effects& fx, const float* in, juce::AudioBuffer<float>& out, int start, int count)
 {
+    process(fx, in, in, out, start, count);
+}
+
+void EffectsChain::process(const Effects& fx, const float* inLeft, const float* inRight, juce::AudioBuffer<float>& out,
+                           int start, int count)
+{
     // Some hosts send more than they announced; the reverb's buffer only holds the announced size.
     const int capacity = reverbBuffer.getNumSamples();
     if (count > capacity && capacity > 0)
     {
         for (int done = 0; done < count; done += capacity)
-            process(fx, in + done, out, start + done, std::min(capacity, count - done));
+            process(fx, inLeft + done, inRight + done, out, start + done, std::min(capacity, count - done));
         return;
     }
     auto* left = out.getWritePointer(0, start);
@@ -104,7 +110,9 @@ void EffectsChain::process(const Effects& fx, const float* in, juce::AudioBuffer
             smoothedReverbMix += (fx.reverb.mix - smoothedReverbMix) * glideFast;
             smoothedTime += (fx.delay.time - smoothedTime) * glideSlow;
 
-            const float dry = in[done + i];
+            const float dryLeft = inLeft[done + i];
+            const float dryRight = inRight[done + i];
+            const float dry = inLeft == inRight ? dryLeft : 0.5f * (dryLeft + dryRight);
             // A fractional read, so a gliding delay time bends the repeats instead of crackling.
             const double delaySamples = std::clamp(smoothedTime * sampleRate, 1.0, (double) size - 2.0);
             double readPosition = writeIndex - delaySamples;
@@ -117,9 +125,9 @@ void EffectsChain::process(const Effects& fx, const float* in, juce::AudioBuffer
             const double delayed = a + (b - a) * fraction;
             const double toned = tone.process(delayed);
             const float wet = (float) toned;
-            left[done + i] = dry + wet;
+            left[done + i] = dryLeft + wet;
             if (right != nullptr)
-                right[done + i] = dry + wet;
+                right[done + i] = dryRight + wet;
             delayLine[(size_t) writeIndex] = (float) (dry * smoothedDelayMix + toned * smoothedFeedback);
             writeIndex = (writeIndex + 1) % size;
             reverbBuffer.setSample(0, done + i, (float) (dry * smoothedReverbMix));
