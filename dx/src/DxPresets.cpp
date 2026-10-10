@@ -29,11 +29,11 @@ OperatorPatch off()
     return o;
 }
 
-/** A gentle vibrato that comes in after the attack: speed 66 is about 5.3 Hz (`lfoHz`). */
+/** A gentle vibrato that comes in after the attack: speed 33 is about 5.3 Hz (`lfoHz`). */
 void vibrato(DxPatch& p, int depth, int delay = 50)
 {
     p.lfoWave = LfoWave::sine;
-    p.lfoSpeed = 66;
+    p.lfoSpeed = 33;
     p.lfoDelay = delay;
     p.lfoPitchDepth = depth;
     p.lfoPitchSens = 3;
@@ -170,7 +170,7 @@ NamedDxPatch pad()
     p.ops[4] = op(1, 96, { 40, 30, 30, 40 }, { 99, 95, 95, 0 }, 1, -4, 0, 1);
     p.ops[5] = op(3, 64, { 28, 25, 30, 40 }, { 99, 85, 80, 0 }, 2, 0, 0, 1);
     p.lfoWave = LfoWave::triangle;
-    p.lfoSpeed = 28;
+    p.lfoSpeed = 3;
     p.lfoAmpDepth = 20;
     p.ops[0].ampModSens = 1;
     p.ops[2].ampModSens = 1;
@@ -197,7 +197,7 @@ NamedDxPatch organ()
     p.ops[4] = op(4, 80, rates, levels);
     p.ops[5] = op(8, 74, rates, levels);
     vibrato(p, 6, 0);
-    p.lfoSpeed = 40;
+    p.lfoSpeed = 6;
     p.fx.reverbMix = 0.04f;
     p.volume = 0.3f;
     return { "Orgel", p, "Tasten" };
@@ -362,7 +362,7 @@ NamedDxPatch vibraphone()
     p.ops[0].ampModSens = 2;
     p.ops[2].ampModSens = 2;
     p.lfoWave = LfoWave::sine;
-    p.lfoSpeed = 62;
+    p.lfoSpeed = 21;
     p.lfoAmpDepth = 40;
     p.fx.reverbMix = 0.05f;
     p.fx.reverbDecay = 2.5f;
@@ -530,7 +530,7 @@ NamedDxPatch glassPad()
     p.ops[2].ampModSens = 1;
     p.ops[4].ampModSens = 1;
     p.lfoWave = LfoWave::triangle;
-    p.lfoSpeed = 30;
+    p.lfoSpeed = 3;
     p.lfoAmpDepth = 30;
     p.fx.reverbMix = 0.07f;
     p.fx.reverbDecay = 4.0f;
@@ -627,7 +627,7 @@ NamedDxPatch dataStream()
     p.ops[4] = off();
     p.ops[5] = off();
     p.lfoWave = LfoWave::sampleHold;
-    p.lfoSpeed = 70;
+    p.lfoSpeed = 44;
     p.lfoPitchDepth = 80;
     p.lfoPitchSens = 7;
     p.fx.delayMix = 0.25f;
