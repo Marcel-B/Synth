@@ -97,7 +97,7 @@ public:
         render(allOff, 1);
 
         beginTest("Factory programs switch the sound");
-        expectEquals(processor.getNumPrograms(), 17);
+        expectEquals(processor.getNumPrograms(), 64);
         processor.setCurrentProgram(4);
         expectEquals(processor.getProgramName(4), juce::String("FM Blech"));
         expectEquals(processor.presetName(), juce::String("FM Blech"));

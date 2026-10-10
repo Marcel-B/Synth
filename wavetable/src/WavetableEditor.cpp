@@ -1,5 +1,6 @@
 #include "WavetableEditor.h"
 
+#include "PresetCategories.h"
 #include "WavetablePresets.h"
 
 namespace tonwerkwave
@@ -239,16 +240,34 @@ WavetableEditor::WavetableEditor(WavetableProcessor& p)
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
+    // Grouped under headings; an item's id stays its program number + 1.
     const auto& factory = factoryPresets();
-    for (std::size_t i = 0; i < factory.size(); ++i)
-        presets.addItem(utf8(factory[i].name), (int) i + 1);
+    menu = menuOrder((int) factory.size(), [&factory](int i) { return factory[(std::size_t) i].category; });
+    int group = -1;
+    for (const int i : menu)
+    {
+        const auto& preset = factory[(std::size_t) i];
+        const int category = categoryIndex(preset.category);
+        if (category != group && category >= 0)
+            presets.addSectionHeading(utf8(preset.category));
+        group = category;
+        presets.addItem(utf8(preset.name), i + 1);
+    }
     presets.setTextWhenNothingSelected(utf8("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);
     };
-    previous.onClick = [this] { choosePreset(synth.getCurrentProgram() - 1); };
-    next.onClick = [this] { choosePreset(synth.getCurrentProgram() + 1); };
+    // The arrows step through the menu as it reads, group by group.
+    auto step = [this](int direction) {
+        const auto at = std::find(menu.begin(), menu.end(), synth.getCurrentProgram());
+        const auto from = at == menu.end() ? -1 : (int) std::distance(menu.begin(), at);
+        const int to = from + direction;
+        if (juce::isPositiveAndBelow(to, (int) menu.size()))
+            choosePreset(menu[(std::size_t) to]);
+    };
+    previous.onClick = [step] { step(-1); };
+    next.onClick = [step] { step(1); };
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &oscA, &oscB, &sub, &noise,
                                                             &filter, &distortion, &master, &env1, &env2, &env3,
                                                             &macros, &lfo1, &lfo2, &voice, &matrix, &keyboard })
@@ -319,7 +338,7 @@ void WavetableEditor::timerCallback()
         presets.setSelectedId(0, juce::dontSendNotification);
         for (int i = 0; i < presets.getNumItems(); ++i)
             if (presets.getItemText(i) == shownPreset)
-                presets.setSelectedId(i + 1, juce::dontSendNotification);
+                presets.setSelectedId(presets.getItemId(i), juce::dontSendNotification);
         if (presets.getSelectedId() == 0)
             presets.setText(shownPreset, juce::dontSendNotification);
     }

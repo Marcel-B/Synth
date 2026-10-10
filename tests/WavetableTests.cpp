@@ -6,6 +6,7 @@
 #include <juce_core/juce_core.h>
 
 #include <chrono>
+#include <cstring>
 #include <numeric>
 
 using namespace tonwerkwave;
@@ -423,7 +424,9 @@ public:
 
         beginTest("Eight chords of supersaws cost little CPU");
         {
-            const int supersaw = (int) factoryPresets().size() - 1;
+            int supersaw = 0;
+            while (std::strcmp(factoryPresets()[(std::size_t) supersaw].name, "Supersaw") != 0)
+                ++supersaw;
             std::vector<Note> chord;
             for (int note : { 48, 52, 55, 59, 60, 64, 67, 71 })
                 chord.push_back({ 0.0, 4.0, note });

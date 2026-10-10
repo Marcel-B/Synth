@@ -164,12 +164,12 @@ public:
                 n += patchFromJson(preset.patch).engine == engine ? 1 : 0;
             return n;
         };
-        expectEquals(PresetLibrary::factoryPresets(Edition::analog).size(), 9);
-        expectEquals(count(Edition::analog, Engine::analog), 9);
-        expectEquals(PresetLibrary::factoryPresets(Edition::fm).size(), 8);
-        expectEquals(count(Edition::fm, Engine::fm), 8);
+        expectEquals(PresetLibrary::factoryPresets(Edition::analog).size(), 34);
+        expectEquals(count(Edition::analog, Engine::analog), 34);
+        expectEquals(PresetLibrary::factoryPresets(Edition::fm).size(), 30);
+        expectEquals(count(Edition::fm, Engine::fm), 30);
         const auto factory = PresetLibrary::factoryPresets();
-        expectEquals(factory.size(), 17);
+        expectEquals(factory.size(), 64);
         expectEquals(factory[0].name, juce::String("Analog Lead"));
         expectEquals(factory[3].name, juce::String("Analog Leitton"));
         expectEquals(factory[4].name, juce::String("FM Blech"));

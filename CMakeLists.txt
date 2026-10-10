@@ -37,6 +37,7 @@ set(TONWERK_UI_SOURCES common/NightCity.cpp)
 set(TONWERK_SOURCES
     src/dsp/Defaults.cpp
     src/EffectsChain.cpp
+    src/FactorySounds.cpp
     src/Parameters.cpp
     src/PatchJson.cpp
     src/PluginEditor.cpp
@@ -215,7 +216,8 @@ if(TONWERK_TESTS)
         ${TONWERK_WAVETABLE_SOURCES}
         tests/WavetableTests.cpp
         ${TONWERK_DX_SOURCES}
-        tests/DxTests.cpp)
+        tests/DxTests.cpp
+        tests/PresetTests.cpp)
     target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}

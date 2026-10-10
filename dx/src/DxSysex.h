@@ -12,6 +12,8 @@ struct NamedDxPatch
 {
     std::string name;
     DxPatch patch;
+    /** The menu's group for a factory sound (see `PresetCategories.h`); empty for one read from a file. */
+    const char* category = "";
 };
 
 /**

@@ -23,6 +23,8 @@ public:
         juce::var patch;
         /** `factory`, `tonwerk` or `file`; only the menu's grouping uses it. */
         juce::String source;
+        /** A factory sound's group in the menu, one of `tonwerkui::kPresetCategories`; empty for imported ones. */
+        juce::String category {};
     };
 
     /** The library in `folder`; the plugin uses `defaultFolder()`, the tests a temporary one. */

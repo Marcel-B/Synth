@@ -37,9 +37,20 @@ int EffectsChain::roomFor(const Effects& fx)
     return fx.reverb.mix > 0.0f ? juce::roundToInt(fx.reverb.decay * 10.0f) : 0;
 }
 
+int EffectsChain::impulseLength(double rate, double decay)
+{
+    return std::max(1, (int) std::ceil(rate * decay));
+}
+
+bool EffectsChain::roomPlaying() const
+{
+    const int tenths = loaded.load();
+    return tenths == 0 || reverb.getCurrentIRSize() == impulseLength(sampleRate, tenths / 10.0);
+}
+
 juce::AudioBuffer<float> EffectsChain::makeImpulse(double rate, double decay, juce::Random& random)
 {
-    const int length = std::max(1, (int) std::ceil(rate * decay));
+    const int length = impulseLength(rate, decay);
     juce::AudioBuffer<float> impulse(2, length);
     // ln(1000): the level after `decay` seconds is 1/1000, i.e. -60 dB. Different noise per side spreads the tail.
     const double fall = std::log(1000.0) / length;
@@ -56,7 +67,8 @@ void EffectsChain::loadRoom(int tenths)
 {
     if (tenths <= 0 || tenths == loaded.load())
         return;
-    juce::Random random;
+    // The same noise for the same room every time: a sound plays alike whenever it is loaded, and a bounce repeats.
+    juce::Random random(tenths);
     reverb.loadImpulseResponse(makeImpulse(sampleRate, tenths / 10.0, random),
                                sampleRate,
                                juce::dsp::Convolution::Stereo::yes,

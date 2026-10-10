@@ -14,9 +14,11 @@ namespace tonwerkwave
 struct FactoryPreset
 {
     const char* name;
+    /** The menu's group, one of `tonwerkui::kPresetCategories`; empty for Init, which comes first. */
+    const char* category;
     std::vector<std::pair<juce::String, float>> values;
 };
 
-/** The host's programs, in order; the first is the plain default sound. */
+/** The host's programs, in order; the first is the plain default sound. New sounds go at the end. */
 const std::vector<FactoryPreset>& factoryPresets();
 } // namespace tonwerkwave
