@@ -173,8 +173,18 @@ inline double levelGain(double level)
 /** Seconds a stage at `rate` takes to cross all 99 steps: about 3 ms at 99, 40 s at 0. */
 inline double stageSeconds(double rate) { return 38.0 * std::exp2(-std::clamp(rate, 0.0, 99.0) / 7.3); }
 
-/** LFO speed 0 to 99 as Hz, from about 0.06 to 50. */
-inline double lfoHz(int speed) { return 0.06 * std::exp2(std::clamp(speed, 0, 99) * 0.098); }
+/**
+ * LFO speed 0 to 99 as Hz, fitted to measurements of the DX7 and TX7 (within a few percent from speed 4 up): about
+ * 0.16 Hz a step up to 63, so the init voice's 35 is a 5.6 Hz vibrato, then steeper to about 49 Hz at 99.
+ */
+inline double lfoHz(int speed)
+{
+    const double s = (double) std::clamp(speed, 0, 99);
+    if (s <= 63.0)
+        return std::max(0.161 * s - 0.03, 0.0625);
+    const double above = s - 63.0;
+    return 0.161 * 63.0 - 0.03 + 0.77 * above + 0.009 * above * above;
+}
 
 /**
  * The four-stage envelope of one operator, in level steps (0 to 99), so its curves are exponential in loudness as on

@@ -306,13 +306,50 @@ public:
         {
             auto p = sine();
             p.lfoWave = LfoWave::square;
-            p.lfoSpeed = 10;
+            p.lfoSpeed = 3;
             p.lfoPitchDepth = 99;
             p.lfoPitchSens = 7; // an octave at full depth
             const auto out = voice(p, 69, 0.3);
             // The square sits at one end for the first half of its slow cycle: an octave above.
             const float up = amplitudeAt(out, 880.0, 2000, 12000), home = amplitudeAt(out, 440.0, 2000, 12000);
             expectGreaterThan(up, home * 5.0f);
+        }
+
+        beginTest("LFO speed runs as fast as a DX7's");
+        {
+            // Hz as measured on a DX7 and a TX7: the mean of Dexed's and hexter's tables, which agree within 4 % up
+            // to speed 63 and within 6 % above. A square throws a 440 Hz sine an octave up and down; the LFO's
+            // cycles are counted from the zero crossings, four times closer together up there than down there.
+            for (const auto& [speed, hz] : std::initializer_list<std::pair<int, double>> {
+                     { 10, 1.56 }, { 35, 5.6 }, { 50, 7.9 }, { 63, 10.2 }, { 80, 25.2 }, { 99, 48.2 } })
+            {
+                auto p = sine();
+                p.lfoWave = LfoWave::square;
+                p.lfoSpeed = speed;
+                p.lfoPitchDepth = 99;
+                p.lfoPitchSens = 7;
+                const auto out = voice(p, 69, 3.0);
+                std::vector<double> rises; // when the pitch goes up again: one per LFO cycle
+                double lastCrossing = -1.0;
+                bool high = false;
+                for (std::size_t n = 1; n < out.size(); ++n)
+                {
+                    if (out[n - 1] >= 0.0f || out[n] < 0.0f)
+                        continue;
+                    const double at = (double) n - out[n] / (out[n] - out[n - 1]);
+                    if (lastCrossing >= 0.0)
+                    {
+                        const bool nowHigh = kRate / (at - lastCrossing) > 440.0;
+                        if (nowHigh && ! high)
+                            rises.push_back(at / kRate);
+                        high = nowHigh;
+                    }
+                    lastCrossing = at;
+                }
+                expectGreaterThan((int) rises.size(), 3, "speed " + juce::String(speed));
+                const double measured = (double) (rises.size() - 1) / (rises.back() - rises.front());
+                expectWithinAbsoluteError(measured, hz, hz * 0.05, "speed " + juce::String(speed));
+            }
         }
 
         beginTest("SysEx: a 32-voice bank reads every voice");
