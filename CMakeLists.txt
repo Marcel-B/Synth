@@ -104,7 +104,7 @@ target_link_libraries(ChromeGlitch
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
-# Tonwerk Distortion: the circuit of BOSS's DS-1 as an audio effect (distortion/).
+# Tonwerk Distortion: a classic guitar distortion pedal's circuit as an audio effect (distortion/).
 juce_add_plugin(TonwerkDistortion
     PRODUCT_NAME "Tonwerk Distortion"
     COMPANY_NAME "b-velop"
@@ -133,7 +133,7 @@ target_link_libraries(TonwerkDistortion
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
-# Tonwerk Wavetable: a wavetable synthesizer for basses and leads, in the manner of Serum (wavetable/).
+# Tonwerk Wavetable: a wavetable synthesizer for basses and leads (wavetable/).
 juce_add_plugin(TonwerkWavetable
     PRODUCT_NAME "Tonwerk Wavetable"
     COMPANY_NAME "b-velop"
@@ -165,7 +165,7 @@ target_link_libraries(TonwerkWavetable
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
-# Tonwerk DX: six operators and the DX7's 32 algorithms, with Tonwerk's delay and hall (dx/).
+# Tonwerk DX: six-operator FM with 32 algorithms, with Tonwerk's delay and hall (dx/).
 juce_add_plugin(TonwerkDX
     PRODUCT_NAME "Tonwerk DX"
     COMPANY_NAME "b-velop"
