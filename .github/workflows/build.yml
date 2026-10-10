@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -37,7 +37,7 @@ jobs:
       - name: Sign ad hoc
         run: |
           for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
-            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular"; do
+            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
@@ -55,9 +55,10 @@ jobs:
           cp -R "build/TonwerkWavetable_artefacts/Release/AU/Tonwerk Wavetable.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkDX_artefacts/Release/AU/Tonwerk DX.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkGranular_artefacts/Release/AU/Tonwerk Granular.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkPhysical_artefacts/Release/AU/Tonwerk Physical.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical || true
           auval -strict -v aumu TwAn Bvlp
           auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
@@ -66,6 +67,7 @@ jobs:
           auval -strict -v aumu TwWt Bvlp
           auval -strict -v aumu TwDx Bvlp
           auval -strict -v aumu TwGr Bvlp
+          auval -strict -v aumu TwPh Bvlp
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -93,6 +95,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/TonwerkGranular_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Granular.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Granular-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Granular.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Granular-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkPhysical_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Physical.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Physical-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Physical.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Physical-VST3.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: tonwerk-synth-macos
