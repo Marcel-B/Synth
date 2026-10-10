@@ -86,12 +86,20 @@ void EffectsChain::process(const Effects& fx, const float* in, juce::AudioBuffer
 void EffectsChain::process(const Effects& fx, const float* inLeft, const float* inRight, juce::AudioBuffer<float>& out,
                            int start, int count)
 {
+    process(fx, inLeft, inRight, nullptr, nullptr, out, start, count);
+}
+
+void EffectsChain::process(const Effects& fx, const float* inLeft, const float* inRight, const float* delaySend,
+                           const float* reverbSend, juce::AudioBuffer<float>& out, int start, int count)
+{
     // Some hosts send more than they announced; the reverb's buffer only holds the announced size.
     const int capacity = reverbBuffer.getNumSamples();
     if (count > capacity && capacity > 0)
     {
         for (int done = 0; done < count; done += capacity)
-            process(fx, inLeft + done, inRight + done, out, start + done, std::min(capacity, count - done));
+            process(fx, inLeft + done, inRight + done, delaySend != nullptr ? delaySend + done : nullptr,
+                    reverbSend != nullptr ? reverbSend + done : nullptr, out, start + done,
+                    std::min(capacity, count - done));
         return;
     }
     auto* left = out.getWritePointer(0, start);
@@ -112,7 +120,9 @@ void EffectsChain::process(const Effects& fx, const float* inLeft, const float* 
 
             const float dryLeft = inLeft[done + i];
             const float dryRight = inRight[done + i];
-            const float dry = inLeft == inRight ? dryLeft : 0.5f * (dryLeft + dryRight);
+            const float middle = inLeft == inRight ? dryLeft : 0.5f * (dryLeft + dryRight);
+            const float toDelay = delaySend != nullptr ? delaySend[done + i] : middle;
+            const float toReverb = reverbSend != nullptr ? reverbSend[done + i] : middle;
             // A fractional read, so a gliding delay time bends the repeats instead of crackling.
             const double delaySamples = std::clamp(smoothedTime * sampleRate, 1.0, (double) size - 2.0);
             double readPosition = writeIndex - delaySamples;
@@ -128,10 +138,10 @@ void EffectsChain::process(const Effects& fx, const float* inLeft, const float* 
             left[done + i] = dryLeft + wet;
             if (right != nullptr)
                 right[done + i] = dryRight + wet;
-            delayLine[(size_t) writeIndex] = (float) (dry * smoothedDelayMix + toned * smoothedFeedback);
+            delayLine[(size_t) writeIndex] = (float) (toDelay * smoothedDelayMix + toned * smoothedFeedback);
             writeIndex = (writeIndex + 1) % size;
-            reverbBuffer.setSample(0, done + i, (float) (dry * smoothedReverbMix));
-            reverbBuffer.setSample(1, done + i, (float) (dry * smoothedReverbMix));
+            reverbBuffer.setSample(0, done + i, (float) (toReverb * smoothedReverbMix));
+            reverbBuffer.setSample(1, done + i, (float) (toReverb * smoothedReverbMix));
         }
         done += chunk;
     }

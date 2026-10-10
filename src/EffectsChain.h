@@ -28,6 +28,13 @@ public:
      */
     void process(const Effects& fx, const float* inLeft, const float* inRight, juce::AudioBuffer<float>& out, int start,
                  int count);
+    /**
+     * The same with sends of their own (Tonwerk Groovebox's, one share per track): the sides pass dry, the delay takes
+     * `delaySend` and the reverb `reverbSend`, each scaled by its mix as above. A null send takes the middle of the
+     * sides, as the version without sends does.
+     */
+    void process(const Effects& fx, const float* inLeft, const float* inRight, const float* delaySend,
+                 const float* reverbSend, juce::AudioBuffer<float>& out, int start, int count);
 
     /**
      * The room the reverb needs for `fx`, in tenths of a second, or 0 when it is off. The impulse is computed and loaded

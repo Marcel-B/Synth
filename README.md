@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -161,6 +161,24 @@ Physical Modeling: Statt Wellenformen abzuspielen, rechnet das Plugin nach, wie 
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Stimmung über die ganze Tastatur, gestrichene Saite und Rohrblatt schwingen von selbst und hören beim Loslassen auf, ungerade Obertöne im geschlossenen Rohr, fehlende gerade Obertöne bei Anschlag in der Mitte, Abklingzeit, gestreckte Obertöne bei Inharmonie, Obertöne von Stab und Glocke, Härte, Vibrato, jeder Erreger auf jedem Resonator auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Korpus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob Geige und Klarinette nach Geige und Klarinette klingen, entscheiden die Ohren.
 
+## Tonwerk Groovebox (Instrument)
+
+Eine Drum-Machine mit acht Instrumenten und eingebautem Step-Sequencer. Alle Klänge werden berechnet, nicht abgespielt, so wie die klassischen analogen Drumcomputer sie gebaut haben: die Bassdrum ein Sinus, dessen Tonhöhe beim Schlag von oben herunterfällt, die Snare ein gestimmter Kessel unter gefiltertem Rauschen, das Clap drei schnelle Hände und ein Nachhall aus Rauschen, die Toms fallende Sinustöne mit etwas Fell, Hi-Hats und Becken sechs Rechteckschwingungen in schief zueinander stehenden Frequenzen, die durch Bandpass und Hochpass nach Metall klingen. Samples gibt es keine, jeder Regler wirkt deshalb stufenlos auf den Klang. Sie liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Groovebox** (`aumu TwGb Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Groovebox](docs/groovebox.png)
+
+- **Pattern**: Eine Zeile pro Instrument mit bis zu 32 Schritten. Ein Klick setzt einen Schritt, ein zweiter macht ihn zum **Akzent** (gelb), ein dritter löscht ihn; Ziehen über die Zeile setzt alle überfahrenen Schritte genauso. Ein Klick auf den Namen spielt das Instrument an und zeigt unten seine Regler, **M** schaltet es stumm. Der gerade spielende Schritt ist umrandet, Schritte hinter der Länge sind abgedunkelt. **Kopieren**, **Einfügen** und **Leeren** wirken auf das gezeigte Pattern.
+- **Sequencer**: **Lauf** *Mit Host* (spielt, solange Logic spielt, auf dessen Takte: wer mitten im Takt startet oder einen Cycle laufen lässt, hört die Schritte trotzdem an ihrer Stelle), *Frei* (läuft ohne Transport, für die App oder zum Jammen) oder *Aus* (nur MIDI). **Pattern** A bis H, acht pro Projekt, umschaltbar auch per Automation. **Länge** 1 bis 32 Schritte, **Raster** 1/16, 1/8, 1/16-Triolen oder 1/32, **Swing** (50 % gerade, 67 % triolisch, 75 % punktiert) und **Akzent** (wie viel leiser ein normaler Schritt als ein Akzent ist, bis 6 dB).
+- **Instrumente**: Jedes hat **Stimmung** (±24 Halbtöne), **Abklingen** (bis −60 dB), zwei Klangregler, **Pegel**, **Panorama** und je einen Send auf **Delay** und **Hall**. Die Klangregler: Bassdrum *Punch* (wie hoch der Schlag beginnt) und *Klick* (Schlägel und Übersteuerung), Snare *Ton* und *Snappy* (Teppich gegen Kessel), Clap *Schärfe* und *Streuung* (wie weit die Hände auseinander liegen), Toms *Sweep* und *Fell*, Hi-Hats und Becken *Ton* und *Rauschen* (Rauschen statt Metall). Die geschlossene Hi-Hat würgt die offene ab, wie bei einem echten Paar.
+- **MIDI**: Jedes Instrument spielt auch auf seiner Note nach General MIDI, mit Anschlagsdynamik: Bassdrum C1 (36), Snare D1 (38), Clap D#1 (39), Tom tief F1 (41), Tom hoch C2 (48), Hi-Hat zu F#1 (42), Hi-Hat offen A#1 (46), Becken C#2 (49), dazu die verwandten Noten (35, 40, 43, 45, 47, 50, 44, 51, 57 …). So lassen sich Patterns auch in Logics Drum-Editor oder Step Sequencer schreiben, mit dem eingebauten Sequencer auf *Aus*.
+- **Summe**: **Drive** sättigt die Summe (leise Teile kommen bis 7 dB hoch, Spitzen werden rund), **Master**. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Instrumenten; was hineingeht, bestimmen die Sends der Instrumente.
+
+**Kits**: 22 eigene Kits mit je einem oder zwei Patterns (A ist der Groove, B eine Variation oder ein Fill), die Liste steht unter [Werksklänge](#werksklänge). Ein Kit lädt Klang und Patterns, die Einstellung von **Lauf** bleibt. Hörproben aller Kits (zwei Takte Pattern A bei 120 BPM) liegen im Projektordner unter `synth/hoerproben/Tonwerk Groovebox`.
+
+**CPU:** Jedes Instrument hat zwei Stimmen, damit ein neuer Schlag den alten kurz ausklingen lässt statt zu knacken; stumme Stimmen kosten nichts. Alle acht Instrumente auf jedem 1/32-Schritt mit Delay, Hall und Drive rechnet der Test etwa 12-mal schneller als Echtzeit.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonhöhe der Bassdrum und ihr Punch, Abklingzeit, Snappy, Helligkeit und Länge der Hi-Hats, die Hände des Claps, Anschlag, Abwürgen der offenen Hi-Hat, erneuter Schlag ohne Knacken, Raster und Swing auf das Sample genau, Start mitten im Takt und Stopp mit dem Host, freier Lauf, Länge, Pattern-Wahl und Stummschalten, Akzent, MIDI-Noten, Sends und Panorama, Zustand mit allen Patterns, alle Kits und ihre Lautheit, CPU, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist sie noch nicht gehört, und ob Logic das Projekt nach einer Änderung im Pattern als geändert markiert, ist nur dort zu sehen.
+
 ## Herunterladen
 
 Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
@@ -237,10 +255,15 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Bässe: Zupfbass, Gestrichener Bass, Röhrenbass, Gleitbass; Leads: Saitenlead, Rohrblattlead
   - Flächen: Gestrichene Schale, Äolsharfe, Gestrichenes Metall
   - Effekte: Pauke, Tom, Holzblock, Gong, Saitenregen
+- **Tonwerk Groovebox** (neu)
+  - House: Deep House, Disco House, Garage; Techno: Berlin Techno, Industrial, Minimal
+  - Hip-Hop: Boom Bap, Lo-Fi; Trap: Trap, Drill (beide im 1/32-Raster für Hi-Hat-Wirbel)
+  - Electro: Electro Funk, Synthwave, Miami Bass; Breaks: Breakbeat, Drum & Bass, Jungle
+  - Dubstep: Halftime, Riddim; Experimentell: Triolen-Shuffle, Glitch-Perkussion, Metall-Werkstatt
 - **Tonwerk Distortion** (Effekt): Gitarre, Bass, Synths, Drums, Gesang, siehe [Tonwerk Distortion](#tonwerk-distortion-effekt)
 - **Chrome Glitch** (Effekt): Dezent, Rhythmisch, Zerstört, Klangeffekte, siehe [Chrome Glitch](#chrome-glitch-effekt)
 
-**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular und Physical liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
+**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular und Physical liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
 
@@ -280,6 +303,7 @@ cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
 cmake --build build --target TonwerkPhysical_Standalone
+cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport
 ```
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
