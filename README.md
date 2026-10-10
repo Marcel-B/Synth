@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für Klänge in Richtung Yamaha DX7, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, der Klang des BOSS DS-1 (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für Klänge in Richtung Yamaha DX7, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, der Klang des BOSS DS-1 (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -117,6 +117,27 @@ FM mit sechs Operatoren und den 32 Algorithmen des Yamaha DX7, für E-Pianos, Gl
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (alle 32 Algorithmen, Hüllkurvenzeiten, Pegelschritte, Ratios, Anschlag, LFO und sein Tempo gegen Messungen am DX7, SysEx-Bänke und Einzelklänge, jeder Werksklang klingt und übersteuert auch im Akkord nicht, Zustand, CPU) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; wie nah die Werksklänge am DX7 sind, entscheiden die Ohren.
 
+## Tonwerk Granular (Instrument)
+
+Ein Granular-Synthesizer: Er schneidet aus einem Klang viele kurze Körner (5 ms bis 1 s) und spielt sie überlappend, verschoben, umgedreht und im Stereobild verteilt wieder ab. Daraus werden Flächen, Wolken, Texturen und eingefrorene Momente. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Granular** (`aumu TwGr Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Granular](docs/granular.png)
+
+- **Quelle**: neun eigene Klänge, beim Laden aus Formeln berechnet, nichts aufgenommen oder kopiert: *Chor* (gesungenes a-e-i-o-u), *Glas* (angeschlagen), *Streicher*, *Zupfen* (Karplus-Strong), *Orgel*, *Wind*, *Metall* (FM), *Sinus* und *Rhythmus* (zwei Takte Kick, Hats und Stabs). Dazu **Eigene Datei**: **Datei …** oder eine Audiodatei auf die Anzeige ziehen (WAV, AIFF, FLAC, MP3 und was macOS sonst liest; die ersten 30 Sekunden, zu Mono gemischt). Der Pfad wird im Projekt gespeichert und beim Öffnen neu gelesen, die Datei selbst nicht; wer sie verschiebt, lädt sie neu. Alle Quellen sind auf C4 gestimmt, C4 spielt eine Datei so, wie sie ist.
+- **Anzeige**: die Quelle als Wellenform, gelb der Bereich, aus dem die Körner kommen, und die Körner der neuesten Note als Funken, die beim Spielen wandern.
+- **Position** (wo in der Quelle), **Streuung** (wie weit darum herum, 100 % ist überall) und **Scan** (wie schnell die Position beim Halten weiterläuft, 100 % ist das Tempo der Quelle, negativ rückwärts, 0 friert ein).
+- **Körner**: **Größe** (5 bis 1000 ms), **Dichte** (1 bis 200 Körner pro Sekunde), **Zufall** (wie unregelmäßig sie kommen), **Fenster** (*Glocke* weich, *Flach* mit kurzen Blenden, *Schlag* mit hartem Anfang), **Rückwärts** (Anteil umgedrehter Körner) und **Breite** im Stereobild. Der Pegel bleibt gleich, ob zwei Körner gleichzeitig klingen oder vierzig.
+- **Tonhöhe**: Oktave, Halbton, Fein, **Streuung** in Cent (bis zwei Oktaven) mit **Raster** *Frei*, *Oktaven* oder *Quinten* (Quinten und Oktaven geben den schimmernden Shimmer-Klang), **Tastatur** aus spielt jede Taste in der Tonhöhe der Quelle.
+- **Filter** (Tiefpass 12 und 24 dB, Hochpass, Bandpass) mit Resonanz und Keytracking; ein Bandpass mit hoher Resonanz und Keytracking 100 % macht aus *Wind* einen gestimmten Klang.
+- **Hüllkurve 1** (Lautstärke), **Hüllkurve 2**, **zwei LFOs** (frei oder im Songtempo, dann auf der Songposition eingerastet), **Modrad** und **Anschlag**, jede mit einem **Ziel** (Position, Streuung, Korngröße, Dichte, Tonhöhe, Cutoff, Resonanz, Breite, Lautstärke) und einer **Menge** von −100 bis 100 %. Die LFOs schwingen um die Einstellung herum. Beim Anschlag nimmt eine positive Menge bei leisem Spiel weg (Standard: Lautstärke 50 %).
+- **Stimmen**: Poly (8 Stimmen) oder Mono mit **Glide**, Pitchbend-Bereich, **Master**. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths, hier in Stereo.
+
+**Presets**: 26 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Hörproben aller Klänge mit ihrer Testphrase liegen im Projektordner unter `synth/hoerproben/Tonwerk Granular`.
+
+**CPU:** Jede Stimme spielt höchstens 40 Körner gleichzeitig; die Modulation rechnet alle 32 Samples. Wird ein Korn schneller als die Quelle gelesen, nimmt es eine vorher gefilterte Kopie mit halber, viertel, ... Rate, damit hoch gespielte Körner nicht aliasen. Acht Stimmen mit je 40 Körnern, Filter und Hall rechnet der Test etwa 6- bis 9-mal schneller als Echtzeit; die Werksklänge brauchen viel weniger Körner.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Quellen und ihr Pegel, Kopien ohne Aliasing, Tonhöhe und Oktave, Tastatur aus, Oktav-Raster, gleicher Pegel bei wenigen und vielen Körnern, Position, Streuung und Scan, Hüllkurve, Vibrato, alle Quellen, Fenster und Filter ohne Ausreißer, eigene Datei samt Speichern und Laden, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, Laden per Dateidialog und Ziehen auf die Anzeige nur auf Linux gebaut, nicht am Mac ausprobiert.
+
 ## Herunterladen
 
 Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
@@ -180,8 +201,13 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Yamahas ROMs oder f
   - Flächen: *Harmonische Fläche*, *Kamm-Fläche*, *Pump-Akkorde* (duckt auf jeder Viertel im Songtempo), *Dunkle Fläche*
   - Plucks: *Pluck*, *Glas-Pluck*, *Bit-Arp*; Tasten: *Bit-Keys*, *Digi-Piano*; Glocken: *Digi-Glocke*
   - Effekte: Laser, *Riser* (vier Sekunden halten), *Downlifter*, *Sirene*
+- **Tonwerk Granular** (neu)
+  - Flächen: Chorwolke, Glasnebel, Streicherwolke, Orgelnebel, Eisfläche, Dunkle Fläche, Zeitlupe, Windharfe
+  - Effekte: Kornregen, Gefroren, Zerfall, Metallschwarm, Sturm, Stotterband
+  - Leads: Kornlead, Vokal-Lead; Bässe: Kornbass, Rauer Bass; Tasten: Orgelkörner, Staubpiano
+  - Plucks: Kornzupfer, Tropfen; Glocken: Kristall, Glockenstaub; Bläser & Streicher: Körnige Streicher, Chor Aah
 
-**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM und Wavetable liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
+**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable und Granular liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
 
@@ -219,6 +245,7 @@ cmake --build build --target ChromeGlitch_Standalone   # der Effekt als App, mit
 cmake --build build --target TonwerkDistortion_Standalone
 cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
+cmake --build build --target TonwerkGranular_Standalone
 ```
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase. `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
