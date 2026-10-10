@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -142,6 +142,25 @@ Ein Granular-Synthesizer: Er schneidet aus einem Klang viele kurze Körner (5 ms
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Quellen und ihr Pegel, Kopien ohne Aliasing, Tonhöhe und Oktave, Tastatur aus, Oktav-Raster, gleicher Pegel bei wenigen und vielen Körnern, Position, Streuung und Scan, Hüllkurve, Vibrato, alle Quellen, Fenster und Filter ohne Ausreißer, eigene Datei samt Speichern und Laden, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, Laden per Dateidialog und Ziehen auf die Anzeige nur auf Linux gebaut, nicht am Mac ausprobiert.
 
+## Tonwerk Physical (Instrument)
+
+Physical Modeling: Statt Wellenformen abzuspielen, rechnet das Plugin nach, wie ein Instrument schwingt. Ein **Erreger** (Zupfen, Schlagen, Streichen, Blasen) bringt einen **Resonator** (Saite, Rohr, Stab, Glocke, Fell, Schale) zum Klingen, danach färbt ein **Korpus** den Klang. Weil der Klang aus dem Zusammenspiel entsteht, klingt jeder Anschlag ein wenig anders, und Bogen und Atem halten den Ton, solange die Taste gedrückt ist. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Physical** (`aumu TwPh Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Physical](docs/physical.png)
+
+- **Anzeige**: Saite und Rohr als die Welle, die gerade auf ihnen läuft, gelb die Stelle, an der gezupft, geschlagen oder gestrichen wird; Stab, Glocke, Fell und Schale als ihre Resonanzen, je ein Balken bei ihrem Verhältnis zum Grundton, so hoch, wie sie noch klingen.
+- **Erreger**: **Zupfen** (ein kurzer Stoß über eine Schwingungsperiode, wie beim Karplus-Strong-Verfahren), **Schlagen** (Hammer oder Schlägel, je härter, desto kürzer und heller), **Streichen** (ein Bogen mit Haft- und Gleitreibung, die Saite schwingt von selbst, solange die Taste gehalten wird) und **Blasen** (am geschlossenen Rohr ein Rohrblatt, das selbst schwingt; sonst ein Luftstrom). Dazu **Härte**, **Druck** (Bogendruck oder Atem), **Rauschen** (Anteil von Kratzen und Luft) und **Position** (wo, 50 % ist die Mitte: eine Saite in der Mitte gezupft verliert ihre geraden Obertöne, am Rand wird sie dünn und hell). Eine eigene Hüllkurve führt Bogen und Atem.
+- **Resonator**: **Saite**, **Rohr geschlossen** (nur ungerade Obertöne, der hohle Klang der Klarinette), **Rohr offen** (alle Obertöne, wie eine Flöte), **Stab** (Obertöne beim 4- und 10-fachen, wie ein gestimmter Marimbastab), **Glocke** (mit dem Summton eine Oktave unter dem Schlagton und der kleinen Terz), **Fell** (die unharmonischen Töne einer Trommel) und **Schale** (Klangschale, je zwei eng benachbarte Töne, die schweben). **Abklingen** (wie lange ein Ton klingt, bis 20 s), **Dämpfung** (wie viel schneller die hohen Obertöne verklingen), **Inharmonie** (bei der Saite die Steifheit, die ihre Obertöne nach oben streckt wie bei einem Klavier; bei den anderen streckt sie die Resonanzen) und **Loslassen** (wie schnell der Ton nach dem Loslassen gedämpft wird).
+- **Korpus**: *Gitarre*, *Geige*, *Kiste* oder *Resonanzboden*, mit **Mix**.
+- **Tonhöhe**, **Filter** (Tiefpass 12 und 24 dB, Hochpass, Bandpass) mit Resonanz und Keytracking, **Hüllkurve 2**, **zwei LFOs** (frei oder im Songtempo), **Modrad** und **Anschlag**, jede mit einem **Ziel** (Tonhöhe, Druck, Härte, Position, Abklingen, Dämpfung, Cutoff, Resonanz, Lautstärke) und einer **Menge**. **Dynamik** sagt, wie viel leiser ein leiser Anschlag ist (bis 20 dB).
+- **Stimmen**: Poly (12 Stimmen) oder Mono mit **Glide**, Pitchbend-Bereich, **Breite** (tiefe Töne links, hohe rechts, wie an einem Flügel), **Master**. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths. Dieselbe Taste noch einmal regt die klingende Saite neu an, wie bei einem echten Instrument.
+
+**Presets**: 35 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Hörproben aller Klänge mit ihrer Testphrase liegen im Projektordner unter `synth/hoerproben/Tonwerk Physical`.
+
+**CPU:** Saite und Rohre sind Verzögerungsleitungen (eine Schleife pro Stimme), Stab, Glocke, Fell und Schale höchstens 16 Resonatoren pro Stimme; die Modulation rechnet alle 32 Samples. Zwölf Stimmen gestrichener Saiten oder Schalen mit Filter, Korpus und Hall rechnet der Test etwa 17- bis 20-mal schneller als Echtzeit.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Stimmung über die ganze Tastatur, gestrichene Saite und Rohrblatt schwingen von selbst und hören beim Loslassen auf, ungerade Obertöne im geschlossenen Rohr, fehlende gerade Obertöne bei Anschlag in der Mitte, Abklingzeit, gestreckte Obertöne bei Inharmonie, Obertöne von Stab und Glocke, Härte, Vibrato, jeder Erreger auf jedem Resonator auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Korpus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob Geige und Klarinette nach Geige und Klarinette klingen, entscheiden die Ohren.
+
 ## Herunterladen
 
 Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
@@ -210,10 +229,18 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Effekte: Kornregen, Gefroren, Zerfall, Metallschwarm, Sturm, Stotterband
   - Leads: Kornlead, Vokal-Lead; Bässe: Kornbass, Rauer Bass; Tasten: Orgelkörner, Staubpiano
   - Plucks: Kornzupfer, Tropfen; Glocken: Kristall, Glockenstaub; Bläser & Streicher: Körnige Streicher, Chor Aah
+- **Tonwerk Physical** (neu)
+  - Plucks: Nylongitarre, Stahlsaite, Harfe, Pizzicato, Kalimba, Koto
+  - Tasten: Hammerklavier, Hackbrett, Kielklavier, Funk-Clavi
+  - Glocken: Marimba, Vibraphon, Kirchenglocke, Röhrenglocke, Glasschale, Spieluhr
+  - Bläser & Streicher: Geige, Cello, Klarinette, Schalmei, Hauchflöte, Panflöte
+  - Bässe: Zupfbass, Gestrichener Bass, Röhrenbass, Gleitbass; Leads: Saitenlead, Rohrblattlead
+  - Flächen: Gestrichene Schale, Äolsharfe, Gestrichenes Metall
+  - Effekte: Pauke, Tom, Holzblock, Gong, Saitenregen
 - **Tonwerk Distortion** (Effekt): Gitarre, Bass, Synths, Drums, Gesang, siehe [Tonwerk Distortion](#tonwerk-distortion-effekt)
 - **Chrome Glitch** (Effekt): Dezent, Rhythmisch, Zerstört, Klangeffekte, siehe [Chrome Glitch](#chrome-glitch-effekt)
 
-**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable und Granular liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
+**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular und Physical liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
 
@@ -252,6 +279,7 @@ cmake --build build --target TonwerkDistortion_Standalone
 cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
+cmake --build build --target TonwerkPhysical_Standalone
 ```
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
