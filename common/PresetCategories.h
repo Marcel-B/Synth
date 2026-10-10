@@ -17,6 +17,9 @@ inline constexpr std::array<const char*, 8> kPresetCategories { "Bässe",   "Lea
                                                                  "Plucks", "Glocken", "Bläser & Streicher", "Effekte" };
 /** Tonwerk Distortion's groups: by what goes through it. */
 inline constexpr std::array<const char*, 5> kDistortionCategories { "Gitarre", "Bass", "Synths", "Drums", "Gesang" };
+/** Tonwerk Groovebox's groups: by style. */
+inline constexpr std::array<const char*, 8> kGrooveCategories { "House", "Techno",  "Hip-Hop", "Trap",
+                                                                 "Electro", "Breaks", "Dubstep", "Experimentell" };
 /** Chrome Glitch's groups: by how far the chrome fails. */
 inline constexpr std::array<const char*, 4> kGlitchCategories { "Dezent", "Rhythmisch", "Zerstört", "Klangeffekte" };
 

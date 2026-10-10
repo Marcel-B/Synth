@@ -264,6 +264,37 @@ target_link_libraries(TonwerkPhysical
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Groovebox: a drum machine of synthesised drums with a step sequencer in the host's tempo (groovebox/).
+juce_add_plugin(TonwerkGroovebox
+    PRODUCT_NAME "Tonwerk Groovebox"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkgroovebox
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwGb
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Drum
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_GROOVEBOX_SOURCES
+    groovebox/src/GrooveEditor.cpp
+    groovebox/src/GroovePresets.cpp
+    groovebox/src/GrooveProcessor.cpp)
+
+# The noise, oscillators and filters come from the synth's DSP (src/dsp/Oscillators.h), the effects from the synth.
+target_sources(TonwerkGroovebox PRIVATE ${TONWERK_GROOVEBOX_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkGroovebox PRIVATE src common)
+target_compile_definitions(TonwerkGroovebox PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkGroovebox
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -289,9 +320,11 @@ if(TONWERK_TESTS)
         tests/GranularTests.cpp
         ${TONWERK_PHYSICAL_SOURCES}
         tests/PhysicalTests.cpp
+        ${TONWERK_GROOVEBOX_SOURCES}
+        tests/GrooveboxTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -302,6 +335,7 @@ if(TONWERK_TESTS)
         TONWERK_DX_NO_ENTRY=1
         TONWERK_GRANULAR_NO_ENTRY=1
         TONWERK_PHYSICAL_NO_ENTRY=1
+        TONWERK_GROOVEBOX_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
