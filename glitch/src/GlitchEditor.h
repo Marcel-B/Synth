@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EffectPresets.h"
 #include "GlitchProcessor.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -82,6 +83,7 @@ private:
 
     ChromeGlitchProcessor& processor;
     GlitchLookAndFeel lookAndFeel;
+    tonwerkui::PresetBar presets;
     Section main;
     Section stutter;
     Section dropout;

@@ -96,9 +96,12 @@ juce_add_plugin(ChromeGlitch
 
 set(CHROME_GLITCH_SOURCES
     glitch/src/GlitchEditor.cpp
-    glitch/src/GlitchProcessor.cpp)
+    glitch/src/GlitchPresets.cpp
+    glitch/src/GlitchProcessor.cpp
+    common/EffectPresets.cpp)
 
 target_sources(ChromeGlitch PRIVATE ${CHROME_GLITCH_SOURCES})
+target_include_directories(ChromeGlitch PRIVATE common)
 target_compile_definitions(ChromeGlitch PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(ChromeGlitch
     PRIVATE juce::juce_audio_utils
@@ -124,7 +127,9 @@ juce_add_plugin(TonwerkDistortion
 
 set(TONWERK_DISTORTION_SOURCES
     distortion/src/DistortionEditor.cpp
-    distortion/src/DistortionProcessor.cpp)
+    distortion/src/DistortionPresets.cpp
+    distortion/src/DistortionProcessor.cpp
+    common/EffectPresets.cpp)
 
 target_sources(TonwerkDistortion PRIVATE ${TONWERK_DISTORTION_SOURCES} ${TONWERK_UI_SOURCES})
 target_include_directories(TonwerkDistortion PRIVATE common)
@@ -251,7 +256,8 @@ if(TONWERK_TESTS)
         tests/DxTests.cpp
         ${TONWERK_GRANULAR_SOURCES}
         tests/GranularTests.cpp
-        tests/PresetTests.cpp)
+        tests/PresetTests.cpp
+        tests/EffectPresetTests.cpp)
     target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
