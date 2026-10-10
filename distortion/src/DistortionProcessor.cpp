@@ -1,6 +1,7 @@
 #include "DistortionProcessor.h"
 
 #include "DistortionEditor.h"
+#include "DistortionPresets.h"
 
 namespace tonwerkdistortion
 {
@@ -43,7 +44,8 @@ DistortionProcessor::DistortionProcessor()
     : AudioProcessor(BusesProperties()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      state(*this, nullptr, "TonwerkDistortion", createParameterLayout())
+      state(*this, nullptr, "TonwerkDistortion", createParameterLayout()),
+      programs(state, factoryPresets())
 {
     auto get = [this](const char* id) { return state.getRawParameterValue(id); };
     values = { get("input"), get("distortion"), get("tone"), get("level") };

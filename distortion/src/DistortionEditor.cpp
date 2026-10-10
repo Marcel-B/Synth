@@ -1,5 +1,8 @@
 #include "DistortionEditor.h"
 
+#include "DistortionPresets.h"
+#include "PresetCategories.h"
+
 namespace tonwerkdistortion
 {
 using namespace tonwerkui;
@@ -11,6 +14,9 @@ constexpr int kScope = 140;
 
 DistortionEditor::DistortionEditor(DistortionProcessor& p)
     : AudioProcessorEditor(p),
+      presets(p, p.programs, factoryPresets(),
+              menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
+                        kDistortionCategories)),
       // The input is read as far behind as the oversampling delays the output, so the two traces line up.
       scope(p.scopeOut, &p.scopeIn, [&p] { return p.getLatencySamples(); }),
       pedal(p.state, "Pedal", { { { "level", "Level" }, { "tone", "Tone" }, { "distortion", "Dist" } } }),
@@ -19,7 +25,7 @@ DistortionEditor::DistortionEditor(DistortionProcessor& p)
     setLookAndFeel(&lookAndFeel);
     scope.setCaption("OSZILLOSKOP");
     scope.setLegend("AUSGANG", "EINGANG");
-    for (auto* c : std::initializer_list<juce::Component*> { &scope, &pedal, &input })
+    for (auto* c : std::initializer_list<juce::Component*> { &presets, &scope, &pedal, &input })
         addAndMakeVisible(*c);
     setSize(kWidth, 2 * kMargin + kHeader + kScope + kGap + pedal.preferredHeight());
 }
@@ -36,7 +42,7 @@ void DistortionEditor::paint(juce::Graphics& g)
 void DistortionEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    area.removeFromTop(kHeader);
+    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(200));
     scope.setBounds(area.removeFromTop(kScope));
     area.removeFromTop(kGap);
     layoutRow(area, { &pedal, &input });

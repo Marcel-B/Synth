@@ -273,6 +273,17 @@ public:
 
             std::unique_ptr<juce::AudioProcessorEditor> editor(processor.createEditor());
             expect(editor != nullptr && editor->getWidth() > 0);
+            for (auto* child : editor->getChildren())
+                expect(editor->getLocalBounds().contains(child->getBounds()));
+            // For a look at it: TONWERK_EDITOR_PNG_DIR=/path
+            if (const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {}); dir.isNotEmpty())
+            {
+                const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 1.0f);
+                juce::FileOutputStream file { juce::File(dir).getChildFile("Chrome Glitch.png") };
+                file.setPosition(0);
+                file.truncate();
+                juce::PNGImageFormat().writeImageToStream(image, file);
+            }
         }
 
         beginTest("The monitor flickers for every glitch, however short, then calms down");
