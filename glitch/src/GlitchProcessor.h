@@ -2,6 +2,8 @@
 
 #include "GlitchEngine.h"
 
+#include "EffectPresets.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <atomic>
@@ -33,10 +35,11 @@ public:
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 0.0; }
 
-    int getNumPrograms() override { return 1; }
-    int getCurrentProgram() override { return 0; }
-    void setCurrentProgram(int) override {}
-    const juce::String getProgramName(int) override { return {}; }
+    /** The factory sounds as the host's programs. */
+    int getNumPrograms() override { return programs.count(); }
+    int getCurrentProgram() override { return programs.current(); }
+    void setCurrentProgram(int index) override { programs.choose(index); }
+    const juce::String getProgramName(int index) override { return programs.name(index); }
     void changeProgramName(int, const juce::String&) override {}
 
     void getStateInformation(juce::MemoryBlock& destData) override;
@@ -47,6 +50,7 @@ public:
     Settings readSettings() const;
 
     juce::AudioProcessorValueTreeState state;
+    tonwerkui::EffectPrograms programs;
     /** Whether a glitch sounded in the last block, for the editor's monitor. */
     std::atomic<bool> glitching { false };
     /** Set when a glitch starts; the monitor takes it back, so even one shorter than its frame flickers. */

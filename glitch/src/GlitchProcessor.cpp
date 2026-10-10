@@ -1,6 +1,7 @@
 #include "GlitchProcessor.h"
 
 #include "GlitchEditor.h"
+#include "GlitchPresets.h"
 
 namespace chromeglitch
 {
@@ -62,7 +63,8 @@ ChromeGlitchProcessor::ChromeGlitchProcessor()
     : AudioProcessor(BusesProperties()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      state(*this, nullptr, "ChromeGlitch", createParameterLayout())
+      state(*this, nullptr, "ChromeGlitch", createParameterLayout()),
+      programs(state, factoryPresets())
 {
     auto get = [this](const char* id) { return state.getRawParameterValue(id); };
     values = { get("amount"),        get("stutterChance"), get("stutterLength"), get("repeats"),

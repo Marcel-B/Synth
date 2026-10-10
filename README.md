@@ -54,7 +54,9 @@ Alle Übergänge werden über 1,5 ms überblendet, es knackt also nur, wo es sol
 
 **Seed** (0–999) macht die Glitches wiederholbar: Während Logic spielt, wird an jedem Schlag neu gewürfelt, aus dem Seed und der Nummer des Schlags. Ein Glitch gehört damit zu seiner Stelle im Song. Mit demselben Seed klingt der Chorus gleich, egal ob die Wiedergabe dort startet, am Anfang oder ob der ganze Song gebounct wird (ab dem ersten vollen Schlag nach dem Start; ein Stotterer braucht etwa 200 ms Vorlauf, weil er wiederholt, was davor lief). Passt eine Stelle nicht, gibt ein anderer Seed eine andere, wieder feste Folge. Der Seed lässt sich automatisieren, etwa ein Wert für den Chorus und ein anderer für die Bridge. Ohne laufenden Transport bleibt es zufällig.
 
-**Getestet und ungetestet:** Unter Linux gebaut und getestet (Durchreichen bei Stärke 0, Stotterperiode, klickfreie Aussetzer und Tonhöhensprünge, Raster im Sync, Einfrieren, Crusher, Seed und Songposition, Zustand). `auval` für den Effekt läuft in der GitHub Action. In Logic ist er noch nicht gehört.
+**Presets** (Logics Programme, oben rechts im Menü und mit den Pfeilen): 13 Einstellungen in vier Gruppen, von **Dezent** (Leichtes Flackern, Wackelkontakt, Funkloch) über **Rhythmisch** (Achtel-Stotter, Sechzehntel-Roll, Stotter-Rampe, Zerhacker) und **Zerstört** (Kernschmelze, Cyberpsychose, Systemabsturz) bis **Klangeffekte** (Roboterstimme, Tonhöhen-Sprünge, Geisterecho mit 50 % Mix). Ein Preset setzt alle Regler, die es nicht nennt, auf ihren Standard zurück; Einfrieren und Seed bleiben also aus bzw. auf 0. Im Test bringt jedes auf einer Stimme in vier Takten Glitches, wird nicht lauter als die Stimme und höchstens 3 dB leiser (Aussetzer nehmen etwas weg).
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Durchreichen bei Stärke 0, Stotterperiode, klickfreie Aussetzer und Tonhöhensprünge, Raster im Sync, Einfrieren, Crusher, Seed und Songposition, Zustand, Presets). `auval` für den Effekt läuft in der GitHub Action. In Logic ist er noch nicht gehört, die Presets nur auf einer künstlichen Stimme aus dem Test.
 
 ## Tonwerk Distortion (Effekt)
 
@@ -73,7 +75,9 @@ Was nachgebildet ist: Transistor-Booster (35 dB, Hochpass 33 Hz, weich in die Ve
 
 **CPU:** Die verzerrenden Stufen laufen vierfach überabgetastet, die Clipper zusätzlich mit Antiderivative-Antialiasing; was zurückfaltet, bleibt selbst bei einer 2,5-kHz-Note mit voller Verzerrung mehr als 60 dB unter dem Ton. Tone und Level laufen auf der normalen Rate. Stereo rechnet das Plugin im Test etwa 50-mal schneller als Echtzeit (rund 2 % eines Kerns), auf einer Mono-Spur nur einen Kanal, also die Hälfte. Die Überabtastung bringt eine Latenz von wenigen Samples, die das Plugin Logic meldet.
 
-**Getestet und ungetestet:** Unter Linux gebaut und getestet (Diodenkennlinie, Tone-Delle, Obertöne mit Dist, Pegel, Aliasing, Stille nach dem Ton, Mono und Stereo, Zustand, Anzeige in ganzen Zahlen) und die Oberfläche dort angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, und ob er wie dein DS-1 klingt, entscheiden die Ohren.
+**Presets** (oben rechts im Menü und mit den Pfeilen): 16 Einstellungen, nach der Quelle sortiert. **Gitarre**: Leicht angezerrt, Crunch, Rock-Rhythmus, Blues-Solo, Solo-Lead, Metal, Fuzz-Wand. **Bass**: Bass-Knurren, Bass-Fuzz (Tone dunkel, sonst bleibt vom Bass wenig übrig). **Synths**: Synth-Wärme, Acid-Biss, Lo-Fi-Lead. **Drums**: Drum-Dreck, Zertrümmert. **Gesang**: Megafon, Schrei. Jedes Preset ist so eingepegelt, dass es etwa so laut ist wie die Spur ohne Effekt, wenn sie mit Spitzen um −6 dBFS aufgenommen ist (im Test höchstens 2 dB daneben, gemessen nach EBU R128). Ein- und Ausschalten springt dann kaum in der Lautstärke. Ist deine Spur deutlich leiser oder lauter, passt du den Eingang an.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Diodenkennlinie, Tone-Delle, Obertöne mit Dist, Pegel, Aliasing, Stille nach dem Ton, Mono und Stereo, Zustand, Anzeige in ganzen Zahlen, Pegel der Presets) und die Oberfläche dort angesehen. Die Presets sind auf künstlichen Testsignalen (gezupfte Saiten, Sägezahn, Drumloop, Vokale) eingestellt, nicht auf echten Aufnahmen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, und ob er wie dein DS-1 klingt, entscheiden die Ohren.
 
 ## Tonwerk Wavetable (Instrument)
 
@@ -181,6 +185,9 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Yamahas ROMs oder f
   - Plucks: *Pluck*, *Glas-Pluck*, *Bit-Arp*; Tasten: *Bit-Keys*, *Digi-Piano*; Glocken: *Digi-Glocke*
   - Effekte: Laser, *Riser* (vier Sekunden halten), *Downlifter*, *Sirene*
 
+- **Tonwerk Distortion** (Effekt): Gitarre, Bass, Synths, Drums, Gesang, siehe [Tonwerk Distortion](#tonwerk-distortion-effekt)
+- **Chrome Glitch** (Effekt): Dezent, Rhythmisch, Zerstört, Klangeffekte, siehe [Chrome Glitch](#chrome-glitch-effekt)
+
 **Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM und Wavetable liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben; der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
@@ -221,7 +228,7 @@ cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 ```
 
-Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase. `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
+Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
 
 ## Lizenz
 

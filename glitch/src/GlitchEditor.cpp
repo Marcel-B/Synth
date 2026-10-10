@@ -1,5 +1,8 @@
 #include "GlitchEditor.h"
 
+#include "GlitchPresets.h"
+#include "PresetCategories.h"
+
 namespace chromeglitch
 {
 namespace
@@ -68,6 +71,8 @@ GlitchLookAndFeel::GlitchLookAndFeel()
     setColour(juce::ToggleButton::tickColourId, kYellow);
     setColour(juce::ToggleButton::tickDisabledColourId, kCyan.withAlpha(0.6f));
     setColour(juce::ToggleButton::textColourId, kText);
+    setColour(juce::TextButton::buttonColourId, kPanel.brighter(0.05f));
+    setColour(juce::TextButton::textColourOffId, kYellow);
 }
 
 void GlitchLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float position,
@@ -168,6 +173,10 @@ void Section::resized()
 ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
     : AudioProcessorEditor(p),
       processor(p),
+      presets(p, p.programs, factoryPresets(),
+              tonwerkui::menuOrder((int) factoryPresets().size(),
+                                   [](int i) { return factoryPresets()[(std::size_t) i].category; },
+                                   tonwerkui::kGlitchCategories)),
       main(p.state, utf8("Gesamt"), { { "amount", "Stärke" }, { "freeze", "Einfrieren" }, { "mix", "Mix" } }),
       stutter(p.state, utf8("Stottern"),
               { { "stutterChance", "Chance" }, { "stutterLength", "Länge" }, { "repeats", "Wiederh." },
@@ -178,6 +187,7 @@ ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
       timing(p.state, utf8("Timing"), { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
 {
     setLookAndFeel(&lookAndFeel);
+    addAndMakeVisible(presets);
     for (auto* section : { &main, &stutter, &dropout, &damage, &timing })
         addAndMakeVisible(*section);
     addAndMakeVisible(monitor);
@@ -208,7 +218,7 @@ void ChromeGlitchEditor::paint(juce::Graphics& g)
 void ChromeGlitchEditor::resized()
 {
     auto area = getLocalBounds().reduced(kGap, 0);
-    area.removeFromTop(48);
+    presets.setBounds(area.removeFromTop(48).withSizeKeepingCentre(area.getWidth(), 28).removeFromRight(260));
     auto place = [](juce::Rectangle<int>& row, Section& section) {
         section.setBounds(row.removeFromLeft(kSlot * section.count() + 8));
         row.removeFromLeft(kGap);
