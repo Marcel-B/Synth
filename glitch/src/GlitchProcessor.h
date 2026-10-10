@@ -75,6 +75,7 @@ private:
         std::atomic<float>* chaos;
         std::atomic<float>* freeze;
         std::atomic<float>* mix;
+        std::atomic<float>* seed;
     } values;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChromeGlitchProcessor)

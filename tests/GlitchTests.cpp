@@ -197,6 +197,44 @@ public:
             expect(run(input, s, transport) == run(input, s, transport));
         }
 
+        beginTest("A glitch belongs to its place in the song, wherever playback starts");
+        {
+            // 120 BPM at 48 kHz: a beat is 24000 samples, so 96000 is a whole number of blocks and beats.
+            constexpr std::size_t offset = 96000 * 2;
+            const auto input = noise(length + (int) offset);
+            auto playFrom = [&](std::size_t from, int seed) {
+                auto s = Settings {};
+                s.amount = 1.0f;
+                s.seed = seed;
+                GlitchEngine engine;
+                engine.prepare(kRate);
+                std::vector<float> left(input.begin() + (std::ptrdiff_t) from, input.end()), right(left);
+                for (std::size_t start = 0; start < left.size(); start += kBlock)
+                {
+                    const int count = (int) std::min<std::size_t>(kBlock, left.size() - start);
+                    float* channels[] = { left.data() + start, right.data() + start };
+                    Transport transport;
+                    transport.playing = true;
+                    transport.hasPosition = true;
+                    // The host's position, as Logic reports it: the same at the same sample of the song.
+                    transport.ppq = (double) (from + start) / 24000.0;
+                    engine.process(channels, 2, count, s, transport);
+                }
+                return left;
+            };
+            // Matching samples of the song from one second after the later start on.
+            auto alike = [&](const std::vector<float>& whole, const std::vector<float>& later) {
+                int same = 0, counted = 0;
+                for (std::size_t n = (std::size_t) kRate; n < later.size(); ++n, ++counted)
+                    same += std::abs(whole[n + offset] - later[n]) < 1.0e-4f ? 1 : 0;
+                return (float) same / (float) counted;
+            };
+            const auto whole = playFrom(0, 42);
+            expectGreaterThan(alike(whole, playFrom(offset, 42)), 0.99f);
+            // Another seed glitches elsewhere.
+            expectLessThan(alike(whole, playFrom(offset, 7)), 0.8f);
+        }
+
         beginTest("The processor keeps its settings in the project");
         {
             ChromeGlitchProcessor processor;
