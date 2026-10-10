@@ -175,14 +175,14 @@ ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
       dropout(p.state, utf8("Aussetzer"), { { "dropoutChance", "Chance" }, { "dropoutLength", "Länge" } }),
       damage(p.state, utf8("Defekt"),
              { { "crush", "Bitcrusher" }, { "pitchChance", "Pitch-Chance" }, { "pitchRange", "Pitch-Bereich" } }),
-      timing(p.state, utf8("Timing"), { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" } })
+      timing(p.state, utf8("Timing"), { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
 {
     setLookAndFeel(&lookAndFeel);
     for (auto* section : { &main, &stutter, &dropout, &damage, &timing })
         addAndMakeVisible(*section);
     addAndMakeVisible(monitor);
-    // Two rows: 3 + 4 and 2 + 3 + 3 slots, plus the gaps.
-    setSize(kGap * 4 + kSlot * 8 + 8 * 3, 56 + kRowHeight * 2 + kGap * 2);
+    // Two rows: 3 + 4 slots and the monitor, 2 + 3 + 4 slots, plus the gaps.
+    setSize(kGap * 4 + kSlot * 9 + 8 * 3, 56 + kRowHeight * 2 + kGap * 2);
     startTimerHz(30);
 }
 

@@ -36,6 +36,8 @@ struct Settings
     /** Loops the last slice for as long as it is on: the voice hangs. */
     bool freeze = false;
     float mix = 1.0f;
+    /** Picks the dice: the same seed glitches the same at the same place in the song, another one differently. */
+    int seed = 0;
 };
 
 struct Transport
@@ -52,6 +54,17 @@ class Random
 {
 public:
     void seed(std::uint32_t value) { state = 0x9E3779B97F4A7C15ull ^ (std::uint64_t) value * 0xBF58476D1CE4E5B9ull; }
+
+    /** Dice of their own for one beat of the song, mixed (splitmix64) so neighbouring beats share nothing. */
+    void seed(std::uint32_t value, std::int64_t beat)
+    {
+        std::uint64_t z = (std::uint64_t) beat * 0x9E3779B97F4A7C15ull + ((std::uint64_t) value << 32) + 0x632BE59BD9B4E019ull;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        z ^= z >> 31;
+        // Xorshift never leaves 0.
+        state = z != 0 ? z : 0x9E3779B97F4A7C15ull;
+    }
 
     float uniform()
     {
@@ -72,8 +85,11 @@ private:
  * stutter repeats what was just heard, so "body" becomes "bo-bo-body".
  *
  * Every switch between the voice and a glitch crossfades over 1.5 ms, and every repeat has 1.5 ms edges, so the
- * glitches chop without clicking. The engine draws its dice from a fixed seed each time the transport starts, so a
- * bounce from the same position comes out the same.
+ * glitches chop without clicking.
+ *
+ * While the host plays, the dice are drawn afresh at every beat from the seed and the beat's number, so a glitch belongs
+ * to its place in the song: playback started at the chorus and a bounce of the whole song sound the same there, from
+ * the first full beat on. Stopped or without a position, the dice run on from the seed of the last transport start.
  */
 class GlitchEngine
 {
@@ -109,6 +125,7 @@ public:
         holdCounter = 0.0f;
         held = {};
         lastGridIndex = kNoGrid;
+        lastBeat = kNoGrid;
         wasPlaying = false;
         rng.seed(kSeed);
         untilRandomTick = 0;
@@ -135,12 +152,16 @@ public:
 
         if (t.playing && ! wasPlaying)
         {
-            // Same start, same dice: a bounce sounds like the playback before it.
-            rng.seed(kSeed);
+            // Same start, same dice, also where the host gives no position.
+            rng.seed(kSeed ^ (std::uint32_t) s.seed);
             untilRandomTick = 0;
             lastGridIndex = kNoGrid;
+            lastBeat = kNoGrid;
         }
         wasPlaying = t.playing;
+        const bool positioned = t.playing && t.hasPosition;
+        if (! positioned)
+            lastBeat = kNoGrid;
 
         const bool gridActive = s.sync && t.playing && t.hasPosition;
         if (! gridActive)
@@ -172,13 +193,29 @@ public:
             writePos = (writePos + 1) % historySize;
             written = std::min(written + 1, historySize);
 
+            const double position = t.ppq + i * beatsPerSample;
+            if (positioned)
+            {
+                const auto beat = (std::int64_t) std::floor(position);
+                if (beat != lastBeat)
+                {
+                    // Each beat's dice depend on nothing before it, so where playback started does not matter.
+                    lastBeat = beat;
+                    rng.seed((std::uint32_t) s.seed, beat);
+                    untilRandomTick = (int) ((0.04 + 0.21 * rng.uniform()) * sampleRate);
+                    // The crusher's held samples line up with the beat too, or its grain would differ by start.
+                    holdCounter = 0.0f;
+                }
+            }
+
             bool tick = false;
             if (gridActive)
             {
-                const auto index = (std::int64_t) std::floor((t.ppq + i * beatsPerSample) / gridBeats);
+                const auto index = (std::int64_t) std::floor(position / gridBeats);
                 if (index != lastGridIndex)
                 {
-                    tick = lastGridIndex != kNoGrid;
+                    // Playback started right on a line ticks there too, as it does when the song plays through.
+                    tick = lastGridIndex != kNoGrid || position - (double) index * gridBeats < beatsPerSample;
                     lastGridIndex = index;
                 }
             }
@@ -344,6 +381,7 @@ private:
     std::array<float, kMaxChannels> held {};
 
     std::int64_t lastGridIndex = kNoGrid;
+    std::int64_t lastBeat = kNoGrid;
     bool wasPlaying = false;
     int untilRandomTick = 0;
     Random rng;

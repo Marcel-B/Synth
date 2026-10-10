@@ -53,6 +53,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout ChromeGlitchProcessor::creat
     layout.add(percent("chaos", "Chaos", 0.3f));
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { "freeze", 1 }, "Einfrieren", false));
     layout.add(percent("mix", "Mix", 1.0f));
+    // New in the release after 0.3.0, hence version hint 2.
+    layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID { "seed", 2 }, "Seed", 0, 999, 0));
     return layout;
 }
 
@@ -66,7 +68,7 @@ ChromeGlitchProcessor::ChromeGlitchProcessor()
     values = { get("amount"),        get("stutterChance"), get("stutterLength"), get("repeats"),
                get("accelerate"),    get("dropoutChance"), get("dropoutLength"), get("crush"),
                get("pitchChance"),   get("pitchRange"),    get("sync"),          get("division"),
-               get("chaos"),         get("freeze"),        get("mix") };
+               get("chaos"),         get("freeze"),        get("mix"),           get("seed") };
 }
 
 Settings ChromeGlitchProcessor::readSettings() const
@@ -87,6 +89,7 @@ Settings ChromeGlitchProcessor::readSettings() const
     s.chaos = values.chaos->load();
     s.freeze = values.freeze->load() >= 0.5f;
     s.mix = values.mix->load();
+    s.seed = juce::roundToInt(values.seed->load());
     return s;
 }
 
