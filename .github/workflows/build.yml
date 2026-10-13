@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkArp_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkFreeze_VST3 TonwerkArp_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -37,7 +37,7 @@ jobs:
       - name: Sign ad hoc
         run: |
           for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
-            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkArp:Tonwerk Arp"; do
+            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
@@ -62,10 +62,11 @@ jobs:
           cp -R "build/TonwerkWobble_artefacts/Release/AU/Tonwerk Wobble.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkPD_artefacts/Release/AU/Tonwerk PD.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkTape_artefacts/Release/AU/Tonwerk Tape.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkFreeze_artefacts/Release/AU/Tonwerk Freeze.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkArp_artefacts/Release/AU/Tonwerk Arp.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e arp || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e freeze -e arp || true
           auval -strict -v aumu TwAn Bvlp
           auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
@@ -81,6 +82,7 @@ jobs:
           auval -strict -v aufx TwWb Bvlp
           auval -strict -v aumu TwPd Bvlp
           auval -strict -v aufx TwTp Bvlp
+          auval -strict -v aufx TwFz Bvlp
           auval -strict -v aumi TwAr Bvlp
       - name: Package
         run: |
@@ -130,6 +132,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/TonwerkTape_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Tape.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Tape-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Tape.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Tape-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkFreeze_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Freeze.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Freeze-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Freeze.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Freeze-VST3.zip"
           cd "$GITHUB_WORKSPACE/build/TonwerkArp_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Arp.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Arp-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Arp.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Arp-VST3.zip"
