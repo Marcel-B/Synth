@@ -264,6 +264,37 @@ target_link_libraries(TonwerkPhysical
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Additiv: sounds built from up to 64 sine partials, with Tonwerk's delay and hall (additive/).
+juce_add_plugin(TonwerkAdditiv
+    PRODUCT_NAME "Tonwerk Additiv"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkadditiv
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwAd
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_ADDITIVE_SOURCES
+    additive/src/AdditiveEditor.cpp
+    additive/src/AdditivePresets.cpp
+    additive/src/AdditiveProcessor.cpp)
+
+# The envelopes and LFO shapes come from Tonwerk Wavetable's DSP (wavetable/src/WaveDsp.h), the effects from the synth.
+target_sources(TonwerkAdditiv PRIVATE ${TONWERK_ADDITIVE_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkAdditiv PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkAdditiv PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkAdditiv
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # Tonwerk Groovebox: a drum machine of synthesised drums with a step sequencer in the host's tempo (groovebox/).
 juce_add_plugin(TonwerkGroovebox
     PRODUCT_NAME "Tonwerk Groovebox"
@@ -328,6 +359,68 @@ target_link_libraries(TonwerkRobovox
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Wobble: a filter and a volume shaper moved by drawn, tempo-synced LFO curves, for dubstep wobbles (wobble/).
+juce_add_plugin(TonwerkWobble
+    PRODUCT_NAME "Tonwerk Wobble"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkwobble
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwWb
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Filter
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_WOBBLE_SOURCES
+    wobble/src/WobbleEditor.cpp
+    wobble/src/WobblePresets.cpp
+    wobble/src/WobbleProcessor.cpp
+    common/EffectPresets.cpp)
+
+target_sources(TonwerkWobble PRIVATE ${TONWERK_WOBBLE_SOURCES} ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkWobble PRIVATE common)
+target_compile_definitions(TonwerkWobble PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkWobble
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
+# Tonwerk PD: phase distortion as on Casio's CZ synths, with a chorus and Tonwerk's delay and hall (pd/).
+juce_add_plugin(TonwerkPD
+    PRODUCT_NAME "Tonwerk PD"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkpd
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwPd
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_PD_SOURCES
+    pd/src/PdEditor.cpp
+    pd/src/PdPresets.cpp
+    pd/src/PdProcessor.cpp)
+
+# The envelopes and LFO shapes come from Tonwerk Wavetable's DSP (wavetable/src/WaveDsp.h), the effects from the synth.
+target_sources(TonwerkPD PRIVATE ${TONWERK_PD_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkPD PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkPD PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkPD
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # Tonwerk Arp: an arpeggiator and step sequencer for the synths (arp/). A MIDI effect (aumi), the kind Logic offers in
 # a software instrument track's MIDI FX slot; no audio buses.
 juce_add_plugin(TonwerkArp
@@ -385,17 +478,23 @@ if(TONWERK_TESTS)
         tests/GranularTests.cpp
         ${TONWERK_PHYSICAL_SOURCES}
         tests/PhysicalTests.cpp
+        ${TONWERK_ADDITIVE_SOURCES}
+        tests/AdditiveTests.cpp
         ${TONWERK_GROOVEBOX_SOURCES}
         tests/GrooveboxTests.cpp
         ${TONWERK_ROBOVOX_SOURCES}
         tests/RobovoxTests.cpp
+        ${TONWERK_WOBBLE_SOURCES}
+        tests/WobbleTests.cpp
+        ${TONWERK_PD_SOURCES}
+        tests/PdTests.cpp
         arp/src/ArpEditor.cpp
         arp/src/ArpPresets.cpp
         arp/src/ArpProcessor.cpp
         tests/ArpTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src robovox/src arp/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src arp/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -406,8 +505,11 @@ if(TONWERK_TESTS)
         TONWERK_DX_NO_ENTRY=1
         TONWERK_GRANULAR_NO_ENTRY=1
         TONWERK_PHYSICAL_NO_ENTRY=1
+        TONWERK_ADDITIVE_NO_ENTRY=1
         TONWERK_GROOVEBOX_NO_ENTRY=1
         TONWERK_ROBOVOX_NO_ENTRY=1
+        TONWERK_WOBBLE_NO_ENTRY=1
+        TONWERK_PD_NO_ENTRY=1
         TONWERK_ARP_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests

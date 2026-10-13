@@ -122,6 +122,8 @@ private:
     struct TrackValues
     {
         std::atomic<float>*tune, *decay, *tone, *character, *level, *pan, *delay, *reverb, *mute;
+        std::atomic<float>*attack, *hold, *pitchMod, *modDecay, *filter, *cutoff, *resonance, *filterMod, *drive, *bits,
+            *crush, *velocity, *random;
     };
     std::array<TrackValues, kTracks> trackValues {};
     struct GlobalValues
