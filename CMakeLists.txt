@@ -295,6 +295,39 @@ target_link_libraries(TonwerkGroovebox
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Robovox: a voice sung through a synth, the robot voice of AI songs (robovox/). A music effect (aumf), so
+# Logic can send it MIDI notes for its carrier through the side chain.
+juce_add_plugin(TonwerkRobovox
+    PRODUCT_NAME "Tonwerk Robovox"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkrobovox
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwRv
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicEffect
+    VST3_CATEGORIES Fx
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_ROBOVOX_SOURCES
+    robovox/src/RobovoxEditor.cpp
+    robovox/src/RobovoxPresets.cpp
+    robovox/src/RobovoxProcessor.cpp
+    common/EffectPresets.cpp)
+
+# The carrier's oscillator and noise come from the synth's DSP (src/dsp/Oscillators.h).
+target_sources(TonwerkRobovox PRIVATE ${TONWERK_ROBOVOX_SOURCES} ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkRobovox PRIVATE src common)
+target_compile_definitions(TonwerkRobovox PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkRobovox
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -322,9 +355,11 @@ if(TONWERK_TESTS)
         tests/PhysicalTests.cpp
         ${TONWERK_GROOVEBOX_SOURCES}
         tests/GrooveboxTests.cpp
+        ${TONWERK_ROBOVOX_SOURCES}
+        tests/RobovoxTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src robovox/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -336,6 +371,7 @@ if(TONWERK_TESTS)
         TONWERK_GRANULAR_NO_ENTRY=1
         TONWERK_PHYSICAL_NO_ENTRY=1
         TONWERK_GROOVEBOX_NO_ENTRY=1
+        TONWERK_ROBOVOX_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

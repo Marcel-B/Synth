@@ -4,6 +4,8 @@
 #include "GlitchProcessor.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
+#include "RobovoxPresets.h"
+#include "RobovoxProcessor.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
@@ -260,11 +262,16 @@ Take render(juce::AudioProcessor& processor, const Signal& source)
     processor.setPlayConfigDetails(2, 2, kRate, kBlock);
     processor.prepareToPlay(kRate, kBlock);
     auto* glitch = dynamic_cast<chromeglitch::ChromeGlitchProcessor*>(&processor);
+    // Tonwerk Robovox in MIDI mode gets a bass note held from the start, as from a track in Logic's side chain.
+    const bool robovox = dynamic_cast<tonwerkrobovox::RobovoxProcessor*>(&processor) != nullptr;
     Take take { source, source };
     juce::AudioBuffer<float> buffer(2, kBlock);
     juce::MidiBuffer midi;
     for (std::size_t at = 0; at < source.size(); at += kBlock)
     {
+        midi.clear();
+        if (robovox && at == 0)
+            midi.addEvent(juce::MidiMessage::noteOn(1, 38, 0.8f), 0);
         const int count = (int) std::min<std::size_t>(kBlock, source.size() - at);
         buffer.setSize(2, count, false, false, true);
         for (int ch = 0; ch < 2; ++ch)
@@ -414,6 +421,35 @@ public:
                 if (wavDir.isNotEmpty())
                     writeWav(take.left, take.right,
                              juce::File(wavDir).getChildFile("Chrome Glitch").getChildFile(fileName(i + 1, sound)));
+            }
+        }
+
+        beginTest("Tonwerk Robovox: groups, names and levels");
+        {
+            const auto& presets = tonwerkrobovox::factoryPresets();
+            const auto& source = sourceFor("Gesang");
+            std::set<juce::String> names;
+            for (int i = 0; i < (int) presets.size(); ++i)
+            {
+                const auto& preset = presets[(std::size_t) i];
+                tonwerkrobovox::RobovoxProcessor processor;
+                processor.setCurrentProgram(i);
+                const auto sound = processor.getProgramName(i);
+                expect(names.insert(sound).second, "twice: " + sound);
+                expect(i == 0 || tonwerkui::categoryIndex(preset.category, tonwerkui::kRobovoxCategories) >= 0,
+                       "no group: " + sound);
+                // A MIDI sound hears a bass note from the side chain, as it would in Logic.
+                const auto take = render(processor, source);
+                const double change = loudness(take) - loudness(source);
+                const float peak = peakOf(take);
+                logMessage(juce::String(i).paddedLeft('0', 2) + " " + sound.paddedRight(' ', 24)
+                           + juce::String::fromUTF8(preset.category).paddedRight(' ', 10) + juce::String(change, 1)
+                           + " dB against dry, peak " + juce::String(peak, 2));
+                expectWithinAbsoluteError(change, 0.0, kTolerance, sound);
+                expectLessThan(peak, 1.0f, sound);
+                if (wavDir.isNotEmpty())
+                    writeWav(take.left, take.right,
+                             juce::File(wavDir).getChildFile("Tonwerk Robovox").getChildFile(fileName(i + 1, sound)));
             }
         }
 
