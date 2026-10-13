@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren und **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, und **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -179,6 +179,25 @@ Eine Drum-Machine mit acht Instrumenten und eingebautem Step-Sequencer. Alle Kl�
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonhöhe der Bassdrum und ihr Punch, Abklingzeit, Snappy, Helligkeit und Länge der Hi-Hats, die Hände des Claps, Anschlag, Abwürgen der offenen Hi-Hat, erneuter Schlag ohne Knacken, Raster und Swing auf das Sample genau, Start mitten im Takt und Stopp mit dem Host, freier Lauf, Länge, Pattern-Wahl und Stummschalten, Akzent, MIDI-Noten, Sends und Panorama, Zustand mit allen Patterns, alle Kits und ihre Lautheit, CPU, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist sie noch nicht gehört, und ob Logic das Projekt nach einer Änderung im Pattern als geändert markiert, ist nur dort zu sehen.
 
+## Tonwerk Robovox (Effekt)
+
+Die Roboterstimme aus KI-Songs: Die Stimme wird von einem Synth gesungen. Der Klang in deinem Beispiel („Day Off in Night City“) ist ein Vocoder, dessen Träger nicht auf der Tonhöhe der Sängerin liegt, sondern ein tiefer, völlig gerader Ton ist (dort D und G ganz unten, die Basslinie), der ohne Gleiten von Ton zu Ton springt; die Formanten der Stimme liegen über seinem dichten Kamm aus Obertönen. Deshalb hat ihn die Stem-Trennung als Bass erkannt. Ein normaler Vocoder trifft das nicht, wenn der Träger von Hand auf der Höhe der Stimme gespielt wird oder zu wenige Bänder hat. Hier macht das Plugin den Träger selbst: aus der Tonhöhe der Stimme, auf eine Tonleiter gerastet und um Oktaven nach unten gesetzt, oder aus MIDI-Noten.
+
+Er liegt in Logic unter **Audio-FX → Audio Units → b-velop → Tonwerk Robovox**. Er ist ein MIDI-gesteuerter Effekt: Für die Noten aus einer Spur: im Plugin-Fenster oben das MIDI-Side-Chain-Menü auf die Instrumentenspur stellen und **Quelle** auf MIDI.
+
+![Tonwerk Robovox](docs/robovox.png)
+
+- **Tonhöhe**: **Quelle** Stimme oder MIDI (ohne gehaltene Note bleibt der letzte Ton liegen, vor der ersten folgt der Träger der Stimme). **Tonart** und **Skala** (Chromatisch, Dur, Moll, Pentatonik) rasten die gesungenen Töne ein, wie eine Tonhöhenkorrektur mit 0 ms. **Oktave** −4 bis +1 setzt den Träger unter die Stimme (nur bei Quelle Stimme): −2 für eine Männerstimme, −3 für eine Frauenstimme ergibt die Lage des Beispiels. **Gleiten** 0 bis 500 ms; bei 0 springt der Ton hart. Die Anzeige links zeigt den Ton des Trägers groß (Logics Namen, C3 = Note 60) und darunter, was gesungen wird, mit der Abweichung in Cent.
+- **Träger**: **Welle** Sägezahn, Rechteck (hohler) oder Puls (dünner). **Fundament** 0 bis 100 % hält die untersten Obertöne des Trägers unter der Stimme oben, wie im Beispiel, wo der Bass immer mitklingt.
+- **Stimme**: **Formant** −12 bis +12 HT verschiebt die Klangfarbe ohne die Tonhöhe (minus: größer, dunkler, plus: kleiner). **Bandbreite** 80 bis 800 Hz: wie fein die Klangfarbe der Stimme abgenommen wird; schmal folgt den Vokalen genauer, breit klingt verwaschener. **Zischlaute** 0 bis 100 %: wie viel Rauschen bei S, T, Sch den Träger ersetzt, damit Konsonanten verständlich bleiben.
+- **Ausgang**: **Mix** (100 % nur der Roboter) und **Pegel** −24 bis +12 dB.
+
+Wie es rechnet: Die Tonhöhe kommt aus YIN auf einer auf etwa 12 kHz heruntergerechneten Kopie (60 Hz bis 1 kHz, alle 5 ms), der Ton muss zweimal hintereinander erkannt werden und hat eine kleine Hysterese, damit er an einer Grenze nicht flattert. Der Vocoder arbeitet mit kurzen Spektren (21 ms, Hann, 75 % Überlappung): Das Spektrum des Trägers wird flach gemacht und bekommt die Hüllkurve der Stimme. Das ist feiner als eine Filterbank mit 16 oder 32 Bändern. Die Stimme läuft dabei 11 ms verzögert, damit der Tonwechsel des Trägers mit seiner Silbe kommt. Zusammen ergibt das 32 ms Latenz, die das Plugin Logic meldet. Gerechnet wird mono (eine Stereospur wird summiert, der Roboter geht auf beide Seiten); im Test etwa 50-mal schneller als Echtzeit.
+
+**Presets**: **Tief**: Night City (Sänger), Night City (Sängerin), Dämon, MIDI-Bass. **Roboter**: Klassischer Vocoder, Harte Korrektur, Helm-Roboter, Halb Mensch. **Hell**: Chip-Stimme, Androidin. **Effekte**: Funkgerät, Gleitender Roboter. Jedes ist auf eine Stimme mit Spitzen um −6 dBFS eingepegelt (im Test höchstens 2 dB daneben).
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonleiter und Hysterese, Tonhöhenerkennung von 82 bis 880 Hz auf 10 Cent, Obertonkamm des Trägers, harter Tonwechsel, MIDI, Pegel, Stille, Latenz des trockenen Wegs, Formant, 44,1 und 96 kHz, Zustand, Oberfläche, Presets) und mit einer Sprachsynthese-Stimme angehört, deren Spektrum dem des Beispiels ähnelt. `auval` läuft in der GitHub Action. In Logic und mit einer echten Gesangsaufnahme ist er noch nicht gehört.
+
 ## Herunterladen
 
 Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
@@ -262,6 +281,7 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Dubstep: Halftime, Riddim; Experimentell: Triolen-Shuffle, Glitch-Perkussion, Metall-Werkstatt
 - **Tonwerk Distortion** (Effekt): Gitarre, Bass, Synths, Drums, Gesang, siehe [Tonwerk Distortion](#tonwerk-distortion-effekt)
 - **Chrome Glitch** (Effekt): Dezent, Rhythmisch, Zerstört, Klangeffekte, siehe [Chrome Glitch](#chrome-glitch-effekt)
+- **Tonwerk Robovox** (Effekt, neu): Tief, Roboter, Hell, Effekte, siehe [Tonwerk Robovox](#tonwerk-robovox-effekt)
 
 **Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular und Physical liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 

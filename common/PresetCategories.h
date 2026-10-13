@@ -23,6 +23,9 @@ inline constexpr std::array<const char*, 8> kGrooveCategories { "House", "Techno
 /** Chrome Glitch's groups: by how far the chrome fails. */
 inline constexpr std::array<const char*, 4> kGlitchCategories { "Dezent", "Rhythmisch", "Zerstört", "Klangeffekte" };
 
+/** Tonwerk Robovox's groups: by where the carrier sits against the voice. */
+inline constexpr std::array<const char*, 4> kRobovoxCategories { "Tief", "Roboter", "Hell", "Effekte" };
+
 /** The category's place among `groups`; -1 for none (as the Init sound), which goes first, without a heading. */
 template <std::size_t N>
 int categoryIndex(const char* category, const std::array<const char*, N>& groups)
