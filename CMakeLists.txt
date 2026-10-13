@@ -328,6 +328,36 @@ target_link_libraries(TonwerkRobovox
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Freeze: a spectral freeze that holds a moment of the input as an endless pad (freeze/).
+juce_add_plugin(TonwerkFreeze
+    PRODUCT_NAME "Tonwerk Freeze"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkfreeze
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwFz
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_FREEZE_SOURCES
+    freeze/src/FreezeEditor.cpp
+    freeze/src/FreezePresets.cpp
+    freeze/src/FreezeProcessor.cpp)
+
+target_sources(TonwerkFreeze PRIVATE ${TONWERK_FREEZE_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkFreeze PRIVATE common)
+target_compile_definitions(TonwerkFreeze PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkFreeze
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -357,9 +387,11 @@ if(TONWERK_TESTS)
         tests/GrooveboxTests.cpp
         ${TONWERK_ROBOVOX_SOURCES}
         tests/RobovoxTests.cpp
+        ${TONWERK_FREEZE_SOURCES}
+        tests/FreezeTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src robovox/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src robovox/src freeze/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -372,6 +404,7 @@ if(TONWERK_TESTS)
         TONWERK_PHYSICAL_NO_ENTRY=1
         TONWERK_GROOVEBOX_NO_ENTRY=1
         TONWERK_ROBOVOX_NO_ENTRY=1
+        TONWERK_FREEZE_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
