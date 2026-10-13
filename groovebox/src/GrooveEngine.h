@@ -48,6 +48,14 @@ enum class StepRate
     thirtySecond
 };
 
+enum class TrackFilter
+{
+    off,
+    lowpass,
+    highpass,
+    bandpass
+};
+
 struct TrackSettings
 {
     /** Semitones from the instrument's own pitch. */
@@ -64,6 +72,34 @@ struct TrackSettings
     float delaySend = 0.0f;
     float reverbSend = 0.0f;
     bool mute = false;
+
+    // The shaping every track has besides its instrument's own knobs. At these defaults it leaves the sound as it was,
+    // so kits and projects from before keep sounding the same.
+
+    /** Seconds the hit takes to rise; 0 strikes at once. */
+    float attack = 0.0f;
+    /** Seconds the main level stays up before it falls: a gated sound. */
+    float hold = 0.0f;
+    /** The mod envelope: semitones it bends the whole instrument at the strike, falling to 0 in `modDecay`. */
+    float pitchMod = 0.0f;
+    /** Seconds the mod envelope takes to -60 dB. */
+    float modDecay = 0.15f;
+    TrackFilter filter = TrackFilter::off;
+    float cutoff = 2000.0f;
+    /** 0 to 1. */
+    float resonance = 0.0f;
+    /** -1 to 1: how far the mod envelope moves the cutoff, six octaves at the ends. */
+    float filterMod = 0.0f;
+    /** Saturation of the track, 0 to 1. */
+    float drive = 0.0f;
+    /** Bit depth, 16 and above untouched. */
+    float bits = 16.0f;
+    /** The rate the track is held at, in Hz; 48000 and above untouched. */
+    float crush = 48000.0f;
+    /** How much the velocity sets the level, 0 to 1: at 0 every hit is as loud as the loudest. */
+    float velocity = 1.0f;
+    /** How much each hit differs from the last in pitch (a semitone at 1) and level (3 dB), 0 to 1. */
+    float random = 0.0f;
 };
 
 /** Each instrument's starting sound. */
@@ -211,19 +247,26 @@ inline float pitchRatio(float semitones) { return std::exp2(semitones / 12.0f); 
  * - Clap: tone the sharpness (a narrower band), character the spread of the hands.
  * - Toms: tone the pitch sweep, character the noise of the skin.
  * - Hats and cymbal: tone the brightness, character noise against metal.
+ *
+ * After the instrument every track has the same shaping (`TrackSettings` from `attack` on): a mod envelope that bends
+ * the pitch and sweeps the filter, saturation, bit and rate reduction, a multimode filter, and attack and hold on the
+ * level. Hold keeps the main level up (the snares, not the snare's head; a clap's tail after its hands).
  */
 class Voice
 {
 public:
     void prepare(double sampleRate) { rate = sampleRate; }
 
-    void trigger(Instrument which, float velocity, const TrackSettings& s)
+    /** `detune` (semitones) and `levelDb` vary this one hit, as the track's `random` asks. */
+    void trigger(Instrument which, float velocity, const TrackSettings& s, float detune = 0.0f, float levelDb = 0.0f)
     {
         instrument = which;
-        gain = velocity;
+        gain = (1.0f - s.velocity * (1.0f - velocity)) * std::pow(10.0f, levelDb / 20.0f);
+        variation = pitchRatio(detune);
         playing = true;
         fading = false;
         fade = 1.0f;
+        rising = 0.0f;
         time = 0;
         const bool tom = which == Instrument::lowTom || which == Instrument::highTom;
         amp = 1.0f;
@@ -231,9 +274,13 @@ public:
         second = which == Instrument::snare || tom ? 1.0f : 0.0f;
         click = which == Instrument::kick || tom ? 1.0f : 0.0f;
         pitchEnv = 1.0f;
+        modEnv = 1.0f;
         burst = 1.0f;
         tail = 0.0f;
         phase = phase2 = 0.0;
+        // The first sample is taken at once, so a crushed hit starts on its strike.
+        crushPhase = 1.0;
+        held = 0.0f;
         // The sweep's depth is set by the strike, as a harder hit stretches a skin further.
         sweep = sweepFor(s) * (0.6f + 0.4f * velocity);
         for (auto& o : metal)
@@ -241,6 +288,7 @@ public:
         filterA.reset();
         filterB.reset();
         filterC.reset();
+        shaper.reset();
     }
 
     /** Lets the hit die within a few milliseconds: a new hit on the same track, or the closed hat choking the open. */
@@ -254,26 +302,45 @@ public:
             return;
         const float fall = fallFor(s.decay, rate);
         const float fadeFall = fallFor(0.005, rate);
-        const float base = pitchRatio(s.tune);
-        setFilters(s, base);
-        for (int i = 0; i < count; ++i)
+        const float modFall = fallFor(s.modDecay, rate);
+        const float tuned = pitchRatio(s.tune) * variation;
+        const float rise = s.attack > 0.0f ? (float) (1.0 / std::max(1.0, s.attack * rate)) : 1.0f;
+        holdFor = (int) (s.hold * rate);
+        const Shape shape(s, rate);
+        const bool bends = std::abs(s.pitchMod) > 1.0e-3f;
+        const bool sweeps = shape.filters && std::abs(s.filterMod) > 1.0e-4f;
+        for (int start = 0; start < count; start += kControl)
         {
-            float x = 0.0f;
-            switch (instrument)
+            const int end = std::min(count, start + kControl);
+            // The mod envelope moves pitch and cutoff every few samples; when it moves neither, the filters are set once.
+            const float base = bends ? tuned * pitchRatio(s.pitchMod * modEnv) : tuned;
+            if (start == 0 || bends)
+                setFilters(s, base);
+            if (shape.filters && (start == 0 || sweeps))
+                setShaper(s);
+            for (int i = start; i < end; ++i)
             {
-                case Instrument::kick: x = kick(s, base, fall); break;
-                case Instrument::snare: x = snare(s, base, fall); break;
-                case Instrument::clap: x = clap(s, fall); break;
-                case Instrument::lowTom: x = tom(s, base * 95.0f, fall); break;
-                case Instrument::highTom: x = tom(s, base * 150.0f, fall); break;
-                case Instrument::closedHat:
-                case Instrument::openHat:
-                case Instrument::cymbal: x = metallic(s, base, fall); break;
+                const float level = time < holdFor ? 1.0f : fall;
+                float x = 0.0f;
+                switch (instrument)
+                {
+                    case Instrument::kick: x = kick(s, base, level); break;
+                    case Instrument::snare: x = snare(s, base, level); break;
+                    case Instrument::clap: x = clap(s, fall); break;
+                    case Instrument::lowTom: x = tom(s, base * 95.0f, level); break;
+                    case Instrument::highTom: x = tom(s, base * 150.0f, level); break;
+                    case Instrument::closedHat:
+                    case Instrument::openHat:
+                    case Instrument::cymbal: x = metallic(s, base, level); break;
+                }
+                x = shapeSample(x, shape);
+                if (fading)
+                    fade *= fadeFall;
+                rising = std::min(1.0f, rising + rise);
+                modEnv *= modFall;
+                out[i] += x * gain * fade * rising;
+                ++time;
             }
-            if (fading)
-                fade *= fadeFall;
-            out[i] += x * gain * fade;
-            ++time;
         }
         if (fade < 1.0e-4f || (amp < 1.0e-5f && second < 1.0e-5f && click < 1.0e-5f && tail < 1.0e-5f && ! clapBursting()))
             playing = false;
@@ -331,6 +398,71 @@ private:
         }
     }
 
+    /** The track's shaping, worked out once a block. */
+    struct Shape
+    {
+        Shape(const TrackSettings& s, double rate)
+            : drive(s.drive > 0.0f),
+              // Driven up to ten times and brought back by the square root, as the sum's drive; faded in over the first
+              // quarter of the knob, so its first turn does not jump.
+              gain(1.0f + 9.0f * s.drive),
+              back(1.0f / std::sqrt(gain)),
+              wet(std::min(1.0f, 4.0f * s.drive)),
+              crushes(s.crush < 48000.0f && s.crush < rate),
+              crushStep(std::max(1.0, (double) s.crush) / rate),
+              quantises(s.bits < 16.0f),
+              steps(std::exp2(std::max(1.0f, s.bits) - 1.0f)),
+              filters(s.filter != TrackFilter::off)
+        {
+        }
+
+        bool drive;
+        float gain, back, wet;
+        bool crushes;
+        double crushStep;
+        bool quantises;
+        float steps;
+        bool filters;
+    };
+
+    float shapeSample(float x, const Shape& shape)
+    {
+        if (shape.drive)
+            x += shape.wet * (std::tanh(shape.gain * x) * shape.back - x);
+        // Rate before bits, as an old sampler takes a sample and then rounds it; the filter after both, so it can smooth
+        // the steps away.
+        if (shape.crushes)
+        {
+            crushPhase += shape.crushStep;
+            if (crushPhase >= 1.0)
+            {
+                crushPhase -= std::floor(crushPhase);
+                held = x;
+            }
+            x = held;
+        }
+        if (shape.quantises)
+            x = std::round(x * shape.steps) / shape.steps;
+        if (shape.filters)
+            x = (float) shaper.process(x);
+        return x;
+    }
+
+    void setShaper(const TrackSettings& s)
+    {
+        using tonwerk::FilterType;
+        const double hz = s.cutoff * std::exp2(6.0 * s.filterMod * modEnv);
+        // Lowpass and highpass take their resonance in decibels (Web Audio's biquad): -3 dB is flat, 18 dB rings.
+        const double db = -3.0 + 21.0 * s.resonance;
+        switch (s.filter)
+        {
+            case TrackFilter::lowpass: shaper.set(FilterType::lowpass, hz, db, rate); break;
+            case TrackFilter::highpass: shaper.set(FilterType::highpass, hz, db, rate); break;
+            case TrackFilter::bandpass: shaper.set(FilterType::bandpass, hz, 0.7 + 14.0 * s.resonance * s.resonance, rate); break;
+            case TrackFilter::off: break;
+        }
+    }
+
     float sine(double& p, double hz)
     {
         const float value = (float) std::sin(kTwoPi * p);
@@ -384,7 +516,8 @@ private:
             if (time == clapTailStart)
                 tail = 1.0f;
             burst *= tauFor(0.0035, rate);
-            tail *= fall;
+            if (time >= clapTailStart + holdFor)
+                tail *= fall;
         }
         amp = std::max(burst, tail);
         const float n = (float) filterB.process(filterA.process(noise.next()));
@@ -417,16 +550,20 @@ private:
         return 2.2f * shaped * amp;
     }
 
+    /** Samples between settings of the mod envelope's pitch and cutoff. */
+    static constexpr int kControl = 32;
+
     double rate = 48000.0;
     Instrument instrument = Instrument::kick;
     bool playing = false, fading = false;
-    float fade = 1.0f, gain = 1.0f;
-    int time = 0, clapTailStart = 0;
+    float fade = 1.0f, gain = 1.0f, variation = 1.0f, rising = 1.0f;
+    int time = 0, clapTailStart = 0, holdFor = 0;
     float amp = 0.0f, second = 0.0f, pitchEnv = 0.0f, click = 0.0f, burst = 0.0f, tail = 0.0f, sweep = 0.0f;
-    double phase = 0.0, phase2 = 0.0;
+    float modEnv = 0.0f, held = 0.0f;
+    double phase = 0.0, phase2 = 0.0, crushPhase = 1.0;
     std::array<tonwerk::BlepOscillator, 6> metal;
     tonwerk::Noise noise;
-    tonwerk::Biquad filterA, filterB, filterC;
+    tonwerk::Biquad filterA, filterB, filterC, shaper;
 };
 
 /**
@@ -485,6 +622,8 @@ public:
             for (auto& voice : track.voices)
                 voice.prepare(sampleRate);
         reset();
+        // The same variations in every run from here, so a bounce repeats.
+        dice = tonwerk::Noise();
     }
 
     void reset()
@@ -502,10 +641,13 @@ public:
         if (index < 0 || index >= kTracks || s.track[(std::size_t) index].mute)
             return;
         auto& track = tracks[(std::size_t) index];
+        const auto& ts = s.track[(std::size_t) index];
+        const float detune = ts.random * (float) dice.next();
+        const float levelDb = 3.0f * ts.random * (float) dice.next();
         track.voices[(std::size_t) track.current].release();
         track.current ^= 1;
-        track.voices[(std::size_t) track.current].trigger((Instrument) index, std::clamp(velocity, 0.0f, 1.0f),
-                                                           s.track[(std::size_t) index]);
+        track.voices[(std::size_t) track.current].trigger((Instrument) index, std::clamp(velocity, 0.0f, 1.0f), ts,
+                                                           detune, levelDb);
         // The closed hat stops the open one, as on one pair of cymbals.
         if (index == (int) Instrument::closedHat)
             for (auto& voice : tracks[(std::size_t) Instrument::openHat].voices)
@@ -602,5 +744,6 @@ private:
     std::array<Track, kTracks> tracks;
     std::array<float, kChunk> scratch {};
     std::array<int, kTracks> hits {};
+    tonwerk::Noise dice;
 };
 } // namespace tonwerkgroove

@@ -6,6 +6,8 @@ namespace
 {
 // Menu indices, named so the kits below read as what they are.
 constexpr float triplets = 2, thirtySeconds = 3;
+// The track filter's menu.
+constexpr float lowpass = 1, highpass = 2, bandpass = 3;
 // The delay's note values (Tonwerk's list).
 constexpr float delayQuarter = 7, delayDottedEighth = 9, delayEighth = 10, delaySixteenth = 13;
 
@@ -209,6 +211,51 @@ const std::vector<FactoryKit>& factoryKits()
             { "cymbalDecay", 900 }, { "cymbalLevel", -6 }, { "fxDelayDivision", delayQuarter } },
           { { "x... ..x. x... ....", none, ".... x... .... x...", "...x .... .... .x..", ".... ..x. .x.. ....",
               "x.x. xx.x x.x. xx.x", "..x. .... ..x. ....", ".... .... x... ...." } } },
+
+        // The kits from here on show the shaping every track has: hold, the mod envelope, filter, crush and dice.
+        // Gated eighties: a snare held open and cut off in a big hall, toms that fall like Simmons pads.
+        { "Gated Eighties", "Electro",
+          { { "master", -7 }, { "kickDecay", 350 }, { "kickTone", 0.5f }, { "snareDecay", 60 }, { "snareHold", 220 },
+            { "snareCharacter", 0.7f }, { "snareReverb", 0.6f }, { "tomLowTune", 5 }, { "tomLowPitchMod", 12 },
+            { "tomLowModDecay", 400 }, { "tomLowTone", 0.0f }, { "tomLowDecay", 500 }, { "tomLowReverb", 0.4f },
+            { "tomHighTune", 5 }, { "tomHighPitchMod", 12 }, { "tomHighModDecay", 400 }, { "tomHighTone", 0.0f },
+            { "tomHighDecay", 450 }, { "tomHighReverb", 0.4f }, { "hatClosedLevel", -5 }, { "fxReverbDecay", 1200 } },
+          { { "x... .... x... ....", ".... x... .... x...", none, none, none, "x.x. x.x. x.x. x.x.", none, none },
+            { "x... .... x... ....", ".... x... .... ....", none, ".... .... .... x.x.", ".... .... x.x. ....",
+              "x.x. x.x. x.x. ....", none, "x... .... .... ...." } } },
+        // Dusty sampler: twelve bits at a low rate, the hats rounded off and never twice the same.
+        { "Staubiger Sampler", "Hip-Hop",
+          { { "master", 0 }, { "swing", 0.6f }, { "kickDecay", 600 }, { "kickCharacter", 0.5f }, { "kickBits", 12 },
+            { "kickCrush", 16000 }, { "kickDrive", 0.3f }, { "snareBits", 10 }, { "snareCrush", 12000 },
+            { "snareFilter", lowpass }, { "snareCutoff", 5000 }, { "snareRandom", 0.3f }, { "hatClosedBits", 8 },
+            { "hatClosedCrush", 14000 }, { "hatClosedFilter", lowpass }, { "hatClosedCutoff", 6000 },
+            { "hatClosedRandom", 0.6f }, { "hatClosedDecay", 60 }, { "hatClosedLevel", -3 }, { "hatOpenBits", 8 },
+            { "hatOpenFilter", lowpass }, { "hatOpenCutoff", 6000 }, { "hatOpenRandom", 0.4f } },
+          { { "x... ...x ..x. ....", ".... x... .... x...", none, none, none, "x.xx x.x. x.xx x.x.", none, none },
+            { "x... ...x ..x. ..x.", ".... x... .... x..x", none, none, none, "x.xx x.x. x.xx x...",
+              ".... .... .... ..x.", none } } },
+        // Filter sweeps on the hats and a clap through a ringing bandpass, over a kick that zaps down from high up.
+        { "Filter-Zap", "Techno",
+          { { "master", 0 }, { "kickDecay", 600 }, { "kickTone", 0.2f }, { "kickPitchMod", 36 }, { "kickModDecay", 60 },
+            { "clapFilter", bandpass }, { "clapCutoff", 1800 }, { "clapResonance", 0.7f }, { "clapReverb", 0.5f },
+            { "hatClosedFilter", bandpass }, { "hatClosedCutoff", 3000 }, { "hatClosedResonance", 0.6f },
+            { "hatClosedFilterMod", 0.6f }, { "hatClosedModDecay", 40 }, { "hatClosedDecay", 80 },
+            { "hatClosedRandom", 0.3f }, { "hatOpenFilter", lowpass }, { "hatOpenCutoff", 800 },
+            { "hatOpenResonance", 0.5f }, { "hatOpenFilterMod", 1.0f }, { "hatOpenModDecay", 250 },
+            { "hatOpenDecay", 300 }, { "fxDelayDivision", delayDottedEighth } },
+          { { "x... x... x... x...", none, ".... x... .... x...", none, none, "xxxx xxxx xxxx xxxx",
+              "..x. ..x. ..x. ..x.", none },
+            { "x... x... x... x...", none, ".... x... .... x...", none, none, "xxxx xxxx xxxx xxxx",
+              "..x. ..x. ..x. .xx.", "x... .... .... ...." } } },
+        // An 808 held at full length and bent down into the sub, a clap pushed through the drive.
+        { "Sub-Boom", "Trap",
+          { { "master", -4 }, { "rate", thirtySeconds }, { "length", 32 }, { "kickTune", -2 }, { "kickDecay", 600 },
+            { "kickHold", 350 }, { "kickPitchMod", -5 }, { "kickModDecay", 700 }, { "kickTone", 0.2f },
+            { "kickCharacter", 0.4f }, { "clapDrive", 0.6f }, { "clapReverb", 0.3f }, { "hatClosedDecay", 35 },
+            { "hatClosedTone", 0.75f }, { "hatClosedLevel", -5 }, { "hatClosedVelocity", 0.5f },
+            { "hatClosedRandom", 0.5f } },
+          { { "x....... ........ ..x..... ........", none, "........ x....... ........ x.......", none, none,
+              "x.x.x.x. x.x.x.x. x.x.x.x. xxxxx.x.", none, none } } },
     };
     return kits;
 }

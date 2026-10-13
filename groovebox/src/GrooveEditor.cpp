@@ -226,7 +226,20 @@ std::unique_ptr<Section> trackSection(GrooveProcessor& p, int t)
                                       { prefix + "Pan", "Panorama" },
                                       { prefix + "Delay", "Delay" },
                                       { prefix + "Reverb", "Hall" },
-                                      { prefix + "Mute", "Stumm" } } });
+                                      { prefix + "Mute", "Stumm" } },
+                                    { { prefix + "Attack", "Attack" },
+                                      { prefix + "Hold", "Halten" },
+                                      { prefix + "PitchMod", "Pitch-Mod" },
+                                      { prefix + "ModDecay", "Mod-Zeit" },
+                                      { prefix + "Filter", "Filter" },
+                                      { prefix + "Cutoff", "Cutoff" },
+                                      { prefix + "Resonance", "Resonanz" },
+                                      { prefix + "FilterMod", "Filter-Mod" } },
+                                    { { prefix + "Drive", "Zerrung" },
+                                      { prefix + "Bits", "Bits" },
+                                      { prefix + "Crush", "Rate" },
+                                      { prefix + "Velocity", "Dynamik" },
+                                      { prefix + "Random", "Zufall" } } });
 }
 } // namespace
 
