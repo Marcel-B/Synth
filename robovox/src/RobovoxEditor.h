@@ -41,7 +41,7 @@ public:
 class RobovoxEditor : public juce::AudioProcessorEditor
 {
 public:
-    static constexpr int kWidth = 744;
+    static constexpr int kWidth = 960;
 
     explicit RobovoxEditor(RobovoxProcessor&);
     ~RobovoxEditor() override;
