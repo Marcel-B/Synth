@@ -390,6 +390,37 @@ target_link_libraries(TonwerkWobble
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk PD: phase distortion as on Casio's CZ synths, with a chorus and Tonwerk's delay and hall (pd/).
+juce_add_plugin(TonwerkPD
+    PRODUCT_NAME "Tonwerk PD"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkpd
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwPd
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_PD_SOURCES
+    pd/src/PdEditor.cpp
+    pd/src/PdPresets.cpp
+    pd/src/PdProcessor.cpp)
+
+# The envelopes and LFO shapes come from Tonwerk Wavetable's DSP (wavetable/src/WaveDsp.h), the effects from the synth.
+target_sources(TonwerkPD PRIVATE ${TONWERK_PD_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkPD PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkPD PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkPD
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -423,9 +454,11 @@ if(TONWERK_TESTS)
         tests/RobovoxTests.cpp
         ${TONWERK_WOBBLE_SOURCES}
         tests/WobbleTests.cpp
+        ${TONWERK_PD_SOURCES}
+        tests/PdTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -440,6 +473,7 @@ if(TONWERK_TESTS)
         TONWERK_GROOVEBOX_NO_ENTRY=1
         TONWERK_ROBOVOX_NO_ENTRY=1
         TONWERK_WOBBLE_NO_ENTRY=1
+        TONWERK_PD_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

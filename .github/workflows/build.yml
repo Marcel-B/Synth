@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -37,7 +37,7 @@ jobs:
       - name: Sign ad hoc
         run: |
           for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
-            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble"; do
+            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
@@ -60,9 +60,10 @@ jobs:
           cp -R "build/TonwerkGroovebox_artefacts/Release/AU/Tonwerk Groovebox.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkRobovox_artefacts/Release/AU/Tonwerk Robovox.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkWobble_artefacts/Release/AU/Tonwerk Wobble.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkPD_artefacts/Release/AU/Tonwerk PD.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd || true
           auval -strict -v aumu TwAn Bvlp
           auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
@@ -76,6 +77,7 @@ jobs:
           auval -strict -v aumu TwGb Bvlp
           auval -strict -v aumf TwRv Bvlp
           auval -strict -v aufx TwWb Bvlp
+          auval -strict -v aumu TwPd Bvlp
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -118,6 +120,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/TonwerkWobble_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Wobble.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Wobble-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Wobble.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Wobble-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkPD_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk PD.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-PD-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk PD.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-PD-VST3.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: tonwerk-synth-macos
