@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, und **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -160,6 +160,26 @@ Physical Modeling: Statt Wellenformen abzuspielen, rechnet das Plugin nach, wie 
 **CPU:** Saite und Rohre sind Verzögerungsleitungen (eine Schleife pro Stimme), Stab, Glocke, Fell und Schale höchstens 16 Resonatoren pro Stimme; die Modulation rechnet alle 32 Samples. Zwölf Stimmen gestrichener Saiten oder Schalen mit Filter, Korpus und Hall rechnet der Test etwa 17- bis 20-mal schneller als Echtzeit.
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Stimmung über die ganze Tastatur, gestrichene Saite und Rohrblatt schwingen von selbst und hören beim Loslassen auf, ungerade Obertöne im geschlossenen Rohr, fehlende gerade Obertöne bei Anschlag in der Mitte, Abklingzeit, gestreckte Obertöne bei Inharmonie, Obertöne von Stab und Glocke, Härte, Vibrato, jeder Erreger auf jedem Resonator auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Korpus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob Geige und Klarinette nach Geige und Klarinette klingen, entscheiden die Ohren.
+
+## Tonwerk Additiv (Instrument)
+
+Additive Synthese: Jeder Ton besteht aus bis zu 64 Sinusschwingungen, den Obertönen, und jeder hat seine eigene Lautstärke, seine eigene Stelle im Spektrum und auf Wunsch seine eigene Hüllkurve. Statt einen fertigen Klang wegzufiltern, baut das Plugin ihn Oberton für Oberton auf. Das klingt sauber und glasig, eignet sich besonders für Glocken, Orgeln, Chöre und Flächen, die sich langsam verändern, und weil alles Formen der Obertonpegel sind, kann nichts aliasen. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Additiv** (`aumu TwAd Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Additiv](docs/additive.png)
+
+- **Anzeige**: ein Balken pro Oberton, gelb der Grundton, so hoch, wie er gerade klingt (48 dB vom lautesten bis zum Boden). Beim Spielen bewegen sich die Balken mit Hüllkurven und LFOs; ohne Ton zeigen sie das Spektrum, wie die Regler es einstellen. Mit Filter markiert eine rote Linie den Cutoff.
+- **Spektrum**: **Spektrum A** und **B** (*Sinus*, *Säge*, *Rechteck*, *Dreieck*, *Puls*, *Orgel* mit Zugriegeln, *Hohl* wie eine Klarinette, *Hell*, *Oktaven*, *Glas* mit den Obertönen 1, 4, 9, 16 …, *Primzahlen*, *Zufall*), alle gleich laut, und **Morph** blendet von A nach B, Oberton für Oberton. **Obertöne** (1 bis 64, stufenlos moduliert, damit ein LFO sie auf- und zuzählen kann), **Neigung** (dB pro Oktave: heller oder dunkler, ohne lauter zu werden), **Gerade/Ungerade** (+100 % nur ungerade, hohl wie ein Rechteck; −100 % nur gerade), **Spreizung** (schiebt die Obertöne von ihren ganzzahligen Plätzen nach oben wie bei einer steifen Saite oder Glocke, oder nach unten), **Schwebung** (jeder Oberton bis zu 50 Cent verstimmt, jeder anders, sodass sie gegeneinander schweben), **Phasen** (*Gleich*: alle starten zusammen, der Anschlag ist knackig; *Zufall*: weicher, Akkorde klingen breiter) und **Breite** (ungerade Obertöne nach links, gerade nach rechts, der Grundton bleibt in der Mitte).
+- **Formant & Kamm**: **Vokal** (A, E, I, O, U, stufenlos dazwischen) legt die Formanten einer Singstimme über die Obertöne, fest in Hertz, egal wie hoch der Ton ist; **Stärke** und **Verschiebung** (±12 Halbtöne, kleinerer oder größerer Rachen). Der **Kamm** schneidet Kerben in das Spektrum, alle **Abstand** Obertöne; mit **Verschiebung** auf einem LFO wandern sie durch den Klang wie bei einem Phaser.
+- **Filter**: *Tiefpass* und *Hochpass* mit 24 dB pro Oktave, *Bandpass* und *Kerbe*, mit **Resonanz** (bis etwa 15 dB) und **Keytracking**. Es rechnet auf den Pegeln der Obertöne, kostet deshalb nichts und kann nicht übersteuern.
+- **Obertöne-Hüllkurve**: jedem Oberton seine eigene Hüllkurve. **Einschwingen** (die hohen Obertöne kommen später, der Grundton sofort, wie bei Blech und Streichern), **Abklingen** (wie lange der Grundton zum Fallen braucht), **Halten** (wohin sie fallen) und **Dämpfung** (wie viel schneller die hohen fallen: bei 100 % der zehnte zehnmal so schnell wie der Grundton, wie bei einer gezupften Saite oder einer Glocke).
+- **Lautstärke** (ADSR und **Dynamik**, bis 20 dB leiser bei leisem Anschlag), **Tonhöhe**, **Hüllkurve 2**, **zwei LFOs** (frei oder im Songtempo), **Modrad** und **Anschlag**, jede mit einem **Ziel** (Tonhöhe, Morph, Neigung, Gerade/Ungerade, Spreizung, Obertöne, Kamm, Cutoff, Resonanz, Vokal, Lautstärke) und einer **Menge**. Der Anschlag macht leise Töne zunächst dunkler (Ziel Neigung).
+- **Stimmen**: Poly (16 Stimmen) oder Mono mit **Glide**, Pitchbend-Bereich, **Master**. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths.
+
+**Presets**: 35 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Hörproben aller Klänge mit ihrer Testphrase liegen im Projektordner unter `synth/hoerproben/Tonwerk Additiv` (und als `synth/hoerproben-additiv.zip`).
+
+**CPU:** Jeder Oberton ist ein Zeiger, der sich pro Sample um einen festen Winkel dreht (vier Multiplikationen, keine Sinusfunktion), acht Obertöne laufen nebeneinander in einem Vektorbefehl. Gerechnet werden nur Obertöne, die klingen und unter der halben Abtastrate liegen; Spektrum, Formanten, Kamm und Filter stellen alle 32 Samples die Pegel neu ein, dazwischen gleiten sie. 16 Stimmen mit je 64 Obertönen und Hall rechnet der Test unter Linux etwa 13-mal schneller als Echtzeit, mit wanderndem Spreizen, Filter, Formanten und Obertöne-Hüllkurven etwa 8-mal.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Stimmung jedes Spektrums über die Tastatur, Säge mit 1/k, Rechteck ohne gerade Obertöne, alle Spektren gleich laut, Morph, Obertonzahl, kein Aliasing bei hohen Tönen, Neigung in dB pro Oktave, Gerade/Ungerade, Spreizung, Formanten fest in Hertz, Kammkerben und ihre Verschiebung, Filtersteilheit, Abklingen und Einschwingen der einzelnen Obertöne, Vibrato, Stereobreite, alle Spektren und Ziele an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, und die Hörproben sind nur gemessen, nicht angehört.
 
 ## Tonwerk PD (Instrument)
 
@@ -338,6 +358,14 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Bässe: Zupfbass, Gestrichener Bass, Röhrenbass, Gleitbass; Leads: Saitenlead, Rohrblattlead
   - Flächen: Gestrichene Schale, Äolsharfe, Gestrichenes Metall
   - Effekte: Pauke, Tom, Holzblock, Gong, Saitenregen
+- **Tonwerk Additiv** (neu)
+  - Flächen: Morph-Fläche, Kammfläche, Glasfläche, Chor Aah, Chor Uuh, Dunkle Fläche, Obertonwelle
+  - Tasten: Zugriegelorgel, Kirchenorgel, Additiv-Piano E, Additiv-Flügel, Cembalo
+  - Glocken: Röhrenglocke, Glockenspiel, Kristall, Gamelan
+  - Bässe: Orgelbass, Sägebass, Sub-Bass, Sprechbass (Vokale im Achteltakt), Kammbass
+  - Leads: Obertonlead, Vokallead, Hohllead; Plucks: Obertonzupfer, Glaszupfer, Additiv-Harfe
+  - Bläser & Streicher: Blechbläser, Streicher, Klarinette, Flöte
+  - Effekte: Obertonleiter (vier Sekunden halten), Glitzerregen, Bandpass-Sweep, Spektralmorph
 - **Tonwerk PD** (neu)
   - Bässe: CZ-Bass, Resobass, Pulsbass, Wobble PD, Ringbass, Sub-Sinus
   - Leads: Sync-Lead, Doppelsinus-Lead, Quaken, Hohler Lead, Kreischen
@@ -357,7 +385,7 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
 - **Tonwerk Wobble** (Effekt, neu): Wobble, Yoi & Vokal, Pumpen, Gater, Bewegung, siehe [Tonwerk Wobble](#tonwerk-wobble-effekt)
 - **Tonwerk Tape** (Effekt, neu): Spulenband, Kassette, Lo-Fi, Kaputt, siehe [Tonwerk Tape](#tonwerk-tape-effekt)
 
-**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular, Physical und PD liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
+**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular, Physical, Additiv und PD liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
 
@@ -397,6 +425,7 @@ cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
 cmake --build build --target TonwerkPhysical_Standalone
+cmake --build build --target TonwerkAdditiv_Standalone
 cmake --build build --target TonwerkPD_Standalone
 cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport
 cmake --build build --target TonwerkTape_Standalone
