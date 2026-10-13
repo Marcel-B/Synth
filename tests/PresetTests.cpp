@@ -1,3 +1,5 @@
+#include "AdditivePresets.h"
+#include "AdditiveProcessor.h"
 #include "DxPresets.h"
 #include "Loudness.h"
 #include "DxProcessor.h"
@@ -44,6 +46,8 @@ bool roomPlaying(const juce::AudioProcessor& processor)
         return granular->roomPlaying();
     if (const auto* physical = dynamic_cast<const tonwerkphys::PhysicalProcessor*>(&processor))
         return physical->roomPlaying();
+    if (const auto* additive = dynamic_cast<const tonwerkadd::AdditiveProcessor*>(&processor))
+        return additive->roomPlaying();
     return true;
 }
 
@@ -227,12 +231,16 @@ std::vector<Instrument> instruments()
                      [] { return std::make_unique<tonwerkphys::PhysicalProcessor>(); },
                      [](int i) { return tonwerkphys::factoryPresets()[(std::size_t) i].category; },
                      [](int i) { return i == 0; } });
+    list.push_back({ "Tonwerk Additiv", (int) tonwerkadd::factoryPresets().size(),
+                     [] { return std::make_unique<tonwerkadd::AdditiveProcessor>(); },
+                     [](int i) { return tonwerkadd::factoryPresets()[(std::size_t) i].category; },
+                     [](int i) { return i == 0; } });
     return list;
 }
 } // namespace
 
 /**
- * The factory sounds of all six instruments, side by side: each in a group of the menu, every name once, and all
+ * The factory sounds of all seven instruments, side by side: each in a group of the menu, every name once, and all
  * about equally loud the way they are played, so switching presets does not jump in level.
  */
 class PresetTests : public juce::UnitTest
