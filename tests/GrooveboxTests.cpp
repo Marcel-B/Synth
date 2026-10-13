@@ -115,6 +115,28 @@ std::vector<float> hit(Instrument instrument, std::initializer_list<std::pair<fl
     return left;
 }
 
+/** Like `hit`, with the track set up by `setup`. */
+template <typename Setup>
+std::vector<float> shaped(Instrument instrument, Setup&& setup, double length, float velocity = 1.0f)
+{
+    Engine engine;
+    engine.prepare(kRate);
+    Settings s;
+    auto& t = s.track[(std::size_t) instrument];
+    t.pan = 0.0f;
+    setup(t);
+    std::vector<float> left(at(length)), right(left.size()), delay(left.size()), reverb(left.size());
+    engine.trigger((int) instrument, velocity, s);
+    engine.render(left.data(), right.data(), delay.data(), reverb.data(), (int) left.size(), s);
+    return left;
+}
+
+/** Peak over RMS, in dB. */
+float crest(const std::vector<float>& signal, std::size_t from, std::size_t to)
+{
+    return decibels(peak(signal, from, to) / rms(signal, from, to));
+}
+
 /** The sample at which the signal first reaches `threshold` after `from`. */
 std::size_t onset(const std::vector<float>& signal, std::size_t from, float threshold = 0.02f)
 {
@@ -374,6 +396,172 @@ public:
             expectLessThan(steepest, 0.25f);
         }
 
+        beginTest("Attack fades the hit in, Halten keeps it up before it falls");
+        {
+            const auto struck = hit(Instrument::snare, {}, 0.1);
+            const auto soft = shaped(Instrument::snare, [](TrackSettings& s) { s.attack = 0.05f; }, 0.1);
+            // The first 3 ms are far quieter; once the attack is over the hit is as loud as without it.
+            expectLessThan(decibels(rms(soft, 0, at(0.003)) / rms(struck, 0, at(0.003))), -18.0f);
+            expectWithinAbsoluteError(decibels(rms(soft, at(0.06), at(0.1)) / rms(struck, at(0.06), at(0.1))), 0.0f, 0.5f);
+
+            const auto gated = shaped(Instrument::openHat, [](TrackSettings& s) {
+                s.decay = 0.1f;
+                s.hold = 0.3f;
+            }, 0.6);
+            const auto open = hit(Instrument::openHat, { { &TrackSettings::decay, 0.1f } }, 0.6);
+            // Still at its strike's level after a quarter second, then gone 100 ms after the hold.
+            expectGreaterThan(decibels(rms(gated, at(0.25), at(0.29)) / rms(gated, at(0.01), at(0.05))), -3.0f);
+            expectLessThan(decibels(rms(open, at(0.25), at(0.29)) / rms(open, at(0.01), at(0.05))), -60.0f);
+            expectLessThan(decibels(rms(gated, at(0.45), at(0.5)) / rms(gated, at(0.01), at(0.05))), -50.0f);
+
+            // The clap's tail holds after its hands.
+            const auto clap = shaped(Instrument::clap, [](TrackSettings& s) {
+                s.decay = 0.1f;
+                s.hold = 0.3f;
+            }, 0.5);
+            expectGreaterThan(rms(clap, at(0.25), at(0.3)), 0.3f * rms(clap, at(0.06), at(0.1)));
+        }
+
+        beginTest("Pitch-Mod bends the whole instrument and falls back in Mod-Zeit");
+        {
+            // A tom with hardly any sweep of its own, bent an octave up by a slow mod envelope: twice its note early on.
+            const auto bent = shaped(Instrument::highTom, [](TrackSettings& s) {
+                s.tone = 0.0f;
+                s.decay = 2.0f;
+                s.pitchMod = 12.0f;
+                s.modDecay = 2.0f;
+            }, 0.2);
+            // 40 ms in, a mod envelope of 2 s to -60 dB is still at 87 %: 10.5 semitones above 150 Hz.
+            expectWithinAbsoluteError(peakBetween(bent, 200.0, 400.0, 1.0, at(0.02), at(0.06)), 280.0, 20.0);
+            // A fast one is back on the note.
+            const auto quick = shaped(Instrument::highTom, [](TrackSettings& s) {
+                s.tone = 0.0f;
+                s.decay = 2.0f;
+                s.pitchMod = 12.0f;
+                s.modDecay = 0.02f;
+            }, 0.4);
+            expectWithinAbsoluteError(peakBetween(quick, 100.0, 400.0, 1.0, at(0.2), at(0.4)), 150.0, 5.0);
+            // Down works too, and moves the metal of a hat.
+            const auto hat = hit(Instrument::closedHat,
+                                 { { &TrackSettings::decay, 0.3f }, { &TrackSettings::character, 0.0f } }, 0.1);
+            const auto lower = shaped(Instrument::closedHat, [](TrackSettings& s) {
+                s.decay = 0.3f;
+                s.pitchMod = -24.0f;
+                s.modDecay = 2.0f;
+                s.character = 0.0f;
+            }, 0.1);
+            expectLessThan(shareAbove(lower, 6000.0), shareAbove(hat, 6000.0));
+        }
+
+        beginTest("The track filter: lowpass darkens, highpass thins, Filter-Mod sweeps");
+        {
+            const auto cymbal = hit(Instrument::cymbal, {}, 0.3);
+            const auto dark = shaped(Instrument::cymbal, [](TrackSettings& s) {
+                s.filter = TrackFilter::lowpass;
+                s.cutoff = 1000.0f;
+            }, 0.3);
+            // The cymbal's metal sits above a few kilohertz, so little is left under a lowpass at 1 kHz.
+            expectLessThan(decibels(rms(dark, 0, dark.size()) / rms(cymbal, 0, cymbal.size())), -20.0f);
+
+            const auto kick = hit(Instrument::kick, { { &TrackSettings::decay, 1.0f } }, 0.5);
+            const auto thin = shaped(Instrument::kick, [](TrackSettings& s) {
+                s.decay = 1.0f;
+                s.filter = TrackFilter::highpass;
+                s.cutoff = 500.0f;
+            }, 0.5);
+            expectLessThan(decibels(amplitudeAt(thin, 50.0, at(0.2), at(0.4)) / amplitudeAt(kick, 50.0, at(0.2), at(0.4))),
+                           -30.0f);
+
+            // A lowpass opened by the mod envelope: far brighter than the same lowpass standing still at the strike, the
+            // same once the envelope has fallen.
+            auto hatThrough = [](float filterMod) {
+                return shaped(Instrument::openHat, [filterMod](TrackSettings& s) {
+                    s.decay = 1.0f;
+                    s.filter = TrackFilter::lowpass;
+                    s.cutoff = 300.0f;
+                    s.filterMod = filterMod;
+                    s.modDecay = 0.1f;
+                }, 0.4);
+            };
+            const auto swept = hatThrough(1.0f), still = hatThrough(0.0f);
+            expectGreaterThan(decibels(rms(swept, 0, at(0.01)) / rms(still, 0, at(0.01))), 20.0f);
+            expectWithinAbsoluteError(decibels(rms(swept, at(0.3), at(0.4)) / rms(still, at(0.3), at(0.4))), 0.0f, 1.0f);
+
+            // Resonance rings at the cutoff.
+            auto atCutoff = [](float resonance) {
+                const auto out = shaped(Instrument::snare, [resonance](TrackSettings& s) {
+                    s.filter = TrackFilter::bandpass;
+                    s.cutoff = 1500.0f;
+                    s.resonance = resonance;
+                    s.character = 1.0f;
+                }, 0.2);
+                return amplitudeAt(out, 1500.0, 0, out.size()) / rms(out, 0, out.size());
+            };
+            expectGreaterThan(atCutoff(1.0f), 2.0f * atCutoff(0.0f));
+        }
+
+        beginTest("Zerrung squeezes the hit, Bitcrush and Downsample coarsen it");
+        {
+            const auto tom = hit(Instrument::lowTom, {}, 0.4);
+            const auto driven = shaped(Instrument::lowTom, [](TrackSettings& s) { s.drive = 1.0f; }, 0.4);
+            expectLessThan(crest(driven, 0, driven.size()), crest(tom, 0, tom.size()) - 3.0f);
+            // No louder at its peak than the plain hit.
+            expectLessThan(peak(driven, 0, driven.size()), peak(tom, 0, tom.size()) * 1.05f);
+
+            // Two bits: the hit takes a handful of values (steps of half full scale), however the track's level scales them.
+            const auto crushed = shaped(Instrument::snare, [](TrackSettings& s) { s.bits = 2.0f; }, 0.2);
+            std::set<float> values(crushed.begin(), crushed.end());
+            expectLessOrEqual((int) values.size(), 7);
+
+            // Held at 1000 Hz: the signal changes at most a thousand times a second.
+            const auto held = shaped(Instrument::closedHat, [](TrackSettings& s) {
+                s.crush = 1000.0f;
+                s.decay = 0.5f;
+            }, 0.5);
+            int changes = 0;
+            for (std::size_t i = 1; i < held.size(); ++i)
+                changes += std::abs(held[i] - held[i - 1]) > 0.0f ? 1 : 0;
+            expectLessOrEqual(changes, 501);
+            expectGreaterThan(changes, 400);
+        }
+
+        beginTest("Dynamik sets how much the velocity counts, Zufall varies each hit");
+        {
+            auto level = [](float velocity, float dynamics) {
+                const auto out = shaped(Instrument::closedHat, [dynamics](TrackSettings& s) { s.velocity = dynamics; },
+                                        0.05, velocity);
+                return rms(out, 0, out.size());
+            };
+            expectWithinAbsoluteError(decibels(level(0.5f, 0.0f) / level(1.0f, 0.0f)), 0.0f, 0.1f);
+            expectWithinAbsoluteError(decibels(level(0.5f, 0.5f) / level(1.0f, 0.5f)), decibels(0.75f), 0.3f);
+
+            auto hits = [](float random) {
+                Engine engine;
+                engine.prepare(kRate);
+                Settings s;
+                auto& t = s.track[(std::size_t) Instrument::closedHat];
+                t.random = random;
+                t.pan = 0.0f;
+                // All metal, no noise, so nothing but the dice can tell one hit from the next.
+                t.character = 0.0f;
+                std::vector<float> levels;
+                std::vector<float> l(at(0.1)), r(l.size()), d(l.size()), v(l.size());
+                for (int i = 0; i < 16; ++i)
+                {
+                    std::fill(l.begin(), l.end(), 0.0f);
+                    engine.trigger((int) Instrument::closedHat, 1.0f, s);
+                    engine.render(l.data(), r.data(), d.data(), v.data(), (int) l.size(), s);
+                    levels.push_back(decibels(rms(l, 0, l.size())));
+                }
+                const auto [low, high] = std::minmax_element(levels.begin(), levels.end());
+                return *high - *low;
+            };
+            expectLessThan(hits(0.0f), 0.01f);
+            expectGreaterThan(hits(1.0f), 1.5f);
+            // 3 dB either way, and a little more from the detuning.
+            expectLessThan(hits(1.0f), 8.0f);
+        }
+
         beginTest("The clock: steps on the grid, swing on every second one, counted from the song's start");
         {
             std::vector<std::pair<int, int>> fired;
@@ -539,6 +727,40 @@ public:
             expectEquals(loaded.presetName(), processor.presetName());
         }
 
+        beginTest("A project from before the shaping loads with the shaping at its defaults");
+        {
+            GrooveProcessor before;
+            set(before, "kickTune", -5.0f);
+            juce::MemoryBlock saved;
+            before.getStateInformation(saved);
+            // What the first version saved: the same state without the parameters added since.
+            auto xml = juce::AudioProcessor::getXmlFromBinary(saved.getData(), (int) saved.getSize());
+            for (auto* param = xml->getFirstChildElement(); param != nullptr;)
+            {
+                auto* next = param->getNextElement();
+                const auto paramId = param->getStringAttribute("id");
+                for (const auto* suffix : { "Attack", "Hold", "PitchMod", "ModDecay", "Filter", "Cutoff", "Resonance",
+                                            "FilterMod", "Drive", "Bits", "Crush", "Velocity", "Random" })
+                    if (paramId.endsWith(suffix) && ! paramId.startsWith("fx"))
+                    {
+                        xml->removeChildElement(param, true);
+                        break;
+                    }
+                param = next;
+            }
+            juce::MemoryBlock old;
+            juce::AudioProcessor::copyXmlToBinary(*xml, old);
+            GrooveProcessor loaded;
+            set(loaded, "kickHold", 400.0f);
+            set(loaded, "kickFilter", 1.0f);
+            loaded.setStateInformation(old.getData(), (int) old.getSize());
+            const auto kick = loaded.readSettings().track[0];
+            expectWithinAbsoluteError(kick.tune, -5.0f, 1.0e-3f);
+            expectEquals(kick.hold, 0.0f);
+            expect(kick.filter == TrackFilter::off);
+            expectEquals(kick.velocity, 1.0f);
+        }
+
         beginTest("Values are whole numbers with units");
         {
             GrooveProcessor processor;
@@ -552,6 +774,14 @@ public:
             expectEquals(text("swing", 0.58f), juce::String("58 %"));
             expectEquals(text("length", 12.0f), juce::String("12 Schritte"));
             expectEquals(text("master", -6.0000002f), juce::String("-6 dB"));
+            expectEquals(text("snareHold", 249.7f), juce::String("250 ms"));
+            expectEquals(text("kickPitchMod", 12.2f), juce::String("12 HT"));
+            expectEquals(text("hatOpenCutoff", 1000.3f), juce::String("1000 Hz"));
+            expectEquals(text("hatOpenFilterMod", -0.5f), juce::String("-50 %"));
+            expectEquals(text("clapBits", 8.0f), juce::String("8 Bit"));
+            expectEquals(text("clapBits", 16.0f), juce::String("Aus"));
+            expectEquals(text("clapCrush", 48000.0f), juce::String("Aus"));
+            expectEquals(text("clapCrush", 4000.0f), juce::String("4000 Hz"));
         }
 
         beginTest("Every kit: in a group, named once, its patterns as long as it plays them, and leveled");
@@ -613,6 +843,26 @@ public:
             logMessage("All tracks on 1/32 with delay, hall and drive: " + juce::String(realtime, 1) + " times real time");
             expect(finite(out));
             expectGreaterThan(realtime, 5.0);
+
+            // The same with every track's shaping working its hardest: the mod envelope moving pitch and filter.
+            for (const auto* track : kTrackIds)
+            {
+                const juce::String t = track;
+                set(processor, t + "PitchMod", 12.0f);
+                set(processor, t + "ModDecay", 2000.0f);
+                set(processor, t + "Filter", 1.0f);
+                set(processor, t + "Resonance", 0.5f);
+                set(processor, t + "FilterMod", 0.5f);
+                set(processor, t + "Drive", 0.5f);
+                set(processor, t + "Bits", 8.0f);
+                set(processor, t + "Crush", 8000.0f);
+                set(processor, t + "Random", 0.5f);
+            }
+            const auto shapedOut = run(processor, 4.0, nullptr, {}, true);
+            const double shapedRealtime = 4.0 / shapedOut.seconds;
+            logMessage("The same with every track shaped: " + juce::String(shapedRealtime, 1) + " times real time");
+            expect(finite(shapedOut));
+            expectGreaterThan(shapedRealtime, 5.0);
         }
 
         beginTest("The editor fits its panels");
