@@ -264,6 +264,37 @@ target_link_libraries(TonwerkPhysical
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Additiv: sounds built from up to 64 sine partials, with Tonwerk's delay and hall (additive/).
+juce_add_plugin(TonwerkAdditiv
+    PRODUCT_NAME "Tonwerk Additiv"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkadditiv
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwAd
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_ADDITIVE_SOURCES
+    additive/src/AdditiveEditor.cpp
+    additive/src/AdditivePresets.cpp
+    additive/src/AdditiveProcessor.cpp)
+
+# The envelopes and LFO shapes come from Tonwerk Wavetable's DSP (wavetable/src/WaveDsp.h), the effects from the synth.
+target_sources(TonwerkAdditiv PRIVATE ${TONWERK_ADDITIVE_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkAdditiv PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkAdditiv PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkAdditiv
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # Tonwerk Groovebox: a drum machine of synthesised drums with a step sequencer in the host's tempo (groovebox/).
 juce_add_plugin(TonwerkGroovebox
     PRODUCT_NAME "Tonwerk Groovebox"
@@ -415,6 +446,8 @@ if(TONWERK_TESTS)
         tests/GranularTests.cpp
         ${TONWERK_PHYSICAL_SOURCES}
         tests/PhysicalTests.cpp
+        ${TONWERK_ADDITIVE_SOURCES}
+        tests/AdditiveTests.cpp
         ${TONWERK_GROOVEBOX_SOURCES}
         tests/GrooveboxTests.cpp
         ${TONWERK_ROBOVOX_SOURCES}
@@ -425,7 +458,7 @@ if(TONWERK_TESTS)
         tests/PdTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src groovebox/src robovox/src wobble/src pd/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -436,6 +469,7 @@ if(TONWERK_TESTS)
         TONWERK_DX_NO_ENTRY=1
         TONWERK_GRANULAR_NO_ENTRY=1
         TONWERK_PHYSICAL_NO_ENTRY=1
+        TONWERK_ADDITIVE_NO_ENTRY=1
         TONWERK_GROOVEBOX_NO_ENTRY=1
         TONWERK_ROBOVOX_NO_ENTRY=1
         TONWERK_WOBBLE_NO_ENTRY=1
