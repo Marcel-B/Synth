@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, und **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, und **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -161,6 +161,24 @@ Physical Modeling: Statt Wellenformen abzuspielen, rechnet das Plugin nach, wie 
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Stimmung über die ganze Tastatur, gestrichene Saite und Rohrblatt schwingen von selbst und hören beim Loslassen auf, ungerade Obertöne im geschlossenen Rohr, fehlende gerade Obertöne bei Anschlag in der Mitte, Abklingzeit, gestreckte Obertöne bei Inharmonie, Obertöne von Stab und Glocke, Härte, Vibrato, jeder Erreger auf jedem Resonator auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Korpus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob Geige und Klarinette nach Geige und Klarinette klingen, entscheiden die Ohren.
 
+## Tonwerk PD (Instrument)
+
+Phase Distortion wie bei Casios CZ-Synthesizern aus den Achtzigern: Eine Kosinuswelle wird mit verbogener Phase gelesen. Wo die Phase schnell läuft, fällt die Welle steil ab, wo sie stehen bleibt, hält die Welle, und so wird aus dem reinen Sinus je nach Biegung (**DCW**) eine Säge, ein Rechteck, ein Puls oder ein resonanter Sweep. Einen Filter braucht es dafür nicht: Die DCW-Hüllkurve öffnet und schließt den Klang so, wie es sonst eine Filterhüllkurve tut. Das klingt digital und trotzdem warm und kostet sehr wenig Rechenzeit. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk PD** (`aumu TwPd Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht. Die Klänge sind eigene, keine Kopien aus Casios Speichern.
+
+![Tonwerk PD](docs/pd.png)
+
+- **Anzeige**: die Welle jeder Linie so, wie sie gerade gebogen ist (Linie 1 cyan, Linie 2 gelb), zwei Perioden lang, damit man bei zwei abwechselnden Wellen beide sieht; darunter blass der unverbogene Kosinus.
+- **Linien**: wie beim CZ zwei Linien mit eigener Welle, DCW und DCA (Lautstärke). **1** oder **2** spielt eine Linie, **1 + 1'** die erste Linie doppelt (die Kopie mit der Verstimmung von Linie 2, für Schwebung), **1 + 2'** beide. **Modulation**: *Ring* multipliziert Linie 2 mit Linie 1 (Glocken, Metall), *Rauschen* liest Linie 2 mit zufällig wandernder Phase (ein Rauschband um ihre Tonhöhe, für Atem und Wind). Dazu die **Verstimmung** von Linie 2 (Halbton und Fein), eine **Tonhöhen-Hüllkurve** (Start bis ±24 Halbtöne, Zeit bis zum Ton) und **Breite** (Linie 1 links, Linie 2 rechts).
+- **Linie 1 und 2**: **Welle** (*Säge*, *Rechteck*, *Puls*, *Doppelsinus*, *Säge-Puls* und drei Resonanzen mit *Säge*-, *Dreieck*- und *Trapez*-Fenster, bei denen ein Kosinus mit bis zum 16-fachen der Tonhöhe unter dem Fenster läuft, der Klang eines resonanten Filters), **Welle 2** (wie beim CZ abwechselnd mit der ersten, Periode um Periode, das bringt die Oktave darunter dazu), **DCW** (wie weit die Hüllkurve biegt), **Keytrack** (hohe Töne bekommen weniger Biegung, damit sie nicht schrill werden), **Pegel**, **Oktave**, dazu je eine Hüllkurve für **DCW** und **DCA** (Attack, Decay, Sustain, Release).
+- **Zwei LFOs** (frei oder im Songtempo, LFO 1 mit **Verzögerung** wie das Vibrato des CZ), **Modrad** und **Anschlag**, jede mit einem **Ziel** (Tonhöhe, DCW, DCW 1, DCW 2, Tonhöhe 2, Lautstärke, Balance zwischen den Linien) und einer **Menge**. Das Modrad öffnet am Anfang den Klang (DCW), ein leiser Anschlag biegt weniger. **Dynamik** sagt, wie viel leiser ein leiser Anschlag ist.
+- **Stimmen**: Poly (16 Stimmen), Mono oder Legato mit **Glide**, Pitchbend-Bereich, **Master**. Danach ein **Chorus** (Mix, Rate, Tiefe; ohne ihn hat man einen CZ selten gehört), **Delay** und **Hall** wie in den anderen Tonwerk-Synths.
+
+**Presets**: 40 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Hörproben aller Klänge mit ihrer Testphrase liegen im Projektordner unter `synth/hoerproben/Tonwerk PD` (auch als `synth/hoerproben-pd.zip`).
+
+**CPU:** Pro Linie und Sample ein Kosinus aus einer Tabelle; Hüllkurven pro Sample, Modulation alle 32 Samples. Damit hohe Töne bei voller Biegung nicht verzerren, fällt eine Flanke nie in weniger als zwei Samples, und die Sprünge des Doppelsinus werden geglättet (was zurückfaltet, liegt bei C7 30 bis 50 dB unter den Obertönen). 16 Stimmen mit beiden Linien, Ringmodulation, Chorus und Hall rechnet der Test etwa 8- bis 9-mal schneller als Echtzeit, der größte Teil davon ist der Hall.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (ohne Biegung ein reiner Kosinus außer bei den Resonanzen, jede Welle auf der Tonhöhe über die Tastatur, mehr DCW gibt mehr Obertöne, volle Säge mit allen und volles Rechteck nur mit ungeraden Obertönen, der Resonanzgipfel wandert bis zum 16-fachen, die DCW-Hüllkurve schließt den Klang, abwechselnde Wellen bringen die Unteroktave, 1 + 1' mit Verstimmung, Ringmodulation mit Summe und Differenz, Rauschmodulation, wenig Rückfaltung bei hohen Tönen, alle Wellen, Linien und Modulationen auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Tonhöhen-Hüllkurve, Chorus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob die Klänge nach CZ klingen, entscheiden die Ohren.
+
 ## Tonwerk Groovebox (Instrument)
 
 Eine Drum-Machine mit acht Instrumenten und eingebautem Step-Sequencer. Alle Klänge werden berechnet, nicht abgespielt, so wie die klassischen analogen Drumcomputer sie gebaut haben: die Bassdrum ein Sinus, dessen Tonhöhe beim Schlag von oben herunterfällt, die Snare ein gestimmter Kessel unter gefiltertem Rauschen, das Clap drei schnelle Hände und ein Nachhall aus Rauschen, die Toms fallende Sinustöne mit etwas Fell, Hi-Hats und Becken sechs Rechteckschwingungen in schief zueinander stehenden Frequenzen, die durch Bandpass und Hochpass nach Metall klingen. Samples gibt es keine, jeder Regler wirkt deshalb stufenlos auf den Klang. Sie liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Groovebox** (`aumu TwGb Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
@@ -301,6 +319,13 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Bässe: Zupfbass, Gestrichener Bass, Röhrenbass, Gleitbass; Leads: Saitenlead, Rohrblattlead
   - Flächen: Gestrichene Schale, Äolsharfe, Gestrichenes Metall
   - Effekte: Pauke, Tom, Holzblock, Gong, Saitenregen
+- **Tonwerk PD** (neu)
+  - Bässe: CZ-Bass, Resobass, Pulsbass, Wobble PD, Ringbass, Sub-Sinus
+  - Leads: Sync-Lead, Doppelsinus-Lead, Quaken, Hohler Lead, Kreischen
+  - Flächen: CZ-Streicher, Glaswand, Atemfläche, Wechselfläche, Digitalchor, Nachtpanorama
+  - Tasten: CZ-Piano, E-Piano PD, Orgel PD, Clavi PD, Akkordeon, Spielzeugklavier
+  - Plucks: PD-Pluck, Resozupf, Digitalharfe, Koto PD, Pizzicato PD; Glocken: Glocke PD, Kristall, Röhrenglocke, Spieluhr
+  - Bläser & Streicher: PD-Bläser, Sologeige, Holzbläser, Tutti; Effekte: Laser PD, Rauschwind, Funkstörung, Arcade
 - **Tonwerk Groovebox** (neu)
   - House: Deep House, Disco House, Garage; Techno: Berlin Techno, Industrial, Minimal
   - Hip-Hop: Boom Bap, Lo-Fi; Trap: Trap, Drill (beide im 1/32-Raster für Hi-Hat-Wirbel)
@@ -312,7 +337,7 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
 - **Tonwerk Robovox** (Effekt, neu): Tief, Roboter, Hell, Effekte, siehe [Tonwerk Robovox](#tonwerk-robovox-effekt)
 - **Tonwerk Wobble** (Effekt, neu): Wobble, Yoi & Vokal, Pumpen, Gater, Bewegung, siehe [Tonwerk Wobble](#tonwerk-wobble-effekt)
 
-**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular und Physical liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
+**Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular, Physical und PD liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
 **Geändert an alten Klängen:** Ihre Lautstärke ist angeglichen und der Hall ist bei vielen deutlich zurückgenommen (er ist laut, schon 10 % Mix bei langem Raum sind etwa so laut wie das trockene Signal). Im DX haben Bass, Marimba, Clavi und Lead etwas mehr Pegel im gehaltenen Teil bekommen, damit sie mit den anderen mithalten, und das Vibrato von Blech, Mundharmonika, Flöte und Lead läuft jetzt mit 5 Hz statt 0,6 Hz. Gespeicherte Projekte behalten ihre Einstellungen; das betrifft nur das neue Laden eines Werksklangs.
 
@@ -352,6 +377,7 @@ cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
 cmake --build build --target TonwerkPhysical_Standalone
+cmake --build build --target TonwerkPD_Standalone
 cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport
 ```
 
