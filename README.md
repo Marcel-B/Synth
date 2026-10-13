@@ -183,7 +183,7 @@ Eine Drum-Machine mit acht Instrumenten und eingebautem Step-Sequencer. Alle Kl�
 
 Die Roboterstimme aus KI-Songs: Die Stimme wird von einem Synth gesungen. Der Klang in deinem Beispiel („Day Off in Night City“) ist ein Vocoder, dessen Träger nicht auf der Tonhöhe der Sängerin liegt, sondern ein tiefer, völlig gerader Ton ist (dort D und G ganz unten, die Basslinie), der ohne Gleiten von Ton zu Ton springt; die Formanten der Stimme liegen über seinem dichten Kamm aus Obertönen. Deshalb hat ihn die Stem-Trennung als Bass erkannt. Ein normaler Vocoder trifft das nicht, wenn der Träger von Hand auf der Höhe der Stimme gespielt wird oder zu wenige Bänder hat. Hier macht das Plugin den Träger selbst: aus der Tonhöhe der Stimme, auf eine Tonleiter gerastet und um Oktaven nach unten gesetzt, oder aus MIDI-Noten.
 
-Er liegt in Logic unter **Audio-FX → Audio Units → b-velop → Tonwerk Robovox**. Er ist ein MIDI-gesteuerter Effekt: Für die Noten aus einer Spur: im Plugin-Fenster oben das MIDI-Side-Chain-Menü auf die Instrumentenspur stellen und **Quelle** auf MIDI.
+Er liegt in Logic unter **Audio-FX → Audio Units → b-velop → Tonwerk Robovox**. Er ist ein MIDI-gesteuerter Effekt: Für die Noten aus einer Spur: im Plugin-Fenster oben rechts das Menü **Sidechain** auf die Instrumentenspur stellen und **Quelle** auf MIDI.
 
 ![Tonwerk Robovox](docs/robovox.png)
 
