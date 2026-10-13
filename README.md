@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, und **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -263,6 +263,25 @@ Wie es rechnet: Die Kurven sind Punkte mit einer Biegung pro Abschnitt (Potenzku
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (Kurven, Stufen und Biegungen, Text im Zustand, Gate-Anteile, LFO auf dem Beat aus der Songposition, freier Lauf bei Stopp und ohne Sync, Stereo-Versatz, Tiefe, Glätten ohne Knacken, Filterfrequenzen und Flanken, Resonanz, Formanten des Vokalfilters, Mix, Presets mit Kurven, Oberfläche, CPU). Die Presets sind als Spektrogramm angesehen, nicht angehört. `auval` läuft in der GitHub Action. In Logic ist es noch nicht gehört.
 
+## Tonwerk Tape (Effekt)
+
+Eine abgenutzte Bandmaschine als Effekt: Was durchläuft, wird aufgenommen und wieder abgespielt, so wie es ein Kassettendeck oder eine Spulenmaschine tut. Der Tonkopf sättigt, das Band rauscht und verliert ab und zu den Kontakt, der Antrieb läuft nicht ganz gleichmäßig, und beim Abspielen kommen ein Buckel in den Bässen und weniger Höhen dazu. Das Plugin liegt in Logic unter **Audio-FX → Audio Units → b-velop → Tonwerk Tape** und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Tape](docs/tape.png)
+
+- **Laufwerk**: **Leiern** (Wow) 0 bis 100 %: ein langsames Schwanken der Geschwindigkeit, etwa einmal in zwei Sekunden, mit unregelmäßigem Tempo wie bei einem ausgeleierten Riemen. Bei 100 % schwankt die Tonhöhe um bis zu 1,6 % (etwa 28 Cent). **Flattern** (Flutter) 0 bis 100 %: das schnelle Zittern um 7 und 12 Hz, bis 0,4 %. **Aussetzer** 0 bis 100 %: Das Band hebt kurz vom Kopf ab, der Pegel sinkt für 30 bis 200 ms um 3 bis 18 dB, bei 100 % etwa einmal pro Sekunde. Die Kassette links dreht sich, solange Ton durchläuft, und zeigt darunter, um wie viele Cent das Band gerade verstimmt ist.
+- **Band**: **Typ** Spulenband (tiefer Bassbuckel bei 48 Hz, weites Band, sauberste Kennlinie), Chrom (Typ II, straffe Bässe, hell), Ferro (Typ I, voller Buckel bei 85 Hz, unsymmetrischer, sättigt früher) oder Diktiergerät (Band nur von etwa 220 Hz bis 4,5 kHz, harte Kennlinie). **Sättigung** 0 bis 100 %: wie hart der Tonkopf gefahren wird. Die Spitzen werden runder, Leises kommt hoch; die Lautheit bleibt dabei etwa gleich, weil ein Ton bei −12 dBFS bei jeder Einstellung seinen Pegel behält. Die Höhen werden vor der Sättigung um 6 dB angehoben und danach wieder abgesenkt, wie bei der Aufnahme-Entzerrung, deshalb sättigen sie zuerst. **Eingang** −24 bis +24 dB: wie heiß aufgenommen wird.
+- **Tonkopf**: **Höhen** 2000 bis 20000 Hz, wo das Band oben aufhört (12 dB pro Oktave). **Rauschen** −90 dB (Aus) bis −30 dB: das Bandrauschen, auf beiden Spuren getrennt.
+- **Ausgang**: **Mix** (100 % nur Band; darunter wird der trockene Weg passend verzögert dazugemischt) und **Pegel** −24 bis +12 dB.
+
+Der Abspielkopf liegt 8 ms hinter dem Aufnahmekopf, damit das Leiern nach beiden Seiten Platz hat. Diese Latenz meldet das Plugin Logic. Leiern, Aussetzer und Rauschen starten bei jedem Start der Wiedergabe gleich, ein Bounce klingt also wie das Abspielen davor.
+
+**CPU:** Keine Überabtastung, die Sättigung rechnet mit Antiderivative-Antialiasing. Stereo mit allem auf Anschlag läuft im Test etwa 100-mal schneller als Echtzeit.
+
+**Presets**: **Spulenband**: Studio-Maschine, Mastering-Band, Heißes Band, Parallel-Band (50 % Mix). **Kassette**: Chromkassette, Ferro-Kassette, Walkman, Mixtape 1991. **Lo-Fi**: Lo-Fi Hip-Hop, Chillhop-Keys, Vaporwave. **Kaputt**: Bandsalat, Diktiergerät, Dachbodenfund, Seekrank. Jedes ist auf einen Lo-Fi-Beat mit Spitzen um −6 dBFS eingepegelt (im Test höchstens 2 dB daneben, gemessen nach EBU R128).
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (sauberer Durchgang und Latenz, Obertöne mit Sättigung, gerade Obertöne der Kassette, Höhen sättigen zuerst, Stärke von Leiern und Flattern gemessen an einer Sinus-Frequenz, Höhen-Filter, Rauschpegel, Aussetzer, Mix, gleicher Bounce, Mono, 44,1 und 96 kHz, Zustand, Anzeige in ganzen Zahlen, CPU, Oberfläche, Presets). Die Presets sind auf einem künstlichen Beat (E-Piano, Bass, Drums) eingestellt. `auval` läuft in der GitHub Action. In Logic ist es noch nicht gehört.
+
 ## Herunterladen
 
 Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
@@ -364,6 +383,7 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
 - **Chrome Glitch** (Effekt): Dezent, Rhythmisch, Zerstört, Klangeffekte, siehe [Chrome Glitch](#chrome-glitch-effekt)
 - **Tonwerk Robovox** (Effekt, neu): Tief, Roboter, Hell, Effekte, siehe [Tonwerk Robovox](#tonwerk-robovox-effekt)
 - **Tonwerk Wobble** (Effekt, neu): Wobble, Yoi & Vokal, Pumpen, Gater, Bewegung, siehe [Tonwerk Wobble](#tonwerk-wobble-effekt)
+- **Tonwerk Tape** (Effekt, neu): Spulenband, Kassette, Lo-Fi, Kaputt, siehe [Tonwerk Tape](#tonwerk-tape-effekt)
 
 **Gleich laut:** Ein Test spielt jeden Klang mit einer Phrase seiner Gruppe (Basslinie, Akkorde, Arpeggio, Melodie) bei Anschlag 100 und misst die Lautheit nach EBU R128 (momentan, am lautesten Punkt). Tonwerk Analog, FM, Wavetable, Granular, Physical, Additiv und PD liegen bei −12 LUFS, Tonwerk DX bei −16 LUFS, jeweils höchstens 2 dB daneben (die Kits der Groovebox spielen zwei Takte ihres Patterns und liegen ebenfalls bei −16 LUFS, denn Schlagzeug hat Spitzen etwa 15 dB über seiner Lautheit); der DX ist leiser, weil eine Stimme bei voller Lautstärke nur halben Vollpegel erreicht, damit ein hart angeschlagener Akkord nicht übersteuert. Effekte dürfen bis 6 dB leiser sein, ein kurzer Laser wird sonst zu laut. Kein Klang kommt dabei über den Vollpegel, Delay und Hall eingerechnet. Ausgenommen sind Tonwerks eigene Startklänge, die so laut bleiben wie im Browser.
 
@@ -408,6 +428,7 @@ cmake --build build --target TonwerkPhysical_Standalone
 cmake --build build --target TonwerkAdditiv_Standalone
 cmake --build build --target TonwerkPD_Standalone
 cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport
+cmake --build build --target TonwerkTape_Standalone
 ```
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
