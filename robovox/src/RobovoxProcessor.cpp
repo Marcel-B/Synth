@@ -74,10 +74,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout RobovoxProcessor::createPara
 RobovoxProcessor::RobovoxProcessor()
     : AudioProcessor(BusesProperties()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                         // Logic shows its side chain menu, where a MIDI-controlled effect picks the track
-                         // whose notes it receives, only for a plug-in with a second input bus. Its audio
-                         // is not used.
-                         .withInput("Sidechain", juce::AudioChannelSet::stereo(), true)
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       state(*this, nullptr, "TonwerkRobovox", createParameterLayout()),
       programs(state, factoryPresets())
@@ -119,10 +115,8 @@ bool RobovoxProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     const auto out = layouts.getMainOutputChannelSet();
     const auto in = layouts.getMainInputChannelSet();
-    const auto side = layouts.getChannelSet(true, 1);
     return (out == juce::AudioChannelSet::mono() || out == juce::AudioChannelSet::stereo())
-           && (in == juce::AudioChannelSet::mono() || in == juce::AudioChannelSet::stereo())
-           && (side.isDisabled() || side == juce::AudioChannelSet::mono() || side == juce::AudioChannelSet::stereo());
+           && (in == juce::AudioChannelSet::mono() || in == juce::AudioChannelSet::stereo());
 }
 
 void RobovoxProcessor::handleMidi(const juce::MidiMessage& message)
@@ -150,9 +144,7 @@ void RobovoxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
 {
     juce::ScopedNoDenormals noDenormals;
     const int total = buffer.getNumSamples();
-    const auto input = getBusBuffer(buffer, true, 0);
-    auto output = getBusBuffer(buffer, false, 0);
-    const int inputs = input.getNumChannels();
+    const int inputs = std::min(getTotalNumInputChannels(), buffer.getNumChannels());
     engine.update(readSettings());
     if ((int) mono.size() < total)
         mono.resize((std::size_t) total);
@@ -160,7 +152,7 @@ void RobovoxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     // The voice in mono: a stereo take summed, so a voice panned to one side keeps its level.
     std::fill(mono.begin(), mono.begin() + total, 0.0f);
     for (int ch = 0; ch < inputs; ++ch)
-        juce::FloatVectorOperations::addWithMultiply(mono.data(), input.getReadPointer(ch), 1.0f / (float) inputs,
+        juce::FloatVectorOperations::addWithMultiply(mono.data(), buffer.getReadPointer(ch), 1.0f / (float) inputs,
                                                      total);
     scopeIn.write(mono.data(), total);
 
@@ -175,8 +167,8 @@ void RobovoxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     }
     engine.process(mono.data() + done, mono.data() + done, total - done);
 
-    for (int ch = 0; ch < output.getNumChannels(); ++ch)
-        output.copyFrom(ch, 0, mono.data(), total);
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        buffer.copyFrom(ch, 0, mono.data(), total);
     scopeOut.write(mono.data(), total);
     carrierNote = engine.carrierNote();
     sungPitch = (float) engine.sungPitch();

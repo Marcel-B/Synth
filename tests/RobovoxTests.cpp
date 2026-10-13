@@ -351,39 +351,6 @@ public:
                 juce::PNGImageFormat().writeImageToStream(image, file);
             }
         }
-
-        beginTest("A side chain bus, so Logic offers its menu for the MIDI track, whose audio changes nothing");
-        {
-            auto run = [&](bool sideNoise) {
-                RobovoxProcessor processor;
-                expectEquals(processor.getBusCount(true), 2);
-                expectEquals(processor.getTotalNumInputChannels(), 4);
-                processor.prepareToPlay(kRate, kBlock);
-                processor.state.getParameter("mode")->setValueNotifyingHost(1.0f);
-                const auto voice = vowel(220.0, 0.5);
-                juce::AudioBuffer<float> buffer(4, kBlock);
-                juce::Random random(7);
-                std::vector<float> out;
-                for (std::size_t at = 0; at + kBlock <= voice.size(); at += kBlock)
-                {
-                    juce::MidiBuffer midi;
-                    if (at == 0)
-                        midi.addEvent(juce::MidiMessage::noteOn(1, 45, 0.8f), 0);
-                    for (int ch = 0; ch < 2; ++ch)
-                        buffer.copyFrom(ch, 0, voice.data() + at, kBlock);
-                    for (int ch = 2; ch < 4; ++ch)
-                        for (int i = 0; i < kBlock; ++i)
-                            buffer.setSample(ch, i, sideNoise ? random.nextFloat() * 2.0f - 1.0f : 0.0f);
-                    processor.processBlock(buffer, midi);
-                    out.insert(out.end(), buffer.getReadPointer(0), buffer.getReadPointer(0) + kBlock);
-                }
-                return out;
-            };
-            const auto quiet = run(false);
-            const auto noisy = run(true);
-            expect(quiet == noisy);
-            expectGreaterThan(*std::max_element(quiet.begin(), quiet.end()), 0.01f);
-        }
     }
 };
 
