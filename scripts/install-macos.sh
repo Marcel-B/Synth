@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Baut Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Groovebox, das bisherige Tonwerk Synth und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Wobble, Tonwerk Tape, Tonwerk Freeze und Tonwerk Arp auf dem Mac und installiert sie für Logic
+# Baut Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Groovebox, das bisherige Tonwerk Synth und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Wobble, Tonwerk Tape, Tonwerk Freeze und Tonwerk Arp auf dem Mac und installiert sie für Logic
 # (Audio Unit) und andere Hosts (VST3).
 # Braucht nur die Command Line Tools (xcode-select --install) und CMake (brew install cmake), kein volles Xcode.
 #
@@ -26,6 +26,7 @@ PD="Tonwerk PD"
 FREEZE="Tonwerk Freeze"
 ARP="Tonwerk Arp"
 SAMPLER="Tonwerk Sampler"
+BASS="Tonwerk Bass"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
 VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
@@ -49,6 +50,7 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   rm -rf "$COMPONENTS/$FREEZE.component" "$VST3/$FREEZE.vst3" "$APPS/$FREEZE.app"
   rm -rf "$COMPONENTS/$ARP.component" "$VST3/$ARP.vst3" "$APPS/$ARP.app"
   rm -rf "$COMPONENTS/$SAMPLER.component" "$VST3/$SAMPLER.vst3" "$APPS/$SAMPLER.app"
+  rm -rf "$COMPONENTS/$BASS.component" "$VST3/$BASS.vst3" "$APPS/$BASS.app"
   killall -9 AudioComponentRegistrar 2>/dev/null || true
   echo "Entfernt. Die Klänge in ~/Library/Application Support/$NAME bleiben."
   exit 0
@@ -61,7 +63,7 @@ cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF
 cmake --build build-release --config Release --parallel "$(sysctl -n hw.ncpu)"
 
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER"; do
+for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS"; do
   ARTEFACTS="build-release/${target%%:*}_artefacts/Release"
   PRODUCT="${target#*:}"
   # Ohne Entwicklerkonto reicht eine Ad-hoc-Signatur: Apple Silicon lädt keinen unsignierten Code, und Logic prüft
@@ -90,14 +92,15 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aumu TwPd Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwTp Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwFz Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumi TwAr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
-  && auval -v aumu TwSm Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
+  && auval -v aumu TwSm Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwBs Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "auval: bestanden."
 else
   echo "auval ist fehlgeschlagen, das Protokoll steht in /tmp/tonwerk-auval.log"
   exit 1
 fi
 echo
-echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER oder $GROOVEBOX."
+echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS oder $GROOVEBOX."
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION oder $TAPE."
 echo "$WOBBLE auf jeder Spur, am liebsten dem Bass: Audio-FX > Audio Units > b-velop > $WOBBLE."

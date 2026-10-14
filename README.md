@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, der Sampler **Tonwerk Sampler** für eigene Samples, Loops und Vocal-Chops, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi, und der MIDI-Effekt **Tonwerk Arp**, ein Arpeggiator und Step-Sequencer vor jedem Synth (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, der Sampler **Tonwerk Sampler** für eigene Samples, Loops und Vocal-Chops, **Tonwerk Bass**, ein Acid-Bass nach Art der TB-303 mit Slide und Accent, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi, und der MIDI-Effekt **Tonwerk Arp**, ein Arpeggiator und Step-Sequencer vor jedem Synth (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -220,6 +220,28 @@ Ein Sampler für eigene Aufnahmen: chromatisch über die Tastatur gespielt, mit 
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (eingebaute Klänge, Tonhöhe vom Grundton bei Dateien mit 44,1, 48 und 96 kHz, Transponieren und Fein, wenig Rückfaltung bei hohen Tönen, Ende ohne Loop, Vorwärts- und Pingpong-Loop, Crossfade gegen Sprünge an der Naht, Rückwärts, Slices im Raster mit ihrer Tonhöhe und One-Shot, Schnitt an Transienten beim Breakbeat und bei den Silben, Einzeln, Legato mit Glide ohne neuen Einsatz, Filter, alle Presets und ihre Lautheit, CPU, Zustand mit Dateipfad, Anzeige mit Einheiten, Oberfläche als Bild). `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, und das Laden einer Datei per Ziehen ist nur auf dem Mac möglich und dort noch nicht ausprobiert.
 
+## Tonwerk Bass (Instrument)
+
+Ein Acid-Bass nach Art der Roland TB-303: eine Stimme, Säge oder Rechteck, ein resonanter Tiefpass, der mit seiner Hüllkurve quietscht, dazu **Slide** und **Accent**. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Bass** (`aumu TwBs Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht. Nichts von Roland ist kopiert; die Schaltung ist nachempfunden, nicht nachgebaut.
+
+![Tonwerk Bass](docs/bass.png)
+
+- **Spielen**: Er ist monophon. Eine Taste, die gedrückt wird, während eine andere noch gehalten ist, **gleitet** zu ihrer Tonhöhe, ohne die Hüllkurven neu zu starten, so wie die Slides der 303 (in Logic: Noten überlappen lassen). Lässt du die zweite Taste los, gleitet er zurück zur ersten, wenn die noch gehalten ist. Ein Anschlag ab **Ab Anschlag** (Vorgabe 110) ist ein **Accent**: lauter, der Filter öffnet weiter und schließt schneller (Decay dann fest 200 ms). Die Anzeige oben zeigt die Welle, die gespielte Note (Logics Namen, C3 = 60) und ob sie gerade Accent oder Slide hat.
+- **Oszillator**: **Welle** Säge oder Rechteck, **Tune** ±12 Halbtöne, **Fein** ±100 Cent, **Sub** ein Rechteck eine Oktave tiefer (die 303 hat keinen, für Clubanlagen hilft er).
+- **Filter**: ein Tiefpass mit 24 dB pro Oktave und Rückkopplung, die bei voller **Resonanz** fast pfeift, ohne zu explodieren. **Cutoff** 30 bis 8000 Hz, **Env Mod** (100 % öffnet ihn mit jeder neuen Note fünf Oktaven weiter), **Decay** 30 bis 3000 ms (wie schnell er wieder schließt), **Keytrack** (100 % folgt der Cutoff den Tasten).
+- **Accent**: **Accent** (wie viel lauter und heller ein Accent ist), **Ab Anschlag** 1 bis 127, **Sweep**: wie sehr sich Accents hintereinander aufschaukeln. Mit viel Sweep klettert der Filter bei jeder weiteren Accent-Note höher, der typische „Wow“-Effekt einer 303-Linie; bei 0 % beginnt jede neu.
+- **Slide & Ausklang**: **Slide** 5 bis 1000 ms (die 303 hat fest etwa 60 ms), **Ausklang** 50 ms bis 10 s (so lange klingt eine gehaltene Note aus), **Release** nach dem Loslassen.
+- **Ausgang**: **Drive** (ein Verzerrer hinter dem Filter, wie das Pedal, durch das die meisten Acid-Platten liefen), **Bend** (Pitchbend-Bereich), **Master**.
+- **LFO** (frei oder im Songtempo) auf **Cutoff** (bis vier Oktaven auf), **Tonhöhe** (Vibrato bis ±2 Halbtöne) oder **Lautstärke** (bei 100 % ganz zu, mit Rechteck im Tempo ein Gate). Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths.
+
+Eine Linie mit Slides und Accents schreibt man in Logic als Noten (überlappend für Slide, laut für Accent) oder lässt sie von **Tonwerk Arp** spielen: Sein Preset *Acid-Linie* bindet Schritte (Slide) und betont einige (Accent). Der Arp spielt unbetonte Schritte mit 65 % des Anschlags; damit seine Accents ankommen, die Taste kräftig anschlagen, beim Arp **Anschlag** auf *Fest* 127 stellen oder **Ab Anschlag** hier auf etwa 90 senken.
+
+**Presets**: 19 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Sie sind etwas leiser abgestimmt als die anderen Synths (−15 statt −12 LUFS), weil ein Accent bis zu 6 dB lauter ist als die unbetonten Noten, nach denen gemessen wird. Hörproben aller Klänge mit einer Acid-Linie (zwei Takte mit Accents und Slides, 125 BPM) liegen im Projektordner unter `synth/hoerproben/Tonwerk Bass` (auch als `synth/hoerproben-bass.zip`).
+
+**CPU:** eine Stimme, Filter und Hüllkurven pro Sample; eine Acid-Linie mit Drive, Sub, LFO, Delay und Hall rechnet der Test etwa 30-mal schneller als Echtzeit.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonhöhe, Tune und Fein, Slide nur bei gehaltener Taste und ohne neuen Einsatz, zurück zur gehaltenen Taste, Accent lauter und heller mit kürzerem Sweep, Schwelle, Sweep schaukelt sich bei Accents hintereinander auf, Filterhüllkurve, volle Resonanz mit Drive und Sub bleibt begrenzt, Release, alle Presets mit Accents unter Vollaussteuerung und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob er nach 303 klingt, entscheiden die Ohren.
+
 ## Tonwerk Groovebox (Instrument)
 
 Eine Drum-Machine mit acht Instrumenten und eingebautem Step-Sequencer. Alle Klänge werden berechnet, nicht abgespielt, so wie die klassischen analogen Drumcomputer sie gebaut haben: die Bassdrum ein Sinus, dessen Tonhöhe beim Schlag von oben herunterfällt, die Snare ein gestimmter Kessel unter gefiltertem Rauschen, das Clap drei schnelle Hände und ein Nachhall aus Rauschen, die Toms fallende Sinustöne mit etwas Fell, Hi-Hats und Becken sechs Rechteckschwingungen in schief zueinander stehenden Frequenzen, die durch Bandpass und Hochpass nach Metall klingen. Samples gibt es keine, jeder Regler wirkt deshalb stufenlos auf den Klang. Sie liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Groovebox** (`aumu TwGb Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
@@ -433,6 +455,9 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Flächen: Streicherteppich, Chor-Fläche, Rückwärts-Chor, Vokal-Pad; Tasten: Tine-Piano, Lo-Fi-Keys
   - Plucks: Nylon, Chop-Melodie; Glocken: Kirchenglocke, Spieluhr; Bläser & Streicher: Pizzicato, Streicher legato
   - Effekte (Slices ab C1): Vokal-Chops, Breakbeat-Slices, Break rückwärts, Funk-Chops
+- **Tonwerk Bass** (neu)
+  - Bässe: Acid Klassik, Squelch, Rechteck-Acid, Verzerrt 303, Tiefer Rumpel, Sub-Acid, Gummiband, Kurz & trocken, Acid-Wobble, Dub-Acid, Kellerclub, Rechteck tief, Zerhackt
+  - Leads: Acid-Lead, Schreier, Vibrato-Lead; Plucks: Acid-Pluck; Effekte: Pfeifender Filter, Zufallsfilter
 - **Tonwerk Groovebox** (neu)
   - House: Deep House, Disco House, Garage; Techno: Berlin Techno, Industrial, Minimal
   - Hip-Hop: Boom Bap, Lo-Fi; Trap: Trap, Drill (beide im 1/32-Raster für Hi-Hat-Wirbel)
@@ -488,6 +513,7 @@ cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
 cmake --build build --target TonwerkPhysical_Standalone
 cmake --build build --target TonwerkSampler_Standalone
+cmake --build build --target TonwerkBass_Standalone
 cmake --build build --target TonwerkAdditiv_Standalone
 cmake --build build --target TonwerkPD_Standalone
 cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport
