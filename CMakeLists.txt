@@ -665,6 +665,36 @@ target_link_libraries(TonwerkChorus
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Glue: a bus compressor with a side chain and a pump in the host tempo (glue/).
+juce_add_plugin(TonwerkGlue
+    PRODUCT_NAME "Tonwerk Glue"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkglue
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwGl
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Dynamics
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_GLUE_SOURCES
+    glue/src/GlueEditor.cpp
+    glue/src/GluePresets.cpp
+    glue/src/GlueProcessor.cpp)
+
+target_sources(TonwerkGlue PRIVATE ${TONWERK_GLUE_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkGlue PRIVATE src common)
+target_compile_definitions(TonwerkGlue PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkGlue
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -718,9 +748,11 @@ if(TONWERK_TESTS)
         tests/DelayTests.cpp
         ${TONWERK_CHORUS_SOURCES}
         tests/ChorusTests.cpp
+        ${TONWERK_GLUE_SOURCES}
+        tests/GlueTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -744,6 +776,7 @@ if(TONWERK_TESTS)
         TONWERK_VOCODER_NO_ENTRY=1
         TONWERK_DELAY_NO_ENTRY=1
         TONWERK_CHORUS_NO_ENTRY=1
+        TONWERK_GLUE_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
