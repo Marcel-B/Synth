@@ -1,6 +1,6 @@
 # Tonwerk Synth
 
-Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi, und der MIDI-Effekt **Tonwerk Arp**, ein Arpeggiator und Step-Sequencer vor jedem Synth (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
+Die beiden Browser-Synthesizer aus Tonwerk (YuE UI) als Plugins für Logic Pro: **Tonwerk Analog** und **Tonwerk FM**, jeder mit Delay und Hall und eigenen Werksklängen. Dazu kommen **Tonwerk DX** mit sechs Operatoren für den klassischen FM-Klang der Achtziger, der Wavetable-Synthesizer **Tonwerk Wavetable** für Dubstep-Bässe, der Granular-Synthesizer **Tonwerk Granular** für Klangwolken, **Tonwerk Physical**, der gezupfte, gestrichene, geblasene und angeschlagene Instrumente aus ihrer Physik nachrechnet, **Tonwerk Additiv**, der Klänge aus bis zu 64 einzelnen Obertönen zusammensetzt, **Tonwerk PD** mit der Phasenverzerrung der Casio-CZ-Synths, der Sampler **Tonwerk Sampler** für eigene Samples, Loops und Vocal-Chops, die Drum-Machine **Tonwerk Groovebox** mit Step-Sequencer, die Effekte **Chrome Glitch** für zerstückelte Gesangsspuren, **Tonwerk Distortion**, ein klassischer Gitarren-Verzerrer, **Tonwerk Robovox**, der eine Stimme wie einen Roboter singen lässt, **Tonwerk Wobble**, Filter und Volume mit selbst gezeichneten LFO-Kurven im Tempo für Dubstep-Wobbles, und **Tonwerk Tape**, eine leiernde, rauschende Bandmaschine für Lo-Fi, und der MIDI-Effekt **Tonwerk Arp**, ein Arpeggiator und Step-Sequencer vor jedem Synth (siehe unten). Klänge, die in Tonwerk auf der Instrumente-Seite gespeichert sind, lassen sich übernehmen und klingen hier wie dort.
 
 Logic lädt nur Audio Units, deshalb wird das Plugin als **Audio Unit** gebaut, dazu als VST3 (für andere Hosts) und als eigenständige App zum Ausprobieren ohne Logic.
 
@@ -198,6 +198,27 @@ Phase Distortion wie bei Casios CZ-Synthesizern aus den Achtzigern: Eine Kosinus
 **CPU:** Pro Linie und Sample ein Kosinus aus einer Tabelle; Hüllkurven pro Sample, Modulation alle 32 Samples. Damit hohe Töne bei voller Biegung nicht verzerren, fällt eine Flanke nie in weniger als zwei Samples, und die Sprünge des Doppelsinus werden geglättet (was zurückfaltet, liegt bei C7 30 bis 50 dB unter den Obertönen). 16 Stimmen mit beiden Linien, Ringmodulation, Chorus und Hall rechnet der Test etwa 8- bis 9-mal schneller als Echtzeit, der größte Teil davon ist der Hall.
 
 **Getestet und ungetestet:** Unter Linux gebaut und getestet (ohne Biegung ein reiner Kosinus außer bei den Resonanzen, jede Welle auf der Tonhöhe über die Tastatur, mehr DCW gibt mehr Obertöne, volle Säge mit allen und volles Rechteck nur mit ungeraden Obertönen, der Resonanzgipfel wandert bis zum 16-fachen, die DCW-Hüllkurve schließt den Klang, abwechselnde Wellen bringen die Unteroktave, 1 + 1' mit Verstimmung, Ringmodulation mit Summe und Differenz, Rauschmodulation, wenig Rückfaltung bei hohen Tönen, alle Wellen, Linien und Modulationen auch an den Extremen ohne Ausreißer, Stimmenklau ohne Knacken, Tonhöhen-Hüllkurve, Chorus, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört; ob die Klänge nach CZ klingen, entscheiden die Ohren.
+
+## Tonwerk Sampler (Instrument)
+
+Ein Sampler für eigene Aufnahmen: chromatisch über die Tastatur gespielt, mit Loop, oder in Slices geschnitten, eine Taste pro Stück, wie bei einer MPC. Er liegt unter **Instrument → AU-Instrumente → b-velop → Tonwerk Sampler** (`aumu TwSm Bvlp`) und wird mit den anderen Plugins gebaut, installiert und veröffentlicht.
+
+![Tonwerk Sampler](docs/sampler.png)
+
+- **Quelle**: neun eingebaute Klänge, alle aus Formeln berechnet, nichts aufgenommen oder kopiert: *Vokal Ah* (gesungenes „a“ auf C3 mit Vibrato), *Vokal-Chops* (acht gesungene Silben auf einer Moll-Pentatonik, zum Schneiden), *Breakbeat* (zwei Takte bei 120 BPM), *E-Piano*, *Streicher* (Stereo), *Glocke*, *808* (auf C1), *Chor* (Stereo, „u“) und *Gitarre* (Nylon). Dazu **Eigene Datei**: Mit **Datei …** oder per Ziehen auf die Anzeige eine WAV-, AIFF-, FLAC-, MP3-, OGG-, M4A- oder CAF-Datei laden (die ersten 60 Sekunden, Mono oder Stereo, ihre eigene Abtastrate). Das Projekt merkt sich den Pfad und lädt die Datei beim Öffnen neu; die Datei selbst steckt nicht im Projekt, sie muss also dort liegen bleiben.
+- **Anzeige**: die Wellenform, der gespielte Bereich hell, der Loop gelb, Slices als Linien mit der Taste, die sie spielt, und eine Linie für jede klingende Stimme dort, wo sie gerade liest.
+- **Sample**: **Modus** *Klassisch* (die Taste bestimmt die Tonhöhe, **Grundton** ist die Taste, auf der das Sample unverändert klingt, Logic-Namen: C3 = 60) oder *Slices*. **Transponieren** ±24 Halbtöne, **Fein** ±100 Cent. **Start** und **Ende** schneiden den gespielten Bereich zu. **Rückwärts** spielt ihn vom Ende her. **Wiedergabe** *Gate* (die Taste loslassen startet das Release) oder *One-Shot* (spielt immer bis zum Ende, für Drums und Chops).
+- **Loop** (nur Klassisch): *Aus*, *Vorwärts* oder *Pingpong*, **Start** und **Ende** in Prozent des Samples, **Crossfade** bis 1000 ms: Beim Vorwärts-Loop blendet das Ende des Loops in das über, was vor seinem Anfang liegt, sodass die Naht auch dann nicht knackt, wenn die Enden nicht zusammenpassen. Der Loop läuft auch im Release weiter.
+- **Slices**: **Anzahl** 2 bis 32, **Schnitt** *Raster* (gleich lange Stücke) oder *Transienten* (an den stärksten Einsätzen im Bereich, nicht näher als 30 ms beieinander). Die erste Slice liegt auf **C1**, die nächste auf C#1 und so weiter, wie bei Logics Quick Sampler. Slices klingen in ihrer eigenen Tonhöhe (plus Transponieren). **Einzeln** (an): Eine neue Slice schneidet die vorige ab, wie die Mute-Gruppe einer MPC; aus: Sie klingen übereinander.
+- **Filter**: *Aus*, *Tiefpass 12*, *Tiefpass 24*, *Hochpass*, *Bandpass*, **Cutoff**, **Resonanz**, **Hüllkurve** (±100 % für bis zu sechs Oktaven), **Keytracking**, mit eigener Hüllkurve (A, D, S, R). **Amp**: Attack, Decay, Sustain, Release. **Anschlag**: wie stark die Lautstärke dem Anschlag folgt.
+- **LFO** (frei oder im Songtempo) auf *Tonhöhe* (100 % = eine Oktave, Vibrato um 2 %), *Filter* (±4 Oktaven), *Lautstärke* oder *Panorama*.
+- **Stimmen**: Poly (16 Stimmen), Mono oder Legato (die zweite Taste gleitet hin, ohne das Sample neu zu starten) mit **Glide**, Pitchbend-Bereich, **Lo-Fi** (Abtastrate bis auf ein Achtel und Bittiefe von 16 bis 6 Bit herunter, ohne Filter davor, so wie die alten 12-Bit-Sampler klingen), **Master**. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths.
+
+**Presets**: 21 eigene Klänge, die Liste steht unter [Werksklänge](#werksklänge). Die Slice-Presets (*Vokal-Chops*, *Breakbeat-Slices*, *Break rückwärts*, *Funk-Chops*) spielt man ab C1. Hörproben aller Klänge mit ihrer Testphrase liegen im Projektordner unter `synth/hoerproben/Tonwerk Sampler` (auch als `synth/hoerproben-sampler.zip`).
+
+**CPU:** Das Sample wird mit vier Punkten (Hermite) gelesen. Damit hoch gespielte Töne nicht zurückfalten, liegt jedes Sample zusätzlich in halber, viertel, … Abtastrate vor, jeweils vorher tiefpassgefiltert, und eine Stimme liest die Kopie, bei der sie höchstens 1,5 Samples pro Schritt springt (eine Säge drei Oktaven und zwei Halbtöne höher: was zurückfaltet, liegt etwa 40 dB unter dem Grundton). Tonhöhe, Filter und LFO alle 32 Samples, Hüllkurven pro Sample. 16 Stereo-Stimmen mit Filter, LFO, Lo-Fi, Delay und Hall rechnet der Test etwa 14-mal schneller als Echtzeit.
+
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (eingebaute Klänge, Tonhöhe vom Grundton bei Dateien mit 44,1, 48 und 96 kHz, Transponieren und Fein, wenig Rückfaltung bei hohen Tönen, Ende ohne Loop, Vorwärts- und Pingpong-Loop, Crossfade gegen Sprünge an der Naht, Rückwärts, Slices im Raster mit ihrer Tonhöhe und One-Shot, Schnitt an Transienten beim Breakbeat und bei den Silben, Einzeln, Legato mit Glide ohne neuen Einsatz, Filter, alle Presets und ihre Lautheit, CPU, Zustand mit Dateipfad, Anzeige mit Einheiten, Oberfläche als Bild). `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört, und das Laden einer Datei per Ziehen ist nur auf dem Mac möglich und dort noch nicht ausprobiert.
 
 ## Tonwerk Groovebox (Instrument)
 
@@ -407,6 +428,11 @@ Jedes Instrument bringt eigene Klänge mit, keine Kopien aus Werks-ROMs oder fre
   - Tasten: CZ-Piano, E-Piano PD, Orgel PD, Clavi PD, Akkordeon, Spielzeugklavier
   - Plucks: PD-Pluck, Resozupf, Digitalharfe, Koto PD, Pizzicato PD; Glocken: Glocke PD, Kristall, Röhrenglocke, Spieluhr
   - Bläser & Streicher: PD-Bläser, Sologeige, Holzbläser, Tutti; Effekte: Laser PD, Rauschwind, Funkstörung, Arcade
+- **Tonwerk Sampler** (neu)
+  - Bässe: 808 Glide, 808 Dreck, Saitenbass; Leads: Vokal-Lead, Lo-Fi-Gesang
+  - Flächen: Streicherteppich, Chor-Fläche, Rückwärts-Chor, Vokal-Pad; Tasten: Tine-Piano, Lo-Fi-Keys
+  - Plucks: Nylon, Chop-Melodie; Glocken: Kirchenglocke, Spieluhr; Bläser & Streicher: Pizzicato, Streicher legato
+  - Effekte (Slices ab C1): Vokal-Chops, Breakbeat-Slices, Break rückwärts, Funk-Chops
 - **Tonwerk Groovebox** (neu)
   - House: Deep House, Disco House, Garage; Techno: Berlin Techno, Industrial, Minimal
   - Hip-Hop: Boom Bap, Lo-Fi; Trap: Trap, Drill (beide im 1/32-Raster für Hi-Hat-Wirbel)
@@ -461,6 +487,7 @@ cmake --build build --target TonwerkWavetable_Standalone
 cmake --build build --target TonwerkDX_Standalone
 cmake --build build --target TonwerkGranular_Standalone
 cmake --build build --target TonwerkPhysical_Standalone
+cmake --build build --target TonwerkSampler_Standalone
 cmake --build build --target TonwerkAdditiv_Standalone
 cmake --build build --target TonwerkPD_Standalone
 cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ stellen, die App hat keinen Transport

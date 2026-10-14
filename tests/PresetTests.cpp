@@ -10,6 +10,8 @@
 #include "PhysicalPresets.h"
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
+#include "SamplerPresets.h"
+#include "SamplerProcessor.h"
 #include "PresetCategories.h"
 #include "PresetLibrary.h"
 #include "WavetablePresets.h"
@@ -52,6 +54,8 @@ bool roomPlaying(const juce::AudioProcessor& processor)
         return additive->roomPlaying();
     if (const auto* pd = dynamic_cast<const tonwerkpd::PdProcessor*>(&processor))
         return pd->roomPlaying();
+    if (const auto* sampler = dynamic_cast<const tonwerksampler::SamplerProcessor*>(&processor))
+        return sampler->roomPlaying();
     return true;
 }
 
@@ -243,12 +247,22 @@ std::vector<Instrument> instruments()
                      [] { return std::make_unique<tonwerkpd::PdProcessor>(); },
                      [](int i) { return tonwerkpd::factoryPresets()[(std::size_t) i].category; },
                      [](int i) { return i == 0; } });
+    // Slices sit from C1 on: the phrase moves down there, so its note plays the first slice.
+    list.push_back({ "Tonwerk Sampler", (int) tonwerksampler::factoryPresets().size(),
+                     [] { return std::make_unique<tonwerksampler::SamplerProcessor>(); },
+                     [](int i) { return tonwerksampler::factoryPresets()[(std::size_t) i].category; },
+                     [](int i) { return i == 0; },
+                     [](int i) {
+                         return tonwerksampler::playsSlices(tonwerksampler::factoryPresets()[(std::size_t) i])
+                                    ? tonwerksampler::kFirstSliceKey - 60
+                                    : 0;
+                     } });
     return list;
 }
 } // namespace
 
 /**
- * The factory sounds of all seven instruments, side by side: each in a group of the menu, every name once, and all
+ * The factory sounds of all the instruments, side by side: each in a group of the menu, every name once, and all
  * about equally loud the way they are played, so switching presets does not jump in level.
  */
 class PresetTests : public juce::UnitTest
@@ -268,8 +282,12 @@ public:
     {
         // For listening: TONWERK_PRESET_WAV_DIR=<dir> writes each sound's phrase as a WAV file.
         const auto wavDir = juce::SystemStats::getEnvironmentVariable("TONWERK_PRESET_WAV_DIR", {});
+        // TONWERK_PRESET_INSTRUMENT=<name> measures one instrument only, e.g. while leveling its sounds.
+        const auto only = juce::SystemStats::getEnvironmentVariable("TONWERK_PRESET_INSTRUMENT", {});
         for (const auto& instrument : instruments())
         {
+            if (only.isNotEmpty() && instrument.name != only)
+                continue;
             beginTest(instrument.name + ": groups, names and levels");
             std::set<juce::String> names;
             for (int i = 0; i < instrument.count; ++i)

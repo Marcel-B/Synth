@@ -514,6 +514,37 @@ target_link_libraries(TonwerkArp
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Sampler: a sampler for chromatic samples, loops and slices, from sounds built in or the user's own file (sampler/).
+juce_add_plugin(TonwerkSampler
+    PRODUCT_NAME "Tonwerk Sampler"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerksampler
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwSm
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Sampler
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_SAMPLER_SOURCES
+    sampler/src/SampleData.cpp
+    sampler/src/SamplerEditor.cpp
+    sampler/src/SamplerPresets.cpp
+    sampler/src/SamplerProcessor.cpp)
+
+target_sources(TonwerkSampler PRIVATE ${TONWERK_SAMPLER_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkSampler PRIVATE src common wavetable/src)
+target_compile_definitions(TonwerkSampler PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkSampler
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -557,9 +588,11 @@ if(TONWERK_TESTS)
         arp/src/ArpPresets.cpp
         arp/src/ArpProcessor.cpp
         tests/ArpTests.cpp
+        ${TONWERK_SAMPLER_SOURCES}
+        tests/SamplerTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -578,6 +611,7 @@ if(TONWERK_TESTS)
         TONWERK_TAPE_NO_ENTRY=1
         TONWERK_FREEZE_NO_ENTRY=1
         TONWERK_ARP_NO_ENTRY=1
+        TONWERK_SAMPLER_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
