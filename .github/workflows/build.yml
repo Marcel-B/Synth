@@ -18,7 +18,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkFreeze_VST3 TonwerkArp_VST3 TonwerkSampler_VST3 TonwerkBass_VST3 TonwerkVocoder_VST3 TonwerkDelay_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkFreeze_VST3 TonwerkArp_VST3 TonwerkSampler_VST3 TonwerkBass_VST3 TonwerkVocoder_VST3 TonwerkDelay_VST3 TonwerkChorus_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -37,7 +37,7 @@ jobs:
       - name: Sign ad hoc
         run: |
           for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
-            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay"; do
+            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
@@ -68,9 +68,10 @@ jobs:
           cp -R "build/TonwerkBass_artefacts/Release/AU/Tonwerk Bass.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkVocoder_artefacts/Release/AU/Tonwerk Vocoder.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkDelay_artefacts/Release/AU/Tonwerk Delay.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkChorus_artefacts/Release/AU/Tonwerk Chorus.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e freeze -e arp -e sampler -e bass -e vocoder -e delay || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e freeze -e arp -e sampler -e bass -e vocoder -e delay -e chorus || true
           auval -strict -v aumu TwAn Bvlp
           auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
@@ -92,6 +93,7 @@ jobs:
           auval -strict -v aumu TwBs Bvlp
           auval -strict -v aumf TwVc Bvlp
           auval -strict -v aufx TwDl Bvlp
+          auval -strict -v aufx TwCh Bvlp
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -158,6 +160,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/TonwerkDelay_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Delay.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Delay-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Delay.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Delay-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkChorus_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Chorus.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chorus-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Chorus.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Chorus-VST3.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: tonwerk-synth-macos
