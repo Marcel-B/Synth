@@ -575,6 +575,36 @@ target_link_libraries(TonwerkBass
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Vocoder: a classic channel vocoder, the voice on the side chain and an eight-voice synth played by MIDI as the carrier (vocoder/).
+juce_add_plugin(TonwerkVocoder
+    PRODUCT_NAME "Tonwerk Vocoder"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkvocoder
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwVc
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicEffect
+    VST3_CATEGORIES Fx
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_VOCODER_SOURCES
+    vocoder/src/VocoderEditor.cpp
+    vocoder/src/VocoderPresets.cpp
+    vocoder/src/VocoderProcessor.cpp)
+
+target_sources(TonwerkVocoder PRIVATE ${TONWERK_VOCODER_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkVocoder PRIVATE src common)
+target_compile_definitions(TonwerkVocoder PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkVocoder
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -622,9 +652,11 @@ if(TONWERK_TESTS)
         tests/SamplerTests.cpp
         ${TONWERK_BASS_SOURCES}
         tests/BassTests.cpp
+        ${TONWERK_VOCODER_SOURCES}
+        tests/VocoderTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -645,6 +677,7 @@ if(TONWERK_TESTS)
         TONWERK_ARP_NO_ENTRY=1
         TONWERK_SAMPLER_NO_ENTRY=1
         TONWERK_BASS_NO_ENTRY=1
+        TONWERK_VOCODER_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
