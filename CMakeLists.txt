@@ -695,6 +695,36 @@ target_link_libraries(TonwerkGlue
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Shimmer: a reverb whose tail rises by an interval on each round trip (shimmer/).
+juce_add_plugin(TonwerkShimmer
+    PRODUCT_NAME "Tonwerk Shimmer"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkshimmer
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwSh
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Reverb
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_SHIMMER_SOURCES
+    shimmer/src/ShimmerEditor.cpp
+    shimmer/src/ShimmerPresets.cpp
+    shimmer/src/ShimmerProcessor.cpp)
+
+target_sources(TonwerkShimmer PRIVATE ${TONWERK_SHIMMER_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkShimmer PRIVATE src common)
+target_compile_definitions(TonwerkShimmer PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkShimmer
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -750,9 +780,11 @@ if(TONWERK_TESTS)
         tests/ChorusTests.cpp
         ${TONWERK_GLUE_SOURCES}
         tests/GlueTests.cpp
+        ${TONWERK_SHIMMER_SOURCES}
+        tests/ShimmerTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -777,6 +809,7 @@ if(TONWERK_TESTS)
         TONWERK_DELAY_NO_ENTRY=1
         TONWERK_CHORUS_NO_ENTRY=1
         TONWERK_GLUE_NO_ENTRY=1
+        TONWERK_SHIMMER_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
