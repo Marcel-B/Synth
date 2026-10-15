@@ -3,8 +3,9 @@
 #
 #   cd ~/Downloads/Tonwerk-Synth-<version>-macOS && zsh install.sh
 #
-# Die Plugins sind nur ad hoc signiert (ohne Apple-Entwicklerkonto), deshalb markiert macOS sie nach dem Download als
-# Quarantäne, und Logic würde sie nicht laden. Das Skript nimmt die Markierung weg, kopiert und prüft mit auval.
+# Ist das Release nur ad hoc signiert (ohne Developer-ID-Secrets gebaut), markiert macOS es nach dem Download als
+# Quarantäne, und Logic würde die Plugins nicht laden. Das Skript nimmt die Markierung weg (bei einem notarisierten
+# Release schadet das nicht), kopiert und prüft mit auval.
 set -euo pipefail
 
 cd "$(dirname "$0")"

@@ -17,8 +17,34 @@ permissions:
 jobs:
   release:
     runs-on: macos-15
+    # With these secrets the release is signed with Developer ID and notarized; without them it stays ad hoc, as before.
+    env:
+      MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+      - name: Import the Developer ID certificate
+        if: env.MACOS_CERTIFICATE_P12 != ''
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
+          if [ -z "$IDENTITY" ]; then
+            echo "Im Zertifikat steckt keine Identität 'Developer ID Application'." >&2
+            exit 1
+          fi
+          echo "TONWERK_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
       - name: Version from the tag
         env:
           TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
@@ -53,9 +79,12 @@ jobs:
           WAVETABLE="build/TonwerkWavetable_artefacts/Release"
           cp -R "$WAVETABLE/AU/Tonwerk Wavetable.component" "$WAVETABLE/VST3/Tonwerk Wavetable.vst3" \
             "$WAVETABLE/Standalone/Tonwerk Wavetable.app" "$DIR/"
-          for bundle in "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app; do
-            codesign --force --deep --sign - "$bundle"
-          done
+          # Ad hoc, or with Developer ID when the certificate step set TONWERK_SIGN_IDENTITY.
+          scripts/sign-macos.sh "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app
+          if [ -n "${TONWERK_SIGN_IDENTITY:-}" ] && [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
+            scripts/notarize-macos.sh "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app
+            echo "NOTARIZED=1" >> "$GITHUB_ENV"
+          fi
           cp scripts/install-release.sh "$DIR/install.sh"
           ditto -c -k --keepParent "$DIR" "$DIR.zip"
           echo "ZIP=$DIR.zip" >> "$GITHUB_ENV"
@@ -116,12 +145,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<'NOTES'
+          if [ -n "${NOTARIZED:-}" ]; then
+            SIGNING="Die Plugins sind mit Developer ID signiert und von Apple notarisiert; macOS öffnet sie nach dem Download ohne Rückfrage."
+          else
+            SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
+          fi
+          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<NOTES
           Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind die Synths Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, die Drum-Machine Tonwerk Groovebox, das bisherige Tonwerk Synth für ältere Projekte und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer und Tonwerk Freeze und der MIDI-Effekt Tonwerk Arp (Arpeggiator und Step-Sequencer).
 
           Installieren: Zip laden, im Terminal
-          `cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh`
+          \`cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh\`
 
-          Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README.
+          $SIGNING
           NOTES
           )"

@@ -40,9 +40,7 @@ jobs:
             "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
-            for bundle in "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"; do
-              codesign --force --deep --sign - "$bundle"
-            done
+            "$GITHUB_WORKSPACE/scripts/sign-macos.sh" "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"
           done
       - name: Validate with auval
         run: |
