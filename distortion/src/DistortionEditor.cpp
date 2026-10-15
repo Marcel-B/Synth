@@ -19,8 +19,8 @@ DistortionEditor::DistortionEditor(DistortionProcessor& p)
                         kDistortionCategories)),
       // The input is read as far behind as the oversampling delays the output, so the two traces line up.
       scope(p.scopeOut, &p.scopeIn, [&p] { return p.getLatencySamples(); }),
-      pedal(p.state, "Pedal", { { { "level", "Level" }, { "tone", "Tone" }, { "distortion", "Dist" } } }),
-      input(p.state, "Eingang", { { { "input", "Gain" } } })
+      pedal(p.state, "Verzerrung", { { { "level", "Level" }, { "tone", "Tone" }, { "distortion", "Drive" } } }),
+      input(p.state, "Eingang", { { { "mode", "Modus" }, { "input", "Gain" } } })
 {
     setLookAndFeel(&lookAndFeel);
     scope.setCaption("OSZILLOSKOP");

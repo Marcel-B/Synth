@@ -9,8 +9,8 @@
 namespace tonwerkdistortion
 {
 /**
- * Night City, as Tonwerk Wavetable: the pedal's three knobs in one panel, the input gain beside it, and above them an
- * oscilloscope with the clipped output over the input, so DIST is seen squaring the wave. The presets are in the header.
+ * Night City, as Tonwerk Wavetable: level, tone and drive in one panel, the mode menu and the input gain beside it,
+ * and above them an oscilloscope with the shaped output over the input, so the drive is seen bending the wave. The presets are in the header.
  */
 class DistortionEditor : public juce::AudioProcessorEditor
 {
