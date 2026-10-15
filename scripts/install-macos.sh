@@ -4,6 +4,8 @@
 # Braucht nur die Command Line Tools (xcode-select --install) und CMake (brew install cmake), kein volles Xcode.
 #
 #   scripts/install-macos.sh            bauen, signieren, installieren, mit auval prüfen
+#   TONWERK_SIGN_IDENTITY="Developer ID Application: …" scripts/install-macos.sh   mit Developer ID signieren
+#   (mit TONWERK_NOTARY_PROFILE=tonwerk dazu notarisieren, siehe scripts/notarize-macos.sh)
 #   scripts/install-macos.sh --uninstall
 set -euo pipefail
 
@@ -73,18 +75,27 @@ cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF
 cmake --build build-release --config Release --parallel "$(sysctl -n hw.ncpu)"
 
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
+BUNDLES=()
 for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS" TonwerkVocoder:"$VOCODER" TonwerkDelay:"$DELAY" TonwerkChorus:"$CHORUS" TonwerkGlue:"$GLUE" TonwerkShimmer:"$SHIMMER"; do
   ARTEFACTS="build-release/${target%%:*}_artefacts/Release"
   PRODUCT="${target#*:}"
-  # Ohne Entwicklerkonto reicht eine Ad-hoc-Signatur: Apple Silicon lädt keinen unsignierten Code, und Logic prüft
-  # Audio Units beim ersten Laden. Für die eigene Maschine genügt das; weitergeben ließe es sich so nicht.
-  for bundle in "$ARTEFACTS/AU/$PRODUCT.component" "$ARTEFACTS/VST3/$PRODUCT.vst3" "$ARTEFACTS/Standalone/$PRODUCT.app"; do
-    codesign --force --deep --sign - "$bundle"
-  done
-  rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
-  cp -R "$ARTEFACTS/AU/$PRODUCT.component" "$COMPONENTS/"
-  cp -R "$ARTEFACTS/VST3/$PRODUCT.vst3" "$VST3/"
-  cp -R "$ARTEFACTS/Standalone/$PRODUCT.app" "$APPS/"
+  BUNDLES+=("$ARTEFACTS/AU/$PRODUCT.component" "$ARTEFACTS/VST3/$PRODUCT.vst3" "$ARTEFACTS/Standalone/$PRODUCT.app")
+done
+
+# Ad hoc, oder mit Developer ID, wenn TONWERK_SIGN_IDENTITY gesetzt ist (scripts/sign-macos.sh). Für die eigene
+# Maschine genügt ad hoc; notarisiert wird nur mit TONWERK_NOTARY_PROFILE, für Kopien, die weitergegeben werden.
+scripts/sign-macos.sh "${BUNDLES[@]}"
+if [[ -n "${TONWERK_SIGN_IDENTITY:-}" && -n "${TONWERK_NOTARY_PROFILE:-}" ]]; then
+  scripts/notarize-macos.sh "${BUNDLES[@]}"
+fi
+for bundle in "${BUNDLES[@]}"; do
+  case "$bundle" in
+    *.component) target_dir="$COMPONENTS" ;;
+    *.vst3) target_dir="$VST3" ;;
+    *.app) target_dir="$APPS" ;;
+  esac
+  rm -rf "$target_dir/${bundle:t}"
+  cp -R "$bundle" "$target_dir/"
 done
 
 # macOS merkt sich Audio Units; ohne Neustart des Registrars sieht Logic eine neue Version erst nach dem Abmelden.

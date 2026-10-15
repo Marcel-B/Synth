@@ -455,7 +455,7 @@ cd ~/Downloads/Tonwerk-Synth-*-macOS
 zsh install.sh
 ```
 
-Die Plugins sind nur ad hoc signiert, denn eine Signatur mit Apple Developer ID kostet ein Entwicklerkonto. Deshalb versieht macOS alles aus dem Netz mit einer Quarantäne-Markierung, und Logic lädt so markierte Plugins nicht. `install.sh` entfernt die Markierung (`xattr -dr com.apple.quarantine`), kopiert die Dateien an ihren Platz und prüft die Audio Unit mit `auval`. Wer lieber von Hand installiert, ruft vorher selbst `xattr -dr com.apple.quarantine` auf den entpackten Ordner auf.
+Sind im Repository die Secrets für Apple Developer ID hinterlegt (siehe „Signieren mit Developer ID“), ist das Release damit signiert und von Apple notarisiert, und macOS öffnet es nach dem Download ohne Rückfrage. Sonst sind die Plugins nur ad hoc signiert, und macOS versieht alles aus dem Netz mit einer Quarantäne-Markierung, die Logic die Plugins nicht laden lässt. `install.sh` entfernt die Markierung in beiden Fällen (`xattr -dr com.apple.quarantine`), kopiert die Dateien an ihren Platz und prüft die Audio Unit mit `auval`. Wer ein ad hoc signiertes Release lieber von Hand installiert, ruft vorher selbst `xattr -dr com.apple.quarantine` auf den entpackten Ordner auf.
 
 Zum Aktualisieren lädst du das neue Zip und rufst dessen `install.sh` genauso auf. Logic sollte dabei geschlossen sein. Importierte Klänge bleiben erhalten, und gespeicherte Projekte laden ihre Einstellungen weiter.
 
@@ -479,6 +479,36 @@ In Logic: neue Software-Instrument-Spur, im Kanalzug **Instrument → AU-Instrum
 Entfernen: `scripts/install-macos.sh --uninstall`.
 
 Zwischenstände ohne Release: Jeder Lauf der Action `build.yml` legt die Dateien auch als Artefakt `tonwerk-synth-macos` ab (Actions → Lauf → Artifacts). Für sie gilt dasselbe wie für Releases, die Quarantäne-Markierung muss weg.
+
+## Signieren mit Developer ID
+
+Mit einem Apple-Entwicklerkonto lassen sich Plugins und Apps mit **Developer ID** signieren und von Apple notarisieren. Dann braucht es keine Ad-hoc-Signatur und kein Entfernen der Quarantäne mehr, und die Plugins lassen sich weitergeben.
+
+Einmal im Konto:
+
+1. Zertifikat **Developer ID Application** anlegen (developer.apple.com → Certificates, oder in Xcode unter Settings → Accounts → Manage Certificates). Es landet mit seinem privaten Schlüssel im Schlüsselbund; `security find-identity -v -p codesigning` zeigt seinen Namen, etwa `Developer ID Application: Vorname Nachname (TEAMID)`.
+2. Für die Notarisierung ein **app-spezifisches Passwort** unter account.apple.com → Anmeldung und Sicherheit anlegen. Die Team-ID steht unter developer.apple.com → Membership.
+
+Lokal:
+
+```sh
+xcrun notarytool store-credentials tonwerk --apple-id <Apple-ID> --team-id <TEAMID>   # einmal, fragt nach dem Passwort
+TONWERK_SIGN_IDENTITY="Developer ID Application: Vorname Nachname (TEAMID)" TONWERK_NOTARY_PROFILE=tonwerk scripts/install-macos.sh
+```
+
+Ohne `TONWERK_NOTARY_PROFILE` wird nur signiert, nicht notarisiert; für die eigene Maschine genügt das. Die Skripte dafür sind `scripts/sign-macos.sh` und `scripts/notarize-macos.sh`.
+
+Für Releases das Zertifikat im Schlüsselbund mit privatem Schlüssel als `.p12` exportieren und unter Settings → Secrets and variables → Actions anlegen:
+
+| Secret | Inhalt |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12` | die `.p12`-Datei als Base64 (`base64 -i Zertifikat.p12 \| pbcopy`) |
+| `MACOS_CERTIFICATE_PASSWORD` | das Passwort, das beim Export vergeben wurde |
+| `APPLE_ID` | die Apple-ID des Kontos |
+| `APPLE_TEAM_ID` | die Team-ID |
+| `APPLE_APP_PASSWORD` | das app-spezifische Passwort |
+
+Fehlen die Secrets, signiert `release.yml` wie bisher ad hoc; fehlen nur die drei für die Notarisierung, signiert es mit Developer ID, ohne zu notarisieren. `build.yml` signiert immer ad hoc.
 
 ## Werksklänge
 
