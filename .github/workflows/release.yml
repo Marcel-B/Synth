@@ -1,7 +1,7 @@
 name: Release
 
-# A tag like v0.2.0 builds the plugin on macOS and attaches it to a GitHub release of that name. Started by hand with
-# a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed).
+# A tag like v0.2.0 builds the plugins on macOS, Linux and Windows and attaches them to a GitHub release of that name.
+# Started by hand with a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed).
 on:
   push:
     tags: ["v*"]
@@ -15,8 +15,10 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  macos:
     runs-on: macos-15
+    outputs:
+      notarized: ${{ steps.handover.outputs.notarized }}
     # With these secrets the release is signed with Developer ID and notarized; without them it stays ad hoc, as before.
     env:
       MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
@@ -141,21 +143,94 @@ jobs:
           auval -strict -v aufx TwCh Bvlp
           auval -strict -v aufx TwGl Bvlp
           auval -strict -v aufx TwSh Bvlp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: ${{ env.ZIP }}
+      - name: Hand over
+        id: handover
+        run: echo "notarized=${NOTARIZED:-}" >> "$GITHUB_OUTPUT"
+
+  # Audio Units exist only on the Mac; Linux and Windows get the VST3 and the standalone apps. The tests run on Linux in
+  # build.yml and on the Mac above, so these jobs only build.
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$VERSION"
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+      - name: Package
+        run: scripts/package-release.sh linux "$VERSION" build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: Tonwerk-Synth-*-Linux-x64.tar.gz
+
+  windows:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version from the tag
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+      # The C++ runtime linked in statically, so the apps and plugins run without the Visual C++ Redistributable.
+      - name: Configure
+        run: cmake -S . -B build -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$VERSION" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Package
+        run: scripts/package-release.sh windows "$VERSION" build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: Tonwerk-Synth-*-Windows-x64.zip
+
+  publish:
+    needs: [macos, linux, windows]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
         run: |
+          VERSION="${TAG#v}"
           if [ -n "${NOTARIZED:-}" ]; then
             SIGNING="Die Plugins sind mit Developer ID signiert und von Apple notarisiert; macOS öffnet sie nach dem Download ohne Rückfrage."
           else
             SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
           fi
-          gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<NOTES
-          Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Dabei sind die Synths Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, die Drum-Machine Tonwerk Groovebox, das bisherige Tonwerk Synth für ältere Projekte und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer und Tonwerk Freeze und der MIDI-Effekt Tonwerk Arp (Arpeggiator und Step-Sequencer).
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<NOTES
+          Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, die Drum-Machine Tonwerk Groovebox und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer und Tonwerk Freeze, dazu der MIDI-Effekt Tonwerk Arp (Arpeggiator und Step-Sequencer).
 
-          Installieren: Zip laden, im Terminal
+          **macOS** (\`Tonwerk-Synth-$VERSION-macOS.zip\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Zip laden, im Terminal
           \`cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh\`
-
           $SIGNING
+
+          **Linux** (\`Tonwerk-Synth-$VERSION-Linux-x64.tar.gz\`): VST3 und Apps für x86-64. Entpacken und \`./install.sh\` aufrufen; die Plugins landen in \`~/.vst3\`, die Apps in \`~/.local/bin\`.
+
+          **Windows** (\`Tonwerk-Synth-$VERSION-Windows-x64.zip\`): VST3 und Apps für 64-Bit-Windows. Die Ordner aus \`VST3\` nach \`C:\\Program Files\\Common Files\\VST3\` kopieren, die Apps liegen unter \`Apps\`. Sie sind nicht signiert, Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
+
+          Linux und Windows sind gebaut, aber noch nicht in einem Host ausprobiert.
           NOTES
           )"

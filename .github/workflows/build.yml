@@ -22,6 +22,22 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
+  # Windows gets no tests, only the build and the release package, so a change that breaks MSVC shows before a release.
+  windows:
+    name: VST3 (Windows)
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build -DTONWERK_TESTS=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+      - name: Build
+        run: cmake --build build --config Release --parallel
+      - name: Package
+        run: scripts/package-release.sh windows ci build
+
   macos:
     name: Audio Unit (macOS)
     runs-on: macos-15
