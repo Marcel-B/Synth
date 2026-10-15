@@ -122,6 +122,7 @@ A further plugin in the same CMake project: `TonwerkShimmer` (audio effect, `auf
 
 ## Conventions
 
+- License: AGPL-3.0 with a section 7(b) attribution term (`LICENSE`, `NOTICE`), Marcel's choice. Distributed builds use JUCE under its AGPLv3, so any other license must stay AGPLv3-compatible.
 - Commit messages and branch names are German; code and comments English; UI strings German.
 - Comments explain why. Tests (`tests/`, JUCE `UnitTest`s run by `TonwerkSynthTests`) come with every change; DSP tests measure the sound (levels, duty cycle, envelope timing), not implementation details.
 - 0.2.0 runs in Logic on Marcel's MacBook (his screenshot, 2026-10-01); anything newer has not been heard there unless a commit or the README says so. Say what was and was not tested.

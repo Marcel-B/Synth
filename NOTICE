@@ -1,0 +1,33 @@
+Tonwerk Synth
+Copyright (C) 2026 Marcel Benders
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, version 3 (see LICENSE).
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+License for more details.
+
+Additional term under section 7(b) of the GNU AGPL (attribution)
+----------------------------------------------------------------
+
+Anyone who conveys this program, a modified version of it or a work based
+on it, in source or object form, must keep the author attribution
+
+    Tonwerk Synth by Marcel Benders (https://github.com/Marcel-B/Synth)
+
+in this NOTICE file and in the documentation of the conveyed work (for
+example its README or manual). If the work shows Appropriate Legal Notices
+in its user interface (an "About" box or similar), the attribution must
+appear there as well. A modified version must be marked as changed and
+must not be presented as the original.
+
+Third-party software
+--------------------
+
+JUCE (https://juce.com), fetched at build time, is licensed under the
+GNU AGPLv3 or a commercial JUCE licence. Builds of this program that are
+distributed use JUCE under the AGPLv3. The VST3 SDK that JUCE bundles is
+licensed by Steinberg Media Technologies under the MIT licence.

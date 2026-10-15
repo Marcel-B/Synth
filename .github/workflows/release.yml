@@ -86,6 +86,8 @@ jobs:
             echo "NOTARIZED=1" >> "$GITHUB_ENV"
           fi
           cp scripts/install-release.sh "$DIR/install.sh"
+          # The AGPL asks for the licence to travel with the binaries.
+          cp LICENSE NOTICE "$DIR/"
           ditto -c -k --keepParent "$DIR" "$DIR.zip"
           echo "ZIP=$DIR.zip" >> "$GITHUB_ENV"
       - name: Validate with auval
