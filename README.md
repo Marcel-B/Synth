@@ -641,4 +641,6 @@ Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfl�
 
 ## Lizenz
 
-Das Plugin nutzt [JUCE](https://juce.com) 8, das unter AGPLv3 oder einer kommerziellen Lizenz steht. Für den eigenen Gebrauch genügt das; wer das Plugin weitergeben will, muss sich vorher für eine der beiden Lizenzen entscheiden.
+Tonwerk Synth steht unter der [GNU Affero General Public License v3](LICENSE) (AGPL-3.0) mit einer Zusatzbedingung nach Abschnitt 7(b), die die Namensnennung verlangt (siehe [NOTICE](NOTICE)). Kurz gesagt: Jeder darf den Code nutzen, ändern und weitergeben, auch in eigenen Projekten, aber nur wenn der Code offen bleibt (unter derselben Lizenz, auch bei Nutzung über ein Netzwerk) und der Hinweis „Tonwerk Synth by Marcel Benders“ mit Link zu diesem Repository erhalten bleibt. Geänderte Fassungen müssen als geändert erkennbar sein.
+
+Die Plugins nutzen [JUCE](https://juce.com) 8, das unter AGPLv3 oder einer kommerziellen Lizenz steht; die weitergegebenen Builds nutzen JUCE unter der AGPLv3. Das VST3 SDK, das JUCE mitbringt, steht unter der MIT-Lizenz.
