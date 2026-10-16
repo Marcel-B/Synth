@@ -14,8 +14,23 @@ namespace tonwerkdistortion
  * host's rate). Voltages are the pedal's: 1.0 in the host is 1 V at the input jack, about what a guitar gives when
  * played hard.
  */
+/**
+ * How the signal is bent. The pedal is the DS-1 below; the others (`Shapers.h`) are single curves made for synths, drums
+ * and bass. The order is the "mode" parameter's: append new ones, never reorder.
+ */
+enum class Mode
+{
+    pedal,
+    tube,
+    clipper,
+    folder,
+    rectifier
+};
+constexpr int kModes = 5;
+
 struct Settings
 {
+    Mode mode = Mode::pedal;
     /** Gain before the pedal, for sources hotter or quieter than a guitar. */
     float inputDb = 0.0f;
     /** The DIST pot, 0 to 1. A linear 100 kΩ pot, as in the pedal. */
@@ -306,8 +321,11 @@ private:
 };
 
 /**
- * Tone, level and output coupling for one channel, at the host's rate: the tone pot blends a low-pass and a high-pass,
- * which leaves the DS-1's dip around 500 Hz with the knob centred.
+ * Tone, level and output coupling for one channel, at the host's rate. For the pedal the tone pot blends a low-pass and
+ * a high-pass, which leaves the DS-1's dip around 500 Hz with the knob centred. That scoop suits a guitar but hollows
+ * out a synth or a kick, so the other modes get a tilt instead: centred it is flat, turned it lifts one side of 700 Hz
+ * by up to 6 dB and lowers the other. Both run all the time and a mode change fades from one to the other, so the
+ * filters never start from a stale state.
  */
 class Voice
 {
@@ -316,9 +334,11 @@ public:
     {
         low.setCutoff(parts::kToneLowPass, rate);
         high.setCutoff(parts::kToneHighPass, rate);
+        tilt.setCutoff(kTiltHz, rate);
         dcBlock.setCutoff(parts::kOutputHighPass, rate);
         tone.prepare(rate, settings.tone);
         level.prepare(rate, levelGain(settings));
+        shaped.prepare(rate, settings.mode == Mode::pedal ? 0.0f : 1.0f);
         reset();
     }
 
@@ -326,6 +346,7 @@ public:
     {
         low.reset();
         high.reset();
+        tilt.reset();
         dcBlock.reset();
     }
 
@@ -333,22 +354,30 @@ public:
     {
         tone.set(std::clamp(settings.tone, 0.0f, 1.0f));
         level.set(levelGain(settings));
+        shaped.set(settings.mode == Mode::pedal ? 0.0f : 1.0f);
     }
 
     float process(float x)
     {
         const float t = tone.next();
-        const float shaped = (1.0f - t) * low.lowPass(x) + t * high.highPass(x);
-        return dcBlock.highPass(shaped) * level.next();
+        const float pedal = kMakeUp * ((1.0f - t) * low.lowPass(x) + t * high.highPass(x));
+        const float below = tilt.lowPass(x);
+        const float lift = std::exp((2.0f * t - 1.0f) * kTiltRange);
+        const float tilted = below / lift + (x - below) * lift;
+        const float w = shaped.next();
+        return dcBlock.highPass(pedal + w * (tilted - pedal)) * level.next();
     }
 
 private:
     // The stack loses about 12 dB of the clipper's ±0.6 V, minus the overshoot of its filters: 1.5 brings a clipped note
     // to about -6 dBFS peak at 0 dB.
     static constexpr float kMakeUp = 1.5f;
-    static float levelGain(const Settings& s) { return kMakeUp * std::pow(10.0f, s.levelDb / 20.0f); }
+    static constexpr float kTiltHz = 700.0f;
+    /** 6 dB, as the natural logarithm of its gain. */
+    static constexpr float kTiltRange = 6.0f * 0.11512925f;
+    static float levelGain(const Settings& s) { return std::pow(10.0f, s.levelDb / 20.0f); }
 
-    OnePole low, high, dcBlock;
-    Smoothed tone, level;
+    OnePole low, high, tilt, dcBlock;
+    Smoothed tone, level, shaped;
 };
 } // namespace tonwerkdistortion

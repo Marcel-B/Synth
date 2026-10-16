@@ -37,6 +37,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout DistortionProcessor::createP
     layout.add(percent("distortion", "Distortion", 0.5f));
     layout.add(percent("tone", "Tone", 0.5f));
     layout.add(decibels("level", "Level", -30.0f, 12.0f, 0.0f));
+    // Version 2: the modes came after the pedal. The order is `Mode`'s, saved in projects: append only.
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "mode", 2 }, "Modus",
+        juce::StringArray { "Pedal", juce::String::fromUTF8("Röhre"), "Clipper", "Falter", "Gleichrichter" }, 0));
     return layout;
 }
 
@@ -48,7 +52,7 @@ DistortionProcessor::DistortionProcessor()
       programs(state, factoryPresets())
 {
     auto get = [this](const char* id) { return state.getRawParameterValue(id); };
-    values = { get("input"), get("distortion"), get("tone"), get("level") };
+    values = { get("input"), get("distortion"), get("tone"), get("level"), get("mode") };
     // Builds the diode table here, on the message thread, not on the audio thread's first block.
     DiodeClipper::instance();
 }
@@ -60,6 +64,7 @@ Settings DistortionProcessor::readSettings() const
     s.distortion = values.distortion->load();
     s.tone = values.tone->load();
     s.levelDb = values.level->load();
+    s.mode = (Mode) std::clamp(juce::roundToInt(values.mode->load()), 0, kModes - 1);
     return s;
 }
 

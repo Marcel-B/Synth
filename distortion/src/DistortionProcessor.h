@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Ds1Circuit.h"
 #include "ScopeBuffer.h"
+#include "Shapers.h"
 
 #include "EffectPresets.h"
 
@@ -13,7 +13,8 @@
 namespace tonwerkdistortion
 {
 /**
- * Tonwerk Distortion: the DS-1's circuit (`Ds1Circuit.h`) as an audio effect. The clipping stages run four times
+ * Tonwerk Distortion: the DS-1's circuit (`Ds1Circuit.h`) and four curves for electronic sounds (`Shapers.h`) as an
+ * audio effect. The clipping stages run four times
  * oversampled with JUCE's polyphase IIR filters, the cheapest of its oversamplers, so the hard clip does not fold
  * back into the audible band; tone and level run at the host's rate. On a mono track only one channel is computed. Parameter ids are part of saved Logic projects:
  * never rename or remove one, and append new ones with the version hint of the release they first appear in.
@@ -62,7 +63,7 @@ private:
     static constexpr int kOversamplingStages = 2;
 
     std::unique_ptr<juce::dsp::Oversampling<float>> oversampling;
-    std::array<Drive, 2> drives;
+    std::array<Distortion, 2> drives;
     std::array<Voice, 2> voices;
     int maxBlock = 0;
 
@@ -72,6 +73,7 @@ private:
         std::atomic<float>* distortion;
         std::atomic<float>* tone;
         std::atomic<float>* level;
+        std::atomic<float>* mode;
     } values;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DistortionProcessor)
