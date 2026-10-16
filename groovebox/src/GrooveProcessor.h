@@ -128,12 +128,12 @@ private:
     {
         std::atomic<float>*tune, *decay, *tone, *character, *level, *pan, *delay, *reverb, *mute;
         std::atomic<float>*attack, *hold, *pitchMod, *modDecay, *filter, *cutoff, *resonance, *filterMod, *drive, *bits,
-            *crush, *velocity, *random, *machine;
+            *crush, *velocity, *random, *machine, *roll;
     };
     std::array<TrackValues, kTracks> trackValues {};
     struct GlobalValues
     {
-        std::atomic<float>*seqMode, *pattern, *length, *rate, *swing, *accent, *drive, *master;
+        std::atomic<float>*seqMode, *pattern, *length, *rate, *swing, *accent, *drive, *master, *roll;
     } global {};
     struct FxValues
     {

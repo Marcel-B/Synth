@@ -822,6 +822,65 @@ public:
             expectEquals(hits({ { "seqMode", 0.0f } }, every)[1], 0);
         }
 
+        beginTest("Würfeln: steps fall out, empty ones sound, accents flip, the same every time");
+        {
+            // The dice alone: nothing at 0, the shares the comment promises at 1.
+            int dropped = 0, added = 0, flipped = 0, addedToSilent = 0;
+            constexpr int rolls = 20000;
+            for (long long n = 0; n < rolls; ++n)
+            {
+                const auto on = rollStep(true, false, true, 0.0f, n, 2);
+                expect(on.plays && ! on.accent);
+                dropped += rollStep(true, false, true, 1.0f, n, 1).plays ? 0 : 1;
+                added += rollStep(false, false, true, 1.0f, n, 1).plays ? 1 : 0;
+                flipped += rollStep(true, true, true, 1.0f, n, 1).accent ? 0 : 1;
+                addedToSilent += rollStep(false, false, false, 1.0f, n, 1).plays ? 1 : 0;
+                expect(rollStep(true, false, true, 0.7f, n, 5).plays == rollStep(true, false, true, 0.7f, n, 5).plays);
+            }
+            expectWithinAbsoluteError(dropped / (double) rolls, 0.5, 0.02);
+            expectWithinAbsoluteError(added / (double) rolls, 0.25, 0.02);
+            expectWithinAbsoluteError(flipped / (double) rolls, 0.3, 0.02);
+            expectEquals(addedToSilent, 0);
+
+            // In the sequencer: the global knob and a track's own add up; a silent track stays silent.
+            auto hits = [](std::initializer_list<std::pair<const char*, float>> knobs) {
+                GrooveProcessor processor;
+                plain(processor);
+                processor.setPattern(0, only({ { Instrument::snare, "x.x.x.x.x.x.x.x." } }));
+                set(processor, "seqMode", 2.0f);
+                for (const auto& [id, value] : knobs)
+                    set(processor, id, value);
+                run(processor, 32.0 - 1.0e-3); // 256 sixteenths, 128 of them set
+                return std::pair { processor.hitCount(1), processor.hitCount(0) };
+            };
+            expectEquals(hits({}).first, 128);
+            const auto all = hits({ { "roll", 1.0f } });
+            const auto split = hits({ { "roll", 0.5f }, { "snareRoll", 0.5f } });
+            const auto other = hits({ { "kickRoll", 1.0f } });
+            // At 1: half of the 128 set steps play, a quarter of the 128 empty ones join them.
+            expectWithinAbsoluteError(all.first, 64 + 32, 16);
+            expectEquals(split.first, all.first);
+            expectEquals(all.second, 0);
+            expectEquals(other.first, 128);
+            expectEquals(hits({ { "roll", 1.0f } }).first, all.first);
+            // A little: only a few change.
+            expectWithinAbsoluteError(hits({ { "roll", 0.1f } }).first, 128 - 6 + 3, 8);
+
+            // A start in the middle of the song rolls what was rolled there before.
+            auto count = [](double from, double beats) {
+                GrooveProcessor processor;
+                plain(processor);
+                processor.setPattern(0, only({ { Instrument::snare, "xxxxxxxxxxxxxxxx" } }));
+                set(processor, "roll", 0.6f);
+                Head head;
+                head.ppq = from;
+                run(processor, beats / 2.0 - 1.0e-3, &head);
+                return processor.hitCount(1);
+            };
+            expectEquals(count(4.0, 4.0), count(0.0, 8.0) - count(0.0, 4.0));
+            expectLessThan(count(0.0, 8.0), 32);
+        }
+
         beginTest("Accents are louder than plain steps by Akzent");
         {
             auto level = [](const char* steps, float accent) {

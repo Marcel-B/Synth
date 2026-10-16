@@ -206,6 +206,11 @@ Layout GrooveProcessor::createParameterLayout()
 
     // Version 4: delay and hall off with one click, the power switch on the effects panel.
     toggle(layout, "fxOn", "Effekte", true, 4);
+    // The dice on the pattern, for all tracks and for each.
+    percent(layout, "roll", utf8("Würfeln"), d.roll, 0.0f, 1.0f, 4);
+    for (int t = 0; t < kTracks; ++t)
+        percent(layout, id(t, "Roll"), utf8(kTrackNames[(std::size_t) t]) + utf8(" Würfeln"), d.track[(std::size_t) t].roll,
+                0.0f, 1.0f, 4);
     return layout;
 }
 
@@ -226,9 +231,9 @@ GrooveProcessor::GrooveProcessor()
                                          value(id(t, "ModDecay")), value(id(t, "Filter")), value(id(t, "Cutoff")),
                                          value(id(t, "Resonance")), value(id(t, "FilterMod")), value(id(t, "Drive")),
                                          value(id(t, "Bits")), value(id(t, "Crush")), value(id(t, "Velocity")),
-                                         value(id(t, "Random")), value(id(t, "Machine")) };
+                                         value(id(t, "Random")), value(id(t, "Machine")), value(id(t, "Roll")) };
     global = { value("seqMode"), value("pattern"), value("length"), value("rate"),
-               value("swing"),   value("accent"),  value("drive"),  value("master") };
+               value("swing"),   value("accent"),  value("drive"),  value("master"), value("roll") };
     fx = { value("fxDelayMix"),      value("fxDelaySync"), value("fxDelayTime"), value("fxDelayDivision"),
            value("fxDelayFeedback"), value("fxDelayTone"), value("fxReverbMix"), value("fxReverbDecay"), value("fxOn") };
     // A new instance starts with Init's beat, so pressing play gives a groove at once.
@@ -269,6 +274,7 @@ Settings GrooveProcessor::readSettings() const
         track.velocity = get(v.velocity);
         track.random = get(v.random);
         track.machine = (Machine) std::clamp(juce::roundToInt(get(v.machine)), 0, kMachines - 1);
+        track.roll = get(v.roll);
     }
     s.seqMode = (SeqMode) juce::roundToInt(get(global.seqMode));
     s.pattern = std::clamp(juce::roundToInt(get(global.pattern)), 0, kPatterns - 1);
@@ -278,6 +284,7 @@ Settings GrooveProcessor::readSettings() const
     s.accent = get(global.accent);
     s.drive = get(global.drive);
     s.masterDb = get(global.master);
+    s.roll = get(global.roll);
     return s;
 }
 
@@ -427,13 +434,15 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     {
         const auto& p = patterns[(std::size_t) s.pattern];
         int shown = playingStep.load(std::memory_order_relaxed);
-        Clock::steps(from, to, samplesPerBeat, count, s.length, s.rate, s.swing, [&](int offset, int step) {
+        Clock::steps(from, to, samplesPerBeat, count, s.length, s.rate, s.swing, [&](int offset, int step, long long n) {
             shown = step;
             for (int t = 0; t < kTracks; ++t)
             {
                 const auto bits = unpack(p[(std::size_t) t].load(std::memory_order_relaxed));
-                if ((bits.on & (1u << step)) != 0 && hitCount < (int) hits.size())
-                    hits[(std::size_t) hitCount++] = { offset, t, stepVelocity((bits.accent & (1u << step)) != 0, s.accent) };
+                const auto rolled = rollStep((bits.on & (1u << step)) != 0, (bits.accent & (1u << step)) != 0, bits.on != 0,
+                                             s.roll + s.track[(std::size_t) t].roll, n, t);
+                if (rolled.plays && hitCount < (int) hits.size())
+                    hits[(std::size_t) hitCount++] = { offset, t, stepVelocity(rolled.accent, s.accent) };
             }
         });
         playingStep.store(shown, std::memory_order_relaxed);

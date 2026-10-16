@@ -310,7 +310,8 @@ std::unique_ptr<Section> trackSection(GrooveProcessor& p, int t)
                                       { prefix + "Bits", "Bits" },
                                       { prefix + "Crush", "Rate" },
                                       { prefix + "Velocity", "Dynamik" },
-                                      { prefix + "Random", "Zufall" } } });
+                                      { prefix + "Random", "Zufall" },
+                                      { prefix + "Roll", utf8("Würfeln") } } });
 }
 } // namespace
 
@@ -323,7 +324,8 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                     { "length", utf8("Länge") },
                     { "rate", "Raster" },
                     { "swing", "Swing" },
-                    { "accent", "Akzent" } } }),
+                    { "accent", "Akzent" },
+                    { "roll", utf8("Würfeln") } } }),
       master(p.state, "Summe", { { { "drive", "Drive" }, { "master", "Master" } } }),
       grid(p),
       machines(p),
