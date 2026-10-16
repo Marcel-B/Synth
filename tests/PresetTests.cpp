@@ -2,6 +2,8 @@
 #include "AdditiveProcessor.h"
 #include "BassPresets.h"
 #include "BassProcessor.h"
+#include "NeuroPresets.h"
+#include "NeuroProcessor.h"
 #include "DxPresets.h"
 #include "Loudness.h"
 #include "DxProcessor.h"
@@ -60,6 +62,8 @@ bool roomPlaying(const juce::AudioProcessor& processor)
         return sampler->roomPlaying();
     if (const auto* bass = dynamic_cast<const tonwerkbass::BassProcessor*>(&processor))
         return bass->roomPlaying();
+    if (const auto* neuro = dynamic_cast<const tonwerkneuro::NeuroProcessor*>(&processor))
+        return neuro->roomPlaying();
     return true;
 }
 
@@ -268,6 +272,10 @@ std::vector<Instrument> instruments()
                      // 3 dB lower: the phrase has no accents, and an accented note with its sweep is up to 6 dB
                      // louder (BassTests plays every sound with accents under full scale).
                      -15.0 });
+    list.push_back({ "Tonwerk Neuro", (int) tonwerkneuro::factoryPresets().size(),
+                     [] { return std::make_unique<tonwerkneuro::NeuroProcessor>(); },
+                     [](int i) { return tonwerkneuro::factoryPresets()[(std::size_t) i].category; },
+                     [](int i) { return i == 0; } });
     return list;
 }
 } // namespace
