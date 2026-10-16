@@ -756,6 +756,36 @@ target_link_libraries(TonwerkFilter
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Neuro: a mono bass for Reese and neuro sounds, detuned saws, FM and a clean sub, wobbled in tempo (neuro/).
+juce_add_plugin(TonwerkNeuro
+    PRODUCT_NAME "Tonwerk Neuro"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkneuro
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwNr
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_NEURO_SOURCES
+    neuro/src/NeuroEditor.cpp
+    neuro/src/NeuroPresets.cpp
+    neuro/src/NeuroProcessor.cpp)
+
+target_sources(TonwerkNeuro PRIVATE ${TONWERK_NEURO_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkNeuro PRIVATE src common wavetable/src bass/src)
+target_compile_definitions(TonwerkNeuro PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkNeuro
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -815,9 +845,11 @@ if(TONWERK_TESTS)
         tests/ShimmerTests.cpp
         ${TONWERK_FILTER_SOURCES}
         tests/FilterTests.cpp
+        ${TONWERK_NEURO_SOURCES}
+        tests/NeuroTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -844,6 +876,7 @@ if(TONWERK_TESTS)
         TONWERK_GLUE_NO_ENTRY=1
         TONWERK_SHIMMER_NO_ENTRY=1
         TONWERK_FILTER_NO_ENTRY=1
+        TONWERK_NEURO_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
