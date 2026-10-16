@@ -693,6 +693,16 @@ cmake --build build --target TonwerkTape_Standalone
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
 
+## Website
+
+Die Seite [tonwerk.studio](https://tonwerk.studio) liegt in `website/` (HTML, CSS und etwas JavaScript, ohne Build-Werkzeug, ohne fremde Schriften oder Tracker). Die Bildschirmfotos kommen aus `docs/`, dieselben wie im README. `scripts/build-website.sh` stellt beides in `build/site` zusammen und bricht ab, wenn ein Bild fehlt oder ein Plugin aus `CMakeLists.txt` keine Karte auf der Seite hat. Ein neues Plugin braucht also eine Karte in `website/index.html` (eine bestehende kopieren) und sein Bild in `docs/`.
+
+```sh
+scripts/build-website.sh && python3 -m http.server -d build/site 8000   # dann http://localhost:8000
+```
+
+Die Action `website.yml` prüft die Seite in jedem Pull Request und veröffentlicht sie bei jedem Push auf `main` über GitHub Pages. Impressum und Datenschutz (`website/impressum.html`, `website/datenschutz.html`) haben rot markierte Stellen für Anschrift und E-Mail, die vor dem Veröffentlichen ausgefüllt sein müssen.
+
 ## Lizenz
 
 Tonwerk Synth steht unter der [GNU Affero General Public License v3](LICENSE) (AGPL-3.0) mit einer Zusatzbedingung nach Abschnitt 7(b), die die Namensnennung verlangt (siehe [NOTICE](NOTICE)). Kurz gesagt: Jeder darf den Code nutzen, ändern und weitergeben, auch in eigenen Projekten, aber nur wenn der Code offen bleibt (unter derselben Lizenz, auch bei Nutzung über ein Netzwerk) und der Hinweis „Tonwerk Synth by Marcel Benders“ mit Link zu diesem Repository erhalten bleibt. Geänderte Fassungen müssen als geändert erkennbar sein.
