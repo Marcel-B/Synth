@@ -56,6 +56,24 @@ enum class TrackFilter
     bandpass
 };
 
+/**
+ * The drum machine a track's instrument is modelled on, from the menu under the grid. Menu order, saved in projects:
+ * append only. The names lean on the classics without naming them; `tonwerk` is the Groovebox's own sound, as before.
+ */
+enum class Machine
+{
+    tonwerk,
+    boom88,
+    punch99,
+    mini66,
+    neon77,
+    kompakt78,
+    studio80,
+    street81,
+    sechseck
+};
+inline constexpr int kMachines = 9;
+
 struct TrackSettings
 {
     /** Semitones from the instrument's own pitch. */
@@ -100,6 +118,8 @@ struct TrackSettings
     float velocity = 1.0f;
     /** How much each hit differs from the last in pitch (a semitone at 1) and level (3 dB), 0 to 1. */
     float random = 0.0f;
+    /** The machine the instrument is built like; taken at the strike. */
+    Machine machine = Machine::tonwerk;
 };
 
 /** Each instrument's starting sound. */
@@ -236,6 +256,503 @@ inline float tauFor(double seconds, double rate) { return (float) std::exp(-1.0 
 inline float pitchRatio(float semitones) { return std::exp2(semitones / 12.0f); }
 
 /**
+ * The constants an instrument is built from, the ones the machines differ in. `Machine::tonwerk` keeps the Groovebox's
+ * own values, so a track on Tonwerk sounds exactly as it did before the machines came; the knobs mean the same on
+ * every machine and move these constants, they do not replace them.
+ */
+struct Voicing
+{
+    /** The body's pitch at Stimmung 0, in Hz; for the hats and the cymbal the factor on the metal's frequencies. */
+    float hz = 50.0f;
+    /** A second body oscillator (snare, toms): its ratio to the first and its level. */
+    float ratio = 1.5f, second = 0.0f;
+    /**
+     * The pitch sweep: its depth (how far the start lies above the note, in multiples of it), `sweep` with the tone
+     * knob down and `sweep + sweepTone` with it up, and its time constant, `sweepTime + sweepSlow` with the knob down
+     * and `sweepTime` with it up.
+     */
+    float sweep = 0.0f, sweepTone = 0.0f, sweepTime = 0.02f, sweepSlow = 0.0f;
+    /** The beater (kick, a time constant) or the stick (toms, the time to -60 dB): its time, its level and the highpass
+     * on its noise. */
+    float clickTime = 0.0012f, click = 0.0f, clickHz = 1500.0f;
+    /** How hard Klick drives the kick's body. */
+    float bodyDrive = 3.0f;
+    /** Noise filters: the snare's rattle band, the toms' lowpass (`noiseHigh`), the metal's two highpasses. */
+    float noiseLow = 400.0f, noiseHigh = 2000.0f;
+    /** How long the snare's head rings before Abklingen adds to it, in seconds. */
+    float head = 0.04f;
+    /** The band the clap and the metal pass, and its Q (the clap's at Schärfe 0). */
+    float band = 1150.0f, bandQ = 0.6f;
+    /** The clap: its hands, their gap at Streuung 0 and what Streuung adds to it. */
+    int hands = 3;
+    float gap = 0.004f, spread = 0.014f;
+    /** Hats and cymbal: the six squares at Stimmung 0, and the noise in the mix before Rauschen adds its share. */
+    std::array<float, 6> metal { 205.3f, 304.4f, 369.6f, 522.7f, 540.0f, 800.0f };
+    float metalNoise = 0.0f;
+    /** The samples a sampling machine played from, bits and rate; 16 and 48000 leave the sound untouched. */
+    float bits = 16.0f, rate = 48000.0f;
+    float gain = 1.0f;
+};
+
+/** The Groovebox's own instruments. */
+inline Voicing tonwerkVoicing(Instrument instrument)
+{
+    Voicing v;
+    switch (instrument)
+    {
+        case Instrument::kick:
+            v.sweep = 0.3f;
+            v.sweepTone = 3.7f;
+            v.sweepTime = 0.02f;
+            v.sweepSlow = 0.03f;
+            v.click = 1.5f;
+            v.gain = 0.8f;
+            break;
+        case Instrument::snare:
+            v.hz = 185.0f;
+            v.ratio = 1.59f;
+            v.second = 0.55f;
+            v.sweep = 0.15f;
+            v.sweepTime = 0.015f;
+            v.gain = 0.5f;
+            break;
+        case Instrument::clap:
+            v.noiseLow = 500.0f;
+            v.gain = 2.8f;
+            break;
+        case Instrument::lowTom:
+        case Instrument::highTom:
+            v.hz = instrument == Instrument::lowTom ? 95.0f : 150.0f;
+            v.ratio = 1.5f;
+            v.second = 0.3f;
+            v.sweep = 0.05f;
+            v.sweepTone = 0.95f;
+            v.sweepTime = 0.08f;
+            v.clickTime = 0.06f;
+            v.click = 1.0f;
+            v.noiseHigh = 3000.0f;
+            v.gain = 0.6f;
+            break;
+        case Instrument::closedHat:
+        case Instrument::openHat:
+        case Instrument::cymbal:
+        {
+            const bool crash = instrument == Instrument::cymbal;
+            v.hz = crash ? 0.85f : 1.0f;
+            v.band = crash ? 6000.0f : 9000.0f;
+            v.bandQ = crash ? 0.6f : 0.9f;
+            v.noiseHigh = crash ? 2500.0f : 4000.0f;
+            v.noiseLow = 400.0f;
+            v.gain = 2.2f;
+            break;
+        }
+    }
+    return v;
+}
+
+/** Each machine's instruments against Tonwerk's, in dB, so a machine is as loud as the next (see the tests). */
+inline constexpr std::array<std::array<float, kTracks>, kMachines> kMachineLevels { {
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 2.6f, -1.0f, 0.9f, 0.6f, 0.4f, 0.5f, 0.5f, 0.7f },
+    { -1.1f, -2.2f, -0.4f, -0.1f, -0.1f, -4.6f, -4.8f, -3.8f },
+    { 0.9f, -2.4f, -0.6f, 0.0f, 0.1f, 0.8f, 0.8f, 0.4f },
+    { 0.5f, -1.7f, -0.5f, -0.3f, -0.1f, -5.4f, -5.4f, -4.4f },
+    { 2.1f, -1.1f, -0.3f, -0.2f, 0.1f, -6.7f, -6.9f, -4.1f },
+    { 0.4f, -2.1f, -1.6f, 0.0f, 0.0f, -7.8f, -8.0f, -5.5f },
+    { -0.2f, -1.4f, 0.3f, 0.3f, 0.1f, -4.3f, -4.5f, -3.7f },
+    { -0.7f, -0.2f, 1.4f, -0.4f, -0.1f, -3.3f, -3.6f, -2.4f },
+} };
+
+/**
+ * Each machine's instruments, leaning on what made the classic it is named after sound as it did. All of them are
+ * synthesised; the sampling machines of the eighties are held at their samples' bits and rate.
+ */
+inline Voicing voicingFor(Machine machine, Instrument instrument)
+{
+    Voicing v = tonwerkVoicing(instrument);
+    const bool low = instrument == Instrument::lowTom;
+    const bool hat = instrument == Instrument::closedHat || instrument == Instrument::openHat;
+    const bool crash = instrument == Instrument::cymbal;
+    auto samples = [&v](float bits, float rate) {
+        v.bits = bits;
+        v.rate = rate;
+    };
+    switch (machine)
+    {
+        case Machine::tonwerk:
+            break;
+
+        // Boom 88: the analog boom. A deep kick that barely bends and has no beater, a snare of two ringing tones
+        // under bright noise, a clap of four hands, toms that ring like sines, and the six squares of the hats.
+        case Machine::boom88:
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 47.0f;
+                    v.sweep = 0.12f;
+                    v.sweepTone = 1.2f;
+                    v.sweepTime = 0.03f;
+                    v.sweepSlow = 0.02f;
+                    v.click = 0.35f;
+                    v.bodyDrive = 1.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 180.0f;
+                    v.ratio = 1.83f;
+                    v.second = 0.8f;
+                    v.sweep = 0.05f;
+                    v.noiseLow = 650.0f;
+                    v.noiseHigh = 2500.0f;
+                    break;
+                case Instrument::clap:
+                    v.hands = 4;
+                    v.gap = 0.007f;
+                    v.spread = 0.008f;
+                    v.band = 1000.0f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 88.0f : 140.0f;
+                    v.second = 0.1f;
+                    v.sweep = 0.04f;
+                    v.sweepTone = 0.35f;
+                    v.click = 0.4f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.bandQ = crash ? 0.8f : 1.1f;
+                    break;
+            }
+            break;
+
+        // Punch 99: the house machine. A kick that drops fast from high up with a hard beater, a tight snare of two
+        // tones and a lot of noise, toms with a short sweep, and hats and cymbal from six-bit samples.
+        case Machine::punch99:
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 54.0f;
+                    v.sweep = 0.9f;
+                    v.sweepTone = 3.1f;
+                    v.sweepTime = 0.01f;
+                    v.sweepSlow = 0.015f;
+                    v.click = 2.6f;
+                    v.clickTime = 0.002f;
+                    v.clickHz = 3000.0f;
+                    v.bodyDrive = 5.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 195.0f;
+                    v.ratio = 1.66f;
+                    v.second = 0.6f;
+                    v.sweep = 0.35f;
+                    v.sweepTime = 0.012f;
+                    v.noiseLow = 500.0f;
+                    v.noiseHigh = 4000.0f;
+                    v.head = 0.03f;
+                    break;
+                case Instrument::clap:
+                    v.hands = 4;
+                    v.gap = 0.005f;
+                    v.spread = 0.006f;
+                    v.band = 1300.0f;
+                    v.bandQ = 0.9f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 100.0f : 160.0f;
+                    v.sweep = 0.25f;
+                    v.sweepTone = 0.9f;
+                    v.sweepTime = 0.04f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.metalNoise = 0.35f;
+                    v.band = crash ? 7000.0f : 10000.0f;
+                    samples(6.0f, 32000.0f);
+                    break;
+            }
+            break;
+
+        // Mini 66: the small one. A short thin kick, a bright snare that is mostly noise, high toms, and hats
+        // brighter and tighter than the big brother's.
+        case Machine::mini66:
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 62.0f;
+                    v.sweep = 0.4f;
+                    v.sweepTone = 1.0f;
+                    v.sweepTime = 0.012f;
+                    v.sweepSlow = 0.01f;
+                    v.click = 0.8f;
+                    v.bodyDrive = 1.5f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 230.0f;
+                    v.ratio = 1.5f;
+                    v.second = 0.35f;
+                    v.noiseLow = 800.0f;
+                    v.noiseHigh = 4500.0f;
+                    v.head = 0.025f;
+                    break;
+                case Instrument::clap:
+                    v.band = 1500.0f;
+                    v.bandQ = 1.0f;
+                    v.gap = 0.003f;
+                    v.spread = 0.008f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 120.0f : 180.0f;
+                    v.second = 0.15f;
+                    v.sweep = 0.06f;
+                    v.sweepTone = 0.4f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.hz *= 1.2f;
+                    v.band = crash ? 8000.0f : 11000.0f;
+                    v.bandQ = crash ? 0.8f : 1.2f;
+                    v.noiseHigh = crash ? 3500.0f : 5500.0f;
+                    break;
+            }
+            break;
+
+        // Neon 77: the first all-sample machine of the house. Clean, bright and a little thin, from eight-bit samples
+        // at a low rate, the hats from six.
+        case Machine::neon77:
+            samples(hat || crash ? 6.0f : 8.0f, 25000.0f);
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 58.0f;
+                    v.sweep = 0.7f;
+                    v.sweepTone = 1.5f;
+                    v.sweepTime = 0.012f;
+                    v.sweepSlow = 0.01f;
+                    v.click = 2.0f;
+                    v.bodyDrive = 2.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 210.0f;
+                    v.second = 0.6f;
+                    v.noiseHigh = 3500.0f;
+                    break;
+                case Instrument::clap:
+                    v.band = 1200.0f;
+                    v.gap = 0.005f;
+                    v.spread = 0.007f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 110.0f : 170.0f;
+                    v.sweep = 0.3f;
+                    v.sweepTone = 0.6f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.metalNoise = 0.45f;
+                    v.band = crash ? 6500.0f : 8000.0f;
+                    break;
+            }
+            break;
+
+        // Kompakt 78: the rhythm box of the late seventies. A soft thump, a hollow snare, toms that sound like bongos,
+        // and a hiss of filtered noise for the hats.
+        case Machine::kompakt78:
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 62.0f;
+                    v.sweep = 0.05f;
+                    v.sweepTone = 0.2f;
+                    v.sweepTime = 0.01f;
+                    v.click = 0.0f;
+                    v.bodyDrive = 0.5f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 290.0f;
+                    v.ratio = 2.03f;
+                    v.second = 0.3f;
+                    v.sweep = 0.05f;
+                    v.noiseLow = 1200.0f;
+                    v.noiseHigh = 3000.0f;
+                    v.head = 0.02f;
+                    break;
+                case Instrument::clap:
+                    v.band = 1800.0f;
+                    v.bandQ = 1.5f;
+                    v.hands = 2;
+                    v.gap = 0.003f;
+                    v.spread = 0.006f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 170.0f : 250.0f;
+                    v.second = 0.0f;
+                    v.sweep = 0.02f;
+                    v.sweepTone = 0.1f;
+                    v.click = 0.3f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.hz *= 1.4f;
+                    v.metalNoise = 0.6f;
+                    v.band = crash ? 8000.0f : 11000.0f;
+                    v.bandQ = 1.2f;
+                    break;
+            }
+            break;
+
+        // Studio 80: the sampled studio kit of the early eighties. A kick with a big beater, a fat snare with a long
+        // rattle, a clap of many hands, toms with a stick, mostly noise in the hats, all from eight bits at 28 kHz.
+        case Machine::studio80:
+            samples(8.0f, 28000.0f);
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 58.0f;
+                    v.sweep = 1.0f;
+                    v.sweepTone = 2.0f;
+                    v.sweepTime = 0.008f;
+                    v.sweepSlow = 0.01f;
+                    v.click = 3.0f;
+                    v.clickTime = 0.0025f;
+                    v.clickHz = 2500.0f;
+                    v.bodyDrive = 2.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 190.0f;
+                    v.ratio = 1.47f;
+                    v.second = 0.7f;
+                    v.noiseLow = 300.0f;
+                    v.noiseHigh = 3500.0f;
+                    v.head = 0.06f;
+                    break;
+                case Instrument::clap:
+                    v.hands = 5;
+                    v.gap = 0.003f;
+                    v.spread = 0.006f;
+                    v.band = 1400.0f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 85.0f : 130.0f;
+                    v.sweep = 0.25f;
+                    v.sweepTone = 0.8f;
+                    v.click = 1.5f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.metal = { 317.0f, 457.0f, 593.0f, 731.0f, 874.0f, 1043.0f };
+                    v.metalNoise = 0.6f;
+                    v.band = crash ? 6000.0f : 8000.0f;
+                    v.bandQ = 0.5f;
+                    break;
+            }
+            break;
+
+        // Street 81: the hip-hop box. Hard and short, a kick that knocks, a fat snare, low toms, all eight bit at
+        // 24 kHz.
+        case Machine::street81:
+            samples(8.0f, 24000.0f);
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 52.0f;
+                    v.sweep = 0.6f;
+                    v.sweepTone = 2.0f;
+                    v.sweepTime = 0.012f;
+                    v.sweepSlow = 0.012f;
+                    v.click = 2.2f;
+                    v.bodyDrive = 4.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 175.0f;
+                    v.second = 0.9f;
+                    v.noiseLow = 350.0f;
+                    v.noiseHigh = 2500.0f;
+                    v.head = 0.07f;
+                    break;
+                case Instrument::clap:
+                    v.hands = 4;
+                    v.gap = 0.005f;
+                    v.spread = 0.008f;
+                    v.band = 1000.0f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 80.0f : 125.0f;
+                    v.sweep = 0.15f;
+                    v.sweepTone = 0.7f;
+                    v.click = 1.2f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.metalNoise = 0.4f;
+                    v.band = crash ? 6000.0f : 7500.0f;
+                    break;
+            }
+            break;
+
+        // Sechseck: the hexagonal pads of the electronic kit. Everything sweeps: the kick, the snare's tone, and the
+        // toms falling an octave and more, the sound of the eighties' drum fills.
+        case Machine::sechseck:
+            switch (instrument)
+            {
+                case Instrument::kick:
+                    v.hz = 58.0f;
+                    v.sweep = 1.6f;
+                    v.sweepTone = 2.4f;
+                    v.sweepTime = 0.035f;
+                    v.sweepSlow = 0.03f;
+                    v.click = 1.0f;
+                    v.bodyDrive = 2.0f;
+                    break;
+                case Instrument::snare:
+                    v.hz = 220.0f;
+                    v.second = 0.25f;
+                    v.sweep = 1.2f;
+                    v.sweepTime = 0.03f;
+                    v.noiseLow = 500.0f;
+                    v.noiseHigh = 2200.0f;
+                    break;
+                case Instrument::clap:
+                    v.hands = 2;
+                    v.band = 900.0f;
+                    break;
+                case Instrument::lowTom:
+                case Instrument::highTom:
+                    v.hz = low ? 90.0f : 145.0f;
+                    v.second = 0.1f;
+                    v.sweep = 1.2f;
+                    v.sweepTone = 1.8f;
+                    v.sweepTime = 0.12f;
+                    v.click = 0.8f;
+                    break;
+                case Instrument::closedHat:
+                case Instrument::openHat:
+                case Instrument::cymbal:
+                    v.hz *= 0.9f;
+                    v.metalNoise = 0.25f;
+                    break;
+            }
+            break;
+    }
+    // Each machine's instrument about as loud as Tonwerk's (measured by the tests), so switching keeps the mix.
+    v.gain *= std::pow(10.0f, kMachineLevels[(std::size_t) machine][(std::size_t) instrument] / 20.0f);
+    return v;
+}
+
+/**
  * One hit of one instrument. Every instrument is built the way the classic analog drum machines build theirs: a
  * sine whose pitch falls for the kick and the toms, a tuned body under filtered noise for the snare, bursts of
  * band-passed noise for the clap, six square waves at clashing ratios for the hats and the cymbal. The amplitude falls
@@ -261,6 +778,7 @@ public:
     void trigger(Instrument which, float velocity, const TrackSettings& s, float detune = 0.0f, float levelDb = 0.0f)
     {
         instrument = which;
+        voicing = voicingFor(s.machine, which);
         gain = (1.0f - s.velocity * (1.0f - velocity)) * std::pow(10.0f, levelDb / 20.0f);
         variation = pitchRatio(detune);
         playing = true;
@@ -306,7 +824,7 @@ public:
         const float tuned = pitchRatio(s.tune) * variation;
         const float rise = s.attack > 0.0f ? (float) (1.0 / std::max(1.0, s.attack * rate)) : 1.0f;
         holdFor = (int) (s.hold * rate);
-        const Shape shape(s, rate);
+        const Shape shape(s, voicing, rate);
         const bool bends = std::abs(s.pitchMod) > 1.0e-3f;
         const bool sweeps = shape.filters && std::abs(s.filterMod) > 1.0e-4f;
         for (int start = 0; start < count; start += kControl)
@@ -327,8 +845,8 @@ public:
                     case Instrument::kick: x = kick(s, base, level); break;
                     case Instrument::snare: x = snare(s, base, level); break;
                     case Instrument::clap: x = clap(s, fall); break;
-                    case Instrument::lowTom: x = tom(s, base * 95.0f, level); break;
-                    case Instrument::highTom: x = tom(s, base * 150.0f, level); break;
+                    case Instrument::lowTom:
+                    case Instrument::highTom: x = tom(s, base * voicing.hz, level); break;
                     case Instrument::closedHat:
                     case Instrument::openHat:
                     case Instrument::cymbal: x = metallic(s, base, level); break;
@@ -351,11 +869,11 @@ private:
     {
         switch (instrument)
         {
-            // Up to four times the note at the start: from a soft thud to the zap of an electro kick.
-            case Instrument::kick: return 0.3f + 3.7f * s.tone * s.tone;
-            case Instrument::snare: return 0.15f;
+            // Tonwerk's kick starts up to four times above the note: from a soft thud to the zap of an electro kick.
+            case Instrument::kick: return voicing.sweep + voicing.sweepTone * s.tone * s.tone;
+            case Instrument::snare: return voicing.sweep;
             case Instrument::lowTom:
-            case Instrument::highTom: return 0.05f + 0.95f * s.tone;
+            case Instrument::highTom: return voicing.sweep + voicing.sweepTone * s.tone;
             case Instrument::clap:
             case Instrument::closedHat:
             case Instrument::openHat:
@@ -370,48 +888,46 @@ private:
         switch (instrument)
         {
             case Instrument::kick:
-                filterA.set(FilterType::highpass, 1500.0, 0.0, rate);
+                filterA.set(FilterType::highpass, voicing.clickHz, 0.0, rate);
                 break;
             case Instrument::snare:
                 // The snares' rattle: noise from a few hundred hertz up to where tone opens it.
-                filterA.set(FilterType::highpass, 400.0 * base, 0.0, rate);
-                filterB.set(FilterType::lowpass, 2000.0 * std::exp2(3.0 * s.tone), 0.0, rate);
+                filterA.set(FilterType::highpass, voicing.noiseLow * base, 0.0, rate);
+                filterB.set(FilterType::lowpass, voicing.noiseHigh * std::exp2(3.0 * s.tone), 0.0, rate);
                 break;
             case Instrument::clap:
-                filterA.set(FilterType::bandpass, 1150.0 * base, 0.6 + 3.4 * s.tone, rate);
-                filterB.set(FilterType::highpass, 500.0, 0.0, rate);
+                filterA.set(FilterType::bandpass, voicing.band * base, voicing.bandQ + 3.4 * s.tone, rate);
+                filterB.set(FilterType::highpass, voicing.noiseLow, 0.0, rate);
                 break;
             case Instrument::lowTom:
             case Instrument::highTom:
-                filterA.set(FilterType::lowpass, 3000.0 * base, 0.0, rate);
+                filterA.set(FilterType::lowpass, voicing.noiseHigh * base, 0.0, rate);
                 break;
             case Instrument::closedHat:
             case Instrument::openHat:
             case Instrument::cymbal:
-            {
-                const bool crash = instrument == Instrument::cymbal;
-                filterA.set(FilterType::bandpass, (crash ? 6000.0 : 9000.0) * base, crash ? 0.6 : 0.9, rate);
-                filterB.set(FilterType::highpass, (crash ? 2500.0 : 4000.0) * std::exp2(1.6 * s.tone), 0.0, rate);
-                filterC.set(FilterType::highpass, 400.0, 0.0, rate);
+                filterA.set(FilterType::bandpass, voicing.band * base, voicing.bandQ, rate);
+                filterB.set(FilterType::highpass, voicing.noiseHigh * std::exp2(1.6 * s.tone), 0.0, rate);
+                filterC.set(FilterType::highpass, voicing.noiseLow, 0.0, rate);
                 break;
-            }
         }
     }
 
     /** The track's shaping, worked out once a block. */
     struct Shape
     {
-        Shape(const TrackSettings& s, double rate)
+        // The machine's samples and the track's crusher are one stage: the coarser of the two counts.
+        Shape(const TrackSettings& s, const Voicing& v, double rate)
             : drive(s.drive > 0.0f),
               // Driven up to ten times and brought back by the square root, as the sum's drive; faded in over the first
               // quarter of the knob, so its first turn does not jump.
               gain(1.0f + 9.0f * s.drive),
               back(1.0f / std::sqrt(gain)),
               wet(std::min(1.0f, 4.0f * s.drive)),
-              crushes(s.crush < 48000.0f && s.crush < rate),
-              crushStep(std::max(1.0, (double) s.crush) / rate),
-              quantises(s.bits < 16.0f),
-              steps(std::exp2(std::max(1.0f, s.bits) - 1.0f)),
+              crushes(std::min(s.crush, v.rate) < 48000.0f && std::min(s.crush, v.rate) < rate),
+              crushStep(std::max(1.0, (double) std::min(s.crush, v.rate)) / rate),
+              quantises(std::min(s.bits, v.bits) < 16.0f),
+              steps(std::exp2(std::max(1.0f, std::min(s.bits, v.bits)) - 1.0f)),
               filters(s.filter != TrackFilter::off)
         {
         }
@@ -473,38 +989,38 @@ private:
 
     float kick(const TrackSettings& s, float base, float fall)
     {
-        pitchEnv *= tauFor(0.02 + 0.03 * (1.0 - s.tone), rate);
-        const double hz = 50.0 * base * (1.0 + sweep * pitchEnv);
+        pitchEnv *= tauFor(voicing.sweepTime + voicing.sweepSlow * (1.0 - s.tone), rate);
+        const double hz = voicing.hz * base * (1.0 + sweep * pitchEnv);
         amp *= fall;
-        click *= tauFor(0.0012, rate);
+        click *= tauFor(voicing.clickTime, rate);
         const float body = sine(phase, hz) * amp;
-        const float beater = (float) filterA.process(noise.next()) * click * s.character * 1.5f;
+        const float beater = (float) filterA.process(noise.next()) * click * s.character * voicing.click;
         float x = body + beater;
         // The character also drives the body into a rounder, louder square, as an overdriven kick does.
-        const float drive = 1.0f + 3.0f * s.character;
+        const float drive = 1.0f + voicing.bodyDrive * s.character;
         x = std::tanh(drive * x) / std::tanh(drive);
-        return 0.8f * x;
+        return voicing.gain * x;
     }
 
     float snare(const TrackSettings& s, float base, float fall)
     {
-        pitchEnv *= tauFor(0.015, rate);
-        const double hz = 185.0 * base * (1.0 + sweep * pitchEnv);
+        pitchEnv *= tauFor(voicing.sweepTime, rate);
+        const double hz = voicing.hz * base * (1.0 + sweep * pitchEnv);
         // The drum's head rings shorter than the snares rattle.
-        second *= fallFor(0.04 + 0.35 * s.decay, rate);
+        second *= fallFor(voicing.head + 0.35 * s.decay, rate);
         amp *= fall;
-        const float body = (sine(phase, hz) + 0.55f * sine(phase2, hz * 1.59)) * second;
+        const float body = (sine(phase, hz) + voicing.second * sine(phase2, hz * voicing.ratio)) * second;
         const float rattle = (float) filterB.process(filterA.process(noise.next())) * amp;
-        return 0.5f * (body * (1.0f - 0.6f * s.character) + rattle * (0.4f + 1.6f * s.character));
+        return voicing.gain * (body * (1.0f - 0.6f * s.character) + rattle * (0.4f + 1.6f * s.character));
     }
 
     bool clapBursting() const { return instrument == Instrument::clap && time < clapTailStart; }
 
     float clap(const TrackSettings& s, float fall)
     {
-        // Three hands a few milliseconds apart, then the room: each burst rises at once and dies in a few ms.
-        const int gap = (int) ((0.004 + 0.014 * s.character) * rate);
-        clapTailStart = 3 * gap;
+        // A few hands (three on Tonwerk) milliseconds apart, then the room: each burst rises at once and dies in a few ms.
+        const int gap = (int) ((voicing.gap + voicing.spread * s.character) * rate);
+        clapTailStart = voicing.hands * gap;
         if (time < clapTailStart)
         {
             if (gap > 0 && time % gap == 0)
@@ -521,33 +1037,34 @@ private:
         }
         amp = std::max(burst, tail);
         const float n = (float) filterB.process(filterA.process(noise.next()));
-        return 2.8f * n * (burst + tail);
+        return voicing.gain * n * (burst + tail);
     }
 
     float tom(const TrackSettings& s, float hz, float fall)
     {
-        pitchEnv *= tauFor(0.08, rate);
+        pitchEnv *= tauFor(voicing.sweepTime, rate);
         const double f = hz * (1.0 + sweep * pitchEnv);
         amp *= fall;
         second *= fallFor(0.5 * s.decay, rate);
-        click *= fallFor(0.06, rate);
-        const float body = sine(phase, f) * amp + 0.3f * sine(phase2, f * 1.5) * second;
-        const float skin = (float) filterA.process(noise.next()) * click * s.character;
-        return 0.6f * (body + skin);
+        click *= fallFor(voicing.clickTime, rate);
+        const float body = sine(phase, f) * amp + voicing.second * sine(phase2, f * voicing.ratio) * second;
+        const float skin = (float) filterA.process(noise.next()) * click * s.character * voicing.click;
+        return voicing.gain * (body + skin);
     }
 
     float metallic(const TrackSettings& s, float base, float fall)
     {
-        // Six squares at the clashing ratios the 808's hats are known for; band-passed, they ring like metal.
-        static constexpr std::array<double, 6> hz { 205.3, 304.4, 369.6, 522.7, 540.0, 800.0 };
-        const double scale = instrument == Instrument::cymbal ? 0.85 * base : base;
+        // Six squares at clashing ratios (Tonwerk's are the ones the classic analog hats are known for); band-passed,
+        // they ring like metal.
+        const double scale = voicing.hz * base;
         double sum = 0.0;
         for (std::size_t k = 0; k < metal.size(); ++k)
-            sum += metal[k].next(tonwerk::Wave::square, hz[k] * scale, rate);
-        const float source = (float) (sum / 6.0) * (1.0f - s.character) + (float) noise.next() * s.character;
+            sum += metal[k].next(tonwerk::Wave::square, voicing.metal[k] * scale, rate);
+        const float noisy = std::min(1.0f, voicing.metalNoise + (1.0f - voicing.metalNoise) * s.character);
+        const float source = (float) (sum / 6.0) * (1.0f - noisy) + (float) noise.next() * noisy;
         amp *= fall;
         const float shaped = (float) filterC.process(filterB.process(filterA.process(source)));
-        return 2.2f * shaped * amp;
+        return voicing.gain * shaped * amp;
     }
 
     /** Samples between settings of the mod envelope's pitch and cutoff. */
@@ -555,6 +1072,7 @@ private:
 
     double rate = 48000.0;
     Instrument instrument = Instrument::kick;
+    Voicing voicing;
     bool playing = false, fading = false;
     float fade = 1.0f, gain = 1.0f, variation = 1.0f, rising = 1.0f;
     int time = 0, clapTailStart = 0, holdFor = 0;

@@ -28,6 +28,11 @@ inline constexpr std::array<std::pair<const char*, const char*>, kTracks> kSound
     { "Ton", "Rauschen" },
 } };
 
+/** The machines in the menu under the grid, in `Machine`'s order. Leaning on the classics, never their names. */
+inline constexpr std::array<const char*, kMachines> kMachineNames { "Tonwerk",   "Boom 88",   "Punch 99",
+                                                                    "Mini 66",   "Neon 77",   "Kompakt 78",
+                                                                    "Studio 80", "Street 81", "Sechseck" };
+
 /**
  * Tonwerk Groovebox: a drum machine of eight synthesised instruments with a step sequencer that follows the host's
  * transport (or runs by itself), and every instrument on a MIDI note as well. The patterns are not parameters; they
@@ -123,7 +128,7 @@ private:
     {
         std::atomic<float>*tune, *decay, *tone, *character, *level, *pan, *delay, *reverb, *mute;
         std::atomic<float>*attack, *hold, *pitchMod, *modDecay, *filter, *cutoff, *resonance, *filterMod, *drive, *bits,
-            *crush, *velocity, *random;
+            *crush, *velocity, *random, *machine;
     };
     std::array<TrackValues, kTracks> trackValues {};
     struct GlobalValues
