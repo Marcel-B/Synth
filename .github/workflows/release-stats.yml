@@ -1,0 +1,46 @@
+# Once a day: the download count of every release package, appended to downloads.csv on the branch `stats`.
+# GitHub keeps only running totals, so this file is where the history comes from. The branch holds nothing else,
+# so these commits never touch main or start a build.
+name: Downloadzahlen
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-stats
+  cancel-in-progress: false
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: main
+      - name: Zweig stats holen
+        run: |
+          if git ls-remote --exit-code --heads "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" stats >/dev/null; then
+            git clone --quiet --branch stats --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" stats
+          else
+            mkdir stats && git -C stats init --quiet -b stats
+            git -C stats remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Zahlen anhängen
+        run: main/scripts/release-stats.sh stats/downloads.csv | tee -a "$GITHUB_STEP_SUMMARY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Speichern
+        working-directory: stats
+        run: |
+          git add downloads.csv
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit --quiet -m "Downloadzahlen $(date -u +%F)"
+          git push --quiet origin stats

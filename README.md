@@ -547,6 +547,16 @@ Entfernen: `scripts/install-macos.sh --uninstall`.
 
 Zwischenstände ohne Release: Jeder Lauf der Action `build.yml` legt die Dateien auch als Artefakt `tonwerk-synth-macos` ab (Actions → Lauf → Artifacts). Für sie gilt dasselbe wie für Releases, die Quarantäne-Markierung muss weg.
 
+### Downloadzahlen
+
+GitHub zeigt auf der Release-Seite nicht an, wie oft ein Paket geladen wurde, zählt aber mit. Die Action `release-stats.yml` (Actions → Downloadzahlen) fragt die Zahlen jeden Morgen ab und hängt sie an `downloads.csv` auf dem Zweig [`stats`](https://github.com/Marcel-B/Synth/blob/stats/downloads.csv) an: eine Zeile pro Tag und Paket mit Datum, Release, Datei und der Summe bis dahin. Die Differenz zweier Tage ergibt die Downloads dazwischen. Von Hand starten geht über **Run workflow**; zweimal am selben Tag schreibt sie nichts doppelt. Gezählt werden nur die angehängten Pakete, nicht die automatischen Quellcode-Archive. Den aktuellen Stand gibt es auch direkt:
+
+```sh
+scripts/release-stats.sh /tmp/downloads.csv      # braucht gh und jq
+```
+
+Besucher und Klone des Repos stehen unter Insights → Traffic, aber nur für die letzten 14 Tage.
+
 ## Signieren mit Developer ID
 
 Mit einem Apple-Entwicklerkonto lassen sich Plugins und Apps mit **Developer ID** signieren und von Apple notarisieren. Dann braucht es keine Ad-hoc-Signatur und kein Entfernen der Quarantäne mehr, und die Plugins lassen sich weitergeben.
