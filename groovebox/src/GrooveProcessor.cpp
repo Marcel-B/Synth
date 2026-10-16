@@ -192,6 +192,14 @@ Layout GrooveProcessor::createParameterLayout()
         percent(layout, id(t, "Velocity"), name + "Dynamik", track.velocity, 0.0f, 1.0f, 2);
         percent(layout, id(t, "Random"), name + "Zufall", track.random, 0.0f, 1.0f, 2);
     }
+
+    // Version 3: the drum machine each track is built like.
+    juce::StringArray machines;
+    for (const auto* machine : kMachineNames)
+        machines.add(utf8(machine));
+    for (int t = 0; t < kTracks; ++t)
+        choice(layout, id(t, "Machine"), utf8(kTrackNames[(std::size_t) t]) + " Maschine", machines,
+               (int) d.track[(std::size_t) t].machine, 3);
     return layout;
 }
 
@@ -212,7 +220,7 @@ GrooveProcessor::GrooveProcessor()
                                          value(id(t, "ModDecay")), value(id(t, "Filter")), value(id(t, "Cutoff")),
                                          value(id(t, "Resonance")), value(id(t, "FilterMod")), value(id(t, "Drive")),
                                          value(id(t, "Bits")), value(id(t, "Crush")), value(id(t, "Velocity")),
-                                         value(id(t, "Random")) };
+                                         value(id(t, "Random")), value(id(t, "Machine")) };
     global = { value("seqMode"), value("pattern"), value("length"), value("rate"),
                value("swing"),   value("accent"),  value("drive"),  value("master") };
     fx = { value("fxDelayMix"),      value("fxDelaySync"), value("fxDelayTime"), value("fxDelayDivision"),
@@ -254,6 +262,7 @@ Settings GrooveProcessor::readSettings() const
         track.crush = get(v.crush);
         track.velocity = get(v.velocity);
         track.random = get(v.random);
+        track.machine = (Machine) std::clamp(juce::roundToInt(get(v.machine)), 0, kMachines - 1);
     }
     s.seqMode = (SeqMode) juce::roundToInt(get(global.seqMode));
     s.pattern = std::clamp(juce::roundToInt(get(global.pattern)), 0, kPatterns - 1);
@@ -512,10 +521,11 @@ void GrooveProcessor::setCurrentProgram(int index)
         return;
     currentProgram = index;
     const auto& kit = kits[(std::size_t) index];
-    // Everything back to its default first, so a kit only names what it changes; how the sequencer runs is the
-    // user's setup, not the kit's, and stays.
+    // Everything back to its default first, so a kit only names what it changes; how the sequencer runs and the
+    // machines chosen under the grid are the user's setup, not the kit's, and stay: a kit plays on any machine.
     for (auto* parameter : getParameters())
-        if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter); ranged && ranged->paramID != "seqMode")
+        if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter);
+            ranged && ranged->paramID != "seqMode" && ! ranged->paramID.endsWith("Machine"))
             ranged->setValueNotifyingHost(ranged->getDefaultValue());
     for (const auto& [parameterId, value] : kit.values)
         if (auto* parameter = state.getParameter(parameterId))

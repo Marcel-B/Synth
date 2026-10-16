@@ -562,6 +562,172 @@ public:
             expectLessThan(hits(1.0f), 8.0f);
         }
 
+        beginTest("Tonwerk is the machine every track starts on, with the Groovebox's own instruments");
+        {
+            const Settings d;
+            for (const auto& track : d.track)
+                expect(track.machine == Machine::tonwerk);
+            for (int t = 0; t < kTracks; ++t)
+            {
+                const auto a = voicingFor(Machine::tonwerk, (Instrument) t), b = tonwerkVoicing((Instrument) t);
+                expectEquals(a.hz, b.hz);
+                expectEquals(a.gain, b.gain);
+                expectEquals(a.bits, 16.0f);
+                expectEquals(a.rate, 48000.0f);
+            }
+            GrooveProcessor processor;
+            expectEquals(processor.state.getParameter("kickMachine")->getCurrentValueAsText(), juce::String("Tonwerk"));
+        }
+
+        beginTest("Every machine plays every instrument about as loud as Tonwerk's");
+        {
+            auto loudness = [](Machine machine, Instrument instrument) {
+                const auto out = shaped(instrument, [machine](TrackSettings& t) { t.machine = machine; }, 1.0);
+                return tonwerktest::momentaryMax(out, out);
+            };
+            for (int t = 0; t < kTracks; ++t)
+            {
+                const double reference = loudness(Machine::tonwerk, (Instrument) t);
+                juce::String line = juce::String(kTrackIds[(std::size_t) t]).paddedRight(' ', 10);
+                for (int m = 1; m < kMachines; ++m)
+                {
+                    const auto out = shaped((Instrument) t, [m](TrackSettings& ts) { ts.machine = (Machine) m; }, 1.0);
+                    bool clean = true;
+                    for (const float x : out)
+                        clean = clean && std::isfinite(x) && std::abs(x) < 1.5f;
+                    expect(clean, kMachineNames[(std::size_t) m]);
+                    const double off = loudness((Machine) m, (Instrument) t) - reference;
+                    line << juce::String(off, 1).paddedLeft(' ', 7);
+                    expectWithinAbsoluteError(off, 0.0, 1.0,
+                                              juce::String(kMachineNames[(std::size_t) m]) + " " + kTrackIds[(std::size_t) t]);
+                }
+                logMessage(line);
+            }
+        }
+
+        beginTest("The machines sound like their classics");
+        {
+            auto kick = [](Machine machine, float tone = 0.5f) {
+                return shaped(Instrument::kick, [=](TrackSettings& t) {
+                    t.machine = machine;
+                    t.tone = tone;
+                    t.decay = 1.5f;
+                }, 0.6);
+            };
+            // Boom 88's kick is deep and barely bends; Punch 99's starts far above its note.
+            const auto boom = kick(Machine::boom88), punch = kick(Machine::punch99);
+            const double boomNote = peakBetween(boom, 35.0, 80.0, 0.5, at(0.3), at(0.55));
+            expectWithinAbsoluteError(boomNote, 47.0, 2.0);
+            expectLessThan(boomNote, peakBetween(punch, 35.0, 80.0, 0.5, at(0.3), at(0.55)));
+            auto start = [](const std::vector<float>& out) {
+                return amplitudeAt(out, 140.0, 0, at(0.012)) / peak(out, 0, out.size());
+            };
+            expectGreaterThan(start(punch), 2.0f * start(boom));
+            // Kompakt 78's thump has no beater, Studio 80's a big one.
+            auto beater = [&](Machine machine) {
+                const auto out = shaped(Instrument::kick, [=](TrackSettings& t) {
+                    t.machine = machine;
+                    t.character = 1.0f;
+                }, 0.01);
+                return shareAbove(out, 2000.0);
+            };
+            expectGreaterThan(beater(Machine::studio80), 4.0f * beater(Machine::kompakt78));
+
+            // Sechseck's toms fall an octave and more; Boom 88's hold their pitch.
+            auto fall = [](Machine machine) {
+                const auto out = shaped(Instrument::lowTom, [=](TrackSettings& t) {
+                    t.machine = machine;
+                    t.decay = 2.0f;
+                }, 0.5);
+                const double early = peakBetween(out, 60.0, 400.0, 1.0, 0, at(0.02));
+                const double late = peakBetween(out, 60.0, 400.0, 1.0, at(0.35), at(0.5));
+                return early / late;
+            };
+            expectGreaterThan(fall(Machine::sechseck), 1.8);
+            expectLessThan(fall(Machine::boom88), 1.3);
+
+            // Kompakt 78's hats are hiss, Boom 88's ring of squares: the squares give a few strong lines.
+            auto peakiness = [](Machine machine) {
+                const auto out = shaped(Instrument::openHat, [=](TrackSettings& t) {
+                    t.machine = machine;
+                    t.character = 0.0f;
+                }, 0.3);
+                double strongest = 0.0, sum = 0.0;
+                int count = 0;
+                for (double hz = 4000.0; hz < 16000.0; hz += 25.0, ++count)
+                {
+                    const double a = amplitudeAt(out, hz, 0, at(0.2));
+                    strongest = std::max(strongest, a);
+                    sum += a;
+                }
+                return strongest / (sum / count);
+            };
+            expectGreaterThan(peakiness(Machine::boom88), 1.5 * peakiness(Machine::kompakt78));
+
+            // The sampling machines play from few bits: a hit takes only a few hundred values.
+            auto values = [](Machine machine) {
+                const auto out = shaped(Instrument::snare, [=](TrackSettings& t) { t.machine = machine; }, 0.3);
+                return std::set<float>(out.begin(), out.end()).size();
+            };
+            for (const auto machine : { Machine::neon77, Machine::studio80, Machine::street81 })
+                expectLessThan((int) values(machine), 300, kMachineNames[(std::size_t) machine]);
+            expectGreaterThan((int) values(Machine::boom88), 3000);
+        }
+
+        // For a listen: TONWERK_PRESET_WAV_DIR=/path writes two bars of one groove on every machine.
+        if (const auto wavDir = juce::SystemStats::getEnvironmentVariable("TONWERK_PRESET_WAV_DIR", {}); wavDir.isNotEmpty())
+        {
+            const Pattern groove = only({ { Instrument::kick, "x... ..x. x... .... x... ..x. x... ...." },
+                                          { Instrument::snare, ".... x... .... x... .... x... .... x.xx" },
+                                          { Instrument::clap, ".... x... .... x... .... x... .... ...." },
+                                          { Instrument::lowTom, ".... .... .... .... .... .... ..x. ...." },
+                                          { Instrument::highTom, ".... .... .... .... .... .... x... ...." },
+                                          { Instrument::closedHat, "x.x. x.x. x.x. x.x. x.x. x.x. .... ...." },
+                                          { Instrument::openHat, ".... .... .... ..x. .... .... .... ...." },
+                                          { Instrument::cymbal, "x... .... .... .... .... .... .... ...." } });
+            for (int m = 0; m < kMachines; ++m)
+            {
+                GrooveProcessor processor;
+                processor.setPattern(0, groove);
+                set(processor, "length", 32.0f);
+                // Kick, snare, clap and cymbal on one step: room under full scale.
+                set(processor, "master", -3.0f);
+                for (const auto* track : kTrackIds)
+                    set(processor, juce::String(track) + "Machine", (float) m);
+                Head head;
+                const auto take = run(processor, 4.5, &head, {}, true);
+                writeWav(take, juce::File(wavDir).getChildFile("Tonwerk Groovebox Maschinen").getChildFile(
+                                   juce::String(m + 1).paddedLeft('0', 2) + " " + kMachineNames[(std::size_t) m] + ".wav"));
+            }
+        }
+
+        beginTest("A kit keeps the machines, and a project from before them loads on Tonwerk");
+        {
+            GrooveProcessor processor;
+            set(processor, "snareMachine", (float) Machine::punch99);
+            processor.setCurrentProgram(3);
+            expect(processor.readSettings().track[1].machine == Machine::punch99);
+            expect(processor.readSettings().track[0].machine == Machine::tonwerk);
+
+            juce::MemoryBlock saved;
+            GrooveProcessor().getStateInformation(saved);
+            auto xml = juce::AudioProcessor::getXmlFromBinary(saved.getData(), (int) saved.getSize());
+            for (auto* param = xml->getFirstChildElement(); param != nullptr;)
+            {
+                auto* next = param->getNextElement();
+                if (param->getStringAttribute("id").endsWith("Machine"))
+                    xml->removeChildElement(param, true);
+                param = next;
+            }
+            juce::MemoryBlock old;
+            juce::AudioProcessor::copyXmlToBinary(*xml, old);
+            GrooveProcessor loaded;
+            set(loaded, "kickMachine", (float) Machine::sechseck);
+            loaded.setStateInformation(old.getData(), (int) old.getSize());
+            for (const auto& track : loaded.readSettings().track)
+                expect(track.machine == Machine::tonwerk);
+        }
+
         beginTest("The clock: steps on the grid, swing on every second one, counted from the song's start");
         {
             std::vector<std::pair<int, int>> fired;
@@ -863,6 +1029,15 @@ public:
             logMessage("The same with every track shaped: " + juce::String(shapedRealtime, 1) + " times real time");
             expect(finite(shapedOut));
             expectGreaterThan(shapedRealtime, 5.0);
+
+            // And every track on a sampling machine, whose bits and rate come on top of the shaping.
+            for (const auto* track : kTrackIds)
+                set(processor, juce::String(track) + "Machine", (float) Machine::studio80);
+            const auto machineOut = run(processor, 4.0, nullptr, {}, true);
+            const double machineRealtime = 4.0 / machineOut.seconds;
+            logMessage("The same on Studio 80: " + juce::String(machineRealtime, 1) + " times real time");
+            expect(finite(machineOut));
+            expectGreaterThan(machineRealtime, 5.0);
         }
 
         beginTest("The editor fits its panels");

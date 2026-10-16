@@ -210,6 +210,77 @@ void StepGrid::mouseDrag(const juce::MouseEvent& event)
         }
 }
 
+MachinePanel::MachinePanel(GrooveProcessor& processor) : synth(processor)
+{
+    allName.setText("Alle", juce::dontSendNotification);
+    allName.setJustificationType(juce::Justification::centred);
+    allName.setFont(juce::FontOptions(12.0f));
+    allName.setColour(juce::Label::textColourId, yellow);
+    addAndMakeVisible(allName);
+    for (int m = 0; m < kMachines; ++m)
+        all.addItem(utf8(kMachineNames[(std::size_t) m]), m + 1);
+    all.onChange = [this] {
+        if (all.getSelectedId() > 0)
+            setAll(all.getSelectedId() - 1);
+    };
+    addAndMakeVisible(all);
+    for (int t = 0; t < kTracks; ++t)
+    {
+        menus.push_back(std::make_unique<Control>(synth.state, juce::String(kTrackIds[(std::size_t) t]) + "Machine",
+                                                  utf8(kTrackNames[(std::size_t) t]), 2));
+        addAndMakeVisible(*menus.back());
+    }
+    update();
+}
+
+void MachinePanel::setAll(int machine)
+{
+    for (int t = 0; t < kTracks; ++t)
+        if (auto* parameter = synth.state.getParameter(juce::String(kTrackIds[(std::size_t) t]) + "Machine"))
+        {
+            parameter->beginChangeGesture();
+            parameter->setValueNotifyingHost(parameter->convertTo0to1((float) machine));
+            parameter->endChangeGesture();
+        }
+    update();
+}
+
+void MachinePanel::update()
+{
+    int common = -1;
+    for (int t = 0; t < kTracks; ++t)
+    {
+        const int machine = juce::roundToInt(
+            synth.state.getRawParameterValue(juce::String(kTrackIds[(std::size_t) t]) + "Machine")->load());
+        if (t == 0)
+            common = machine;
+        else if (machine != common)
+            common = -1;
+    }
+    if (common == shownCommon)
+        return;
+    shownCommon = common;
+    if (common >= 0)
+        all.setSelectedId(common + 1, juce::dontSendNotification);
+    else
+        all.setText("Gemischt", juce::dontSendNotification);
+}
+
+void MachinePanel::paint(juce::Graphics& g) { paintPanel(g, getLocalBounds(), "Maschinen"); }
+
+void MachinePanel::resized()
+{
+    auto line = getLocalBounds().reduced(kPad, 0).withTrimmedTop(kTitle).removeFromTop(kLine);
+    line = line.withSizeKeepingCentre(preferredWidth() - 2 * kPad, line.getHeight());
+    // The same shape as a menu in a section: its name above, the menu below.
+    auto first = line.removeFromLeft(kMenu);
+    allName.setBounds(first.removeFromTop(16));
+    all.setBounds(first.withSizeKeepingCentre(first.getWidth() - 8, 24));
+    line.removeFromLeft(kGap);
+    for (auto& menu : menus)
+        menu->setBounds(line.removeFromLeft(kMenu));
+}
+
 namespace
 {
 std::unique_ptr<Section> trackSection(GrooveProcessor& p, int t)
@@ -255,6 +326,7 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                     { "accent", "Akzent" } } }),
       master(p.state, "Summe", { { { "drive", "Drive" }, { "master", "Master" } } }),
       grid(p),
+      machines(p),
       effects(p.state, "Effekte",
               { { { "fxDelayMix", "Delay" },
                   { "fxDelaySync", "Sync" },
@@ -298,17 +370,18 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
     previous.onClick = [step] { step(-1); };
     next.onClick = [step] { step(1); };
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &sequencer, &master, &grid,
-                                                            &effects })
+                                                            &machines, &effects })
         addAndMakeVisible(*c);
     for (auto& section : tracks)
         addChildComponent(*section);
 
     const int width = 2 * kMargin
-                      + std::max({ grid.preferredWidth(),
+                      + std::max({ grid.preferredWidth(), machines.preferredWidth(),
                                    sequencer.preferredWidth() + master.preferredWidth() + kGap,
                                    tracks.front()->preferredWidth() + effects.preferredWidth() + kGap });
     const int height = 2 * kMargin + kHeader + sequencer.preferredHeight() + grid.preferredHeight()
-                       + std::max(tracks.front()->preferredHeight(), effects.preferredHeight()) + 2 * kGap;
+                       + machines.preferredHeight()
+                       + std::max(tracks.front()->preferredHeight(), effects.preferredHeight()) + 3 * kGap;
     setSize(width, height);
     select(synth.selectedTrack.load());
     timerCallback();
@@ -356,6 +429,8 @@ void GrooveEditor::resized()
     layoutRow(area, { &sequencer, &master });
     grid.setBounds(area.removeFromTop(grid.preferredHeight()));
     area.removeFromTop(kGap);
+    machines.setBounds(area.removeFromTop(machines.preferredHeight()));
+    area.removeFromTop(kGap);
     layoutRow(area, { tracks.front().get(), &effects });
     for (auto& section : tracks)
         section->setBounds(tracks.front()->getBounds());
@@ -364,6 +439,7 @@ void GrooveEditor::resized()
 void GrooveEditor::timerCallback()
 {
     grid.update();
+    machines.update();
     if (synth.presetName() != shownPreset)
     {
         shownPreset = synth.presetName();

@@ -52,6 +52,35 @@ private:
     static juce::String utf8Text(const char* text) { return juce::String::fromUTF8(text); }
 };
 
+/**
+ * The machines under the grid: which classic each track's instrument is built like, a menu per track in the grid's
+ * order, and in front of them one that sets all eight at once (it reads "Gemischt" while they differ).
+ */
+class MachinePanel : public juce::Component
+{
+public:
+    explicit MachinePanel(GrooveProcessor& processor);
+    /** Shows the machine all tracks share; called at the editor's frame rate. */
+    void update();
+    void paint(juce::Graphics&) override;
+    void resized() override;
+
+    static constexpr int kMenu = 2 * tonwerkui::kSlot;
+    int preferredWidth() const { return 2 * tonwerkui::kPad + (kTracks + 1) * kMenu + tonwerkui::kGap; }
+    /** A row of menus needs less room than a row of knobs. */
+    static constexpr int kLine = 50;
+    int preferredHeight() const { return tonwerkui::kTitle + kLine + tonwerkui::kPad; }
+
+private:
+    void setAll(int machine);
+
+    GrooveProcessor& synth;
+    juce::Label allName;
+    juce::ComboBox all;
+    std::vector<std::unique_ptr<tonwerkui::Control>> menus;
+    int shownCommon = -2;
+};
+
 class GrooveEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -73,6 +102,7 @@ private:
     juce::TextButton previous { "<" }, next { ">" };
     Section sequencer, master;
     StepGrid grid;
+    MachinePanel machines;
     std::vector<std::unique_ptr<Section>> tracks;
     Section effects;
     juce::String shownPreset;
