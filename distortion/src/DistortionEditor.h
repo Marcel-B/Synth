@@ -9,13 +9,14 @@
 namespace tonwerkdistortion
 {
 /**
- * Night City, as Tonwerk Wavetable: level, tone and drive in one panel, the mode menu and the input gain beside it,
+ * Night City, as Tonwerk Wavetable: level, tone, drive and the dry/wet mix in one panel, the mode menu, the input
+ * gain and the bitcrusher's rate beside it,
  * and above them an oscilloscope with the shaped output over the input, so the drive is seen bending the wave. The presets are in the header.
  */
 class DistortionEditor : public juce::AudioProcessorEditor
 {
 public:
-    static constexpr int kWidth = 480;
+    static constexpr int kWidth = 560;
 
     explicit DistortionEditor(DistortionProcessor&);
     ~DistortionEditor() override;

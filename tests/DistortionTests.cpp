@@ -6,6 +6,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include <chrono>
+#include <set>
 
 using namespace tonwerkdistortion;
 
@@ -107,11 +108,15 @@ Rendered process(const std::vector<float>& input, std::initializer_list<std::pai
     out.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
     return out;
 }
-constexpr std::array<Mode, kModes> kAllModes { Mode::pedal, Mode::tube, Mode::clipper, Mode::folder, Mode::rectifier };
+constexpr std::array<Mode, kModes> kAllModes { Mode::pedal,  Mode::tube,      Mode::clipper,
+                                                Mode::folder, Mode::rectifier, Mode::crusher };
+/** The modes that clip; the crusher keeps its input's level and folds back on purpose. */
+constexpr std::array<Mode, kModes - 1> kClippingModes { Mode::pedal, Mode::tube, Mode::clipper, Mode::folder,
+                                                        Mode::rectifier };
 
 juce::String nameOf(Mode mode)
 {
-    constexpr const char* names[] = { "Pedal", "Tube", "Clipper", "Folder", "Rectifier" };
+    constexpr const char* names[] = { "Pedal", "Tube", "Clipper", "Folder", "Rectifier", "Crusher" };
     return names[(int) mode];
 }
 
@@ -258,7 +263,7 @@ public:
         {
             const auto pedal = process(sine(220.0f, 0.5f, (int) kRate), { { "distortion", 0.8f } });
             const float pedalRms = rms(pedal.left, pedal.left.size() / 2);
-            for (const auto mode : kAllModes)
+            for (const auto mode : kClippingModes)
             {
                 const auto quiet = process(sine(220.0f, 0.1f, (int) kRate),
                                            { { "mode", modeValue(mode) }, { "distortion", 1.0f } });
@@ -357,7 +362,7 @@ public:
             // 2511 Hz does not divide 48 kHz, so folded harmonics fall between the true ones. Full drive and tone and a
             // note higher than a guitar's highest are the worst case; lower notes fold back far less.
             const float f0 = 2511.0f;
-            for (const auto mode : kAllModes)
+            for (const auto mode : kClippingModes)
             {
                 const auto out = process(sine(f0, 0.5f, 1 << 17),
                                          { { "mode", modeValue(mode) }, { "distortion", 1.0f }, { "tone", 1.0f } });
@@ -369,6 +374,92 @@ public:
                 // a note this high at full drive is its worst case.
                 expectLessThan(folded, mode == Mode::folder ? -45.0f : mode == Mode::pedal ? -60.0f : -55.0f, nameOf(mode));
             }
+        }
+
+        beginTest("The bitcrusher rounds to fewer bits as DIST turns up");
+        {
+            const auto input = sine(220.0f, 0.5f, (int) kRate);
+            auto levels = [&](float distortion) {
+                Settings s;
+                s.mode = Mode::crusher;
+                s.distortion = distortion;
+                Crusher crusher;
+                crusher.prepare((float) kRate, s);
+                std::set<float> seen;
+                for (const float sample : input)
+                    seen.insert(crusher.process(sample));
+                return (int) seen.size();
+            };
+            const int none = levels(0.0f), half = levels(0.5f), full = levels(1.0f);
+            logMessage("Levels of a sine at -6 dBFS: DIST 0 " + juce::String(none) + ", 50 % " + juce::String(half)
+                       + ", 100 % " + juce::String(full) + "; bits " + juce::String(Crusher::bitsFor(0.5f), 1)
+                       + " half way");
+            expectGreaterThan(none, 1000); // every sample its own value
+            expect(half > 15 && half < 40);
+            expectEquals(full, 3); // two bits: -0.5, 0, 0.5
+            expectWithinAbsoluteError(Crusher::bitsFor(0.0f), 16.0f, 1.0e-4f);
+            expectWithinAbsoluteError(Crusher::bitsFor(1.0f), 2.0f, 1.0e-4f);
+
+            // Heard through the processor: clean at no DIST, grit at full.
+            auto distortionOf = [](float drive) {
+                const auto out = process(sine(220.0f, 0.5f, (int) kRate),
+                                         { { "mode", modeValue(Mode::crusher) }, { "distortion", drive } });
+                const float first = amplitudeAt(out.left, 220.0f, out.left.size() / 2);
+                const float all = rms(out.left, out.left.size() / 2);
+                return decibels(std::sqrt(std::max(0.0f, 2.0f * all * all - first * first)) / first);
+            };
+            const float clean = distortionOf(0.0f), gritty = distortionOf(1.0f);
+            logMessage("Crusher distortion: " + juce::String(clean, 1) + " dB at no DIST, " + juce::String(gritty, 1)
+                       + " dB at full");
+            expectLessThan(clean, -60.0f);
+            expectGreaterThan(gritty, -20.0f);
+        }
+
+        beginTest("The crusher's rate mirrors the note into the band, its level follows the input");
+        {
+            auto take = [](float rate, float amplitude) {
+                return process(sine(1000.0f, amplitude, (int) kRate),
+                               { { "mode", modeValue(Mode::crusher) }, { "distortion", 0.0f }, { "crushRate", rate } });
+            };
+            const auto low = take(8000.0f, 0.5f), full = take(48000.0f, 0.5f), quiet = take(8000.0f, 0.05f);
+            auto image = [](const Rendered& r) {
+                return decibels(amplitudeAt(r.left, 7000.0f, r.left.size() / 2)
+                                / amplitudeAt(r.left, 1000.0f, r.left.size() / 2));
+            };
+            logMessage("Image at 7 kHz: " + juce::String(image(low), 1) + " dB at 8 kHz, " + juce::String(image(full), 1)
+                       + " dB at 48 kHz");
+            // A hold of 8 kHz leaves the image at 8 - 1 kHz a seventh as strong as the note (-17 dB).
+            expectWithinAbsoluteError(image(low), -17.0f, 3.0f);
+            expectLessThan(image(full), -70.0f);
+            const float level = decibels(amplitudeAt(full.left, 1000.0f, full.left.size() / 2) / 0.5f);
+            expectWithinAbsoluteError(level, 0.0f, 1.0f);
+            expectWithinAbsoluteError(decibels(rms(low.left, low.left.size() / 2) / rms(quiet.left, quiet.left.size() / 2)),
+                                      20.0f, 1.0f);
+        }
+
+        beginTest("Mix: none is the dry signal, half adds up without combing");
+        {
+            // Fully dry, the pedal at full drive leaves the note as it came in, only delayed.
+            const auto dry = process(sine(220.0f, 0.5f, (int) kRate), { { "distortion", 1.0f }, { "mix", 0.0f } });
+            const float first = amplitudeAt(dry.left, 220.0f, dry.left.size() / 2);
+            const float all = rms(dry.left, dry.left.size() / 2);
+            expectWithinAbsoluteError(decibels(first / 0.5f), 0.0f, 0.1f);
+            expectLessThan(decibels(std::sqrt(std::max(0.0f, 2.0f * all * all - first * first)) / first), -60.0f);
+
+            // The clipper at no drive is linear; with the level making up its scale, wet and dry are the same signal.
+            // Were the dry side not delayed and phase-shifted as the wet one, half and half would comb.
+            const float makeUp = -decibels(0.38f);
+            float worst = 0.0f;
+            for (const float hz : { 60.0f, 250.0f, 1000.0f, 4000.0f, 9000.0f, 15000.0f })
+            {
+                const auto out = process(sine(hz, 0.1f, (int) kRate / 2), { { "mode", modeValue(Mode::clipper) },
+                                                                             { "distortion", 0.0f },
+                                                                             { "level", makeUp },
+                                                                             { "mix", 0.5f } });
+                worst = std::max(worst, std::abs(decibels(amplitudeAt(out.left, hz, out.left.size() / 2) / 0.1f)));
+            }
+            logMessage("Half dry, half linear wet: at most " + juce::String(worst, 2) + " dB off from 60 Hz to 15 kHz");
+            expectLessThan(worst, 0.5f);
         }
 
         beginTest("Switching the mode on a sounding note fades instead of clicking");
@@ -460,6 +551,9 @@ public:
             expectEquals(text("level", -6.0000002f), juce::String("-6 dB"));
             expectEquals(text("input", 12.0f), juce::String("12 dB"));
             expectEquals(text("mode", 1.0f), juce::String::fromUTF8("Röhre"));
+            expectEquals(text("mode", 5.0f), juce::String("Bitcrusher"));
+            expectEquals(text("crushRate", 8000.4f), juce::String("8000 Hz"));
+            expectEquals(text("mix", 0.5f), juce::String("50 %"));
             // Projects from before the modes open with the pedal.
             expect(processor.readSettings().mode == Mode::pedal);
 

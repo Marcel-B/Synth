@@ -13,8 +13,8 @@
 namespace tonwerkdistortion
 {
 /**
- * Tonwerk Distortion: the DS-1's circuit (`Ds1Circuit.h`) and four curves for electronic sounds (`Shapers.h`) as an
- * audio effect. The clipping stages run four times
+ * Tonwerk Distortion: the DS-1's circuit (`Ds1Circuit.h`), four curves for electronic sounds and a bitcrusher
+ * (`Shapers.h`) as an audio effect, mixed with the dry signal by `mix`. The clipping stages run four times
  * oversampled with JUCE's polyphase IIR filters, the cheapest of its oversamplers, so the hard clip does not fold
  * back into the audible band; tone and level run at the host's rate. On a mono track only one channel is computed. Parameter ids are part of saved Logic projects:
  * never rename or remove one, and append new ones with the version hint of the release they first appear in.
@@ -62,7 +62,9 @@ private:
     /** Two stages of 2x: 4x. 2x lets a high note fold back 20 dB more; 8x halves the speed for little more. */
     static constexpr int kOversamplingStages = 2;
 
-    std::unique_ptr<juce::dsp::Oversampling<float>> oversampling;
+    std::unique_ptr<juce::dsp::Oversampling<float>> oversampling, dryOversampling;
+    juce::AudioBuffer<float> dry;
+    Smoothed mix;
     std::array<Distortion, 2> drives;
     std::array<Voice, 2> voices;
     int maxBlock = 0;
@@ -74,6 +76,8 @@ private:
         std::atomic<float>* tone;
         std::atomic<float>* level;
         std::atomic<float>* mode;
+        std::atomic<float>* crushRate;
+        std::atomic<float>* mix;
     } values;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DistortionProcessor)
