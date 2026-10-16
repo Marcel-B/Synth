@@ -10,7 +10,8 @@ namespace tonwerkdistortion
  * The modes beside the pedal: each one curve, driven by DIST from 0 to its own maximum gain, with first-order
  * antiderivative anti-aliasing (`AntiAliased`) on top of the processor's 4x oversampling. They are cheaper than the
  * pedal's circuit, which matters more than accuracy here: none models a particular device. All of them are bounded, so
- * DIST makes them denser, not louder, and each is scaled so a fully driven note lands where the pedal's does.
+ * DIST makes them denser, not louder, and each is scaled so a fully driven note lands where the pedal's does. The
+ * bitcrusher (`Crusher`) is the exception: no curve, and its level follows the input.
  */
 namespace curves
 {
@@ -79,6 +80,59 @@ private:
 };
 
 /**
+ * A bitcrusher, as in early samplers and game consoles: the wave is held for whole periods of a lower sample rate, so
+ * its mirror images fall into the band as the metallic ring of a 12 kHz sampler, and rounded to fewer bits, so quiet
+ * passages turn to grit and fall silent. Both on purpose, unlike the other modes: the oversampler only keeps the
+ * images of the host's own rate out. DIST takes the bits from 16 down to 2 on a curve that spends most of its turn
+ * below 8, where the sound changes; it does not raise the gain, so the note keeps its level.
+ */
+class Crusher
+{
+public:
+    void prepare(float rate, const Settings& settings)
+    {
+        oversampledRate = rate;
+        gain.prepare(rate, gainFor(settings));
+        update(settings);
+        reset();
+    }
+    void reset()
+    {
+        phase = 1.0f;
+        held = 0.0f;
+    }
+    void update(const Settings& settings)
+    {
+        gain.set(gainFor(settings));
+        increment = std::clamp(settings.crushRate / oversampledRate, 0.0f, 1.0f);
+        // 2^(bits - 1) steps either side of zero.
+        step = std::exp2(1.0f - bitsFor(settings.distortion));
+    }
+    float process(float x)
+    {
+        const float driven = x * gain.next();
+        phase += increment;
+        if (phase >= 1.0f)
+        {
+            phase -= 1.0f;
+            // Rounded, not floored: silence stays silence instead of sitting half a step off zero.
+            held = std::round(std::clamp(driven, -1.0f, 1.0f) / step) * step;
+        }
+        return held;
+    }
+
+    /** 16 bits at no DIST, 2 at full, about 6 half way. */
+    static float bitsFor(float distortion) { return 16.0f * std::exp2(-3.0f * std::clamp(distortion, 0.0f, 1.0f)); }
+
+private:
+    static float gainFor(const Settings& s) { return std::pow(10.0f, s.inputDb / 20.0f); }
+
+    float oversampledRate = 192000.0f;
+    float increment = 1.0f, phase = 1.0f, held = 0.0f, step = 1.0f / 32768.0f;
+    Smoothed gain;
+};
+
+/**
  * Every mode's drive for one channel, at the oversampled rate. Only the chosen one runs; on a change the old and the
  * new run side by side for 20 ms and cross-fade, the new one from a reset state, so switching while a note sounds
  * does not click.
@@ -91,6 +145,7 @@ public:
         pedal.prepare(sampleRate, settings);
         for (auto* shaper : shapers())
             shaper->prepare(sampleRate, settings);
+        crusher.prepare(sampleRate, settings);
         current = previous = settings.mode;
         fade = 1.0f;
         fadeStep = 1.0f / (0.02f * sampleRate);
@@ -102,6 +157,7 @@ public:
         pedal.update(settings);
         for (auto* shaper : shapers())
             shaper->update(settings);
+        crusher.update(settings);
         if (settings.mode != current)
         {
             previous = current;
@@ -121,12 +177,14 @@ public:
     }
 
 private:
-    std::array<Shaper*, kModes - 1> shapers() { return { &tube, &clipper, &folder, &rectifier }; }
+    std::array<Shaper*, 4> shapers() { return { &tube, &clipper, &folder, &rectifier }; }
 
     void reset(Mode mode)
     {
         if (mode == Mode::pedal)
             pedal.reset();
+        else if (mode == Mode::crusher)
+            crusher.reset();
         else
             shapers()[(std::size_t) mode - 1]->reset();
     }
@@ -139,6 +197,7 @@ private:
             case Mode::clipper: return clipper.process(x);
             case Mode::folder: return folder.process(x);
             case Mode::rectifier: return rectifier.process(x);
+            case Mode::crusher: return crusher.process(x);
             case Mode::pedal:
             default: return pedal.process(x);
         }
@@ -153,6 +212,7 @@ private:
     Shaper clipper { &curves::clipper, &curves::clipperIntegral, 24.0f, 0.38f };
     Shaper folder { &curves::folder, &curves::folderIntegral, 30.0f, 0.5f };
     Shaper rectifier { &curves::rectifier, &curves::rectifierIntegral, 24.0f, 0.8f };
+    Crusher crusher;
     Mode current = Mode::pedal, previous = Mode::pedal;
     float fade = 1.0f, fadeStep = 1.0f;
 };

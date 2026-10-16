@@ -49,6 +49,19 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         // The octave above a lead, and the spit of a gated fuzz on a bass.
         { "Oktav-Fuzz", "Synths", { { "mode", 4 }, { "distortion", 0.6f }, { "tone", 0.55f }, { "level", 2 } } },
         { "Gleichrichter-Bass", "Bass", { { "mode", 4 }, { "distortion", 0.8f }, { "tone", 0.3f }, { "level", -4 } } },
+
+        // The bitcrusher (mode 5): DIST sets the bits (16 at 0, 4 at 67 %, 2 at 100 %), crushRate the sample rate.
+        // A 12-bit sampler at 26 kHz: the grain of old drum machines, no more.
+        { "Sampler-Grain", "Drums", { { "mode", 5 }, { "distortion", 0.14f }, { "crushRate", 26000 }, { "level", 0 } } },
+        { "Lo-Fi-Beat", "Drums", { { "mode", 5 }, { "distortion", 0.55f }, { "crushRate", 8000 }, { "tone", 0.6f }, { "level", 0 } } },
+        { "8-Bit-Konsole", "Synths", { { "mode", 5 }, { "distortion", 0.67f }, { "crushRate", 16000 }, { "level", 0 } } },
+        { "Bit-Bass", "Bass", { { "mode", 5 }, { "distortion", 0.7f }, { "crushRate", 11025 }, { "tone", 0.35f }, { "level", 0 } } },
+        { "Funkgerät", "Gesang", { { "mode", 5 }, { "distortion", 0.55f }, { "crushRate", 4000 }, { "tone", 0.8f }, { "level", 0 } } },
+
+        // Parallel: the dry note keeps its attack and low end, the distortion is mixed in under it.
+        { "Parallel-Bass", "Bass", { { "mode", 1 }, { "distortion", 0.8f }, { "tone", 0.45f }, { "mix", 0.4f }, { "level", -7 } } },
+        { "Parallel-Drums", "Drums", { { "mode", 2 }, { "distortion", 0.8f }, { "mix", 0.5f }, { "level", -6 } } },
+        { "Crunch-Blend", "Gitarre", { { "distortion", 0.6f }, { "tone", 0.55f }, { "mix", 0.5f }, { "level", -11 } } },
     };
     return presets;
 }

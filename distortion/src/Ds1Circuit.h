@@ -24,9 +24,10 @@ enum class Mode
     tube,
     clipper,
     folder,
-    rectifier
+    rectifier,
+    crusher
 };
-constexpr int kModes = 5;
+constexpr int kModes = 6;
 
 struct Settings
 {
@@ -39,6 +40,10 @@ struct Settings
     float tone = 0.5f;
     /** The LEVEL pot, as gain after the pedal. 0 dB puts a fully clipped note at about -6 dBFS with the tone centred. */
     float levelDb = 0.0f;
+    /** The bitcrusher's sample rate in Hz; at the host's rate or above it holds nothing. */
+    float crushRate = 48000.0f;
+    /** The share of the distorted sound against the dry one, 0 to 1. */
+    float mix = 1.0f;
 };
 
 namespace parts
