@@ -822,6 +822,65 @@ public:
             expectEquals(hits({ { "seqMode", 0.0f } }, every)[1], 0);
         }
 
+        beginTest("Würfeln: steps fall out, empty ones sound, accents flip, the same every time");
+        {
+            // The dice alone: nothing at 0, the shares the comment promises at 1.
+            int dropped = 0, added = 0, flipped = 0, addedToSilent = 0;
+            constexpr int rolls = 20000;
+            for (long long n = 0; n < rolls; ++n)
+            {
+                const auto on = rollStep(true, false, true, 0.0f, n, 2);
+                expect(on.plays && ! on.accent);
+                dropped += rollStep(true, false, true, 1.0f, n, 1).plays ? 0 : 1;
+                added += rollStep(false, false, true, 1.0f, n, 1).plays ? 1 : 0;
+                flipped += rollStep(true, true, true, 1.0f, n, 1).accent ? 0 : 1;
+                addedToSilent += rollStep(false, false, false, 1.0f, n, 1).plays ? 1 : 0;
+                expect(rollStep(true, false, true, 0.7f, n, 5).plays == rollStep(true, false, true, 0.7f, n, 5).plays);
+            }
+            expectWithinAbsoluteError(dropped / (double) rolls, 0.5, 0.02);
+            expectWithinAbsoluteError(added / (double) rolls, 0.25, 0.02);
+            expectWithinAbsoluteError(flipped / (double) rolls, 0.3, 0.02);
+            expectEquals(addedToSilent, 0);
+
+            // In the sequencer: the global knob and a track's own add up; a silent track stays silent.
+            auto hits = [](std::initializer_list<std::pair<const char*, float>> knobs) {
+                GrooveProcessor processor;
+                plain(processor);
+                processor.setPattern(0, only({ { Instrument::snare, "x.x.x.x.x.x.x.x." } }));
+                set(processor, "seqMode", 2.0f);
+                for (const auto& [id, value] : knobs)
+                    set(processor, id, value);
+                run(processor, 32.0 - 1.0e-3); // 256 sixteenths, 128 of them set
+                return std::pair { processor.hitCount(1), processor.hitCount(0) };
+            };
+            expectEquals(hits({}).first, 128);
+            const auto all = hits({ { "roll", 1.0f } });
+            const auto split = hits({ { "roll", 0.5f }, { "snareRoll", 0.5f } });
+            const auto other = hits({ { "kickRoll", 1.0f } });
+            // At 1: half of the 128 set steps play, a quarter of the 128 empty ones join them.
+            expectWithinAbsoluteError(all.first, 64 + 32, 16);
+            expectEquals(split.first, all.first);
+            expectEquals(all.second, 0);
+            expectEquals(other.first, 128);
+            expectEquals(hits({ { "roll", 1.0f } }).first, all.first);
+            // A little: only a few change.
+            expectWithinAbsoluteError(hits({ { "roll", 0.1f } }).first, 128 - 6 + 3, 8);
+
+            // A start in the middle of the song rolls what was rolled there before.
+            auto count = [](double from, double beats) {
+                GrooveProcessor processor;
+                plain(processor);
+                processor.setPattern(0, only({ { Instrument::snare, "xxxxxxxxxxxxxxxx" } }));
+                set(processor, "roll", 0.6f);
+                Head head;
+                head.ppq = from;
+                run(processor, beats / 2.0 - 1.0e-3, &head);
+                return processor.hitCount(1);
+            };
+            expectEquals(count(4.0, 4.0), count(0.0, 8.0) - count(0.0, 4.0));
+            expectLessThan(count(0.0, 8.0), 32);
+        }
+
         beginTest("Accents are louder than plain steps by Akzent");
         {
             auto level = [](const char* steps, float accent) {
@@ -872,6 +931,89 @@ public:
             const auto out = run(processor, 0.3, nullptr, { { 0.0, 38, 127 } });
             expectLessThan(rms(out.right, 0, out.right.size()), 1.0e-6f);
             expectGreaterThan(rms(out.left, 0, out.left.size()), 0.01f);
+        }
+
+        beginTest("The effects switch: off fades delay and hall out in 20 ms and leaves the tracks dry");
+        {
+            // A snare into delay and hall; the effects go off at 0.3 s, back on at 0.6 s, without a new hit.
+            // 0: effects on throughout, 1: switched, 2: off throughout.
+            auto take = [](int mode) {
+                const bool switching = mode == 1;
+                GrooveProcessor processor;
+                plain(processor);
+                set(processor, "seqMode", 0.0f);
+                set(processor, "fxReverbMix", 0.5f);
+                set(processor, "fxDelayMix", 0.5f);
+                set(processor, "fxDelaySync", 0.0f);
+                set(processor, "fxDelayTime", 120.0f);
+                set(processor, "fxDelayFeedback", 0.6f);
+                set(processor, "snareReverb", 0.7f);
+                set(processor, "snareDelay", 0.7f);
+                set(processor, "snareDecay", 800.0f);
+                processor.setPlayConfigDetails(0, 2, kRate, kBlock);
+                if (mode == 2)
+                    set(processor, "fxOn", 0.0f);
+                processor.prepareToPlay(kRate, kBlock);
+                juce::AudioBuffer<float> buffer(2, kBlock);
+                juce::MidiBuffer none;
+                for (int waited = 0; ! processor.roomPlaying() && waited < 5000; ++waited)
+                {
+                    processor.processBlock(buffer, none);
+                    juce::Thread::sleep(1);
+                }
+                // The new room fades in on the convolution's own schedule; let it settle as run() does.
+                for (int block = 0; block < (int) (0.1 * kRate) / kBlock; ++block)
+                    processor.processBlock(buffer, none);
+                std::vector<float> out(at(1.0));
+                for (std::size_t from = 0; from < out.size(); from += kBlock)
+                {
+                    if (switching && from == at(0.3) / kBlock * kBlock)
+                        set(processor, "fxOn", 0.0f);
+                    if (switching && from == at(0.6) / kBlock * kBlock)
+                        set(processor, "fxOn", 1.0f);
+                    juce::MidiBuffer midi;
+                    if (from == 0)
+                        midi.addEvent(juce::MidiMessage::noteOn(10, 38, (juce::uint8) 127), 0);
+                    processor.processBlock(buffer, midi);
+                    std::copy_n(buffer.getReadPointer(0), std::min<std::size_t>(kBlock, out.size() - from),
+                                out.data() + from);
+                }
+                return out;
+            };
+            const auto on = take(0);
+            const auto switched = take(1);
+            const auto dry = take(2);
+            const auto off = at(0.3) / kBlock * kBlock;
+            // Until the switch both are the same; while it fades the effects are still there, after it nothing.
+            // The hall's room loads on another thread, so two takes may differ a little (macOS: about 1 %).
+            expectWithinAbsoluteError(peak(switched, 0, off), peak(on, 0, off), 0.05f * peak(on, 0, off));
+            expectGreaterThan(rms(on, off + at(0.025), at(0.6)), 1.0e-3f);
+            expectGreaterThan(rms(switched, off, off + at(0.005)), 0.3f * rms(on, off, off + at(0.005)));
+            expectGreaterThan(rms(dry, off, at(0.6)), 1.0e-5f); // the snare's own tail, which stays
+            std::vector<float> difference(switched.size());
+            for (std::size_t i = 0; i < difference.size(); ++i)
+                difference[i] = switched[i] - dry[i];
+            expectLessThan(rms(difference, off + at(0.025), at(0.6)), 1.0e-6f);
+            // The fade is a ramp: no sample jumps further than the take with the effects on does.
+            float jump = 0.0f, onJump = 0.0f;
+            for (std::size_t i = off; i < off + at(0.03); ++i)
+            {
+                jump = std::max(jump, std::abs(switched[i + 1] - switched[i]));
+                onJump = std::max(onJump, std::abs(on[i + 1] - on[i]));
+            }
+            expectLessThan(jump, onJump + 1.0e-3f);
+            // Back on, the closed sends left nothing in the lines: the old repeats and hall do not return.
+            expectLessThan(rms(difference, at(0.6), at(1.0)), 0.05f * rms(on, at(0.6), at(1.0)));
+
+            // A kit leaves the switch as it is; a new instance starts with the effects on.
+            GrooveProcessor processor;
+            expectEquals(processor.state.getRawParameterValue("fxOn")->load(), 1.0f);
+            set(processor, "fxOn", 0.0f);
+            processor.setCurrentProgram(3);
+            expectEquals(processor.state.getRawParameterValue("fxOn")->load(), 0.0f);
+            auto* parameter = processor.state.getParameter("fxOn");
+            expectEquals(parameter->getText(1.0f, 32), juce::String("An"));
+            expectEquals(parameter->getText(0.0f, 32), juce::String("Aus"));
         }
 
         beginTest("The state keeps the knobs and every pattern");

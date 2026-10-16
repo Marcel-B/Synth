@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <type_traits>
 
 /**
  * Tonwerk Groovebox's sound and clock, plain C++: eight drum voices synthesised from oscillators and noise (no
@@ -120,6 +121,8 @@ struct TrackSettings
     float random = 0.0f;
     /** The machine the instrument is built like; taken at the strike. */
     Machine machine = Machine::tonwerk;
+    /** How much the dice change this track's pattern, 0 to 1, added to `Settings::roll`; see `rollStep`. */
+    float roll = 0.0f;
 };
 
 /** Each instrument's starting sound. */
@@ -187,6 +190,8 @@ struct Settings
     /** Saturation of the sum, 0 to 1; 0 leaves it untouched. */
     float drive = 0.0f;
     float masterDb = 0.0f;
+    /** How much the dice change every track's pattern, 0 to 1; a track's own `roll` adds to it. */
+    float roll = 0.0f;
 };
 
 /** One track of a pattern: bit `s` of `on` sets step `s`, the same bit of `accent` makes it loud. */
@@ -215,6 +220,38 @@ inline TrackPattern parseTrack(const char* text)
         ++step;
     }
     return t;
+}
+
+/** A step after the dice: whether it plays, and whether accented. */
+struct RolledStep
+{
+    bool plays;
+    bool accent;
+};
+
+/**
+ * Rolls the dice for step `n` (counted from the song's start, so every bar rolls anew) of `track` at `amount` 0 to 1,
+ * the way the DrumBrute Impact's randomness varies a pattern: a step may fall out (half of them at 1), an empty step
+ * of a track that plays at all may sound (a quarter at 1), and an accent may come or go (three in ten at 1). The dice
+ * are a hash of the step and track, so a bounce, a loop or a start in the middle of the song plays the same rolls.
+ */
+inline RolledStep rollStep(bool on, bool accent, bool trackPlays, float amount, long long n, int track)
+{
+    if (amount <= 0.0f)
+        return { on, accent };
+    // SplitMix64 on the step and track: cheap, and neighbouring steps roll independently.
+    constexpr std::uint64_t golden = 0x9E3779B97F4A7C15u, other = 0xD1B54A32D192ED03u;
+    constexpr std::uint64_t mixA = 0xBF58476D1CE4E5B9u, mixB = 0x94D049BB133111EBu;
+    const auto steps = static_cast<std::uint64_t>(n), lane = static_cast<std::uint64_t>(track + 1);
+    auto z = steps * golden + lane * other;
+    z = (z ^ (z >> 30)) * mixA;
+    z = (z ^ (z >> 27)) * mixB;
+    z ^= z >> 31;
+    const float play = (float) (z & 0xFFFFFF) / 16777216.0f;
+    const float flip = (float) ((z >> 24) & 0xFFFFFF) / 16777216.0f;
+    const float a = std::min(amount, 1.0f);
+    const bool plays = on ? play >= 0.5f * a : (trackPlays && play < 0.25f * a);
+    return { plays, flip < 0.3f * a ? ! accent : accent };
 }
 
 /** The velocity a step plays with. */
@@ -1107,7 +1144,7 @@ struct Clock
 
     /**
      * Calls `fire(offset, step)` for each step starting in [from, to) beats: `offset` in samples from `from`, `step`
-     * the step of a pattern `length` steps long.
+     * the step of a pattern `length` steps long; `fire(offset, step, n)` also gets the step counted from beat 0.
      */
     template <typename Fire>
     static void steps(double from, double to, double samplesPerBeat, int count, int length, StepRate rate, float swing,
@@ -1124,7 +1161,11 @@ struct Clock
             if (at < from || at >= to)
                 continue;
             const int offset = std::clamp((int) ((at - from) * samplesPerBeat), 0, std::max(0, count - 1));
-            fire(offset, (int) (((n % length) + length) % length));
+            const int inPattern = (int) (((n % length) + length) % length);
+            if constexpr (std::is_invocable_v<Fire, int, int, long long>)
+                fire(offset, inPattern, n);
+            else
+                fire(offset, inPattern);
         }
     }
 };
