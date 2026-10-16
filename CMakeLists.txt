@@ -18,6 +18,21 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(JUCE)
 
+# Link-time optimisation for the plugins people install. CI turns it off (-DTONWERK_LTO=OFF): with LTO the compiler
+# only stores bitcode and all code is generated again at every link, which ccache cannot keep, so each CI run took
+# as long as a fresh build. The release builds and tests with LTO. GCC gets -flto=auto so the link-time code
+# generation uses every core instead of running its jobs one after the other.
+option(TONWERK_LTO "Link-time optimisation in Release builds" ON)
+add_library(tonwerk_lto_flags INTERFACE)
+if(TONWERK_LTO)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(tonwerk_lto_flags INTERFACE $<$<CONFIG:Release>:-flto=auto>)
+        target_link_options(tonwerk_lto_flags INTERFACE $<$<CONFIG:Release>:-flto=auto>)
+    else()
+        target_link_libraries(tonwerk_lto_flags INTERFACE juce::juce_recommended_lto_flags)
+    endif()
+endif()
+
 # Audio Units exist only on the Mac; elsewhere the VST3 and the standalone app are built, which is enough for the tests.
 if(APPLE)
     set(TONWERK_FORMATS AU VST3 Standalone)
@@ -69,7 +84,7 @@ function(tonwerk_add_synth target product bundle code edition)
     target_compile_definitions(${target} PUBLIC ${TONWERK_DEFINITIONS} TONWERK_EDITION=${edition})
     target_link_libraries(${target}
         PRIVATE juce::juce_audio_utils juce::juce_dsp
-        PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+        PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 endfunction()
 
 tonwerk_add_synth(TonwerkAnalog "Tonwerk Analog" de.bvelop.tonwerkanalog TwAn analog)
@@ -105,7 +120,7 @@ target_include_directories(ChromeGlitch PRIVATE common)
 target_compile_definitions(ChromeGlitch PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(ChromeGlitch
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Distortion: a classic guitar distortion pedal's circuit as an audio effect (distortion/).
 juce_add_plugin(TonwerkDistortion
@@ -136,7 +151,7 @@ target_include_directories(TonwerkDistortion PRIVATE common)
 target_compile_definitions(TonwerkDistortion PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkDistortion
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Wavetable: a wavetable synthesizer for basses and leads (wavetable/).
 juce_add_plugin(TonwerkWavetable
@@ -168,7 +183,7 @@ target_include_directories(TonwerkWavetable PRIVATE src common)
 target_compile_definitions(TonwerkWavetable PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkWavetable
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk DX: six-operator FM with 32 algorithms, with Tonwerk's delay and hall (dx/).
 juce_add_plugin(TonwerkDX
@@ -199,7 +214,7 @@ target_include_directories(TonwerkDX PRIVATE src common)
 target_compile_definitions(TonwerkDX PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkDX
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Granular: clouds of grains from its own sources or a file of the user's, with Tonwerk's delay and hall (granular/).
 juce_add_plugin(TonwerkGranular
@@ -231,7 +246,7 @@ target_include_directories(TonwerkGranular PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkGranular PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkGranular
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Physical: strings, tubes and struck bodies built from their physics, with Tonwerk's delay and hall (physical/).
 juce_add_plugin(TonwerkPhysical
@@ -262,7 +277,7 @@ target_include_directories(TonwerkPhysical PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkPhysical PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkPhysical
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Additiv: sounds built from up to 64 sine partials, with Tonwerk's delay and hall (additive/).
 juce_add_plugin(TonwerkAdditiv
@@ -293,7 +308,7 @@ target_include_directories(TonwerkAdditiv PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkAdditiv PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkAdditiv
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Groovebox: a drum machine of synthesised drums with a step sequencer in the host's tempo (groovebox/).
 juce_add_plugin(TonwerkGroovebox
@@ -324,7 +339,7 @@ target_include_directories(TonwerkGroovebox PRIVATE src common)
 target_compile_definitions(TonwerkGroovebox PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkGroovebox
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Robovox: a voice sung through a synth, the robot voice of AI songs (robovox/). A music effect (aumf), so
 # Logic can send it MIDI notes for its carrier through the side chain.
@@ -357,7 +372,7 @@ target_include_directories(TonwerkRobovox PRIVATE src common)
 target_compile_definitions(TonwerkRobovox PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkRobovox
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Wobble: a filter and a volume shaper moved by drawn, tempo-synced LFO curves, for dubstep wobbles (wobble/).
 juce_add_plugin(TonwerkWobble
@@ -388,7 +403,7 @@ target_include_directories(TonwerkWobble PRIVATE common)
 target_compile_definitions(TonwerkWobble PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkWobble
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk PD: phase distortion as on Casio's CZ synths, with a chorus and Tonwerk's delay and hall (pd/).
 juce_add_plugin(TonwerkPD
@@ -419,7 +434,7 @@ target_include_directories(TonwerkPD PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkPD PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkPD
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Tape: a worn tape machine as an audio effect, saturation, wow and flutter, hiss, dropouts (tape/).
 juce_add_plugin(TonwerkTape
@@ -450,7 +465,7 @@ target_include_directories(TonwerkTape PRIVATE common)
 target_compile_definitions(TonwerkTape PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkTape
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Freeze: a spectral freeze that holds a moment of the input as an endless pad (freeze/).
 juce_add_plugin(TonwerkFreeze
@@ -480,7 +495,7 @@ target_include_directories(TonwerkFreeze PRIVATE common)
 target_compile_definitions(TonwerkFreeze PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkFreeze
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Arp: an arpeggiator and step sequencer for the synths (arp/). A MIDI effect (aumi), the kind Logic offers in
 # a software instrument track's MIDI FX slot; no audio buses.
@@ -512,7 +527,7 @@ target_include_directories(TonwerkArp PRIVATE common)
 target_compile_definitions(TonwerkArp PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkArp
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Sampler: a sampler for chromatic samples, loops and slices, from sounds built in or the user's own file (sampler/).
 juce_add_plugin(TonwerkSampler
@@ -543,7 +558,7 @@ target_include_directories(TonwerkSampler PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkSampler PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkSampler
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Bass: an acid bass in the manner of the TB-303, one voice with slide and accent, with Tonwerk's delay and hall (bass/).
 juce_add_plugin(TonwerkBass
@@ -573,7 +588,7 @@ target_include_directories(TonwerkBass PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkBass PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkBass
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Vocoder: a classic channel vocoder, the voice on the side chain and an eight-voice synth played by MIDI as the carrier (vocoder/).
 juce_add_plugin(TonwerkVocoder
@@ -603,7 +618,7 @@ target_include_directories(TonwerkVocoder PRIVATE src common)
 target_compile_definitions(TonwerkVocoder PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkVocoder
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Delay: ping-pong, stereo or mono echoes in the host tempo with filters and saturation in the feedback and ducking (delay/).
 juce_add_plugin(TonwerkDelay
@@ -633,7 +648,7 @@ target_include_directories(TonwerkDelay PRIVATE src common)
 target_compile_definitions(TonwerkDelay PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkDelay
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Chorus: chorus, ensemble, flanger and phaser on one LFO, free or in the host tempo (chorus/).
 juce_add_plugin(TonwerkChorus
@@ -663,7 +678,7 @@ target_include_directories(TonwerkChorus PRIVATE src common)
 target_compile_definitions(TonwerkChorus PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkChorus
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Glue: a bus compressor with a side chain and a pump in the host tempo (glue/).
 juce_add_plugin(TonwerkGlue
@@ -693,7 +708,7 @@ target_include_directories(TonwerkGlue PRIVATE src common)
 target_compile_definitions(TonwerkGlue PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkGlue
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Shimmer: a reverb whose tail rises by an interval on each round trip (shimmer/).
 juce_add_plugin(TonwerkShimmer
@@ -723,7 +738,7 @@ target_include_directories(TonwerkShimmer PRIVATE src common)
 target_compile_definitions(TonwerkShimmer PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkShimmer
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Filter: a multimode filter moved by an envelope follower and a tempo-synced LFO (filter/).
 juce_add_plugin(TonwerkFilter
@@ -754,7 +769,7 @@ target_include_directories(TonwerkFilter PRIVATE common wobble/src)
 target_compile_definitions(TonwerkFilter PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkFilter
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Neuro: a mono bass for Reese and neuro sounds, detuned saws, FM and a clean sub, wobbled in tempo (neuro/).
 juce_add_plugin(TonwerkNeuro
@@ -784,7 +799,7 @@ target_include_directories(TonwerkNeuro PRIVATE src common wavetable/src bass/sr
 target_compile_definitions(TonwerkNeuro PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkNeuro
     PRIVATE juce::juce_audio_utils juce::juce_dsp
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # Tonwerk Stutter: a beat repeat on the song's grid, its repeats pitched, reversed, faded and filtered (stutter/).
 juce_add_plugin(TonwerkStutter
@@ -815,7 +830,7 @@ target_include_directories(TonwerkStutter PRIVATE common wobble/src)
 target_compile_definitions(TonwerkStutter PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkStutter
     PRIVATE juce::juce_audio_utils
-    PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
