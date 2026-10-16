@@ -701,7 +701,7 @@ Die Seite [tonwerk.studio](https://tonwerk.studio) liegt in `website/` (HTML, CS
 scripts/build-website.sh && python3 -m http.server -d build/site 8000   # dann http://localhost:8000
 ```
 
-Die Action `website.yml` prüft die Seite in jedem Pull Request und veröffentlicht sie bei jedem Push auf `main` über GitHub Pages. Impressum und Datenschutz (`website/impressum.html`, `website/datenschutz.html`) haben rot markierte Stellen für Anschrift und E-Mail, die vor dem Veröffentlichen ausgefüllt sein müssen.
+Die Action `website.yml` prüft die Seite in jedem Pull Request und veröffentlicht sie bei jedem Push auf `main` über GitHub Pages.
 
 ## Lizenz
 
