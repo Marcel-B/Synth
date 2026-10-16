@@ -72,9 +72,12 @@ void choice(Layout& layout, const juce::String& id, const juce::String& name, co
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, version }, name, items, initial));
 }
 
-void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial)
+void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial, int version = 1)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { id, version }, name, initial,
+        juce::AudioParameterBoolAttributes().withStringFromValueFunction(
+            [](bool on, int) { return on ? juce::String("An") : juce::String("Aus"); })));
 }
 
 /** How long each instrument may ring, in ms: a closed hat is a tick, a cymbal washes for seconds. */
@@ -200,6 +203,9 @@ Layout GrooveProcessor::createParameterLayout()
     for (int t = 0; t < kTracks; ++t)
         choice(layout, id(t, "Machine"), utf8(kTrackNames[(std::size_t) t]) + " Maschine", machines,
                (int) d.track[(std::size_t) t].machine, 3);
+
+    // Version 4: delay and hall off with one click, the power switch on the effects panel.
+    toggle(layout, "fxOn", "Effekte", true, 4);
     return layout;
 }
 
@@ -224,7 +230,7 @@ GrooveProcessor::GrooveProcessor()
     global = { value("seqMode"), value("pattern"), value("length"), value("rate"),
                value("swing"),   value("accent"),  value("drive"),  value("master") };
     fx = { value("fxDelayMix"),      value("fxDelaySync"), value("fxDelayTime"), value("fxDelayDivision"),
-           value("fxDelayFeedback"), value("fxDelayTone"), value("fxReverbMix"), value("fxReverbDecay") };
+           value("fxDelayFeedback"), value("fxDelayTone"), value("fxReverbMix"), value("fxReverbDecay"), value("fxOn") };
     // A new instance starts with Init's beat, so pressing play gives a groove at once.
     setCurrentProgram(0);
     startTimerHz(10);
@@ -357,6 +363,9 @@ void GrooveProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     engine.prepare(sampleRate);
     effects.prepare(sampleRate, samplesPerBlock);
     work.setSize(4, samplesPerBlock);
+    wetGain.reset(sampleRate, kBypassSeconds);
+    wetGain.setCurrentAndTargetValue(fx.on->load() >= 0.5f ? 1.0f : 0.0f);
+    effectsCleared = false;
     running = false;
     lastMode = SeqMode::off;
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
@@ -498,7 +507,39 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
             left[i] = 0.5f * (left[i] + right[i]);
         right = left;
     }
-    effects.process(effectsFor(), left, right, delaySend, reverbSend, buffer, 0, count);
+    // Off, what the effects add fades out over kBypassSeconds and the dry tracks pass untouched; the sends close
+    // meanwhile. Once silent the lines are cleared, so switching back on brings no old echoes or hall, and the effects
+    // cost nothing until then.
+    const bool fxOn = fx.on->load() >= 0.5f;
+    wetGain.setTargetValue(fxOn ? 1.0f : 0.0f);
+    if (! fxOn && ! wetGain.isSmoothing())
+    {
+        if (! effectsCleared)
+            effects.reset();
+        effectsCleared = true;
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            buffer.copyFrom(channel, 0, channel == 0 ? left : right, count);
+    }
+    else
+    {
+        effectsCleared = false;
+        auto e = effectsFor();
+        if (! fxOn)
+            e.delay.mix = e.reverb.mix = 0.0f;
+        effects.process(e, left, right, delaySend, reverbSend, buffer, 0, count);
+        if (wetGain.isSmoothing() || ! fxOn) // the fade may end inside this block
+        {
+            float* out[2] = { buffer.getWritePointer(0),
+                              buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr };
+            for (int i = 0; i < count; ++i)
+            {
+                const float g = wetGain.getNextValue();
+                out[0][i] = left[i] + g * (out[0][i] - left[i]);
+                if (out[1] != nullptr)
+                    out[1][i] = right[i] + g * (out[1][i] - right[i]);
+            }
+        }
+    }
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         Engine::saturate(buffer.getWritePointer(channel), count, s.drive);
     buffer.applyGain(juce::Decibels::decibelsToGain(s.masterDb));
@@ -522,10 +563,12 @@ void GrooveProcessor::setCurrentProgram(int index)
     currentProgram = index;
     const auto& kit = kits[(std::size_t) index];
     // Everything back to its default first, so a kit only names what it changes; how the sequencer runs and the
-    // machines chosen under the grid are the user's setup, not the kit's, and stay: a kit plays on any machine.
+    // machines chosen under the grid are the user's setup, not the kit's, and stay: a kit plays on any machine. So does
+    // the effects' switch: a kit chosen while listening dry stays dry.
     for (auto* parameter : getParameters())
         if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter);
-            ranged && ranged->paramID != "seqMode" && ! ranged->paramID.endsWith("Machine"))
+            ranged && ranged->paramID != "seqMode" && ranged->paramID != "fxOn"
+            && ! ranged->paramID.endsWith("Machine"))
             ranged->setValueNotifyingHost(ranged->getDefaultValue());
     for (const auto& [parameterId, value] : kit.values)
         if (auto* parameter = state.getParameter(parameterId))

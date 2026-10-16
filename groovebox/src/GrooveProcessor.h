@@ -138,8 +138,13 @@ private:
     struct FxValues
     {
         std::atomic<float>*delayMix, *delaySync, *delayTime, *delayDivision, *delayFeedback, *delayTone, *reverbMix,
-            *reverbDecay;
+            *reverbDecay, *on;
     } fx {};
+    /** How long switching the effects off or on fades what they add. */
+    static constexpr double kBypassSeconds = 0.02;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> wetGain { 1.0f };
+    /** Whether the delay and hall were emptied since the effects went off. */
+    bool effectsCleared = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GrooveProcessor)
 };

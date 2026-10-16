@@ -335,7 +335,8 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } })
+                  { "fxReverbDecay", utf8("Länge") } } },
+              "fxOn")
 {
     setLookAndFeel(&lookAndFeel);
     for (int t = 0; t < kTracks; ++t)
