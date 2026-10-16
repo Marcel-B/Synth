@@ -18,7 +18,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
             libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
-      - uses: hendrikmuhs/ccache-action@v1.2.14
+      - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
           key: linux
           max-size: 2G
@@ -41,7 +41,7 @@ jobs:
       # Ninja in the compiler's environment instead of the Visual Studio generator, which ignores compiler launchers,
       # so sccache can keep the objects between runs.
       - uses: ilammy/msvc-dev-cmd@v1.13.0
-      - uses: hendrikmuhs/ccache-action@v1.2.14
+      - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
           key: windows
           variant: sccache
@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # The default generator (Unix Makefiles) with the compiler of the Command Line Tools, as on a Mac without Xcode.
-      - uses: hendrikmuhs/ccache-action@v1.2.14
+      - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
           key: macos
           max-size: 2G
