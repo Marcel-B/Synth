@@ -1,5 +1,6 @@
 #include "Catalogue.h"
 #include "NightCity.h"
+#include "ScopeBuffer.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -7,9 +8,9 @@
 
 /**
  * Tonwerk for the iPad: one app with every plugin in it. Logic Pro for iPad, GarageBand and AUM load the plugins as the
- * AUv3s it carries; on its own the app plays one of them at a time, with the on-screen keyboard, a MIDI keyboard (USB
- * or Bluetooth) and, for the effects, the microphone or the audio interface's inputs. It builds on the desktop too
- * (-DTONWERK_APP=ON), to try it without an iPad.
+ * AUv3s it carries; on its own the app plays one instrument at a time, with its own on-screen keyboard and a MIDI
+ * keyboard (USB or Bluetooth), or shows the microphone's or the audio interface's input in Tonwerk Scope. It builds on
+ * the desktop too (-DTONWERK_APP=ON), to try it without an iPad.
  */
 namespace tonwerkapp
 {
@@ -18,22 +19,44 @@ namespace
 using tonwerkui::utf8;
 namespace colours = tonwerkui::colours;
 
-/** The device's audio into the plugin, with the input left out until the user turns it on (feedback otherwise). */
+/** The plugin played to the device, its output kept for the app's oscilloscope. */
 class Player : public juce::AudioIODeviceCallback
 {
 public:
     juce::AudioProcessorPlayer player;
-    std::atomic<bool> inputOn { false };
+    tonwerkui::ScopeBuffer scope;
+    /** The input into the plugin and its output kept from the speakers, which would play it back into the microphone. */
+    std::atomic<bool> listening { false };
 
     void audioDeviceIOCallbackWithContext(const float* const* inputs, int numInputs, float* const* outputs,
                                           int numOutputs, int numSamples,
                                           const juce::AudioIODeviceCallbackContext& context) override
     {
-        // With no inputs the player hands the plugin silence on its input channels.
-        if (inputOn.load(std::memory_order_relaxed))
+        if (listening.load(std::memory_order_relaxed))
+        {
             player.audioDeviceIOCallbackWithContext(inputs, numInputs, outputs, numOutputs, numSamples, context);
-        else
-            player.audioDeviceIOCallbackWithContext(nullptr, 0, outputs, numOutputs, numSamples, context);
+            for (int channel = 0; channel < numOutputs; ++channel)
+                juce::FloatVectorOperations::clear(outputs[channel], numSamples);
+            return;
+        }
+        // With no inputs the player hands the plugin silence on its input channels.
+        player.audioDeviceIOCallbackWithContext(nullptr, 0, outputs, numOutputs, numSamples, context);
+        if (numOutputs <= 0)
+            return;
+        // Left and right averaged, in pieces so the copy stays on the stack.
+        std::array<float, 256> mono {};
+        for (int start = 0; start < numSamples; start += (int) mono.size())
+        {
+            const int count = std::min((int) mono.size(), numSamples - start);
+            for (int i = 0; i < count; ++i)
+            {
+                float sum = 0.0f;
+                for (int channel = 0; channel < numOutputs; ++channel)
+                    sum += outputs[channel][start + i];
+                mono[(size_t) i] = sum / (float) numOutputs;
+            }
+            scope.write(mono.data(), count);
+        }
     }
 
     void audioDeviceAboutToStart(juce::AudioIODevice* device) override { player.audioDeviceAboutToStart(device); }
@@ -41,10 +64,16 @@ public:
     void audioDeviceError(const juce::String& message) override { player.audioDeviceError(message); }
 };
 
-/** The plugin's editor, scaled to the room it gets with its shape kept, following when it resizes itself. */
+/**
+ * The plugin's editor at the top of the room it gets, scaled with its shape kept and following when it resizes itself.
+ * The editors' own keyboards are too small for a finger and sit wherever the editor ends, so the frame shows only what
+ * lies above one (cut off by `window`, which holds the editor); the app's keyboard below takes its place.
+ */
 class EditorFrame : public juce::Component, private juce::ComponentListener
 {
 public:
+    EditorFrame() { addAndMakeVisible(window); }
+
     void show(juce::AudioProcessorEditor* editorToShow)
     {
         if (editor != nullptr)
@@ -52,7 +81,7 @@ public:
         editor.reset(editorToShow);
         if (editor != nullptr)
         {
-            addAndMakeVisible(*editor);
+            window.addAndMakeVisible(*editor);
             editor->addComponentListener(this);
         }
         fit();
@@ -69,20 +98,236 @@ private:
             fit();
     }
 
+    /** The editor's height down to its own keyboard, if it draws one in its lower half. */
+    int shownHeight() const
+    {
+        if (auto* keys = findKeyboard(editor.get()); keys != nullptr && keys != editor.get())
+        {
+            const auto top = editor->getLocalArea(keys, keys->getLocalBounds()).getY();
+            // A little above, where the gap over the keyboard begins, so none of its edge shows.
+            if (top > editor->getHeight() / 2)
+                return top - tonwerkui::kGap / 2;
+        }
+        return editor->getHeight();
+    }
+
+    static const juce::Component* findKeyboard(const juce::Component* component)
+    {
+        if (component == nullptr)
+            return nullptr;
+        if (dynamic_cast<const juce::MidiKeyboardComponent*>(component) != nullptr)
+            return component;
+        for (auto* child : component->getChildren())
+            if (auto* found = findKeyboard(child))
+                return found;
+        return nullptr;
+    }
+
     void fit()
     {
         if (editor == nullptr || editor->getWidth() <= 0 || editor->getHeight() <= 0 || getWidth() <= 0
             || getHeight() <= 0)
             return;
         const auto w = (float) editor->getWidth();
-        const auto h = (float) editor->getHeight();
+        const auto h = (float) shownHeight();
         const float scale = std::min((float) getWidth() / w, (float) getHeight() / h);
+        // Centred across, at the top, so every instrument starts under the app's header.
+        window.setBounds(juce::roundToInt(((float) getWidth() - w * scale) * 0.5f), 0, juce::roundToInt(w * scale),
+                         juce::roundToInt(h * scale));
         editor->setTopLeftPosition(0, 0);
-        editor->setTransform(juce::AffineTransform::scale(scale).translated(((float) getWidth() - w * scale) * 0.5f,
-                                                                            ((float) getHeight() - h * scale) * 0.5f));
+        editor->setTransform(juce::AffineTransform::scale(scale));
     }
 
+    juce::Component window;
     std::unique_ptr<juce::AudioProcessorEditor> editor;
+};
+
+/** The instruments as large tiles over the app, for a finger rather than a drop-down's narrow lines. */
+class Chooser : public juce::Component
+{
+public:
+    std::function<void(int)> onChoose;
+
+    Chooser()
+    {
+        for (const auto& entry : catalogue())
+        {
+            auto* tile = tiles.add(new juce::TextButton(entry.name));
+            const int index = tiles.size() - 1;
+            tile->onClick = [this, index] {
+                setVisible(false);
+                if (onChoose)
+                    onChoose(index);
+            };
+            addAndMakeVisible(tile);
+        }
+    }
+
+    void open(int current)
+    {
+        for (int i = 0; i < tiles.size(); ++i)
+            tiles[i]->setColour(juce::TextButton::textColourOffId, i == current ? colours::yellow : colours::text);
+        setVisible(true);
+        toFront(false);
+    }
+
+    void paint(juce::Graphics& g) override { g.fillAll(colours::background.withAlpha(0.94f)); }
+
+    // A tap beside the tiles closes it without a change.
+    void mouseDown(const juce::MouseEvent&) override { setVisible(false); }
+
+    void resized() override
+    {
+        constexpr int columns = 4;
+        const int rows = (tiles.size() + columns - 1) / columns;
+        auto area = getLocalBounds().reduced(tonwerkui::kMargin * 4);
+        const int height = juce::jmin(110, area.getHeight() / juce::jmax(1, rows));
+        area = area.withSizeKeepingCentre(area.getWidth(), height * rows);
+        const int width = area.getWidth() / columns;
+        for (int i = 0; i < tiles.size(); ++i)
+            tiles[i]->setBounds(juce::Rectangle<int>(area.getX() + (i % columns) * width,
+                                                     area.getY() + (i / columns) * height, width, height)
+                                    .reduced(tonwerkui::kGap));
+    }
+
+private:
+    juce::OwnedArray<juce::TextButton> tiles;
+};
+
+/**
+ * The input's device and channels, for Tonwerk Scope. iOS names every channel of an interface after the interface
+ * ("Scarlett 8i6 USB" eight times), so there the channels are a list of their own, numbered; elsewhere JUCE's list
+ * shows the drivers' names, and its input device menu, which a list of its own would hide.
+ */
+class InputChooser : public juce::Component, private juce::ChangeListener, private juce::ComponentListener
+{
+public:
+#if JUCE_IOS
+    static constexpr bool numbered = true;
+#else
+    static constexpr bool numbered = false;
+#endif
+    // The scope shows at most a stereo pair.
+    static constexpr int maxChannels = 2;
+
+    explicit InputChooser(juce::AudioDeviceManager& manager)
+        : devices(manager),
+          selector(manager, numbered ? 0 : 1, numbered ? 0 : maxChannels, 0, 0, false, false, false, false)
+    {
+        addAndMakeVisible(selector);
+        selector.setSize(kWidth, 200);
+        selector.addComponentListener(this);
+        if (numbered)
+        {
+            heading.setText(utf8("Eingänge (höchstens zwei)"), juce::dontSendNotification);
+            heading.setColour(juce::Label::textColourId, colours::text);
+            addAndMakeVisible(heading);
+            view.setViewedComponent(&list, false);
+            view.setScrollBarsShown(true, false);
+            addAndMakeVisible(view);
+            devices.addChangeListener(this);
+        }
+        rebuild();
+    }
+
+    ~InputChooser() override
+    {
+        devices.removeChangeListener(this);
+        selector.removeComponentListener(this);
+    }
+
+    void resized() override
+    {
+        auto area = getLocalBounds();
+        selector.setBounds(area.removeFromTop(selector.getHeight()));
+        if (! numbered)
+            return;
+        area.reduce(tonwerkui::kMargin * 2, tonwerkui::kGap);
+        heading.setBounds(area.removeFromTop(kRow));
+        view.setBounds(area);
+        list.setSize(view.getMaximumVisibleWidth(), channels.size() * kRow);
+        for (int i = 0; i < channels.size(); ++i)
+            channels[i]->setBounds(0, i * kRow, list.getWidth(), kRow);
+    }
+
+private:
+    static constexpr int kWidth = 420;
+    static constexpr int kRow = 30;
+    static constexpr int kShownRows = 6;
+
+    void rebuild()
+    {
+        channels.clear();
+        if (numbered)
+            if (auto* device = devices.getCurrentAudioDevice())
+            {
+                const auto names = device->getInputChannelNames();
+                const auto active = device->getActiveInputChannels();
+                juce::StringArray unique(names);
+                unique.removeDuplicates(false);
+                // A name of its own says more than a number; the same name on every channel says nothing.
+                const bool named = unique.size() == names.size();
+                for (int i = 0; i < names.size(); ++i)
+                {
+                    auto text = "Eingang " + juce::String(i + 1);
+                    if (named)
+                        text << utf8(" · ") << names[i];
+                    auto* button = channels.add(new juce::ToggleButton(text));
+                    button->setToggleState(active[i], juce::dontSendNotification);
+                    button->onClick = [this, i] { toggle(i); };
+                    list.addAndMakeVisible(button);
+                }
+            }
+        layout();
+    }
+
+    void layout()
+    {
+        const int rows = juce::jlimit(1, kShownRows, channels.size());
+        const int extra = numbered ? kRow * (rows + 1) + tonwerkui::kGap * 2 : 0;
+        if (getWidth() == kWidth && getHeight() == selector.getHeight() + extra)
+            resized();
+        else
+            setSize(kWidth, selector.getHeight() + extra);
+    }
+
+    /** Switches a channel on or off; a third one takes the place of the first of the two already on. */
+    void toggle(int channel)
+    {
+        auto* device = devices.getCurrentAudioDevice();
+        if (device == nullptr)
+            return;
+        auto bits = device->getActiveInputChannels();
+        if (bits[channel])
+            bits.clearBit(channel);
+        else
+        {
+            if (bits.countNumberOfSetBits() >= maxChannels)
+                bits.clearBit(bits.findNextSetBit(0));
+            bits.setBit(channel);
+        }
+        auto setup = devices.getAudioDeviceSetup();
+        setup.inputChannels = bits;
+        setup.useDefaultInputChannels = false;
+        devices.setAudioDeviceSetup(setup, true);
+    }
+
+    // The device changed (another one, or its channels): its list is read again.
+    void changeListenerCallback(juce::ChangeBroadcaster*) override { rebuild(); }
+
+    // The selector sets its own height as its rows come and go.
+    void componentMovedOrResized(juce::Component&, bool, bool wasResized) override
+    {
+        if (wasResized)
+            layout();
+    }
+
+    juce::AudioDeviceManager& devices;
+    juce::AudioDeviceSelectorComponent selector;
+    juce::Label heading;
+    juce::Component list;
+    juce::Viewport view;
+    juce::OwnedArray<juce::ToggleButton> channels;
 };
 
 class MainComponent : public juce::Component, private juce::MidiKeyboardState::Listener, private juce::Timer
@@ -100,22 +345,21 @@ public:
         options.osxLibrarySubFolder = "Application Support";
         settings = std::make_unique<juce::PropertiesFile>(options);
 
-        juce::PopupMenu menu;
-        menu.addSectionHeader("Instrumente");
-        const auto& entries = catalogue();
-        for (size_t i = 0; i < entries.size(); ++i)
-        {
-            if (i > 0 && entries[i - 1].instrument && ! entries[i].instrument)
-                menu.addSectionHeader("Effekte");
-            menu.addItem((int) i + 1, entries[i].name);
-        }
-        *picker.getRootMenu() = menu;
-        picker.onChange = [this] { choose(picker.getSelectedId() - 1); };
+        picker.onClick = [this] { chooser.open(current); };
         addAndMakeVisible(picker);
 
+        // A large editor (Tonwerk Wavetable) gets the whole screen when the keys are put away.
+        showKeyboard.setButtonText("Tasten");
+        showKeyboard.setClickingTogglesState(true);
+        showKeyboard.setToggleState(settings->getBoolValue("keyboard", true), juce::dontSendNotification);
+        showKeyboard.onClick = [this] {
+            settings->setValue("keyboard", showKeyboard.getToggleState());
+            resized();
+        };
+        addAndMakeVisible(showKeyboard);
+
         input.setButtonText("Eingang");
-        input.setTooltip(utf8("Mikrofon oder Eingänge des Audio-Interfaces ins Plugin (mit Kopfhörern, sonst pfeift es)"));
-        input.onClick = [this] { setInput(input.getToggleState()); };
+        input.onClick = [this] { chooseInput(); };
         addChildComponent(input);
 
 #if JUCE_IOS
@@ -130,10 +374,23 @@ public:
         keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, colours::yellow.withAlpha(0.3f));
         keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, colours::border);
         keyboard.setColour(juce::MidiKeyboardComponent::shadowColourId, juce::Colours::transparentBlack);
-        addChildComponent(keyboard);
+        // The octave buttons beside it move it; its own arrows would be too small to hit.
+        keyboard.setScrollButtonsVisible(false);
+        addAndMakeVisible(keyboard);
         keys.addListener(this);
 
+        octaveDown.setButtonText("-");
+        octaveDown.onClick = [this] { shiftOctave(-1); };
+        addAndMakeVisible(octaveDown);
+        octaveUp.setButtonText("+");
+        octaveUp.onClick = [this] { shiftOctave(1); };
+        addAndMakeVisible(octaveUp);
+        scope.setCaption("Oszilloskop");
+        addAndMakeVisible(scope);
+
         addAndMakeVisible(frame);
+        chooser.onChoose = [this](int index) { choose(index); };
+        addChildComponent(chooser);
 
         devices.initialise(0, 2, nullptr, true);
         devices.addAudioCallback(&audio);
@@ -142,6 +399,7 @@ public:
         startTimer(2000);
 
         // TONWERK_PLUGIN=<name> opens that plugin, for the simulator's screenshots in CI.
+        const auto& entries = catalogue();
         auto last = juce::SystemStats::getEnvironmentVariable("TONWERK_PLUGIN", {});
         if (last.isEmpty())
             last = settings->getValue("plugin", entries.front().name);
@@ -149,7 +407,7 @@ public:
         for (size_t i = 0; i < entries.size(); ++i)
             if (entries[i].name == last)
                 index = (int) i;
-        picker.setSelectedId(index + 1, juce::sendNotificationSync);
+        choose(index);
 
         setSize(1280, 800);
     }
@@ -183,6 +441,12 @@ public:
     {
         g.fillAll(colours::background);
         tonwerkui::paintTitle(g, title, "TONWERK");
+        if (! keyboard.isVisible())
+            return;
+        g.setColour(colours::muted);
+        g.setFont(tonwerkui::mono(13.0f));
+        g.drawText(juce::MidiMessage::getMidiNoteName(keyboard.getLowestVisibleKey(), true, true, 3), octaveLabel,
+                   juce::Justification::centred);
     }
 
     void resized() override
@@ -191,23 +455,43 @@ public:
         // The room iPadOS keeps free: the home bar at the bottom, the camera's edge.
         if (auto* display = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds()))
             area = display->safeAreaInsets.subtractedFrom(area);
+        chooser.setBounds(area);
 
         auto bar = area.removeFromTop(tonwerkui::kHeader).reduced(tonwerkui::kMargin, 4);
         title = bar.removeFromLeft(150);
-        picker.setBounds(bar.removeFromLeft(240));
+        picker.setBounds(bar.removeFromLeft(280));
         bar.removeFromLeft(tonwerkui::kGap);
+        if (showKeyboard.isVisible())
+            showKeyboard.setBounds(bar.removeFromLeft(90));
         if (input.isVisible())
             input.setBounds(bar.removeFromLeft(110));
         if (bluetooth.isVisible())
             bluetooth.setBounds(bar.removeFromRight(150));
 
-        if (keyboard.isVisible())
+        const bool keysShown = showKeyboard.isVisible() && showKeyboard.getToggleState();
+        for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown, &scope })
+            component->setVisible(keysShown);
+        if (! keysShown)
         {
-            auto keysArea = area.removeFromBottom(juce::jlimit(70, 130, area.getHeight() / 6));
-            keyboard.setBounds(keysArea);
-            keyboard.setKeyWidth(juce::jmax(16.0f, (float) keysArea.getWidth() / 36.0f));
-            keyboard.setLowestVisibleKey(36);
+            frame.setBounds(area);
+            repaint();
+            return;
         }
+
+        // Large enough to play with a finger, the same height for every instrument.
+        auto keysArea = area.removeFromBottom(juce::jlimit(130, 220, area.getHeight() / 4));
+        auto octave = keysArea.removeFromLeft(64).reduced(tonwerkui::kGap, 0);
+        octaveUp.setBounds(octave.removeFromTop(octave.getHeight() * 2 / 5));
+        octaveDown.setBounds(octave.removeFromBottom(octave.getHeight() * 2 / 3));
+        octaveLabel = octave;
+        // Every instrument gets the same scope; the editors' own ones are cut off with their keyboards.
+        scope.setBounds(keysArea.removeFromRight(juce::jmin(320, keysArea.getWidth() / 4)).reduced(tonwerkui::kGap, 0));
+        keysArea.removeFromRight(tonwerkui::kGap);
+        keyboard.setBounds(keysArea);
+        // Two octaves and a C across, large enough for a finger.
+        keyboard.setKeyWidth((float) keysArea.getWidth() / 15.0f);
+        showKeys();
+        area.removeFromBottom(tonwerkui::kGap);
         frame.setBounds(area);
     }
 
@@ -235,52 +519,59 @@ private:
         audio.player.setProcessor(processor.get());
         frame.show(processor->hasEditor() ? processor->createEditorIfNeeded() : nullptr);
 
-        // Most instruments draw their own keyboard; the app's is for those that do not and for Robovox and Vocoder.
-        keyboard.setVisible(processor->acceptsMidi() && ! hasOwnKeyboard(processor->getActiveEditor()));
-        const bool hearsInput = processor->getTotalNumInputChannels() > 0;
-        input.setVisible(hearsInput);
-        if (! hearsInput && input.getToggleState())
-            input.setToggleState(false, juce::sendNotificationSync);
+        picker.setButtonText(chosen.name + utf8(" \xe2\x96\xbe"));
+        showKeyboard.setVisible(! chosen.listens);
+        input.setVisible(chosen.listens);
+        listen(chosen.listens);
+        // Each instrument keeps where its keyboard sat; the drums start on General MIDI's kick, C1.
+        lowestKey = settings->getIntValue("lowestKey." + chosen.name, 36);
         settings->setValue("plugin", chosen.name);
         resized();
+        repaint();
     }
 
-    static bool hasOwnKeyboard(const juce::Component* component)
+    void shiftOctave(int octaves)
     {
-        if (component == nullptr)
-            return false;
-        if (dynamic_cast<const juce::MidiKeyboardComponent*>(component) != nullptr)
-            return true;
-        for (auto* child : component->getChildren())
-            if (hasOwnKeyboard(child))
-                return true;
-        return false;
+        // The top of two octaves stays within MIDI's notes.
+        lowestKey = juce::jlimit(0, 108, lowestKey + 12 * octaves);
+        showKeys();
+        if (current >= 0)
+            settings->setValue("lowestKey." + catalogue()[(size_t) current].name, lowestKey);
+        repaint(octaveLabel);
     }
 
-    void setInput(bool on)
+    void listen(bool on)
     {
         if (! on)
         {
-            audio.inputOn = false;
+            audio.listening = false;
             return;
         }
         juce::Component::SafePointer<MainComponent> self(this);
         juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
-            if (self == nullptr)
+            if (self == nullptr || ! granted)
                 return;
-            if (! granted)
-            {
-                self->input.setToggleState(false, juce::dontSendNotification);
-                return;
-            }
             // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
             if (! self->inputsOpen)
             {
                 self->devices.initialise(2, 2, nullptr, true);
                 self->inputsOpen = true;
             }
-            self->audio.inputOn = true;
+            self->audio.listening = true;
         });
+    }
+
+    /** The device and its input channels: the iPad's microphone or a plugged-in interface's inputs. */
+    void chooseInput()
+    {
+        juce::CallOutBox::launchAsynchronously(std::make_unique<InputChooser>(devices), input.getBounds(), this);
+    }
+
+    /** Without its scroll buttons the keyboard always starts at its range's bottom, so the range is what it shows. */
+    void showKeys()
+    {
+        keyboard.setAvailableRange(lowestKey, juce::jmin(127, lowestKey + 24));
+        keyboard.setLowestVisibleKey(lowestKey);
     }
 
     void enableMidiInputs()
@@ -313,15 +604,18 @@ private:
     Player audio;
     std::unique_ptr<juce::AudioProcessor> processor;
     int current = -1;
+    int lowestKey = 36;
     bool inputsOpen = false;
 
-    juce::Rectangle<int> title;
-    juce::ComboBox picker;
-    juce::ToggleButton input;
+    juce::Rectangle<int> title, octaveLabel;
+    juce::TextButton picker, showKeyboard, input;
     juce::TextButton bluetooth;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard { keys, juce::MidiKeyboardComponent::horizontalKeyboard };
+    juce::TextButton octaveDown, octaveUp;
+    tonwerkui::ScopeView scope { audio.scope };
     EditorFrame frame;
+    Chooser chooser;
 };
 
 class MainWindow : public juce::DocumentWindow

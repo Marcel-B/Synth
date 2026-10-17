@@ -1,5 +1,6 @@
-# Builds Tonwerk for the iPad (the app with every plugin's AUv3), signs it for the App Store and uploads it to
-# TestFlight. Started by hand (Actions → TestFlight → Run workflow). Needs the repository secrets
+# Builds Tonwerk for the iPad and for the Mac (the app with every plugin's AUv3; on the Mac sandboxed for the Mac App
+# Store), signs it for the App Store and uploads it to TestFlight. Both carry the same bundle id, so App Store Connect
+# keeps them in one app with an iOS and a macOS platform. Started by hand (Actions → TestFlight → Run workflow). Needs the repository secrets
 #   APPLE_TEAM_ID   the team id of the developer account (already there for the Mac's signing)
 #   ASC_KEY_ID      the App Store Connect API key's id (the ten characters in AuthKey_<id>.p8)
 #   ASC_ISSUER_ID   the issuer id above the key list in App Store Connect
@@ -16,16 +17,46 @@ on:
         description: "Version (leer: die des letzten Tags)"
         required: false
         type: string
+      platforms:
+        description: "Plattformen"
+        required: false
+        type: choice
+        options: [beide, iPad, Mac]
+        default: beide
 
 jobs:
   upload:
-    name: iPad-App zu TestFlight
+    name: ${{ matrix.platform }}-App zu TestFlight
     runs-on: macos-15
     timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: ${{ fromJSON((inputs.platforms == '' || inputs.platforms == 'beide') && '["iPad","Mac"]' || format('["{0}"]', inputs.platforms)) }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # App Store Connect takes only apps built with the iOS 26 SDK or later (ITMS-90725); the runner's default Xcode
+      # may be older, so the newest Xcode 26 or later it carries is chosen.
+      - name: Xcode 26
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -iv beta | sort -V | tail -1)
+          version=$(basename "$xcode" .app); version=${version#Xcode_}
+          (( ${version%%.*} >= 26 )) || { echo "::error::no Xcode 26 on the runner"; ls -d /Applications/Xcode*; exit 1; }
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+      - name: Platform
+        run: |
+          if [[ "${{ matrix.platform }}" == iPad ]]; then
+            echo "TONWERK_CMAKE_PLATFORM=-DCMAKE_SYSTEM_NAME=iOS" >> "$GITHUB_ENV"
+            echo "TONWERK_DESTINATION=generic/platform=iOS" >> "$GITHUB_ENV"
+            echo "TONWERK_PLUGINS=Tonwerk.app/PlugIns" >> "$GITHUB_ENV"
+          else
+            echo "TONWERK_CMAKE_PLATFORM=-DTONWERK_MAC_STORE=ON" >> "$GITHUB_ENV"
+            echo "TONWERK_DESTINATION=generic/platform=macOS" >> "$GITHUB_ENV"
+            echo "TONWERK_PLUGINS=Tonwerk.app/Contents/PlugIns" >> "$GITHUB_ENV"
+          fi
       - name: Check the secrets
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -59,7 +90,7 @@ jobs:
           echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
       - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
-          key: testflight
+          key: testflight-${{ matrix.platform }}
           max-size: 2G
       # Xcode ignores CMake's compiler launchers; its compiler settings point at ccache instead (as in build.yml).
       - name: ccache for Xcode
@@ -80,11 +111,13 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           # Static libraries stay out of the archive (SKIP_INSTALL), or Xcode makes a generic archive instead of an
-          # app's; the app itself sets it back. No LTO: with 33 binaries it would take hours.
-          cmake -S . -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS \
+          # app's; the app itself sets it back. The dSYMs go up with the build so TestFlight's crash reports name
+          # functions. No LTO: with 33 binaries it would take hours.
+          cmake -S . -B build-store -G Xcode $TONWERK_CMAKE_PLATFORM \
             -DTONWERK_VERSION="$TONWERK_VERSION" -DTONWERK_BUILD_NUMBER="$TONWERK_BUILD_NUMBER" -DTONWERK_LTO=OFF \
             -DCMAKE_XCODE_GENERATE_SCHEME=ON \
             -DCMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL=YES \
+            -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
             -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE=Automatic \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="Apple Development" \
@@ -96,14 +129,29 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          xcodebuild -project build-ios/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
-            -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
-            -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            archive > "$RUNNER_TEMP/archive.log" 2>&1 \
-            || { grep -E "error:" "$RUNNER_TEMP/archive.log" | head -50; tail -100 "$RUNNER_TEMP/archive.log"; exit 1; }
+          # Xcode fetches the 33 targets' profiles side by side and now and then refers to one it has not written yet
+          # ("Build input file cannot be found: ....mobileprovision"). The profiles are on the runner after that, so
+          # the archive is tried again, at most three times, and only for that error.
+          for attempt in 1 2 3; do
+            if xcodebuild -project build-store/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
+              -destination "$TONWERK_DESTINATION" -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
+              -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
+              -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+              archive > "$RUNNER_TEMP/archive.log" 2>&1; then
+              break
+            fi
+            grep -E "error:" "$RUNNER_TEMP/archive.log" | sort -u | head -50
+            if [[ $attempt -lt 3 ]] && grep -q "error: Build input file cannot be found: .*\.mobileprovision" "$RUNNER_TEMP/archive.log" \
+              && ! grep "error:" "$RUNNER_TEMP/archive.log" | grep -vq "\.mobileprovision"; then
+              echo "Profiles were still arriving; attempt $((attempt + 1))"
+              ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null | wc -l
+              continue
+            fi
+            tail -100 "$RUNNER_TEMP/archive.log"
+            exit 1
+          done
           grep -E "ARCHIVE SUCCEEDED" "$RUNNER_TEMP/archive.log"
-          ls "$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/Tonwerk.app/PlugIns"
+          ls "$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/$TONWERK_PLUGINS"
       - name: Upload to TestFlight
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

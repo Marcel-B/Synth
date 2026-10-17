@@ -63,6 +63,15 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      # App Store Connect takes only apps built with the iOS 26 SDK or later (ITMS-90725); the runner's default Xcode
+      # may be older, so the newest Xcode 26 or later it carries is chosen.
+      - name: Xcode 26
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -iv beta | sort -V | tail -1)
+          version=$(basename "$xcode" .app); version=${version#Xcode_}
+          (( ${version%%.*} >= 26 )) || { echo "::error::no Xcode 26 on the runner"; ls -d /Applications/Xcode*; exit 1; }
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
       - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
           key: ios
@@ -93,7 +102,8 @@ jobs:
           for appex in "$app"/PlugIns/*.appex; do
             [[ -d "$appex" ]] || continue
             ext=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$appex/Info.plist")
-            [[ "$ext" == "$id".* ]] || { echo "::error::$ext does not begin with $id"; exit 1; }
+            # App Store Connect takes an extension's id only as the app's plus one part without a period.
+            [[ "$ext" =~ ^"$id"\.[^.]+$ ]] || { echo "::error::$ext is not $id plus one part"; exit 1; }
             type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Info.plist")
             [[ -f "$appex/PrivacyInfo.xcprivacy" ]] || { echo "::error::$appex has no privacy manifest"; exit 1; }
             echo "$(basename "$appex"): $type"
@@ -120,7 +130,7 @@ jobs:
           xcrun simctl privacy "$udid" grant microphone de.bvelop.tonwerk || true
           mkdir -p ipad-screenshots
           # simctl hands SIMCTL_CHILD_* to the app; TONWERK_PLUGIN picks the plugin it opens.
-          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope"; do
+          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Bass" "Tonwerk Scope"; do
             SIMCTL_CHILD_TONWERK_PLUGIN="$name" xcrun simctl launch "$udid" de.bvelop.tonwerk
             sleep 12
             xcrun simctl io "$udid" screenshot "ipad-screenshots/$name.png"
@@ -140,6 +150,83 @@ jobs:
           name: ipad-screenshots
           path: ipad-screenshots
           retention-days: 30
+
+  macstore:
+    name: Mac App Store (Tonwerk mit AUv3)
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      # The Mac App Store, too, takes only apps built with the newest SDKs.
+      - name: Xcode 26
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -iv beta | sort -V | tail -1)
+          version=$(basename "$xcode" .app); version=${version#Xcode_}
+          (( ${version%%.*} >= 26 )) || { echo "::error::no Xcode 26 on the runner"; ls -d /Applications/Xcode*; exit 1; }
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: macstore
+          max-size: 2G
+      - name: ccache for Xcode
+        run: |
+          bin="$RUNNER_TEMP/ccache-bin"
+          mkdir -p "$bin"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang)" > "$bin/clang"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang++)" > "$bin/clang++"
+          chmod +x "$bin/clang" "$bin/clang++"
+          {
+            echo "CCACHE_SLOPPINESS=clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros"
+            echo "CCACHE_FILECLONE=true"
+            echo "CCACHE_DEPEND=true"
+            echo "CCACHE_BIN=$bin"
+          } >> "$GITHUB_ENV"
+      # Signed to run locally (ad hoc, with the entitlements), Apple Silicon only to keep CI short; the upload in
+      # testflight.yml builds both architectures.
+      - name: Build
+        run: |
+          cmake -S . -B build-mac -G Xcode -DTONWERK_MAC_STORE=ON -DTONWERK_LTO=OFF -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY=- \
+            -DCMAKE_XCODE_ATTRIBUTE_CC="$CCACHE_BIN/clang" -DCMAKE_XCODE_ATTRIBUTE_CXX="$CCACHE_BIN/clang++" \
+            -DCMAKE_XCODE_ATTRIBUTE_LD="$(xcrun -f clang)" -DCMAKE_XCODE_ATTRIBUTE_LDPLUSPLUS="$(xcrun -f clang++)" \
+            -DCMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE=NO
+          cmake --build build-mac --config Release --target Tonwerk --parallel "$(sysctl -n hw.ncpu)"
+      # The store rejects an app or extension without the sandbox, and an extension id that is not the app's plus one part.
+      - name: Check the AUv3s
+        run: |
+          app=build-mac/Tonwerk_artefacts/Release/Tonwerk.app
+          [[ -d "$app" ]] || { echo "::error::Tonwerk.app was not built"; exit 1; }
+          id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist")
+          /usr/libexec/PlistBuddy -c "Print :LSApplicationCategoryType" "$app/Contents/Info.plist"
+          # The entitlements a bundle was signed with, as a plist file PlistBuddy can read.
+          entitlements() { codesign -d --entitlements - --xml "$1" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null; }
+          has() { /usr/libexec/PlistBuddy -c "Print :$2" "$RUNNER_TEMP/entitlements.plist" 2>/dev/null | grep -q true; }
+          sandboxed() { entitlements "$1" && has "$1" com.apple.security.app-sandbox; }
+          if ! sandboxed "$app"; then
+            echo "::error::the app is not sandboxed"
+            codesign -dvv "$app" 2>&1 | head -20
+            cat "$RUNNER_TEMP/entitlements.plist"; echo
+            find build-mac -name 'Tonwerk*.entitlements' -maxdepth 4 -exec sh -c 'echo "== $1"; cat "$1"' _ {} \;
+            exit 1
+          fi
+          has "$app" com.apple.security.device.audio-input || { echo "::error::the app lacks audio-input"; exit 1; }
+          count=0
+          for appex in "$app"/Contents/PlugIns/*.appex; do
+            [[ -d "$appex" ]] || continue
+            ext=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$appex/Contents/Info.plist")
+            [[ "$ext" =~ ^"$id"\.[^.]+$ ]] || { echo "::error::$ext is not $id plus one part"; exit 1; }
+            sandboxed "$appex" || { echo "::error::$appex is not sandboxed"; exit 1; }
+            [[ -f "$appex/Contents/Resources/PrivacyInfo.xcprivacy" ]] || { echo "::error::$appex has no privacy manifest"; exit 1; }
+            type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Contents/Info.plist")
+            echo "$(basename "$appex"): $type $ext"
+            count=$((count + 1))
+          done
+          echo "$count AUv3s"
+          (( count == 32 )) || { echo "::error::expected 32 AUv3s, found $count"; exit 1; }
+          # Registered with the system, a host finds them; shown for the log only.
+          pluginkit -a "$app"/Contents/PlugIns/*.appex || true
+          pluginkit -m -v -p com.apple.AudioUnit-UI | grep -i tonwerk || true
 
   macos:
     name: Audio Unit (macOS)

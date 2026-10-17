@@ -708,8 +708,9 @@ void TonwerkSynthEditor::exportFile()
                              entry->setProperty("name", name);
                              entry->setProperty("patch", safe->processor.currentPatchJson());
                              const auto text = juce::JSON::toString(juce::var(entry));
-#if JUCE_IOS
-                             // The picker names the file; it cannot be renamed through its URL.
+#if JUCE_IOS || TONWERK_SANDBOX
+                             // The picker names the file; it cannot be renamed through its URL, nor in the sandbox,
+                             // which allows only the file chosen.
                              const auto shown = tonwerkui::chosenName(fc);
                              const bool written = tonwerkui::writeChosenText(fc, text);
 #else
