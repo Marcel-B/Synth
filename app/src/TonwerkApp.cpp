@@ -194,6 +194,142 @@ private:
     juce::OwnedArray<juce::TextButton> tiles;
 };
 
+/**
+ * The input's device and channels, for Tonwerk Scope. iOS names every channel of an interface after the interface
+ * ("Scarlett 8i6 USB" eight times), so there the channels are a list of their own, numbered; elsewhere JUCE's list
+ * shows the drivers' names, and its input device menu, which a list of its own would hide.
+ */
+class InputChooser : public juce::Component, private juce::ChangeListener, private juce::ComponentListener
+{
+public:
+#if JUCE_IOS
+    static constexpr bool numbered = true;
+#else
+    static constexpr bool numbered = false;
+#endif
+    // The scope shows at most a stereo pair.
+    static constexpr int maxChannels = 2;
+
+    explicit InputChooser(juce::AudioDeviceManager& manager)
+        : devices(manager),
+          selector(manager, numbered ? 0 : 1, numbered ? 0 : maxChannels, 0, 0, false, false, false, false)
+    {
+        addAndMakeVisible(selector);
+        selector.setSize(kWidth, 200);
+        selector.addComponentListener(this);
+        if (numbered)
+        {
+            heading.setText(utf8("Eingänge (höchstens zwei)"), juce::dontSendNotification);
+            heading.setColour(juce::Label::textColourId, colours::text);
+            addAndMakeVisible(heading);
+            view.setViewedComponent(&list, false);
+            view.setScrollBarsShown(true, false);
+            addAndMakeVisible(view);
+            devices.addChangeListener(this);
+        }
+        rebuild();
+    }
+
+    ~InputChooser() override
+    {
+        devices.removeChangeListener(this);
+        selector.removeComponentListener(this);
+    }
+
+    void resized() override
+    {
+        auto area = getLocalBounds();
+        selector.setBounds(area.removeFromTop(selector.getHeight()));
+        if (! numbered)
+            return;
+        area.reduce(tonwerkui::kMargin * 2, tonwerkui::kGap);
+        heading.setBounds(area.removeFromTop(kRow));
+        view.setBounds(area);
+        list.setSize(view.getMaximumVisibleWidth(), channels.size() * kRow);
+        for (int i = 0; i < channels.size(); ++i)
+            channels[i]->setBounds(0, i * kRow, list.getWidth(), kRow);
+    }
+
+private:
+    static constexpr int kWidth = 420;
+    static constexpr int kRow = 30;
+    static constexpr int kShownRows = 6;
+
+    void rebuild()
+    {
+        channels.clear();
+        if (numbered)
+            if (auto* device = devices.getCurrentAudioDevice())
+            {
+                const auto names = device->getInputChannelNames();
+                const auto active = device->getActiveInputChannels();
+                juce::StringArray unique(names);
+                unique.removeDuplicates(false);
+                // A name of its own says more than a number; the same name on every channel says nothing.
+                const bool named = unique.size() == names.size();
+                for (int i = 0; i < names.size(); ++i)
+                {
+                    auto text = "Eingang " + juce::String(i + 1);
+                    if (named)
+                        text << utf8(" · ") << names[i];
+                    auto* button = channels.add(new juce::ToggleButton(text));
+                    button->setToggleState(active[i], juce::dontSendNotification);
+                    button->onClick = [this, i] { toggle(i); };
+                    list.addAndMakeVisible(button);
+                }
+            }
+        layout();
+    }
+
+    void layout()
+    {
+        const int rows = juce::jlimit(1, kShownRows, channels.size());
+        const int extra = numbered ? kRow * (rows + 1) + tonwerkui::kGap * 2 : 0;
+        if (getWidth() == kWidth && getHeight() == selector.getHeight() + extra)
+            resized();
+        else
+            setSize(kWidth, selector.getHeight() + extra);
+    }
+
+    /** Switches a channel on or off; a third one takes the place of the first of the two already on. */
+    void toggle(int channel)
+    {
+        auto* device = devices.getCurrentAudioDevice();
+        if (device == nullptr)
+            return;
+        auto bits = device->getActiveInputChannels();
+        if (bits[channel])
+            bits.clearBit(channel);
+        else
+        {
+            if (bits.countNumberOfSetBits() >= maxChannels)
+                bits.clearBit(bits.findNextSetBit(0));
+            bits.setBit(channel);
+        }
+        auto setup = devices.getAudioDeviceSetup();
+        setup.inputChannels = bits;
+        setup.useDefaultInputChannels = false;
+        devices.setAudioDeviceSetup(setup, true);
+    }
+
+    // The device changed (another one, or its channels): its list is read again.
+    void changeListenerCallback(juce::ChangeBroadcaster*) override { rebuild(); }
+
+    // The selector sets its own height as its rows come and go.
+    void componentMovedOrResized(juce::Component&, bool, bool wasResized) override
+    {
+        if (wasResized)
+            layout();
+    }
+
+    juce::AudioDeviceManager& devices;
+    juce::AudioDeviceSelectorComponent selector;
+    juce::Label heading;
+    juce::Component list;
+    juce::Viewport view;
+    juce::OwnedArray<juce::ToggleButton> channels;
+};
+
 class MainComponent : public juce::Component, private juce::MidiKeyboardState::Listener, private juce::Timer
 {
 public:
@@ -428,10 +564,7 @@ private:
     /** The device and its input channels: the iPad's microphone or a plugged-in interface's inputs. */
     void chooseInput()
     {
-        auto selector = std::make_unique<juce::AudioDeviceSelectorComponent>(devices, 1, 2, 0, 0, false, false, false,
-                                                                             false);
-        selector->setSize(420, 260);
-        juce::CallOutBox::launchAsynchronously(std::move(selector), input.getBounds(), this);
+        juce::CallOutBox::launchAsynchronously(std::make_unique<InputChooser>(devices), input.getBounds(), this);
     }
 
     /** Without its scroll buttons the keyboard always starts at its range's bottom, so the range is what it shows. */
