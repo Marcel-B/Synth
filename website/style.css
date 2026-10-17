@@ -225,7 +225,9 @@ section { padding: 72px 0 24px; }
 .card:hover .shot img { transform: scale(1.03); }
 .shot:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
 
-.body { padding: 18px 20px 20px; display: flex; flex-direction: column; flex: 1; }
+.body { position: relative; padding: 18px 20px 20px; display: flex; flex-direction: column; flex: 1; }
+/* The app's icon sits on the screenshot's lower edge, as on a desktop. */
+.body .icon { position: absolute; top: -46px; right: 16px; width: 64px; height: 64px; }
 
 .card h3 {
   margin: 0;
