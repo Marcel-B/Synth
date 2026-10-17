@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Puts the website for tonwerk.studio together in one folder (default build/site): website/ plus the screenshots from
-# docs/ as img/, so the README and the page show the same pictures. Fails when the page names a picture that does not
+# docs/ as img/ (the app icons are in website/icons, written by scripts/make-icons.py), so the README and the page show the same pictures. Fails when the page names a picture that does not
 # exist or leaves out a plugin the build makes, so a new plugin cannot be forgotten there.
 #
 #   scripts/build-website.sh [folder]
@@ -17,7 +17,7 @@ cp "$root"/docs/*.png "$site/img/"
 
 failed=0
 for page in "$site"/*.html; do
-  for picture in $(grep -o 'img/[A-Za-z0-9._-]*' "$page" | sort -u); do
+  for picture in $(grep -oE '(img|icons)/[A-Za-z0-9._-]*' "$page" | sort -u); do
     if [[ ! -f "$site/$picture" ]]; then
       echo "$(basename "$page") zeigt $picture, das gibt es nicht." >&2
       failed=1

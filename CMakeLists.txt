@@ -64,6 +64,7 @@ set(TONWERK_SOURCES
 function(tonwerk_add_synth target product bundle code edition)
     juce_add_plugin(${target}
         PRODUCT_NAME "${product}"
+        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/${target}.png"
         COMPANY_NAME "b-velop"
         COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
         BUNDLE_ID ${bundle}
@@ -94,6 +95,7 @@ tonwerk_add_synth(TonwerkSynth "Tonwerk Synth" de.bvelop.tonwerksynth Twsy combi
 # Chrome Glitch: an audio effect from the same repository, for a voice whose speech chrome fails (glitch/).
 juce_add_plugin(ChromeGlitch
     PRODUCT_NAME "Chrome Glitch"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/ChromeGlitch.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.chromeglitch
@@ -125,6 +127,7 @@ target_link_libraries(ChromeGlitch
 # Tonwerk Distortion: a classic guitar distortion pedal's circuit as an audio effect (distortion/).
 juce_add_plugin(TonwerkDistortion
     PRODUCT_NAME "Tonwerk Distortion"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDistortion.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkdistortion
@@ -156,6 +159,7 @@ target_link_libraries(TonwerkDistortion
 # Tonwerk Wavetable: a wavetable synthesizer for basses and leads (wavetable/).
 juce_add_plugin(TonwerkWavetable
     PRODUCT_NAME "Tonwerk Wavetable"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkWavetable.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkwavetable
@@ -188,6 +192,7 @@ target_link_libraries(TonwerkWavetable
 # Tonwerk DX: six-operator FM with 32 algorithms, with Tonwerk's delay and hall (dx/).
 juce_add_plugin(TonwerkDX
     PRODUCT_NAME "Tonwerk DX"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDX.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkdx
@@ -219,6 +224,7 @@ target_link_libraries(TonwerkDX
 # Tonwerk Granular: clouds of grains from its own sources or a file of the user's, with Tonwerk's delay and hall (granular/).
 juce_add_plugin(TonwerkGranular
     PRODUCT_NAME "Tonwerk Granular"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGranular.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkgranular
@@ -251,6 +257,7 @@ target_link_libraries(TonwerkGranular
 # Tonwerk Physical: strings, tubes and struck bodies built from their physics, with Tonwerk's delay and hall (physical/).
 juce_add_plugin(TonwerkPhysical
     PRODUCT_NAME "Tonwerk Physical"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkPhysical.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkphysical
@@ -282,6 +289,7 @@ target_link_libraries(TonwerkPhysical
 # Tonwerk Additiv: sounds built from up to 64 sine partials, with Tonwerk's delay and hall (additive/).
 juce_add_plugin(TonwerkAdditiv
     PRODUCT_NAME "Tonwerk Additiv"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkAdditiv.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkadditiv
@@ -313,6 +321,7 @@ target_link_libraries(TonwerkAdditiv
 # Tonwerk Groovebox: a drum machine of synthesised drums with a step sequencer in the host's tempo (groovebox/).
 juce_add_plugin(TonwerkGroovebox
     PRODUCT_NAME "Tonwerk Groovebox"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGroovebox.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkgroovebox
@@ -345,6 +354,7 @@ target_link_libraries(TonwerkGroovebox
 # Logic can send it MIDI notes for its carrier through the side chain.
 juce_add_plugin(TonwerkRobovox
     PRODUCT_NAME "Tonwerk Robovox"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkRobovox.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkrobovox
@@ -377,6 +387,7 @@ target_link_libraries(TonwerkRobovox
 # Tonwerk Wobble: a filter and a volume shaper moved by drawn, tempo-synced LFO curves, for dubstep wobbles (wobble/).
 juce_add_plugin(TonwerkWobble
     PRODUCT_NAME "Tonwerk Wobble"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkWobble.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkwobble
@@ -408,6 +419,7 @@ target_link_libraries(TonwerkWobble
 # Tonwerk PD: phase distortion as on Casio's CZ synths, with a chorus and Tonwerk's delay and hall (pd/).
 juce_add_plugin(TonwerkPD
     PRODUCT_NAME "Tonwerk PD"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkPD.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkpd
@@ -439,6 +451,7 @@ target_link_libraries(TonwerkPD
 # Tonwerk Tape: a worn tape machine as an audio effect, saturation, wow and flutter, hiss, dropouts (tape/).
 juce_add_plugin(TonwerkTape
     PRODUCT_NAME "Tonwerk Tape"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkTape.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerktape
@@ -470,6 +483,7 @@ target_link_libraries(TonwerkTape
 # Tonwerk Freeze: a spectral freeze that holds a moment of the input as an endless pad (freeze/).
 juce_add_plugin(TonwerkFreeze
     PRODUCT_NAME "Tonwerk Freeze"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkFreeze.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkfreeze
@@ -501,6 +515,7 @@ target_link_libraries(TonwerkFreeze
 # a software instrument track's MIDI FX slot; no audio buses.
 juce_add_plugin(TonwerkArp
     PRODUCT_NAME "Tonwerk Arp"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkArp.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkarp
@@ -532,6 +547,7 @@ target_link_libraries(TonwerkArp
 # Tonwerk Sampler: a sampler for chromatic samples, loops and slices, from sounds built in or the user's own file (sampler/).
 juce_add_plugin(TonwerkSampler
     PRODUCT_NAME "Tonwerk Sampler"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkSampler.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerksampler
@@ -563,6 +579,7 @@ target_link_libraries(TonwerkSampler
 # Tonwerk Bass: an acid bass in the manner of the TB-303, one voice with slide and accent, with Tonwerk's delay and hall (bass/).
 juce_add_plugin(TonwerkBass
     PRODUCT_NAME "Tonwerk Bass"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkBass.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkbass
@@ -593,6 +610,7 @@ target_link_libraries(TonwerkBass
 # Tonwerk Vocoder: a classic channel vocoder, the voice on the side chain and an eight-voice synth played by MIDI as the carrier (vocoder/).
 juce_add_plugin(TonwerkVocoder
     PRODUCT_NAME "Tonwerk Vocoder"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkVocoder.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkvocoder
@@ -623,6 +641,7 @@ target_link_libraries(TonwerkVocoder
 # Tonwerk Delay: ping-pong, stereo or mono echoes in the host tempo with filters and saturation in the feedback and ducking (delay/).
 juce_add_plugin(TonwerkDelay
     PRODUCT_NAME "Tonwerk Delay"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDelay.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkdelay
@@ -653,6 +672,7 @@ target_link_libraries(TonwerkDelay
 # Tonwerk Chorus: chorus, ensemble, flanger and phaser on one LFO, free or in the host tempo (chorus/).
 juce_add_plugin(TonwerkChorus
     PRODUCT_NAME "Tonwerk Chorus"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkChorus.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkchorus
@@ -683,6 +703,7 @@ target_link_libraries(TonwerkChorus
 # Tonwerk Glue: a bus compressor with a side chain and a pump in the host tempo (glue/).
 juce_add_plugin(TonwerkGlue
     PRODUCT_NAME "Tonwerk Glue"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGlue.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkglue
@@ -713,6 +734,7 @@ target_link_libraries(TonwerkGlue
 # Tonwerk Shimmer: a reverb whose tail rises by an interval on each round trip (shimmer/).
 juce_add_plugin(TonwerkShimmer
     PRODUCT_NAME "Tonwerk Shimmer"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkShimmer.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkshimmer
@@ -743,6 +765,7 @@ target_link_libraries(TonwerkShimmer
 # Tonwerk Filter: a multimode filter moved by an envelope follower and a tempo-synced LFO (filter/).
 juce_add_plugin(TonwerkFilter
     PRODUCT_NAME "Tonwerk Filter"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkFilter.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkfilter
@@ -774,6 +797,7 @@ target_link_libraries(TonwerkFilter
 # Tonwerk Neuro: a mono bass for Reese and neuro sounds, detuned saws, FM and a clean sub, wobbled in tempo (neuro/).
 juce_add_plugin(TonwerkNeuro
     PRODUCT_NAME "Tonwerk Neuro"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkNeuro.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkneuro
@@ -804,6 +828,7 @@ target_link_libraries(TonwerkNeuro
 # Tonwerk Stutter: a beat repeat on the song's grid, its repeats pitched, reversed, faded and filtered (stutter/).
 juce_add_plugin(TonwerkStutter
     PRODUCT_NAME "Tonwerk Stutter"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkStutter.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkstutter
@@ -835,6 +860,7 @@ target_link_libraries(TonwerkStutter
 # Tonwerk Multiband: a three-band compressor, downward and upward (multiband/).
 juce_add_plugin(TonwerkMultiband
     PRODUCT_NAME "Tonwerk Multiband"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkMultiband.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkmultiband
@@ -866,6 +892,7 @@ target_link_libraries(TonwerkMultiband
 # Tonwerk Zone: a compressor on one range of the spectrum, a dynamic EQ with a side chain (zone/).
 juce_add_plugin(TonwerkZone
     PRODUCT_NAME "Tonwerk Zone"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkZone.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkzone
@@ -897,6 +924,7 @@ target_link_libraries(TonwerkZone
 # Tonwerk Scope: an oscilloscope that passes the audio through untouched (scope/).
 juce_add_plugin(TonwerkScope
     PRODUCT_NAME "Tonwerk Scope"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkScope.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
     BUNDLE_ID de.bvelop.tonwerkscope
