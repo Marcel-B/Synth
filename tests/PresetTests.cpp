@@ -5,6 +5,8 @@
 #include "NeuroPresets.h"
 #include "NeuroProcessor.h"
 #include "DxPresets.h"
+#include "ExpanderPresets.h"
+#include "ExpanderProcessor.h"
 #include "Loudness.h"
 #include "DxProcessor.h"
 #include "GranularPresets.h"
@@ -64,6 +66,8 @@ bool roomPlaying(const juce::AudioProcessor& processor)
         return bass->roomPlaying();
     if (const auto* neuro = dynamic_cast<const tonwerkneuro::NeuroProcessor*>(&processor))
         return neuro->roomPlaying();
+    if (const auto* expander = dynamic_cast<const tonwerkexpander::ExpanderProcessor*>(&processor))
+        return expander->roomPlaying();
     return true;
 }
 
@@ -275,6 +279,10 @@ std::vector<Instrument> instruments()
     list.push_back({ "Tonwerk Neuro", (int) tonwerkneuro::factoryPresets().size(),
                      [] { return std::make_unique<tonwerkneuro::NeuroProcessor>(); },
                      [](int i) { return tonwerkneuro::factoryPresets()[(std::size_t) i].category; },
+                     [](int i) { return i == 0; } });
+    list.push_back({ "Tonwerk Expander", (int) tonwerkexpander::factoryPresets().size(),
+                     [] { return std::make_unique<tonwerkexpander::ExpanderProcessor>(); },
+                     [](int i) { return tonwerkexpander::factoryPresets()[(std::size_t) i].category; },
                      [](int i) { return i == 0; } });
     return list;
 }

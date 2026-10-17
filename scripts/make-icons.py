@@ -361,6 +361,19 @@ def scope(p):
     p.curve(lambda x: 0.55 * math.sin(math.pi * 2 * x) * math.cos(math.pi * x * 0.5), -0.88, 0.88, 300, 32)
 
 
+def expander(p):
+    # A module of two oscillators and a multimode filter: a pulse over the notch between lowpass and highpass.
+    p.line([(-0.95, 0.35), (-0.55, 0.35), (-0.55, 0.85), (-0.05, 0.85), (-0.05, 0.35), (0.45, 0.35), (0.45, 0.85),
+            (0.95, 0.85)], 34)
+
+    def f(x):
+        w = math.exp(3.2 * x)
+        k = 1.6
+        mag = abs(1 - w * w) / math.sqrt((1 - w * w) ** 2 + (k * w) ** 2)
+        return max(-0.85, -0.2 + 0.45 * math.log10(max(mag, 1e-3)))
+    p.curve(f, steps=90)
+
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -393,6 +406,7 @@ ICONS = {
     "TonwerkMultiband": (multiband, EFFECT),
     "TonwerkZone": (zone, EFFECT),
     "TonwerkScope": (scope, EFFECT),
+    "TonwerkExpander": (expander, INSTRUMENT),
     "TonwerkArp": (arp, MIDI),
 }
 
