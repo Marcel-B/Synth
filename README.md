@@ -673,6 +673,18 @@ Die App liegt danach unter `build-ios/Tonwerk_artefacts/Release/Tonwerk.app`. Au
 
 Die Action `build.yml` baut bei jedem Push die App für den Simulator, prüft, dass sie alle 32 AUv3s enthält, öffnet einige Plugins darin in einem iPad-Simulator und legt Bildschirmfotos als Artefakt `ipad-screenshots` ab.
 
+### Für den Mac aus dem App Store (in Arbeit)
+
+Dieselbe App gibt es auch für den Mac, über den Mac App Store: **Tonwerk** mit allen 32 Plugins als AUv3, die Logic Pro, GarageBand und MainStage unter Audio Units → b-velop finden, und allein gespielt wie auf dem iPad (im Fenster statt im Vollbild). Sie hat dieselbe Bundle-ID wie die iPad-App, App Store Connect führt beide als eine App mit zwei Plattformen. Die Plugins haben dieselben Codes wie die Audio Units aus `install.sh`, ein Logic-Projekt öffnet sich also mit beiden, und auch die Projekte von Logic Pro für iPad.
+
+Was sich gegenüber den Plugins aus `install.sh` ändert:
+
+- **Sandbox**: Der App Store nimmt nur Apps in einer Sandbox. Die Plugins laufen deshalb in einem eigenen Prozess, ihre Einstellungen und Klänge liegen in ihrem Container (`~/Library/Containers/de.bvelop.tonwerk.<plugin>/Data/Library/Application Support`) statt unter `~/Library/Application Support`. Eigene Samples und SysEx werden beim Laden in den Container kopiert, wie auf dem iPad, denn die Erlaubnis für die gewählte Datei endet mit dem Prozess; Menüs öffnen sich in der Oberfläche.
+- **Kein VST3, keine einzelnen Apps**: Im App Store gibt es nur die eine App mit den AUv3s. VST3 und die einzelnen Apps bleiben im Release-Zip.
+- **Nicht beides zugleich**: Dieselben Plugins aus `install.sh` und aus dem App Store melden sich mit denselben Codes, Logic zeigt sie dann als „nicht verfügbar“. Wer die App aus dem Store nimmt, löscht die Tonwerk-Komponenten unter `~/Library/Audio/Plug-Ins/Components` und lässt den Plug-in-Manager neu scannen. Dasselbe gilt für die iPad-App auf einem Mac mit Apple-Chip.
+
+Gebaut wird sie mit `-G Xcode -DTONWERK_MAC_STORE=ON` (volles Xcode). `build.yml` baut sie bei jedem Push und prüft die Sandbox jeder Erweiterung, die Action **TestFlight** lädt sie zusammen mit der iPad-App hoch (Auswahl **Plattformen**: beide, iPad oder Mac).
+
 ### TestFlight
 
 Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App, signiert sie für den App Store und lädt sie zu TestFlight hoch; die Version ist die des letzten Tags, die Build-Nummer die Nummer des Laufs. Einmal einzurichten:
@@ -681,9 +693,11 @@ Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App
 2. Unter Benutzer und Zugriff → Integrationen einen API-Schlüssel mit der Rolle **Admin** erzeugen und die `.p8`-Datei laden (geht nur einmal).
 3. Im Repository unter Settings → Secrets and variables → Actions eintragen: `ASC_KEY_ID` (die zehn Zeichen im Dateinamen `AuthKey_….p8`), `ASC_ISSUER_ID` (über der Schlüsselliste) und `ASC_KEY_P8` (der ganze Inhalt der Datei, mit den Zeilen BEGIN und END). `APPLE_TEAM_ID` ist schon da.
 
+Für den Mac kommt einmal dazu: in App Store Connect bei der App Tonwerk unter **Plattform hinzufügen** macOS wählen. Zertifikate und Profile für den Mac legt der Build wie beim iPad selbst an.
+
 Nach dem Upload prüft Apple den Build einige Minuten; dann erscheint er in App Store Connect unter TestFlight, und wer dort als interner Tester eingetragen ist, installiert ihn mit der App TestFlight.
 
-**Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action, die App auch unter Linux gebaut und gestartet. Der Upload zu TestFlight lief am 17.10.2026 durch (Build 0.5.0 (2)); installiert und gespielt ist er noch nicht. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale), Bluetooth-MIDI und die Dateien-App.
+**Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action, die App auch unter Linux gebaut und gestartet. Der Upload zu TestFlight lief am 17.10.2026 durch (Build 0.5.0 (2) wurde wegen der IDs der Erweiterungen abgelehnt, 0.5.0 (4) angenommen und von Marcel auf dem iPad installiert, 0.5.0 (6) mit der neuen Tastatur hochgeladen). Die Mac-Version ist bisher nur gebaut, noch nicht hochgeladen und nirgends gestartet. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale), Bluetooth-MIDI und die Dateien-App.
 
 ## Signieren mit Developer ID
 

@@ -6,6 +6,19 @@ project(TonwerkSynth VERSION ${TONWERK_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# The Mac App Store's Tonwerk (-G Xcode -DTONWERK_MAC_STORE=ON, testflight.yml): the iPad's app built for the Mac, every
+# plugin an AUv3 inside it, sandboxed. The Mac's own build (AU, VST3, standalone apps) stays without it.
+option(TONWERK_MAC_STORE "Build the Tonwerk app for the Mac App Store (AUv3 only, sandboxed, Xcode generator)" OFF)
+if(TONWERK_MAC_STORE AND NOT (APPLE AND CMAKE_GENERATOR STREQUAL "Xcode" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS"))
+    message(FATAL_ERROR "TONWERK_MAC_STORE needs the Mac and -G Xcode")
+endif()
+# Either store build: one app with every plugin's AUv3, ids under the app's.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR TONWERK_MAC_STORE)
+    set(TONWERK_STORE ON)
+else()
+    set(TONWERK_STORE OFF)
+endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     # The iPad (scripts/build-ios.sh): every iPad that runs iPadOS 15 has an arm64 chip, as do the simulators on
     # Apple Silicon.
@@ -44,7 +57,7 @@ endif()
 # On the iPad every plugin is an AUv3 inside the one Tonwerk app (app/, below; Logic Pro for iPad, GarageBand, AUM load
 # the AUv3s, the app plays them on its own). iOS needs the Xcode generator (its SDK and the app extension's embedding come only with Xcode); the Mac's own
 # build stays on the Command Line Tools.
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(TONWERK_STORE)
     set(TONWERK_FORMATS AUv3)
 elseif(APPLE)
     set(TONWERK_FORMATS AU VST3 Standalone)
@@ -61,16 +74,27 @@ set(TONWERK_IOS_OPTIONS
     STATUS_BAR_HIDDEN TRUE
     BACKGROUND_AUDIO_ENABLED TRUE)
 
-# An app extension's bundle id must be its app's plus one more part, so on the iPad the plugins' ids sit under the
-# app's (de.bvelop.tonwerk.tonwerkdx, which the AUv3 takes as it is, below). The Mac keeps its ids.
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+# An app extension's bundle id must be its app's plus one more part, so in the store builds the plugins' ids sit under
+# the app's (de.bvelop.tonwerk.tonwerkdx, which the AUv3 takes as it is, below), the same on the iPad and the Mac, so
+# App Store Connect sells both as one app. The Mac's own build keeps its ids.
+if(TONWERK_STORE)
     set(TONWERK_BUNDLE_PREFIX de.bvelop.tonwerk)
     # TestFlight takes every upload only with a build number of its own (CFBundleVersion); the app and its
     # extensions must carry the same one. The upload workflow passes its run number.
-    set(TONWERK_BUILD_NUMBER "${TONWERK_VERSION}" CACHE STRING "CFBundleVersion of the iPad app and its AUv3s")
+    set(TONWERK_BUILD_NUMBER "${TONWERK_VERSION}" CACHE STRING "CFBundleVersion of the store app and its AUv3s")
     list(APPEND TONWERK_IOS_OPTIONS BUILD_VERSION "${TONWERK_BUILD_NUMBER}")
 else()
     set(TONWERK_BUNDLE_PREFIX de.bvelop)
+endif()
+
+# The Mac App Store takes only sandboxed apps and extensions. They reach Tonwerk over the network (the preset import)
+# and open the files the user picks (samples, SysEx, patches); a picked file is copied into the container, since the
+# permission ends with the process (TONWERK_SANDBOX, common/Platform.h). APP_SANDBOX_OPTIONS stays last, so the app
+# can add its microphone to the list.
+if(TONWERK_MAC_STORE)
+    list(APPEND TONWERK_IOS_OPTIONS
+        APP_SANDBOX_ENABLED TRUE
+        APP_SANDBOX_OPTIONS com.apple.security.network.client com.apple.security.files.user-selected.read-write)
 endif()
 
 # The effects' standalone apps read the audio interface's inputs. macOS hands an app without a microphone usage text in
@@ -84,6 +108,9 @@ set(TONWERK_DEFINITIONS
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0)
+if(TONWERK_MAC_STORE)
+    list(APPEND TONWERK_DEFINITIONS TONWERK_SANDBOX=1)
+endif()
 
 # The Night City look the plugins share: colours, panels, knobs, the oscilloscope (common/).
 set(TONWERK_UI_SOURCES common/NightCity.cpp common/MidiLearn.cpp)
@@ -1100,9 +1127,9 @@ target_link_libraries(TonwerkLFO
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
-# Tonwerk, the iPad app (app/): every plugin's AUv3 inside one app, which also plays the instruments and effects on its
+# Tonwerk, the iPad's and the Mac App Store's app (app/): every plugin's AUv3 inside one app, which also plays the instruments and effects on its
 # own from the same sources the tests compile. It builds on the desktop too (-DTONWERK_APP=ON) to try it there.
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+if(TONWERK_STORE)
     set(TONWERK_APP_DEFAULT ON)
 else()
     set(TONWERK_APP_DEFAULT OFF)
@@ -1175,18 +1202,23 @@ set(TONWERK_NO_ENTRIES
     TONWERK_LFO_NO_ENTRY=1)
 
 if(TONWERK_APP)
+    if(TONWERK_MAC_STORE)
+        set(tonwerk_app_sandbox com.apple.security.device.audio-input)
+    endif()
     juce_add_gui_app(Tonwerk
         PRODUCT_NAME "Tonwerk"
         ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/Tonwerk.png"
         COMPANY_NAME "b-velop"
         COMPANY_WEBSITE "https://tonwerk.studio"
         BUNDLE_ID de.bvelop.tonwerk
-        ${TONWERK_IOS_OPTIONS}
         ${TONWERK_INPUT_PERMISSION}
         BLUETOOTH_PERMISSION_ENABLED TRUE
         BLUETOOTH_PERMISSION_TEXT "Verbindet MIDI-Keyboards über Bluetooth."
-        # No encryption beyond the system's, so TestFlight asks no export questions.
-        PLIST_TO_MERGE "<plist><dict><key>ITSAppUsesNonExemptEncryption</key><false/></dict></plist>")
+        # No encryption beyond the system's, so TestFlight asks no export questions; the Mac App Store wants a category.
+        PLIST_TO_MERGE "<plist><dict><key>ITSAppUsesNonExemptEncryption</key><false/><key>LSApplicationCategoryType</key><string>public.app-category.music</string></dict></plist>"
+        # Last, so on the Mac the microphone joins the sandbox's options (Tonwerk Scope's input).
+        ${TONWERK_IOS_OPTIONS}
+        ${tonwerk_app_sandbox})
     target_sources(Tonwerk PRIVATE app/src/TonwerkApp.cpp app/src/Catalogue.cpp ${TONWERK_ALL_SOURCES})
     target_include_directories(Tonwerk PRIVATE ${TONWERK_ALL_INCLUDES})
     target_compile_definitions(Tonwerk PRIVATE
@@ -1198,7 +1230,7 @@ if(TONWERK_APP)
         PRIVATE juce::juce_audio_utils juce::juce_dsp
         PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
-    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    if(TONWERK_STORE)
         # Every plugin's AUv3 goes into the app's PlugIns folder.
         set(tonwerk_extensions
             TonwerkAnalog_AUv3 TonwerkFM_AUv3 TonwerkSynth_AUv3 ChromeGlitch_AUv3 TonwerkDistortion_AUv3
@@ -1248,8 +1280,8 @@ endif()
 
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
-# The tests run on the Mac and Linux; the iPad build has the same DSP.
-if(TONWERK_TESTS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+# The tests run on the Mac and Linux; the store builds have the same DSP.
+if(TONWERK_TESTS AND NOT TONWERK_STORE)
     enable_testing()
     juce_add_console_app(TonwerkSynthTests PRODUCT_NAME "Tonwerk Synth Tests")
     target_sources(TonwerkSynthTests PRIVATE
