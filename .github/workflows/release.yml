@@ -67,7 +67,7 @@ jobs:
           mkdir "$DIR"
           cp -R "$ARTEFACTS/AU/Tonwerk Synth.component" "$ARTEFACTS/VST3/Tonwerk Synth.vst3" \
             "$ARTEFACTS/Standalone/Tonwerk Synth.app" "$DIR/"
-          for synth in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer" "TonwerkFilter:Tonwerk Filter" "TonwerkNeuro:Tonwerk Neuro" "TonwerkStutter:Tonwerk Stutter" "TonwerkMultiband:Tonwerk Multiband" "TonwerkZone:Tonwerk Zone" "TonwerkScope:Tonwerk Scope" "TonwerkExpander:Tonwerk Expander"; do
+          for synth in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer" "TonwerkFilter:Tonwerk Filter" "TonwerkNeuro:Tonwerk Neuro" "TonwerkStutter:Tonwerk Stutter" "TonwerkMultiband:Tonwerk Multiband" "TonwerkZone:Tonwerk Zone" "TonwerkScope:Tonwerk Scope" "TonwerkExpander:Tonwerk Expander" "TonwerkLFO:Tonwerk LFO"; do
             FROM="build/${synth%%:*}_artefacts/Release"
             PRODUCT="${synth#*:}"
             cp -R "$FROM/AU/$PRODUCT.component" "$FROM/VST3/$PRODUCT.vst3" "$FROM/Standalone/$PRODUCT.app" "$DIR/"
@@ -126,6 +126,7 @@ jobs:
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Zone.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Scope.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Expander.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk LFO.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
           auval -strict -v aumu TwAn Bvlp
@@ -145,6 +146,7 @@ jobs:
           auval -strict -v aufx TwTp Bvlp
           auval -strict -v aufx TwFz Bvlp
           auval -strict -v aumi TwAr Bvlp
+          auval -strict -v aumi TwLf Bvlp
           auval -strict -v aumu TwSm Bvlp
           auval -strict -v aumu TwBs Bvlp
           auval -strict -v aumf TwVc Bvlp
@@ -237,7 +239,7 @@ jobs:
             SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
           fi
           gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<NOTES
-          Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, der Reese- und Neuro-Bass Tonwerk Neuro, der achtstimmige Analog-Synth Tonwerk Expander, die Drum-Machine Tonwerk Groovebox und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope und Tonwerk Freeze, dazu der MIDI-Effekt Tonwerk Arp (Arpeggiator und Step-Sequencer).
+          Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, der Reese- und Neuro-Bass Tonwerk Neuro, der achtstimmige Analog-Synth Tonwerk Expander, die Drum-Machine Tonwerk Groovebox und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope und Tonwerk Freeze, dazu der MIDI-Effekte Tonwerk Arp (Arpeggiator und Step-Sequencer) und Tonwerk LFO (bewegt per MIDI-Controller jeden Regler eines Instruments).
 
           **macOS** (\`Tonwerk-Synth-$VERSION-macOS.zip\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Zip laden, im Terminal
           \`cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh\`

@@ -380,6 +380,7 @@ void GrooveProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    midiLearn.process(midi);
     juce::ScopedNoDenormals noDenormals;
     const int count = buffer.getNumSamples();
     const double rate = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;

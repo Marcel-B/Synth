@@ -3,6 +3,8 @@
 #include "EffectsChain.h"
 #include "SamplerEngine.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -67,6 +69,8 @@ public:
     std::shared_ptr<const Sample> shownSample() const;
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     juce::MidiKeyboardState keyboardState;
     /** The newest voices' places as shares of the sample, -1 where none, for the editor's play heads. */
     std::array<std::atomic<float>, 8> playheads {};

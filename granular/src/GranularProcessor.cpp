@@ -340,6 +340,7 @@ void GranularProcessor::handle(const juce::MidiMessage& message, const Settings&
 
 void GranularProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    midiLearn.process(midi);
     juce::ScopedNoDenormals noDenormals;
     const int count = buffer.getNumSamples();
     keyboardState.processNextMidiBuffer(midi, 0, count, true);

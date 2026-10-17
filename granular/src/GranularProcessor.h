@@ -3,6 +3,8 @@
 #include "EffectsChain.h"
 #include "GranularEngine.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -65,6 +67,8 @@ public:
     std::shared_ptr<const GrainSource> shownSource() const;
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     juce::MidiKeyboardState keyboardState;
 
     /** The newest note's grains (place 0 to 1, or -1) and where its cloud is centred, for the display. */

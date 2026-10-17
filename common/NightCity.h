@@ -61,16 +61,29 @@ public:
 };
 
 /** A knob, menu or switch with its name above, tied to a parameter; the knob shows the parameter's own text. */
-class Control : public juce::Component
+class Control : public juce::Component, private juce::ChangeListener
 {
 public:
     /** `slots` 0 takes the control's own width: two for a menu, so its entries fit, one otherwise. */
     Control(juce::AudioProcessorValueTreeState& state, const juce::String& parameterId, const juce::String& label,
             int slots = 0);
+    ~Control() override;
     void resized() override;
     int slots() const { return width; }
 
+    /**
+     * In a plugin with MIDI learn (`MidiLearn`), a right click on a knob offers to learn a controller or forget it;
+     * the name shows the controller (“Cutoff · CC20”) or that it is listening.
+     */
+    void showMidiMenu();
+    juce::String shownName() const { return name.getText(); }
+
 private:
+    void changeListenerCallback(juce::ChangeBroadcaster*) override { showMapping(); }
+    void showMapping();
+
+    juce::AudioProcessorValueTreeState& state;
+    juce::String id, label;
     juce::Label name;
     std::unique_ptr<juce::Slider> slider;
     std::unique_ptr<juce::ComboBox> menu;

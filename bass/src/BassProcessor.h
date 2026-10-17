@@ -4,6 +4,8 @@
 #include "EffectsChain.h"
 #include "ScopeBuffer.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -57,6 +59,8 @@ public:
     static juce::String noteName(int note);
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     juce::MidiKeyboardState keyboardState;
     tonwerkui::ScopeBuffer scope;
 

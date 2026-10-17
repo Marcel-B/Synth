@@ -2,6 +2,8 @@
 
 #include "WaveEngine.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_dsp/juce_dsp.h>
@@ -54,6 +56,8 @@ public:
     juce::String presetName() const { return state.state.getProperty("presetName", {}).toString(); }
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     juce::MidiKeyboardState keyboardState;
 
     /** Where in their tables the newest note's oscillators play, in frames, or -1 when nothing sounds. */

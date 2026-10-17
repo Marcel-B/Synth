@@ -180,6 +180,7 @@ void VocoderProcessor::handleMidi(const juce::MidiMessage& message, const Settin
 
 void VocoderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    midiLearn.process(midi);
     juce::ScopedNoDenormals noDenormals;
     const int total = buffer.getNumSamples();
     const int inputs = std::min(getTotalNumInputChannels(), buffer.getNumChannels());

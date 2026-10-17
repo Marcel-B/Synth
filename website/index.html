@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tonwerk Studio</title>
-  <meta name="description" content="Tonwerk: Synthesizer, Effekte und ein Arpeggiator für Logic Pro und jede DAW mit VST3. Eigener Code, offen unter der AGPL, kostenlos für macOS, Linux und Windows.">
+  <meta name="description" content="Tonwerk: Synthesizer, Effekte, einen Arpeggiator und ein LFO für Logic Pro und jede DAW mit VST3. Eigener Code, offen unter der AGPL, kostenlos für macOS, Linux und Windows.">
   <meta name="theme-color" content="#0a0b10">
   <meta property="og:title" content="Tonwerk Studio">
-  <meta property="og:description" content="13 Instrumente, 16 Effekte und ein MIDI-Effekt für Logic Pro und VST3. Offen und kostenlos.">
+  <meta property="og:description" content="13 Instrumente, 16 Effekte und zwei MIDI-Effekte für Logic Pro und VST3. Offen und kostenlos.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tonwerk.studio/">
   <meta property="og:image" content="https://tonwerk.studio/img/wavetable.png">
@@ -39,7 +39,7 @@
         <ul class="stats">
           <li><b>13</b>Instrumente</li>
           <li><b>16</b>Effekte</li>
-          <li><b>1</b>MIDI-Effekt</li>
+          <li><b>2</b>MIDI-Effekte</li>
           <li><b>AU</b>VST3 · App</li>
         </ul>
         <div class="actions">
@@ -594,8 +594,8 @@
 
     <section id="midi">
       <div class="wrap">
-        <div class="heading"><h2>MIDI-Effekte</h2><span class="count">1 Plugin</span></div>
-        <p class="intro">Sitzt vor dem Instrument und spielt es. In Logic im MIDI-FX-Slot über dem Instrument: <b>MIDI-FX → Audio Units → b-velop</b>.</p>
+        <div class="heading"><h2>MIDI-Effekte</h2><span class="count">2 Plugins</span></div>
+        <p class="intro">Sitzen vor dem Instrument und spielen oder bewegen es. In Logic im MIDI-FX-Slot über dem Instrument: <b>MIDI-FX → Audio Units → b-velop</b>.</p>
         <div class="grid">
         <article class="card" id="arp">
           <button class="shot" type="button" data-full="img/arp.png" data-title="Tonwerk Arp" aria-label="Bildschirmfoto von Tonwerk Arp vergrößern">
@@ -613,6 +613,24 @@
             <li>Funktioniert mit jedem Instrument, auch Logics eigenen</li>
             </ul>
             <div class="tags"><span>MIDI</span><span>Sequencer</span></div>
+          </div>
+        </article>
+        <article class="card" id="lfo">
+          <button class="shot" type="button" data-full="img/lfo.png" data-title="Tonwerk LFO" aria-label="Bildschirmfoto von Tonwerk LFO vergrößern">
+            <img src="img/lfo.png" alt="Oberfläche von Tonwerk LFO" width="668" height="436" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="icons/TonwerkLFO.png" alt="" width="64" height="64">
+            <h3>Tonwerk LFO</h3>
+            <p class="code">aumi TwLf Bvlp</p>
+            <p class="tagline">Ein LFO, der jeden Regler eines Tonwerk-Instruments bewegt: Er sendet einen MIDI-Controller, das Instrument lernt ihn per Rechtsklick auf den Regler.</p>
+            <ul>
+            <li>Sechs Formen, frei oder im Songtempo</li>
+            <li>14 Bit, damit langsame Sweeps nicht stufen</li>
+            <li>Mehrere hintereinander für mehrere Regler</li>
+            <li>Start mit dem Song oder mit jeder Phrase</li>
+            </ul>
+            <div class="tags"><span>MIDI</span><span>Modulation</span></div>
           </div>
         </article>
         </div>

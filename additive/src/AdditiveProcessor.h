@@ -3,6 +3,8 @@
 #include "AdditiveEngine.h"
 #include "EffectsChain.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -54,6 +56,8 @@ public:
     bool roomPlaying() const { return effects.roomPlaying(); }
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     juce::MidiKeyboardState keyboardState;
 
     /** The newest note as the display draws it: its frequency (0 while nothing sounds) and its partials. */
