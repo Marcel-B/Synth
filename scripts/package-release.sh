@@ -21,6 +21,7 @@ esac
 
 rm -rf "$dir"
 mkdir -p "$dir/VST3" "$dir/Apps"
+if [[ "$platform" == linux ]]; then mkdir -p "$dir/Icons"; fi
 count=0
 for artefacts in "$build"/*_artefacts/Release; do
   [[ -d "$artefacts/VST3" ]] || continue
@@ -29,6 +30,10 @@ for artefacts in "$build"/*_artefacts/Release; do
   # The standalone app is one executable (Linux) or .exe (Windows) next to nothing else.
   for app in "$artefacts"/Standalone/*; do
     if [[ -f "$app" ]]; then cp "$app" "$dir/Apps/"; fi
+    # Windows has the icon inside the .exe; on Linux install.sh puts it in the application menu, named like the app.
+    target="$(basename "$(dirname "$artefacts")")"
+    icon="$scripts/../icons/${target%_artefacts}.png"
+    if [[ -f "$app" && "$platform" == linux && -f "$icon" ]]; then cp "$icon" "$dir/Icons/$(basename "$app").png"; fi
   done
 done
 if [[ $count -eq 0 ]]; then
