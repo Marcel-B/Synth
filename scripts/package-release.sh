@@ -41,7 +41,7 @@ if [[ $count -eq 0 ]]; then
   exit 1
 fi
 echo "$count Plugins gepackt."
-# AGPL-3.0 and the attribution term travel with every binary, as in the macOS zip.
+# The licence and its Required Notice travel with every binary, as in the macOS zip.
 cp "$scripts/../LICENSE" "$scripts/../NOTICE" "$dir/"
 
 if [[ "$platform" == linux ]]; then
