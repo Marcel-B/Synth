@@ -1,4 +1,5 @@
 #include "DelayProcessor.h"
+#include "Platform.h"
 
 #include "DelayEditor.h"
 #include "DelayPresets.h"
@@ -165,7 +166,7 @@ void DelayProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     duckGain.store(engine.duckGainNow(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* DelayProcessor::createEditor() { return new DelayEditor(*this); }
+juce::AudioProcessorEditor* DelayProcessor::createEditor() { return tonwerkui::forHost(new DelayEditor(*this)); }
 
 void DelayProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

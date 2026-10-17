@@ -1,4 +1,5 @@
 #include "GlueProcessor.h"
+#include "Platform.h"
 
 #include "GlueEditor.h"
 #include "GluePresets.h"
@@ -205,7 +206,7 @@ void GlueProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     level.store(loudest, std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* GlueProcessor::createEditor() { return new GlueEditor(*this); }
+juce::AudioProcessorEditor* GlueProcessor::createEditor() { return tonwerkui::forHost(new GlueEditor(*this)); }
 
 void GlueProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

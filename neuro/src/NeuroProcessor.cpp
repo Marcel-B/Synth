@@ -1,4 +1,5 @@
 #include "NeuroProcessor.h"
+#include "Platform.h"
 
 #include "NeuroEditor.h"
 #include "NeuroPresets.h"
@@ -353,7 +354,7 @@ void NeuroProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* NeuroProcessor::createEditor() { return new NeuroEditor(*this); }
+juce::AudioProcessorEditor* NeuroProcessor::createEditor() { return tonwerkui::forHost(new NeuroEditor(*this)); }
 
 int NeuroProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

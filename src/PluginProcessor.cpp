@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "Platform.h"
 
 #include "PluginEditor.h"
 
@@ -195,7 +196,10 @@ void TonwerkSynthProcessor::timerCallback()
     effects.loadRoom(EffectsChain::roomFor(readPatch().fx));
 }
 
-juce::AudioProcessorEditor* TonwerkSynthProcessor::createEditor() { return new TonwerkSynthEditor(*this); }
+juce::AudioProcessorEditor* TonwerkSynthProcessor::createEditor()
+{
+    return tonwerkui::forHost(new TonwerkSynthEditor(*this));
+}
 
 int TonwerkSynthProcessor::getNumPrograms() { return PresetLibrary::factoryPresets(edition).size(); }
 

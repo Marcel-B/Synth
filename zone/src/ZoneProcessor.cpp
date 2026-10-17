@@ -1,4 +1,5 @@
 #include "ZoneProcessor.h"
+#include "Platform.h"
 
 #include "ZoneEditor.h"
 #include "ZonePresets.h"
@@ -232,7 +233,7 @@ void ZoneProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     level.store(std::max(level.load(std::memory_order_relaxed), engine.levelNow()), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return new ZoneEditor(*this); }
+juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return tonwerkui::forHost(new ZoneEditor(*this)); }
 
 void ZoneProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

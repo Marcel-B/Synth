@@ -1,4 +1,5 @@
 #include "BassProcessor.h"
+#include "Platform.h"
 
 #include "BassEditor.h"
 #include "BassPresets.h"
@@ -314,7 +315,7 @@ void BassProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* BassProcessor::createEditor() { return new BassEditor(*this); }
+juce::AudioProcessorEditor* BassProcessor::createEditor() { return tonwerkui::forHost(new BassEditor(*this)); }
 
 int BassProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

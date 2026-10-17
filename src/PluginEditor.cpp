@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "Platform.h"
 
 #include "PresetCategories.h"
 
@@ -658,11 +659,12 @@ void TonwerkSynthEditor::importFile()
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {
-                             if (safe == nullptr || fc.getResult() == juce::File())
+                             if (safe == nullptr || tonwerkui::nothingChosen(fc))
                                  return;
-                             const auto file = fc.getResult();
-                             const auto sounds = namedPatchesFromJson(file.loadFileAsString(),
-                                                                      file.getFileNameWithoutExtension());
+                             const auto sounds = namedPatchesFromJson(
+                                 tonwerkui::readChosenText(fc),
+                                 juce::File::createFileWithoutCheckingPath(tonwerkui::chosenName(fc))
+                                     .getFileNameWithoutExtension());
                              if (sounds.isEmpty())
                              {
                                  safe->setMessage(utf8("In der Datei steht kein Klang."), true);
@@ -699,17 +701,26 @@ void TonwerkSynthEditor::exportFile()
     chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                              | juce::FileBrowserComponent::warnAboutOverwriting,
                          [safe, name](const juce::FileChooser& fc) {
-                             if (safe == nullptr || fc.getResult() == juce::File())
+                             if (safe == nullptr || tonwerkui::nothingChosen(fc))
                                  return;
                              // The shape of one entry in Tonwerk's preset list, so the file loads back as this name.
                              auto entry = new juce::DynamicObject();
                              entry->setProperty("name", name);
                              entry->setProperty("patch", safe->processor.currentPatchJson());
+                             const auto text = juce::JSON::toString(juce::var(entry));
+#if JUCE_IOS
+                             // The picker names the file; it cannot be renamed through its URL.
+                             const auto shown = tonwerkui::chosenName(fc);
+                             const bool written = tonwerkui::writeChosenText(fc, text);
+#else
                              const auto file = fc.getResult().withFileExtension("json");
-                             if (file.replaceWithText(juce::JSON::toString(juce::var(entry))))
-                                 safe->setMessage("Gespeichert in " + file.getFullPathName());
+                             const auto shown = file.getFullPathName();
+                             const bool written = file.replaceWithText(text);
+#endif
+                             if (written)
+                                 safe->setMessage("Gespeichert in " + shown);
                              else
-                                 safe->setMessage("Konnte " + file.getFullPathName() + " nicht schreiben.", true);
+                                 safe->setMessage("Konnte " + shown + " nicht schreiben.", true);
                          });
 }
 

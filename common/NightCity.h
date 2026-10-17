@@ -58,6 +58,7 @@ public:
                           float maxPosition, juce::Slider::SliderStyle, juce::Slider&) override;
     juce::Font getComboBoxFont(juce::ComboBox&) override;
     juce::Font getPopupMenuFont() override;
+    juce::Component* getParentComponentForMenuOptions(const juce::PopupMenu::Options&) override;
 };
 
 /** A knob, menu or switch with its name above, tied to a parameter; the knob shows the parameter's own text. */

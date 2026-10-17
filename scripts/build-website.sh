@@ -25,9 +25,10 @@ for page in "$site"/*.html; do
   done
 done
 
-# Every plugin of CMakeLists.txt but the test app and Tonwerk Synth (kept only for old projects) needs its card.
+# Every plugin of CMakeLists.txt but the test app, Tonwerk Synth (kept only for old projects) and Tonwerk (the iPad app,
+# shown in the iPad download panel) needs its card.
 while read -r product; do
-  case "$product" in "Tonwerk Synth"|"Tonwerk Synth Tests"|"\$"*) continue ;; esac
+  case "$product" in "Tonwerk"|"Tonwerk Synth"|"Tonwerk Synth Tests"|"\$"*) continue ;; esac
   if ! grep -q "<h3>$product</h3>" "$site/index.html"; then
     echo "index.html stellt $product nicht vor." >&2
     failed=1

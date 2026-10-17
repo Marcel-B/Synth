@@ -1,4 +1,5 @@
 #include "FilterProcessor.h"
+#include "Platform.h"
 
 #include "FilterEditor.h"
 #include "FilterPresets.h"
@@ -192,7 +193,7 @@ void FilterProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     envelopeNow.store(engine.envelope(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* FilterProcessor::createEditor() { return new FilterEditor(*this); }
+juce::AudioProcessorEditor* FilterProcessor::createEditor() { return tonwerkui::forHost(new FilterEditor(*this)); }
 
 void FilterProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

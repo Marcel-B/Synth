@@ -1,4 +1,5 @@
 #include "WobbleProcessor.h"
+#include "Platform.h"
 
 #include "WobbleEditor.h"
 #include "WobblePresets.h"
@@ -240,7 +241,7 @@ void WobbleProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     value[1].store(engine.channel(0).volumeValue(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* WobbleProcessor::createEditor() { return new WobbleEditor(*this); }
+juce::AudioProcessorEditor* WobbleProcessor::createEditor() { return tonwerkui::forHost(new WobbleEditor(*this)); }
 
 void WobbleProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

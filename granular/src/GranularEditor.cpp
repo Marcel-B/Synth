@@ -1,4 +1,5 @@
 #include "GranularEditor.h"
+#include "Platform.h"
 
 #include "GranularPresets.h"
 #include "PresetCategories.h"
@@ -121,8 +122,9 @@ void SourceSection::choose()
     chooser = std::make_unique<juce::FileChooser>(utf8("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
-                             if (c.getResult().existsAsFile())
-                                 synth.loadFile(c.getResult());
+                             const auto file = tonwerkui::keepChosen(c, tonwerkui::keptFilesFolder("Tonwerk Granular"));
+                             if (file.existsAsFile())
+                                 synth.loadFile(file);
                          });
 }
 

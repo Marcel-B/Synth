@@ -1,4 +1,5 @@
 #include "GlitchProcessor.h"
+#include "Platform.h"
 
 #include "GlitchEditor.h"
 #include "GlitchPresets.h"
@@ -140,7 +141,7 @@ void ChromeGlitchProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
 juce::AudioProcessorEditor* ChromeGlitchProcessor::createEditor()
 {
-    return new ChromeGlitchEditor(*this);
+    return tonwerkui::forHost(new ChromeGlitchEditor(*this));
 }
 
 void ChromeGlitchProcessor::getStateInformation(juce::MemoryBlock& destData)

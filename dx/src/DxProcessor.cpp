@@ -1,4 +1,5 @@
 #include "DxProcessor.h"
+#include "Platform.h"
 
 #include "DxEditor.h"
 #include "DxPresets.h"
@@ -309,7 +310,7 @@ void DxProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor(readPatch())));
 }
 
-juce::AudioProcessorEditor* DxProcessor::createEditor() { return new DxEditor(*this); }
+juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost(new DxEditor(*this)); }
 
 int DxProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

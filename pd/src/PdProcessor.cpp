@@ -1,4 +1,5 @@
 #include "PdProcessor.h"
+#include "Platform.h"
 
 #include "PdEditor.h"
 #include "PdPresets.h"
@@ -417,7 +418,7 @@ void PdProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PdProcessor::createEditor() { return new PdEditor(*this); }
+juce::AudioProcessorEditor* PdProcessor::createEditor() { return tonwerkui::forHost(new PdEditor(*this)); }
 
 int PdProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

@@ -1,6 +1,7 @@
 #include "NightCity.h"
 
 #include "MidiLearn.h"
+#include "Platform.h"
 
 namespace tonwerkui
 {
@@ -137,10 +138,18 @@ juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox&) { return juce::Font(juc
 
 juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(14.0f)); }
 
+juce::Component* LookAndFeel::getParentComponentForMenuOptions(const juce::PopupMenu::Options& options)
+{
+    return menuParentFor(options);
+}
+
 namespace
 {
-/** A knob whose right click opens the MIDI menu instead of turning it. */
-class Knob : public juce::Slider
+/**
+ * A knob whose right click opens the MIDI menu instead of turning it. A touch screen has no right click: there a finger
+ * held still on the knob for a moment opens it.
+ */
+class Knob : public juce::Slider, private juce::Timer
 {
 public:
     Knob() : juce::Slider(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow) {}
@@ -149,19 +158,38 @@ public:
     void mouseDown(const juce::MouseEvent& e) override
     {
         if (e.mods.isPopupMenu() && onMenu)
+        {
             onMenu();
-        else
-            juce::Slider::mouseDown(e);
+            return;
+        }
+        juce::Slider::mouseDown(e);
+        if (e.source.isTouch() && onMenu)
+            startTimer(kHoldMs);
     }
     void mouseDrag(const juce::MouseEvent& e) override
     {
-        if (! (e.mods.isPopupMenu() && onMenu))
-            juce::Slider::mouseDrag(e);
+        if (e.mods.isPopupMenu() && onMenu)
+            return;
+        if (e.getDistanceFromDragStart() > kHoldSlop)
+            stopTimer();
+        juce::Slider::mouseDrag(e);
     }
     void mouseUp(const juce::MouseEvent& e) override
     {
+        stopTimer();
         if (! (e.mods.isPopupMenu() && onMenu))
             juce::Slider::mouseUp(e);
+    }
+
+private:
+    static constexpr int kHoldMs = 600;
+    static constexpr int kHoldSlop = 6;
+
+    void timerCallback() override
+    {
+        stopTimer();
+        if (onMenu)
+            onMenu();
     }
 };
 } // namespace

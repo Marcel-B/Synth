@@ -1,4 +1,5 @@
 #include "SamplerEditor.h"
+#include "Platform.h"
 
 #include "PresetCategories.h"
 #include "SamplerPresets.h"
@@ -152,8 +153,9 @@ void SampleSection::choose()
     chooser = std::make_unique<juce::FileChooser>(utf8("Audiodatei als Sample"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
-                             if (c.getResult().existsAsFile())
-                                 synth.loadFile(c.getResult());
+                             const auto file = tonwerkui::keepChosen(c, tonwerkui::keptFilesFolder("Tonwerk Sampler"));
+                             if (file.existsAsFile())
+                                 synth.loadFile(file);
                          });
 }
 

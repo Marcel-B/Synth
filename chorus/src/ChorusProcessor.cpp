@@ -1,4 +1,5 @@
 #include "ChorusProcessor.h"
+#include "Platform.h"
 
 #include "ChorusEditor.h"
 #include "ChorusPresets.h"
@@ -201,7 +202,7 @@ void ChorusProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     phase.store(engine.phaseNow(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ChorusProcessor::createEditor() { return new ChorusEditor(*this); }
+juce::AudioProcessorEditor* ChorusProcessor::createEditor() { return tonwerkui::forHost(new ChorusEditor(*this)); }
 
 void ChorusProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

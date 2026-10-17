@@ -1,4 +1,5 @@
 #include "ExpanderProcessor.h"
+#include "Platform.h"
 
 #include "ExpanderEditor.h"
 #include "ExpanderPresets.h"
@@ -399,7 +400,7 @@ void ExpanderProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* ExpanderProcessor::createEditor() { return new ExpanderEditor(*this); }
+juce::AudioProcessorEditor* ExpanderProcessor::createEditor() { return tonwerkui::forHost(new ExpanderEditor(*this)); }
 
 int ExpanderProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

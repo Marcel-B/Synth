@@ -1,4 +1,5 @@
 #include "MultibandProcessor.h"
+#include "Platform.h"
 
 #include "MultibandEditor.h"
 #include "MultibandPresets.h"
@@ -178,7 +179,10 @@ void MultibandProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
     }
 }
 
-juce::AudioProcessorEditor* MultibandProcessor::createEditor() { return new MultibandEditor(*this); }
+juce::AudioProcessorEditor* MultibandProcessor::createEditor()
+{
+    return tonwerkui::forHost(new MultibandEditor(*this));
+}
 
 void MultibandProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
