@@ -160,6 +160,45 @@ public:
             expectWithinAbsoluteError(noteOf(440.0), 69.0, 1.0e-9);
         }
 
+        beginTest("The tuner reads a note to a fraction of a cent, at any rate");
+        {
+            for (const double rate : { 44100.0, 48000.0, 96000.0 })
+            {
+                PitchEstimator estimator;
+                estimator.prepare(rate);
+                double worst = 0.0;
+                for (const double hz : { 30.87, 41.2, 55.0, 82.41, 110.0, 146.83, 196.0, 246.94, 329.63, 440.0, 466.16, 659.26,
+                                         987.77, 1318.51 })
+                {
+                    // A band-limited saw with every harmonic's phase different: the hardest case for the period.
+                    Signal wave((std::size_t) estimator.needed() + 100, 0.0f);
+                    for (int k = 1; k * hz < 0.4 * rate; ++k)
+                        for (std::size_t n = 0; n < wave.size(); ++n)
+                            wave[n] += (float) (0.25 * std::sin(kTwoPi * k * hz * (double) n / rate + 0.3 * k) / k);
+                    const float coarse = estimator.estimate(wave.data(), (int) wave.size());
+                    const float fine = estimator.refine(wave.data(), (int) wave.size(), coarse);
+                    worst = std::max(worst, std::abs(1200.0 * std::log2(fine / hz)));
+                }
+                logMessage(juce::String(rate, 0) + " Hz: worst " + juce::String(worst, 2) + " cents from 31 Hz to 1.3 kHz");
+                expectLessThan(worst, 1.0);
+            }
+            // The reference moves every note: at A = 442 Hz, 440 Hz is about 8 cents flat.
+            const auto a = tuningOf(442.0, 442.0);
+            expectEquals(a.note, 69);
+            expectWithinAbsoluteError(a.cents, 0.0f, 1.0e-4f);
+            const auto flat = tuningOf(440.0, 442.0);
+            expectEquals(flat.note, 69);
+            expectWithinAbsoluteError(flat.cents, -7.85f, 0.01f);
+            // Half a semitone up is the next note, half a cent short of it this one.
+            expectEquals(tuningOf(440.0 * std::pow(2.0, 51.0 / 1200.0), 440.0).note, 70);
+            expectEquals(tuningOf(440.0 * std::pow(2.0, 49.0 / 1200.0), 440.0).note, 69);
+            ScopeProcessor p;
+            auto* reference = p.state.getParameter("reference");
+            expectEquals(reference->getText(reference->getValue(), 32), juce::String("440 Hz"));
+            reference->setValueNotifyingHost(reference->convertTo0to1(442.0f));
+            expectEquals(p.readSettings().reference, 442.0f);
+        }
+
         beginTest("The bars sit where the song's beats are");
         {
             // One bar at 120 BPM: loud on the first beat, quiet on the others.
@@ -227,6 +266,59 @@ public:
             loaded.setStateInformation(saved.getData(), (int) saved.getSize());
             expectWithinAbsoluteError(loaded.readSettings().timeMs, 50.0f, 0.1f);
             expectEquals((int) loaded.state.state.getProperty("editorWidth"), 1200);
+        }
+
+        beginTest("The tuner shows the note and how far it is off");
+        {
+            ScopeProcessor p;
+            p.setCurrentProgram((int) factoryPresets().size() - 1);
+            expect(p.readSettings().mode == Mode::tuner);
+            std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
+            auto* editor = dynamic_cast<ScopeEditor*>(created.get());
+            p.setPlayConfigDetails(2, 2, kRate, kBlock);
+            p.prepareToPlay(kRate, kBlock);
+            // A guitar's A string twelve cents flat, Logic's A1.
+            const double hz = 110.0 * std::pow(2.0, -12.0 / 1200.0);
+            const auto string = saw(hz, 1.5, 0.4f);
+            juce::AudioBuffer<float> buffer(2, 1600);
+            juce::MidiBuffer midi;
+            for (std::size_t at = 0; at + 1600 <= string.size(); at += 1600)
+            {
+                buffer.copyFrom(0, 0, string.data() + at, 1600);
+                buffer.copyFrom(1, 0, string.data() + at, 1600);
+                p.processBlock(buffer, midi);
+                editor->screen.refresh();
+            }
+            const auto shown = editor->screen.tuning();
+            logMessage("tuner: note " + juce::String(shown.note) + ", " + juce::String(shown.cents, 2) + " cents");
+            expectEquals(shown.note, 45);
+            expectWithinAbsoluteError(shown.cents, -12.0f, 1.0f);
+            expect(editor->screen.caption().startsWith(juce::String::fromUTF8("STIMMGERÄT")));
+            // Silence: the note stays a moment, then goes.
+            buffer.clear();
+            for (int frame = 0; frame < 60; ++frame)
+            {
+                p.processBlock(buffer, midi);
+                editor->screen.refresh();
+            }
+            expectEquals(editor->screen.tuning().note, -1);
+            // Back to the note for the picture.
+            for (std::size_t at = 0; at + 1600 <= string.size(); at += 1600)
+            {
+                buffer.copyFrom(0, 0, string.data() + at, 1600);
+                buffer.copyFrom(1, 0, string.data() + at, 1600);
+                p.processBlock(buffer, midi);
+                editor->screen.refresh();
+            }
+            const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+            if (dir.isNotEmpty())
+            {
+                const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 1.0f);
+                juce::File out = juce::File(dir).getChildFile("scope-stimmgeraet.png");
+                out.deleteFile();
+                juce::FileOutputStream stream(out);
+                juce::PNGImageFormat().writeImageToStream(image, stream);
+            }
         }
 
         beginTest("The screen draws all three modes and reads out the pitch");

@@ -19,7 +19,8 @@ enum class Mode
 {
     wave,
     bars,
-    xy
+    xy,
+    tuner
 };
 
 enum class Trigger
@@ -57,6 +58,7 @@ struct Settings
     float persistence = 0.5f;
     int colour = 0;
     bool hold = false;
+    float reference = 440.0f; // the tuner's A in Hz (Logic's A3)
 };
 
 /**
@@ -225,12 +227,14 @@ public:
         tauMin = (int) (rate / 1500.0);
         tauMax = (int) std::ceil(rate / 30.0);
         window = tauMax;
+        fullRate = sampleRate;
+        fullTauMax = (int) std::ceil(sampleRate / 30.0) + 32;
         decimated.assign((std::size_t) (window + tauMax + 2), 0.0f);
         difference.assign((std::size_t) tauMax + 2, 0.0f);
     }
 
-    /** How many input samples `estimate` reads. */
-    int needed() const { return (window + tauMax + 2) * factor; }
+    /** How many input samples `estimate` and `refine` read. */
+    int needed() const { return std::max((window + tauMax + 2) * factor, 3 * fullTauMax + 16); }
 
     /** The pitch of the last `needed()` samples of `x` in Hz, or 0. */
     float estimate(const float* x, int count)
@@ -282,9 +286,51 @@ public:
         return 0.0f;
     }
 
+    /**
+     * `coarse` (from `estimate`) to a fraction of a cent, for the tuner: at 12 kHz a period of 440 Hz is 27 samples
+     * and the parabola's fraction is worth several cents. So the difference function is searched again at the full
+     * rate, 1.5 % either way, over two periods (at least 1024 samples), on the mean of neighbouring samples: the
+     * highest harmonics bend the minimum away from a parabola, and that mild low pass halves their error. Within
+     * a cent from 31 Hz to 1.3 kHz on a sawtooth.
+     */
+    float refine(const float* x, int count, float coarse) const
+    {
+        if (coarse <= 0.0f || count < needed())
+            return coarse;
+        const double period = fullRate / coarse;
+        const int centre = (int) std::lround(period);
+        const int reach = std::max(6, (int) std::ceil(0.015 * period));
+        const int length = std::min(std::max(1024, 2 * centre), count - centre - reach - 2);
+        const int start = count - length - centre - reach - 1;
+        if (start < 1 || centre - reach < 2)
+            return coarse;
+        auto smooth = [x](int n) { return 0.5f * (x[n] + x[n - 1]); };
+        std::array<float, 256> d {}; // 1.5 % either way of 30 Hz at 192 kHz: 193 lags
+        const int taus = std::min(2 * reach + 1, (int) d.size());
+        for (int i = 0; i < taus; ++i)
+        {
+            const int tau = centre - reach + i;
+            float sum = 0.0f;
+            for (int n = start; n < start + length; ++n)
+            {
+                const float delta = smooth(n) - smooth(n + tau);
+                sum += delta * delta;
+            }
+            d[(std::size_t) i] = sum;
+        }
+        int at = 1;
+        for (int i = 2; i < taus - 1; ++i)
+            if (d[(std::size_t) i] < d[(std::size_t) at])
+                at = i;
+        const float before = d[(std::size_t) at - 1], best = d[(std::size_t) at], after = d[(std::size_t) at + 1];
+        const float bend = before - 2.0f * best + after;
+        const float shift = bend > 0.0f ? 0.5f * (before - after) / bend : 0.0f;
+        return (float) (fullRate / ((double) (centre - reach + at) + std::clamp(shift, -0.5f, 0.5f)));
+    }
+
 private:
-    int factor = 4, tauMin = 8, tauMax = 400, window = 400;
-    double rate = 12000.0;
+    int factor = 4, tauMin = 8, tauMax = 400, window = 400, fullTauMax = 1632;
+    double rate = 12000.0, fullRate = 48000.0;
     std::vector<float> decimated, difference;
 };
 
@@ -295,5 +341,21 @@ inline const char* noteName(int note)
     return names[(std::size_t) (((note % 12) + 12) % 12)];
 }
 inline int noteOctave(int note) { return (int) std::floor(note / 12.0) - 2; }
-inline double noteOf(double hz) { return 69.0 + 12.0 * std::log2(hz / 440.0); }
+inline double noteOf(double hz, double reference = 440.0) { return 69.0 + 12.0 * std::log2(hz / reference); }
+
+/** What the tuner shows for a pitch: the nearest note and how many cents it is off, -50 to +50. */
+struct Tuning
+{
+    int note = 69;
+    float cents = 0.0f;
+};
+inline Tuning tuningOf(double hz, double reference)
+{
+    const double note = noteOf(hz, reference);
+    const auto nearest = (int) std::lround(note);
+    return { nearest, (float) ((note - nearest) * 100.0) };
+}
+
+/** The tuner's verdict: in tune within 3 cents (a trained ear hears about 5), close within 15. */
+inline constexpr float kInTuneCents = 3.0f, kCloseCents = 15.0f;
 } // namespace tonwerkscope

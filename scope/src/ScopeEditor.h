@@ -27,6 +27,8 @@ public:
     juce::String caption() const;
     /** The pitch read out on the top right in Hz, 0 when there is none. */
     float pitchHz() const { return pitch; }
+    /** What the tuner shows: its note (-1 while it has none) and the needle's cents, eased from frame to frame. */
+    Tuning tuning() const { return { tunerNote, tunerCents }; }
 
 private:
     void timerCallback() override;
@@ -35,6 +37,9 @@ private:
     void drawWave(juce::Graphics&, juce::Rectangle<float> plot);
     void drawBars(juce::Graphics&, juce::Rectangle<float> plot);
     void drawXy(juce::Graphics&, juce::Rectangle<float> plot);
+    /** The tuner fills the screen itself, not the afterglow layer: a needle has no business leaving a trail. */
+    void paintTuner(juce::Graphics&, juce::Rectangle<float> plot);
+    void updateTuner(float hz);
     /** The zoom in effect for a signal whose peak is `peak`: the manual gain, or auto, easing towards filling 90 %. */
     float zoomFor(float peak);
 
@@ -51,6 +56,11 @@ private:
     int frame = 0;
     std::array<float, 2> peakDb { -100.0f, -100.0f }, rmsDb { -100.0f, -100.0f };
     float correlation = 0.0f;
+    int tunerNote = -1;
+    float tunerCents = 0.0f, tunerHz = 0.0f;
+    /** The strobe's stripes move by the cents each frame, so they stand still when the note is in tune. */
+    float strobe = 0.0f;
+    int framesWithoutPitch = 0;
     std::uint64_t lastWritten = 0;
     bool silent = true;
 };
@@ -70,7 +80,7 @@ private:
     ScopeProcessor& processor;
     tonwerkui::LookAndFeel lookAndFeel;
     tonwerkui::PresetBar presets;
-    tonwerkui::Section view, trigger, picture;
+    tonwerkui::Section view, trigger, picture, tuner;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ScopeEditor)
 };

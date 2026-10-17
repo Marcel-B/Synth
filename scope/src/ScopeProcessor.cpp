@@ -52,7 +52,7 @@ Layout ScopeProcessor::createParameterLayout()
 {
     const Settings d;
     Layout layout;
-    choice(layout, "mode", "Modus", { "Welle", "Takt", "XY" }, (int) d.mode);
+    choice(layout, "mode", "Modus", { "Welle", "Takt", "XY", utf8("Stimmgerät") }, (int) d.mode);
     number(layout, "time", "Zeit", 1.0f, 500.0f, d.timeMs, "ms", 20.0f);
     juce::StringArray windows;
     for (const auto* name : kWindowNames)
@@ -66,6 +66,7 @@ Layout ScopeProcessor::createParameterLayout()
     percent(layout, "persistence", "Nachleuchten", d.persistence);
     choice(layout, "colour", "Farbe", { "Cyan", "Gelb", "Rot", utf8("Grün") }, d.colour);
     toggle(layout, "hold", "Halten", d.hold);
+    number(layout, "reference", "Kammerton", 430.0f, 450.0f, d.reference, "Hz");
     return layout;
 }
 
@@ -90,7 +91,7 @@ Settings ScopeProcessor::readSettings() const
     auto whole = [&next] { return juce::roundToInt(next()); };
 
     Settings s;
-    s.mode = (Mode) std::clamp(whole(), 0, 2);
+    s.mode = (Mode) std::clamp(whole(), 0, 3);
     s.timeMs = next();
     s.window = std::clamp(whole(), 0, (int) kWindowBeats.size() - 1);
     s.trigger = (Trigger) std::clamp(whole(), 0, 2);
@@ -101,6 +102,7 @@ Settings ScopeProcessor::readSettings() const
     s.persistence = next();
     s.colour = std::clamp(whole(), 0, 3);
     s.hold = flag();
+    s.reference = (float) whole();
     jassert(at == values.size());
     return s;
 }
