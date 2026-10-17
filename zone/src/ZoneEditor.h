@@ -21,7 +21,7 @@ public:
     explicit ZoneView(ZoneProcessor&);
     void paint(juce::Graphics&) override;
     void refresh();
-    /** The caption, e.g. "GLOCKE 1000 HZ · 12 HT · BAND · GR 3.5 DB". */
+    /** The caption, e.g. "GLOCKE 1000 HZ · 12 HT · BAND · LFO ±12 HT · GR 3.5 DB". */
     juce::String caption() const;
 
 private:
@@ -56,7 +56,7 @@ private:
     tonwerkui::LookAndFeel lookAndFeel;
     tonwerkui::PresetBar presets;
     tonwerkui::ScopeView scope;
-    tonwerkui::Section compressor, output;
+    tonwerkui::Section compressor, lfo, output;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ZoneEditor)
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FilterEngine.h"
 #include "WobbleEngine.h"
 
 #include <algorithm>
@@ -43,6 +44,14 @@ enum class Source
     sidechain
 };
 
+/** The LFO's shapes and their menu are Tonwerk Filter's (the same order, append only there and here). */
+using LfoShape = tonwerkfilter::Shape;
+using tonwerkfilter::Clock;
+using tonwerkfilter::kShapeNames;
+/** The most the LFO moves the frequency either way, in semitones: four octaves. */
+inline constexpr float kMaxLfoSemitones = 48.0f;
+inline constexpr int kLfoStep = 16;
+
 /** The knobs in the parameters' units. */
 struct Settings
 {
@@ -62,7 +71,22 @@ struct Settings
     bool listen = false;
     float mix = 1.0f;
     float outputDb = 0.0f;
+
+    LfoShape lfoShape = LfoShape::sine;
+    bool lfoSync = false;
+    /** Cycles per second when free. */
+    float lfoRate = 1.0f;
+    /** A `tonwerkwobble::kDivisions` index when synced. */
+    int lfoDivision = tonwerkwobble::kQuarter;
+    /** How far the LFO moves the frequency either way; 0 leaves it where the knob says. */
+    float lfoSemitones = 0.0f;
 };
+
+/** The frequency the LFO's offset (in semitones) moves the knob's to, kept where the filter is stable. */
+inline float modulatedFrequency(float hz, float semitones, double rate)
+{
+    return std::clamp(hz * std::exp2(semitones / 12.0f), 10.0f, 0.45f * (float) rate);
+}
 
 /** The bell's damping (1/Q) for a width in semitones between its half-power points. */
 inline float dampingFor(float semitones)
@@ -122,6 +146,11 @@ inline float responseDb(double hz, const Settings& s, float g)
  * recomputing the filter, and the mix never combs. The detector averages the louder side's power of the range (of the
  * input, or of the side chain through its own filter) over about two of its cycles, read 3 dB up so a sine's level is
  * its peak; the reduction is smoothed in dB, rising with the attack, falling with the release.
+ *
+ * An LFO moves the range's frequency (and the side chain's filter with it) by up to `lfoDepth` semitones either way.
+ * At depth 0 the coefficients stay as they were, once per block, so sessions from before the LFO sound the same.
+ * With depth they follow every `kLfoStep` samples (3000 times a second at 48 kHz, far above the fastest LFO), the
+ * offset smoothed over 3 ms so a square's or the random shape's step glides instead of clicking.
  */
 class Engine
 {
@@ -142,18 +171,29 @@ public:
         reduction = 0.0f;
         shownReduction = 0.0f;
         shownLevel = -100.0f;
+        offset = 0.0f;
+        primed = false;
     }
 
-    /** In place, stereo; `keyLeft`/`keyRight` are the side chain (null when there is none). */
-    void process(float* left, float* right, const float* keyLeft, const float* keyRight, int count, const Settings& s)
+    /**
+     * In place, stereo; `keyLeft`/`keyRight` are the side chain (null when there is none); `clock` says where the LFO
+     * is at the first sample.
+     */
+    void process(float* left, float* right, const float* keyLeft, const float* keyRight, int count, const Settings& s,
+                 const Clock& clock = {})
     {
-        const float hz = std::clamp(s.frequency, 10.0f, 0.45f * (float) rate);
-        const float g = (float) std::tan(kPi * hz / rate);
+        const float depth = std::clamp(s.lfoSemitones, 0.0f, kMaxLfoSemitones);
+        const bool moving = depth > 0.0f;
+        if (! moving)
+            offset = 0.0f;
+        float hz = modulatedFrequency(s.frequency, offset, rate);
+        float g = (float) std::tan(kPi * hz / rate);
         const float k = s.shape == Shape::bell ? dampingFor(s.widthSemitones) : kButterworth;
         const float attack = coefficient(s.attackMs * 0.001f);
         const float release = coefficient(s.releaseMs * 0.001f);
         // About two cycles of the range's frequency, so a low range's own wave does not ripple through the gain.
-        const float detector = coefficient(std::clamp(2.0f / hz, 0.001f, 0.025f));
+        float detector = detectorFor(hz);
+        const float glide = (float) std::exp(-kLfoStep / (0.003 * rate));
         const float output = std::pow(10.0f, s.outputDb / 20.0f);
         const float wet = std::clamp(s.mix, 0.0f, 1.0f), dry = 1.0f - wet;
         const bool fromKey = s.source == Source::sidechain;
@@ -162,6 +202,17 @@ public:
 
         for (int i = 0; i < count; ++i)
         {
+            if (moving && i % kLfoStep == 0)
+            {
+                const double phase = clock.phase + (double) i * clock.increment;
+                const float target = depth * tonwerkfilter::lfoValue(s.lfoShape, phase,
+                                                                     tonwerkfilter::randomFor((std::int64_t) std::floor(phase)));
+                offset = primed ? target + (offset - target) * glide : target;
+                primed = true;
+                hz = modulatedFrequency(s.frequency, offset, rate);
+                g = (float) std::tan(kPi * hz / rate);
+                detector = detectorFor(hz);
+            }
             const float in[2] = { left[i], right[i] };
             std::array<SvfStage::Out, 2> parts {};
             std::array<float, 2> heard {};
@@ -198,7 +249,13 @@ public:
                 (c == 0 ? left : right)[i] = out;
             }
         }
+        if (! moving)
+            primed = false;
+        shownFrequency = hz;
     }
+
+    /** The frequency the range sits at now, LFO included, for the editor. */
+    float frequencyNow() const { return shownFrequency; }
 
     /** For the meter: the detector's peak level in the last block (dBFS) and the deepest reduction there (dB). */
     float levelNow() const { return shownLevel; }
@@ -228,11 +285,17 @@ private:
         return x - shelf - (1.0f - gain) * part.high;
     }
 
+    float detectorFor(float hz) const { return coefficient(std::clamp(2.0f / hz, 0.001f, 0.025f)); }
+
     float coefficient(float seconds) const { return (float) std::exp(-1.0 / (std::max(1.0e-5f, seconds) * rate)); }
 
     double rate = 48000.0;
     std::array<SvfStage, 2> main {}, key {};
     float power = 0.0f, reduction = 0.0f;
     float shownReduction = 0.0f, shownLevel = -100.0f;
+    /** The LFO's offset in semitones, smoothed; `primed` once it has a value to glide from. */
+    float offset = 0.0f;
+    bool primed = false;
+    float shownFrequency = 1000.0f;
 };
 } // namespace tonwerkzone

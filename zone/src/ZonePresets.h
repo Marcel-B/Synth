@@ -7,7 +7,7 @@
 namespace tonwerkzone
 {
 /** The preset menu's groups. Kept here, as Tonwerk Freeze keeps its own. */
-inline constexpr std::array<const char*, 4> kZoneCategories { "Gesang", "Mix", "Bass", "Sidechain" };
+inline constexpr std::array<const char*, 5> kZoneCategories { "Gesang", "Mix", "Bass", "Sidechain", "Bewegung" };
 
 /**
  * The host's programs, in order; the first is the effect at its defaults. New sounds go at the end. Each is leveled to

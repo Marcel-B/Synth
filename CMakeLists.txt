@@ -915,7 +915,7 @@ set(TONWERK_ZONE_SOURCES
 
 target_sources(TonwerkZone PRIVATE ${TONWERK_ZONE_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
 # Borrows the state variable filter from Tonwerk Wobble.
-target_include_directories(TonwerkZone PRIVATE common wobble/src)
+target_include_directories(TonwerkZone PRIVATE common wobble/src filter/src)
 target_compile_definitions(TonwerkZone PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkZone
     PRIVATE juce::juce_audio_utils

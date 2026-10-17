@@ -10,6 +10,8 @@ namespace
 constexpr float bell = (float) Shape::bell, lows = (float) Shape::low, highs = (float) Shape::high;
 constexpr float wide = (float) Mode::wide;
 constexpr float sidechain = (float) Source::sidechain;
+constexpr float triangle = (float) LfoShape::triangle, sawUp = (float) LfoShape::sawUp;
+constexpr float half = 4.0f, bar = (float) tonwerkwobble::kWhole, eighth = (float) tonwerkwobble::kEighth;
 } // namespace
 
 const std::vector<tonwerkui::EffectPreset>& factoryPresets()
@@ -59,6 +61,22 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         { "Platz für Gesang", "Sidechain",
           { { "source", sidechain }, { "frequency", 2500 }, { "width", 24 }, { "threshold", -36 }, { "ratio", 3 },
             { "attack", 5 }, { "release", 200 }, { "range", 6 }, { "output", 0 } } },
+
+        // The LFO walks the bell through the mix: whatever is loud where it passes gives way, a slow phaser-like sweep.
+        { "Wandernde Glocke", "Bewegung",
+          { { "frequency", 1200 }, { "width", 8 }, { "threshold", -40 }, { "ratio", 6 }, { "attack", 2 },
+            { "release", 60 }, { "range", 12 }, { "lfoSync", 1 }, { "lfoShape", triangle }, { "lfoDivision", bar },
+            { "lfoDepth", 24 }, { "output", 0 } } },
+        // A narrow notch climbing every half bar, four octaves up, then back to the start.
+        { "Kerbe im Takt", "Bewegung",
+          { { "frequency", 400 }, { "width", 4 }, { "threshold", -44 }, { "ratio", 10 }, { "attack", 1 },
+            { "release", 40 }, { "range", 18 }, { "lfoSync", 1 }, { "lfoShape", sawUp }, { "lfoDivision", half },
+            { "lfoDepth", 24 }, { "output", 0 } } },
+        // The highs duck on the eighths, a hi-hat pump without a side chain.
+        { "Höhen-Pendel", "Bewegung",
+          { { "shape", highs }, { "frequency", 4000 }, { "threshold", -40 }, { "ratio", 4 }, { "attack", 2 },
+            { "release", 50 }, { "range", 10 }, { "lfoSync", 1 }, { "lfoShape", triangle }, { "lfoDivision", eighth },
+            { "lfoDepth", 12 }, { "output", 0 } } },
     };
     return presets;
 }
