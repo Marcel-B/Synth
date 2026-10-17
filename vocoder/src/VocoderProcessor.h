@@ -4,6 +4,8 @@
 #include "ScopeBuffer.h"
 #include "VocoderEngine.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <atomic>
@@ -55,6 +57,8 @@ public:
     static juce::String noteName(int note);
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     tonwerkui::EffectPrograms programs;
     /** The voice in and the vocoder out (left), for the editor's oscilloscope. */
     tonwerkui::ScopeBuffer scopeIn, scopeOut;

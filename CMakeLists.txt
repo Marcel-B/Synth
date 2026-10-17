@@ -53,7 +53,7 @@ set(TONWERK_DEFINITIONS
     JUCE_DISPLAY_SPLASH_SCREEN=0)
 
 # The Night City look the plugins share: colours, panels, knobs, the oscilloscope (common/).
-set(TONWERK_UI_SOURCES common/NightCity.cpp)
+set(TONWERK_UI_SOURCES common/NightCity.cpp common/MidiLearn.cpp)
 
 set(TONWERK_SOURCES
     src/dsp/Defaults.cpp
@@ -936,7 +936,7 @@ set(TONWERK_ZONE_SOURCES
 
 target_sources(TonwerkZone PRIVATE ${TONWERK_ZONE_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
 # Borrows the state variable filter from Tonwerk Wobble.
-target_include_directories(TonwerkZone PRIVATE common wobble/src)
+target_include_directories(TonwerkZone PRIVATE common wobble/src filter/src)
 target_compile_definitions(TonwerkZone PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkZone
     PRIVATE juce::juce_audio_utils
@@ -1003,6 +1003,38 @@ target_include_directories(TonwerkExpander PRIVATE src common wavetable/src)
 target_compile_definitions(TonwerkExpander PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkExpander
     PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
+# Tonwerk LFO: an LFO that sends a MIDI controller to the instrument after it, whose knob learnt it (lfo/). A MIDI
+# effect (aumi) like Tonwerk Arp; no audio buses.
+juce_add_plugin(TonwerkLFO
+    PRODUCT_NAME "Tonwerk LFO"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkLFO.png"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerklfo
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwLf
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT TRUE
+    IS_MIDI_EFFECT TRUE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MIDIProcessor
+    VST3_CATEGORIES Fx
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_LFO_SOURCES
+    lfo/src/LfoEditor.cpp
+    lfo/src/LfoPresets.cpp
+    lfo/src/LfoProcessor.cpp)
+
+target_sources(TonwerkLFO PRIVATE ${TONWERK_LFO_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkLFO PRIVATE common wobble/src filter/src)
+target_compile_definitions(TonwerkLFO PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkLFO
+    PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
@@ -1076,9 +1108,12 @@ if(TONWERK_TESTS)
         tests/ScopeTests.cpp
         ${TONWERK_EXPANDER_SOURCES}
         tests/ExpanderTests.cpp
+        ${TONWERK_LFO_SOURCES}
+        tests/LfoTests.cpp
+        tests/MidiLearnTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -1111,6 +1146,7 @@ if(TONWERK_TESTS)
         TONWERK_ZONE_NO_ENTRY=1
         TONWERK_SCOPE_NO_ENTRY=1
         TONWERK_EXPANDER_NO_ENTRY=1
+        TONWERK_LFO_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

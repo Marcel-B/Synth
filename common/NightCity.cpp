@@ -1,5 +1,7 @@
 #include "NightCity.h"
 
+#include "MidiLearn.h"
+
 namespace tonwerkui
 {
 using namespace colours;
@@ -135,8 +137,38 @@ juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox&) { return juce::Font(juc
 
 juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(14.0f)); }
 
-Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& parameterId, const juce::String& label,
+namespace
+{
+/** A knob whose right click opens the MIDI menu instead of turning it. */
+class Knob : public juce::Slider
+{
+public:
+    Knob() : juce::Slider(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow) {}
+    std::function<void()> onMenu;
+
+    void mouseDown(const juce::MouseEvent& e) override
+    {
+        if (e.mods.isPopupMenu() && onMenu)
+            onMenu();
+        else
+            juce::Slider::mouseDown(e);
+    }
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if (! (e.mods.isPopupMenu() && onMenu))
+            juce::Slider::mouseDrag(e);
+    }
+    void mouseUp(const juce::MouseEvent& e) override
+    {
+        if (! (e.mods.isPopupMenu() && onMenu))
+            juce::Slider::mouseUp(e);
+    }
+};
+} // namespace
+
+Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& parameterId, const juce::String& text,
                  int slotCount)
+    : state(s), id(parameterId), label(text)
 {
     name.setText(label, juce::dontSendNotification);
     name.setJustificationType(juce::Justification::centred);
@@ -161,7 +193,10 @@ Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& 
     }
     else
     {
-        slider = std::make_unique<juce::Slider>(juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::TextBoxBelow);
+        auto knob = std::make_unique<Knob>();
+        if (MidiLearn::of(state) != nullptr)
+            knob->onMenu = [this] { showMidiMenu(); };
+        slider = std::move(knob);
         slider->setTextBoxStyle(juce::Slider::TextBoxBelow, false, kSlot - 4, 16);
         // Set on the slider itself: its value box is made before the editor's look and feel is in place.
         slider->setColour(juce::Slider::textBoxTextColourId, cyan);
@@ -171,6 +206,65 @@ Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& 
         sliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, parameterId, *slider);
     }
     width = slotCount > 0 ? slotCount : (menu != nullptr ? 2 : 1);
+    if (auto* learn = MidiLearn::of(state); learn != nullptr && slider != nullptr)
+    {
+        learn->addChangeListener(this);
+        showMapping();
+    }
+}
+
+Control::~Control()
+{
+    if (auto* learn = MidiLearn::of(state))
+        learn->removeChangeListener(this);
+}
+
+void Control::showMapping()
+{
+    auto* learn = MidiLearn::of(state);
+    if (learn == nullptr || slider == nullptr)
+        return;
+    if (learn->learning() == id)
+    {
+        name.setText(utf8("CC lernen …"), juce::dontSendNotification);
+        name.setColour(juce::Label::textColourId, colours::yellow);
+    }
+    else if (const int controller = learn->controllerFor(id); controller >= 0)
+    {
+        name.setText(label + utf8(" · CC") + juce::String(controller), juce::dontSendNotification);
+        name.setColour(juce::Label::textColourId, colours::cyan);
+    }
+    else
+    {
+        name.setText(label, juce::dontSendNotification);
+        name.setColour(juce::Label::textColourId, colours::text);
+    }
+}
+
+void Control::showMidiMenu()
+{
+    auto* learn = MidiLearn::of(state);
+    if (learn == nullptr)
+        return;
+    const bool learning = learn->learning() == id;
+    const int controller = learn->controllerFor(id);
+    juce::PopupMenu popup;
+    popup.addSectionHeader(controller >= 0 ? "MIDI: CC " + juce::String(controller) : juce::String("MIDI"));
+    popup.addItem(1, learning ? juce::String("Lernen abbrechen") : utf8("MIDI lernen (nächster Controller)"));
+    if (controller >= 0)
+        popup.addItem(2, "CC " + juce::String(controller) + " entfernen");
+    juce::Component::SafePointer<Control> safe(this);
+    popup.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(slider.get()), [safe, learning](int chosen) {
+        if (safe == nullptr)
+            return;
+        auto* learner = MidiLearn::of(safe->state);
+        if (learner == nullptr)
+            return;
+        if (chosen == 1)
+            learner->learn(learning ? juce::String() : safe->id);
+        else if (chosen == 2)
+            learner->forget(safe->id);
+    });
 }
 
 void Control::resized()

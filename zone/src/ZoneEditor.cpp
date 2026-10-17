@@ -24,6 +24,9 @@ ZoneView::ZoneView(ZoneProcessor& p) : processor(p) { startTimerHz(30); }
 void ZoneView::refresh()
 {
     shown = processor.readSettings();
+    // With the LFO on, the curve, the marker and the caption follow the range where it is now.
+    if (shown.lfoSemitones > 0.0f)
+        shown.frequency = processor.frequency.load();
     keyConnected = processor.keyConnected.load();
     level = std::max(processor.level.exchange(-100.0f), level - kFall);
     reduction = std::max(processor.reduction.exchange(0.0f), reduction - kFall);
@@ -40,6 +43,8 @@ juce::String ZoneView::caption() const
     text << dot << (shown.mode == Mode::band ? "BAND" : "BREITBAND");
     if (shown.source == Source::sidechain)
         text << dot << (keyConnected ? "SIDECHAIN" : "SIDECHAIN FEHLT");
+    if (shown.lfoSemitones > 0.0f)
+        text << dot << utf8("LFO ±") << juce::roundToInt(shown.lfoSemitones) << " HT";
     if (shown.listen)
         text << dot << utf8("HÖREN");
     text << dot << "GR " << juce::String(reduction, 1) << " DB";
@@ -163,14 +168,20 @@ ZoneEditor::ZoneEditor(ZoneProcessor& p)
                      { "attack", "Attack" },
                      { "release", "Release" },
                      { "range", "Bereich" } } }),
+      lfo(p.state, "LFO",
+          { { { "lfoShape", "Form", 2 },
+              { "lfoSync", "Sync" },
+              { "lfoDivision", "Takt", 0, "lfoSync", true },
+              { "lfoRate", "Rate", 0, "lfoSync", false },
+              { "lfoDepth", "Tiefe" } } }),
       output(p.state, "Ausgang", { { { "source", "Quelle" }, { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
     scope.setCaption("OSZILLOSKOP");
     scope.setLegend("ZONE", "EINGANG");
-    for (auto* c : std::initializer_list<juce::Component*> { &presets, &zone, &scope, &compressor, &output })
+    for (auto* c : std::initializer_list<juce::Component*> { &presets, &zone, &scope, &compressor, &lfo, &output })
         addAndMakeVisible(*c);
-    const int width = 2 * kMargin + std::max(zone.preferredWidth() + 260, compressor.preferredWidth() + output.preferredWidth() + kGap);
+    const int width = 2 * kMargin + std::max(zone.preferredWidth() + 260, compressor.preferredWidth() + lfo.preferredWidth() + output.preferredWidth() + 2 * kGap);
     setSize(width, 2 * kMargin + kHeader + zone.preferredHeight() + kGap + compressor.preferredHeight() + kGap + kScope);
 }
 
@@ -190,6 +201,6 @@ void ZoneEditor::resized()
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &zone });
-    layoutRow(area, { &compressor, &output });
+    layoutRow(area, { &compressor, &lfo, &output });
 }
 } // namespace tonwerkzone

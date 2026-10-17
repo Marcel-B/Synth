@@ -4,6 +4,8 @@
 
 #include "EffectPresets.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <array>
@@ -55,6 +57,8 @@ public:
     static juce::String stepId(int step, const char* field);
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
     tonwerkui::EffectPrograms programs;
 
     /** For the editor: the step playing (-1 for none), the last note started, the keys held (up to eight). */

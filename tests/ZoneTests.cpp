@@ -27,18 +27,23 @@ struct Take
     double seconds = 0.0;
 };
 
-/** A stereo signal through the engine alone, in blocks as a host would send them; the key may be empty. */
+/**
+ * A stereo signal through the engine alone, in blocks as a host would send them; the key may be empty. The LFO runs
+ * free at `s.lfoRate`, from phase 0.
+ */
 Take play(const Settings& s, const Signal& in, const Signal& key = {})
 {
     Engine engine;
     engine.prepare(kRate);
     Take take { in, in };
     const auto started = std::chrono::steady_clock::now();
+    const double increment = s.lfoRate / kRate;
     for (std::size_t at = 0; at < in.size(); at += kBlock)
     {
         const int count = (int) std::min<std::size_t>(kBlock, in.size() - at);
         const float* k = key.empty() ? nullptr : key.data() + at;
-        engine.process(take.left.data() + at, take.right.data() + at, k, k, count, s);
+        engine.process(take.left.data() + at, take.right.data() + at, k, k, count, s,
+                       Clock { (double) at * increment, increment });
     }
     take.seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
     return take;
@@ -155,6 +160,35 @@ Take render(ZoneProcessor& processor, const Signal& source)
     processor.releaseResources();
     return take;
 }
+
+/** The RMS level in dB of `seconds` around `centre`. */
+float levelAround(const Signal& signal, double centre, double seconds)
+{
+    const auto from = (std::size_t) ((centre - 0.5 * seconds) * kRate);
+    const auto to = std::min(signal.size(), (std::size_t) ((centre + 0.5 * seconds) * kRate));
+    double sum = 0.0;
+    for (std::size_t n = from; n < to; ++n)
+        sum += (double) signal[n] * signal[n];
+    return db((float) std::sqrt(2.0 * sum / (double) (to - from)));
+}
+
+/** A host that plays at 120 BPM, standing at `ppq`. */
+class StandingHead : public juce::AudioPlayHead
+{
+public:
+    explicit StandingHead(double at) : ppq(at) {}
+    juce::Optional<PositionInfo> getPosition() const override
+    {
+        PositionInfo info;
+        info.setBpm(120.0);
+        info.setPpqPosition(ppq);
+        info.setIsPlaying(true);
+        return info;
+    }
+
+private:
+    double ppq;
+};
 
 void writeWav(const Take& take, const juce::File& file)
 {
@@ -363,6 +397,64 @@ public:
             expectLessThan(db(amplitudeAt(take.left, 100.0, 0.5) / 0.25f), -25.0f);
         }
 
+        beginTest("The LFO walks the range across the spectrum");
+        {
+            // A loud 1 kHz tone, a narrow bell on it moved two octaves either way at 0.5 Hz: the tone is cut while the
+            // bell passes it (every second) and left alone while the bell is two octaves away (half a second later).
+            Settings s;
+            s.frequency = 1000.0f;
+            s.widthSemitones = 4.0f;
+            s.thresholdDb = -40.0f;
+            s.ratio = 20.0f;
+            s.attackMs = 0.5f;
+            s.releaseMs = 10.0f;
+            s.lfoRate = 0.5f;
+            s.lfoSemitones = 24.0f;
+            const auto take = play(s, sine(1000.0, 4.0, 0.5f));
+            for (const double at : { 1.0, 2.0, 3.0 })
+            {
+                expectLessThan(levelAround(take.left, at, 0.005) - db(0.5f), -12.0f);
+                expectWithinAbsoluteError(levelAround(take.left, at + 0.5, 0.005) - db(0.5f), 0.0f, 1.0f);
+            }
+            // At depth 0 the rate and shape change nothing: the same as the plugin before the LFO, to the bit.
+            Settings still = s, plain = s;
+            still.lfoSemitones = 0.0f;
+            still.lfoShape = LfoShape::random;
+            still.lfoRate = 13.0f;
+            plain.lfoSemitones = 0.0f;
+            const auto source = mixLoop();
+            const auto a = play(still, source), b = play(plain, source);
+            expect(a.left == b.left && a.right == b.right);
+        }
+
+        beginTest("A synced LFO sits where the song is");
+        {
+            // A rising saw over a whole bar, an octave either way: half a bar in it is at the knob's frequency,
+            // three quarters in half an octave up.
+            for (const auto& [ppq, expected] : { std::pair { 2.0, 1000.0f }, { 3.0, 1414.2f }, { 6.0, 1000.0f } })
+            {
+                ZoneProcessor p;
+                auto set = [&p](const char* id, float value) {
+                    auto* parameter = p.state.getParameter(id);
+                    parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+                };
+                set("lfoSync", 1.0f);
+                set("lfoShape", (float) LfoShape::sawUp);
+                set("lfoDivision", (float) tonwerkwobble::kWhole);
+                set("lfoDepth", 12.0f);
+                StandingHead head(ppq);
+                p.setPlayHead(&head);
+                p.setPlayConfigDetails(2, 2, kRate, 64);
+                p.prepareToPlay(kRate, 64);
+                juce::AudioBuffer<float> buffer(2, 64);
+                buffer.clear();
+                juce::MidiBuffer midi;
+                p.processBlock(buffer, midi);
+                expectWithinAbsoluteError(p.frequency.load(), expected, expected * 0.01f);
+                p.setPlayHead(nullptr);
+            }
+        }
+
         beginTest("It runs far inside real time");
         {
             Settings s;
@@ -372,6 +464,11 @@ public:
             const double factor = (double) source.size() / kRate / take.seconds;
             logMessage("zone: " + juce::String(factor, 0) + " times faster than real time");
             expectGreaterThan(factor, 50.0);
+            s.lfoSemitones = 24.0f;
+            const auto moving = play(s, source);
+            const double movingFactor = (double) source.size() / kRate / moving.seconds;
+            logMessage("zone with the LFO: " + juce::String(movingFactor, 0) + " times faster than real time");
+            expectGreaterThan(movingFactor, 50.0);
         }
 
         beginTest("Factory sounds: groups, names and levels against the dry mix");
@@ -421,6 +518,9 @@ public:
             expectEquals(text("ratio"), juce::String("4:1"));
             expectEquals(text("shape"), juce::String("Glocke"));
             expectEquals(text("range"), juce::String("24 dB"));
+            expectEquals(text("lfoDepth"), juce::String("0 HT"));
+            expectEquals(text("lfoShape"), juce::String("Sinus"));
+            expectEquals(text("lfoDivision"), juce::String("1/4"));
             juce::MemoryBlock saved;
             p.getStateInformation(saved);
             ZoneProcessor loaded;

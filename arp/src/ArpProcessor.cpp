@@ -152,6 +152,7 @@ bool ArpProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 
 void ArpProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    midiLearn.process(midi);
     const int count = buffer.getNumSamples();
     buffer.clear();
     engine.update(readSettings());

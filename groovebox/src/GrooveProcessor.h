@@ -3,6 +3,8 @@
 #include "EffectsChain.h"
 #include "GrooveEngine.h"
 
+#include "MidiLearn.h"
+
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -93,6 +95,8 @@ public:
     void audition(int track) { auditions.fetch_or(1u << track); }
 
     juce::AudioProcessorValueTreeState state;
+    /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */
+    tonwerkui::MidiLearn midiLearn { state };
 
     /** The step that sounded last, -1 while the sequencer stands; for the editor's running light. */
     std::atomic<int> playingStep { -1 };

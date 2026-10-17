@@ -374,6 +374,18 @@ def expander(p):
     p.curve(f, steps=90)
 
 
+def lfo(p):
+    # One cycle of a sine above the controller's steps it turns into.
+    def f(x):
+        return 0.42 * math.sin(math.pi * x / 0.9)
+    p.curve(lambda x: f(x) + 0.28, -0.9, 0.9, 300, 30)
+    pts = []
+    for i in range(9):
+        x0 = -0.9 + i * 0.2
+        y = f(x0 + 0.1) - 0.42
+        pts += [(x0, y), (x0 + 0.2, y)]
+    p.line(pts, 16)
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -408,6 +420,7 @@ ICONS = {
     "TonwerkScope": (scope, EFFECT),
     "TonwerkExpander": (expander, INSTRUMENT),
     "TonwerkArp": (arp, MIDI),
+    "TonwerkLFO": (lfo, MIDI),
 }
 
 

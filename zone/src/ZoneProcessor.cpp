@@ -74,6 +74,24 @@ Layout ZoneProcessor::createParameterLayout()
     toggle(layout, "listen", "Hören", d.listen);
     percent(layout, "mix", "Mix", d.mix);
     number(layout, "output", "Ausgang", -24.0f, 12.0f, d.outputDb, "dB");
+
+    // The LFO on the frequency, appended so projects from before keep their values (depth 0: it does nothing).
+    juce::StringArray shapes;
+    for (const auto* name : kShapeNames)
+        shapes.add(utf8(name));
+    choice(layout, "lfoShape", "LFO-Form", shapes, (int) d.lfoShape);
+    toggle(layout, "lfoSync", "LFO-Sync", d.lfoSync);
+    juce::NormalisableRange<float> rates(0.05f, 20.0f);
+    rates.setSkewForCentre(2.0f);
+    // Below 10 Hz a tenth of a hertz matters, so the free rate is shown with a decimal there, as in Tonwerk Filter.
+    add(layout, "lfoRate", "LFO-Rate", rates, d.lfoRate, [](float value, int) {
+        return (value < 9.95f ? juce::String(value, 1) : juce::String(juce::roundToInt(value))) + " Hz";
+    });
+    juce::StringArray divisions;
+    for (const auto& division : tonwerkwobble::kDivisions)
+        divisions.add(division.name);
+    choice(layout, "lfoDivision", "LFO-Raster", divisions, d.lfoDivision);
+    number(layout, "lfoDepth", "LFO-Tiefe", 0.0f, kMaxLfoSemitones, d.lfoSemitones, "HT");
     return layout;
 }
 
@@ -112,12 +130,19 @@ Settings ZoneProcessor::readSettings() const
     s.listen = flag();
     s.mix = next();
     s.outputDb = next();
+    s.lfoShape = (LfoShape) std::clamp(whole(), 0, (int) kShapeNames.size() - 1);
+    s.lfoSync = flag();
+    s.lfoRate = next();
+    s.lfoDivision = whole();
+    s.lfoSemitones = next();
     jassert(at == values.size());
     return s;
 }
 
 void ZoneProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    rate = sampleRate;
+    running = 0.0;
     engine.prepare(sampleRate);
     spare.assign((std::size_t) std::max(samplesPerBlock, 1), 0.0f);
     keyCopy.assign((std::size_t) std::max(2 * samplesPerBlock, 2), 0.0f);
@@ -172,8 +197,32 @@ void ZoneProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     if (channels == 1)
         std::copy_n(left, total, right);
 
+    double bpm = 120.0, ppq = 0.0;
+    bool locked = false;
+    if (auto* head = getPlayHead())
+        if (const auto position = head->getPosition())
+        {
+            if (const auto tempo = position->getBpm())
+                bpm = *tempo;
+            if (const auto at = position->getPpqPosition(); at && position->getIsPlaying())
+            {
+                ppq = *at;
+                locked = true;
+            }
+        }
+    const auto settings = readSettings();
+    const double beats = tonwerkwobble::divisionBeats(settings.lfoDivision);
+    const double increment = settings.lfoSync ? bpm / 60.0 / beats / rate : settings.lfoRate / rate;
+    // While the song plays, a synced LFO is where the song position says: on the beat from any start or loop.
+    if (settings.lfoSync && locked)
+        running = ppq / beats;
+    running -= std::floor(running);
+    const Clock clock { running, increment };
+    running += increment * total;
+
     scopeIn.write(left, total);
-    engine.process(left, right, keyLeft, keyRight, total, readSettings());
+    engine.process(left, right, keyLeft, keyRight, total, settings, clock);
+    frequency.store(engine.frequencyNow(), std::memory_order_relaxed);
     if (channels == 1)
         for (int i = 0; i < total; ++i)
             left[i] = 0.5f * (left[i] + right[i]);

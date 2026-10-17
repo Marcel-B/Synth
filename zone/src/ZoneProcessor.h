@@ -16,7 +16,8 @@ juce::String ratioText(float ratio);
 
 /**
  * Tonwerk Zone: a compressor on one range of the spectrum, with a side chain input (`ZoneEngine.h`). Mono in is played
- * as stereo; the side chain is a second input bus, off until the host connects one. Parameter ids are part of saved
+ * as stereo; the side chain is a second input bus, off until the host connects one. An LFO (free or on the host's
+ * tempo, placed by the play head's ppq while playing) moves the frequency. Parameter ids are part of saved
  * Logic projects: never rename or remove one, and append new ones with the version hint of the release they first
  * appear in. Menu orders are saved too: append only.
  */
@@ -61,9 +62,14 @@ public:
     std::atomic<float> reduction { 0.0f }, level { -100.0f };
     /** Whether the host feeds the side chain, for the editor's hint. */
     std::atomic<bool> keyConnected { false };
+    /** Where the range sits now, the LFO included, for the editor's curve. */
+    std::atomic<float> frequency { 1000.0f };
 
 private:
     Engine engine;
+    double rate = 48000.0;
+    /** The LFO's phase in cycles, carried from block to block when it is not locked to the song. */
+    double running = 0.0;
     std::vector<float> spare, keyCopy;
     std::vector<std::atomic<float>*> values;
 
