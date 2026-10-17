@@ -7,7 +7,7 @@
   <meta name="description" content="Tonwerk: Synthesizer, Effekte und ein Arpeggiator für Logic Pro und jede DAW mit VST3. Eigener Code, offen unter der AGPL, kostenlos für macOS, Linux und Windows.">
   <meta name="theme-color" content="#0a0b10">
   <meta property="og:title" content="Tonwerk Studio">
-  <meta property="og:description" content="12 Instrumente, 15 Effekte und ein MIDI-Effekt für Logic Pro und VST3. Offen und kostenlos.">
+  <meta property="og:description" content="12 Instrumente, 16 Effekte und ein MIDI-Effekt für Logic Pro und VST3. Offen und kostenlos.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tonwerk.studio/">
   <meta property="og:image" content="https://tonwerk.studio/img/wavetable.png">
@@ -38,7 +38,7 @@
         <p class="lead">Instrumente und Effekte aus eigenem Code: vom analogen Synth über FM, Wavetable und Granular bis zum Acid-Bass und zur Drum-Machine, dazu Effekte für Vocals, Dubstep und den Mix. Offen, kostenlos, als Audio Unit und VST3.</p>
         <ul class="stats">
           <li><b>12</b>Instrumente</li>
-          <li><b>15</b>Effekte</li>
+          <li><b>16</b>Effekte</li>
           <li><b>1</b>MIDI-Effekt</li>
           <li><b>AU</b>VST3 · App</li>
         </ul>
@@ -278,7 +278,7 @@
 
     <section id="effekte">
       <div class="wrap">
-        <div class="heading"><h2>Effekte</h2><span class="count">15 Plugins</span></div>
+        <div class="heading"><h2>Effekte</h2><span class="count">16 Plugins</span></div>
         <p class="intro">Audio-Effekte für jede Spur und jeden Bus, mit pegelgleichen Presets. In Logic unter <b>Audio-FX → Audio Units → b-velop</b>; Robovox und Vocoder kommen in den Instrumenten-Slot und hören die Stimme über den Sidechain, damit sie MIDI bekommen.</p>
         <div class="grid">
         <article class="card" id="chrome-glitch">
@@ -549,6 +549,24 @@
             <li>Unter dem Threshold bitgenau unverändert</li>
             </ul>
             <div class="tags"><span>Dynamik</span><span>EQ</span></div>
+          </div>
+        </article>
+        <article class="card" id="scope">
+          <button class="shot" type="button" data-full="img/scope.png" data-title="Tonwerk Scope" aria-label="Bildschirmfoto von Tonwerk Scope vergrößern">
+            <img src="img/scope.png" alt="Oberfläche von Tonwerk Scope" width="1024" height="654" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="icons/TonwerkScope.png" alt="" width="64" height="64">
+            <h3>Tonwerk Scope</h3>
+            <p class="code">aufx TwSc Bvlp</p>
+            <p class="tagline">Ein Oszilloskop mit Nachleuchten wie auf der Bildröhre: Welle, Takte des Songs oder Stereobild, das Audio bleibt unberührt.</p>
+            <ul>
+            <li>Getriggerte Welle, steht bei gehaltenem Ton still</li>
+            <li>Takt-Ansicht im Songtempo zeigt Pumpen und Ducking</li>
+            <li>Goniometer und Korrelation fürs Stereobild</li>
+            <li>Tonhöhe mit Notenname, Pegel, Fenster frei skalierbar</li>
+            </ul>
+            <div class="tags"><span>Analyse</span><span>Mix</span></div>
           </div>
         </article>
         </div>
