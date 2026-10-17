@@ -99,11 +99,16 @@ jobs:
           (( count > 0 )) || { echo "::error::no apps built"; exit 1; }
       - name: Screenshots in the simulator
         run: |
-          runtime=$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier')
-          type=$(xcrun simctl list devicetypes -j | jq -r '[.devicetypes[] | select(.name | startswith("iPad"))] | last | .identifier')
-          echo "$type on $runtime"
-          udid=$(xcrun simctl create Tonwerk "$type" "$runtime")
-          xcrun simctl boot "$udid"
+          # An iPad the runner already has on its newest iOS runtime (not every device type runs on every runtime),
+          # an iPad Pro if there is one.
+          ipads=$(xcrun simctl list devices available -j | jq -r '.devices | to_entries[] | select(.key | test("SimRuntime.iOS"))
+            | .key as $rt | .value[] | select(.name | startswith("iPad")) | "\($rt) \(.udid) \(.name)"' | sort)
+          echo "$ipads"
+          newest=$(echo "$ipads" | tail -1 | awk '{print $1}')
+          pick=$( (echo "$ipads" | grep "^$newest " | grep "iPad Pro" || echo "$ipads" | grep "^$newest ") | tail -1)
+          echo "simulator: $pick"
+          udid=$(echo "$pick" | awk '{print $2}')
+          xcrun simctl boot "$udid" || true   # already booted is fine
           xcrun simctl bootstatus "$udid" -b
           mkdir -p ipad-screenshots
           for name in "Tonwerk Wavetable" "Tonwerk Synth" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope" "Tonwerk Arp"; do
