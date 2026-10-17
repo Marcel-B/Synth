@@ -1,4 +1,5 @@
 #include "AdditiveProcessor.h"
+#include "Platform.h"
 
 #include "AdditiveEditor.h"
 #include "AdditivePresets.h"
@@ -447,7 +448,7 @@ void AdditiveProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* AdditiveProcessor::createEditor() { return new AdditiveEditor(*this); }
+juce::AudioProcessorEditor* AdditiveProcessor::createEditor() { return tonwerkui::forHost(new AdditiveEditor(*this)); }
 
 int AdditiveProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

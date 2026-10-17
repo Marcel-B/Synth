@@ -1,4 +1,5 @@
 #include "DxEditor.h"
+#include "Platform.h"
 
 #include "DxPresets.h"
 #include "PresetCategories.h"
@@ -571,9 +572,11 @@ void DxEditor::importSysex()
     juce::Component::SafePointer<DxEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {
-                             if (safe == nullptr || fc.getResult() == juce::File())
+                             if (safe == nullptr || tonwerkui::nothingChosen(fc))
                                  return;
-                             const auto file = fc.getResult();
+                             // On the iPad a copy first: the import reads it and keeps its own in the SysEx folder.
+                             const auto temp = juce::File::getSpecialLocation(juce::File::tempDirectory);
+                             const auto file = tonwerkui::keepChosen(fc, temp.getChildFile("Tonwerk DX"));
                              const int count = DxProcessor::importSysex(file);
                              if (count == 0)
                              {

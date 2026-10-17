@@ -1,4 +1,5 @@
 #include "DistortionProcessor.h"
+#include "Platform.h"
 
 #include "DistortionEditor.h"
 #include "DistortionPresets.h"
@@ -192,7 +193,7 @@ void DistortionProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
 juce::AudioProcessorEditor* DistortionProcessor::createEditor()
 {
-    return new DistortionEditor(*this);
+    return tonwerkui::forHost(new DistortionEditor(*this));
 }
 
 void DistortionProcessor::getStateInformation(juce::MemoryBlock& destData)

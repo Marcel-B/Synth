@@ -1,4 +1,5 @@
 #include "VocoderProcessor.h"
+#include "Platform.h"
 
 #include "VocoderEditor.h"
 #include "VocoderPresets.h"
@@ -237,7 +238,7 @@ void VocoderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
         carrierNotes[shown].store(-1, std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* VocoderProcessor::createEditor() { return new VocoderEditor(*this); }
+juce::AudioProcessorEditor* VocoderProcessor::createEditor() { return tonwerkui::forHost(new VocoderEditor(*this)); }
 
 void VocoderProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

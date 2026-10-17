@@ -6,9 +6,16 @@ project(TonwerkSynth VERSION ${TONWERK_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# One build for Apple Silicon and Intel Macs, from macOS 11 on.
-set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
-set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    # The iPad (scripts/build-ios.sh): every iPad that runs iPadOS 15 has an arm64 chip, as do the simulators on
+    # Apple Silicon.
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "")
+else()
+    # One build for Apple Silicon and Intel Macs, from macOS 11 on.
+    set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -34,11 +41,25 @@ if(TONWERK_LTO)
 endif()
 
 # Audio Units exist only on the Mac; elsewhere the VST3 and the standalone app are built, which is enough for the tests.
-if(APPLE)
+# On the iPad each plugin is an AUv3 inside its app (Logic Pro for iPad, GarageBand, AUM load the AUv3; the app plays on
+# its own). iOS needs the Xcode generator (its SDK and the app extension's embedding come only with Xcode); the Mac's own
+# build stays on the Command Line Tools.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(TONWERK_FORMATS AUv3 Standalone)
+elseif(APPLE)
     set(TONWERK_FORMATS AU VST3 Standalone)
 else()
     set(TONWERK_FORMATS VST3 Standalone)
 endif()
+
+# The iPad apps: iPad only (the editors are too wide for a phone), landscape, full screen, playing on in the background
+# so a key on a MIDI keyboard still sounds when another app is in front. Elsewhere JUCE ignores these.
+set(TONWERK_IOS_OPTIONS
+    TARGETED_DEVICE_FAMILY 2
+    IPAD_SCREEN_ORIENTATIONS UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+    REQUIRES_FULL_SCREEN TRUE
+    STATUS_BAR_HIDDEN TRUE
+    BACKGROUND_AUDIO_ENABLED TRUE)
 
 # The effects' standalone apps read the audio interface's inputs. macOS hands an app without a microphone usage text in
 # its Info.plist nothing but silence there, without asking (the plugins live in the host, which has asked already).
@@ -77,6 +98,7 @@ function(tonwerk_add_synth target product bundle code edition)
         PLUGIN_MANUFACTURER_CODE Bvlp
         PLUGIN_CODE ${code}
         FORMATS ${TONWERK_FORMATS}
+        ${TONWERK_IOS_OPTIONS}
         IS_SYNTH TRUE
         NEEDS_MIDI_INPUT TRUE
         NEEDS_MIDI_OUTPUT FALSE
@@ -108,6 +130,7 @@ juce_add_plugin(ChromeGlitch
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE ChGl
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -141,6 +164,7 @@ juce_add_plugin(TonwerkDistortion
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDs
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -174,6 +198,7 @@ juce_add_plugin(TonwerkWavetable
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwWt
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -207,6 +232,7 @@ juce_add_plugin(TonwerkDX
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDx
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -239,6 +265,7 @@ juce_add_plugin(TonwerkGranular
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGr
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -272,6 +299,7 @@ juce_add_plugin(TonwerkPhysical
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwPh
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -304,6 +332,7 @@ juce_add_plugin(TonwerkAdditiv
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwAd
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -336,6 +365,7 @@ juce_add_plugin(TonwerkGroovebox
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGb
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -369,6 +399,7 @@ juce_add_plugin(TonwerkRobovox
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwRv
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT TRUE
@@ -403,6 +434,7 @@ juce_add_plugin(TonwerkWobble
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwWb
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -436,6 +468,7 @@ juce_add_plugin(TonwerkPD
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwPd
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -468,6 +501,7 @@ juce_add_plugin(TonwerkTape
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwTp
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -501,6 +535,7 @@ juce_add_plugin(TonwerkFreeze
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwFz
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -534,6 +569,7 @@ juce_add_plugin(TonwerkArp
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwAr
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT TRUE
@@ -566,6 +602,7 @@ juce_add_plugin(TonwerkSampler
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSm
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -598,6 +635,7 @@ juce_add_plugin(TonwerkBass
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwBs
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -629,6 +667,7 @@ juce_add_plugin(TonwerkVocoder
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwVc
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT TRUE
@@ -661,6 +700,7 @@ juce_add_plugin(TonwerkDelay
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDl
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -693,6 +733,7 @@ juce_add_plugin(TonwerkChorus
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwCh
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -725,6 +766,7 @@ juce_add_plugin(TonwerkGlue
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGl
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -757,6 +799,7 @@ juce_add_plugin(TonwerkShimmer
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSh
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -789,6 +832,7 @@ juce_add_plugin(TonwerkFilter
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwFl
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -822,6 +866,7 @@ juce_add_plugin(TonwerkNeuro
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwNr
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -853,6 +898,7 @@ juce_add_plugin(TonwerkStutter
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSt
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -886,6 +932,7 @@ juce_add_plugin(TonwerkMultiband
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwMb
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -919,6 +966,7 @@ juce_add_plugin(TonwerkZone
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwZn
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -952,6 +1000,7 @@ juce_add_plugin(TonwerkScope
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSc
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     ${TONWERK_INPUT_PERMISSION}
     NEEDS_MIDI_INPUT FALSE
@@ -984,6 +1033,7 @@ juce_add_plugin(TonwerkExpander
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwEx
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -1016,6 +1066,7 @@ juce_add_plugin(TonwerkLFO
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwLf
     FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT TRUE
@@ -1039,7 +1090,8 @@ target_link_libraries(TonwerkLFO
 
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
-if(TONWERK_TESTS)
+# The tests run on the Mac and Linux; the iPad build has the same DSP.
+if(TONWERK_TESTS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
     enable_testing()
     juce_add_console_app(TonwerkSynthTests PRODUCT_NAME "Tonwerk Synth Tests")
     target_sources(TonwerkSynthTests PRIVATE

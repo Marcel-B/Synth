@@ -1,4 +1,5 @@
 #include "SamplerProcessor.h"
+#include "Platform.h"
 
 #include "SamplerEditor.h"
 #include "SamplerPresets.h"
@@ -436,7 +437,7 @@ std::shared_ptr<const Sample> SamplerProcessor::shownSample() const
     return std::shared_ptr<const Sample>(std::shared_ptr<const Sample>(), &SampleBank::instance().sample(index));
 }
 
-juce::AudioProcessorEditor* SamplerProcessor::createEditor() { return new SamplerEditor(*this); }
+juce::AudioProcessorEditor* SamplerProcessor::createEditor() { return tonwerkui::forHost(new SamplerEditor(*this)); }
 
 int SamplerProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 
@@ -480,7 +481,8 @@ void SamplerProcessor::setStateInformation(const void* data, int sizeInBytes)
     state.replaceState(juce::ValueTree::fromXml(*xml));
     // The file is read again from where it was; the source parameter keeps what the project saved.
     const auto saved = state.getRawParameterValue("source")->load();
-    if (const auto file = userFile(); file.existsAsFile())
+    const auto file = tonwerkui::findKept(userFile(), tonwerkui::keptFilesFolder("Tonwerk Sampler"));
+    if (file.existsAsFile())
         loadFile(file);
     if (auto* parameter = state.getParameter("source"))
         parameter->setValueNotifyingHost(parameter->convertTo0to1(saved));

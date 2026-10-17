@@ -55,6 +55,79 @@ jobs:
       - name: Package
         run: scripts/package-release.sh windows ci build
 
+  # The iPad apps with their AUv3s, built for the simulator with Xcode (the iOS SDK comes only with it). A few apps are
+  # started in an iPad simulator and photographed, so how the editors fit the screen shows without an iPad.
+  ios:
+    name: iPad (iOS-Simulator)
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: ios
+          max-size: 2G
+      # Xcode ignores CMake's compiler launchers; its compiler settings point at ccache instead.
+      - name: ccache for Xcode
+        run: |
+          bin="$RUNNER_TEMP/ccache-bin"
+          mkdir -p "$bin"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang)" > "$bin/clang"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang++)" > "$bin/clang++"
+          chmod +x "$bin/clang" "$bin/clang++"
+          {
+            echo "CCACHE_SLOPPINESS=clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros"
+            echo "CCACHE_FILECLONE=true"
+            echo "CCACHE_DEPEND=true"
+            echo "TONWERK_IOS_CMAKE_ARGS=-DTONWERK_LTO=OFF -DCMAKE_XCODE_ATTRIBUTE_CC=$bin/clang -DCMAKE_XCODE_ATTRIBUTE_CXX=$bin/clang++ -DCMAKE_XCODE_ATTRIBUTE_LD=$(xcrun -f clang) -DCMAKE_XCODE_ATTRIBUTE_LDPLUSPLUS=$(xcrun -f clang++) -DCMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE=NO"
+          } >> "$GITHUB_ENV"
+      - name: Build
+        run: scripts/build-ios.sh simulator
+      # Each app must carry its AUv3, or Logic Pro for iPad and AUM never see the plugin.
+      - name: Check the AUv3s
+        run: |
+          count=0
+          for app in build-ios/*_artefacts/Release-iphonesimulator/Standalone/*.app; do
+            appex=$(find "$app/PlugIns" -maxdepth 1 -name "*.appex" | head -1)
+            [[ -n "$appex" ]] || { echo "::error::$app has no AUv3"; exit 1; }
+            type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Info.plist")
+            echo "$(basename "$app"): $type"
+            count=$((count + 1))
+          done
+          echo "$count apps"
+      - name: Screenshots in the simulator
+        run: |
+          runtime=$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier')
+          type=$(xcrun simctl list devicetypes -j | jq -r '[.devicetypes[] | select(.name | startswith("iPad"))] | last | .identifier')
+          echo "$type on $runtime"
+          udid=$(xcrun simctl create Tonwerk "$type" "$runtime")
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          mkdir -p ipad-screenshots
+          for name in "Tonwerk Wavetable" "Tonwerk Synth" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope" "Tonwerk Arp"; do
+            app=$(find build-ios -maxdepth 4 -path "*Release-iphonesimulator/Standalone/$name.app" | head -1)
+            id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Info.plist")
+            xcrun simctl install "$udid" "$app"
+            xcrun simctl privacy "$udid" grant microphone "$id" || true
+            xcrun simctl launch "$udid" "$id"
+            sleep 12
+            xcrun simctl io "$udid" screenshot "ipad-screenshots/$name.png"
+            xcrun simctl terminate "$udid" "$id" || true
+          done
+          # The simulator stays upright; the apps are landscape only, so the pictures are turned to show them upright.
+          for png in ipad-screenshots/*.png; do
+            w=$(sips -g pixelWidth "$png" | awk '/pixelWidth/ {print $2}')
+            h=$(sips -g pixelHeight "$png" | awk '/pixelHeight/ {print $2}')
+            if (( w < h )); then sips -r 270 "$png" >/dev/null; fi
+          done
+          xcrun simctl spawn "$udid" pluginkit -m -v -p com.apple.AudioUnit-UI || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ipad-screenshots
+          path: ipad-screenshots
+          retention-days: 30
+
   macos:
     name: Audio Unit (macOS)
     runs-on: macos-15

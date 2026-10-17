@@ -14,6 +14,7 @@ public:
     GlitchLookAndFeel();
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height, float position, float start, float end,
                           juce::Slider&) override;
+    juce::Component* getParentComponentForMenuOptions(const juce::PopupMenu::Options&) override;
 };
 
 /** A knob, menu or switch with its name above, tied to a parameter. */

@@ -1,4 +1,5 @@
 #include "LfoProcessor.h"
+#include "Platform.h"
 
 #include "LfoEditor.h"
 #include "LfoPresets.h"
@@ -198,7 +199,7 @@ void LfoProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
         valueNow.store(value, std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* LfoProcessor::createEditor() { return new LfoEditor(*this); }
+juce::AudioProcessorEditor* LfoProcessor::createEditor() { return tonwerkui::forHost(new LfoEditor(*this)); }
 
 void LfoProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

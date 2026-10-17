@@ -1,4 +1,5 @@
 #include "TapeProcessor.h"
+#include "Platform.h"
 
 #include "TapeEditor.h"
 #include "TapePresets.h"
@@ -127,7 +128,7 @@ void TapeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     samplesRun += buffer.getNumSamples();
 }
 
-juce::AudioProcessorEditor* TapeProcessor::createEditor() { return new TapeEditor(*this); }
+juce::AudioProcessorEditor* TapeProcessor::createEditor() { return tonwerkui::forHost(new TapeEditor(*this)); }
 
 void TapeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

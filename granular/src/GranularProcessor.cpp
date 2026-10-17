@@ -1,4 +1,5 @@
 #include "GranularProcessor.h"
+#include "Platform.h"
 
 #include "GranularEditor.h"
 #include "GranularPresets.h"
@@ -486,7 +487,7 @@ std::shared_ptr<const GrainSource> GranularProcessor::shownSource() const
     return std::shared_ptr<const GrainSource>(std::shared_ptr<const GrainSource>(), &SourceBank::instance().source(index));
 }
 
-juce::AudioProcessorEditor* GranularProcessor::createEditor() { return new GranularEditor(*this); }
+juce::AudioProcessorEditor* GranularProcessor::createEditor() { return tonwerkui::forHost(new GranularEditor(*this)); }
 
 int GranularProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 
@@ -530,7 +531,8 @@ void GranularProcessor::setStateInformation(const void* data, int sizeInBytes)
     state.replaceState(juce::ValueTree::fromXml(*xml));
     // The file is read again from where it was; the source parameter keeps what the project saved.
     const auto saved = state.getRawParameterValue("source")->load();
-    if (const auto file = userFile(); file.existsAsFile())
+    const auto file = tonwerkui::findKept(userFile(), tonwerkui::keptFilesFolder("Tonwerk Granular"));
+    if (file.existsAsFile())
         loadFile(file);
     if (auto* parameter = state.getParameter("source"))
         parameter->setValueNotifyingHost(parameter->convertTo0to1(saved));

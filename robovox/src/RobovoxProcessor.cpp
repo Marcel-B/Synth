@@ -1,4 +1,5 @@
 #include "RobovoxProcessor.h"
+#include "Platform.h"
 
 #include "RobovoxEditor.h"
 #include "RobovoxPresets.h"
@@ -175,7 +176,7 @@ void RobovoxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     sungPitch = (float) engine.sungPitch();
 }
 
-juce::AudioProcessorEditor* RobovoxProcessor::createEditor() { return new RobovoxEditor(*this); }
+juce::AudioProcessorEditor* RobovoxProcessor::createEditor() { return tonwerkui::forHost(new RobovoxEditor(*this)); }
 
 void RobovoxProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

@@ -1,4 +1,5 @@
 #include "GlitchEditor.h"
+#include "Platform.h"
 
 #include "GlitchPresets.h"
 #include "PresetCategories.h"
@@ -73,6 +74,11 @@ GlitchLookAndFeel::GlitchLookAndFeel()
     setColour(juce::ToggleButton::textColourId, kText);
     setColour(juce::TextButton::buttonColourId, kPanel.brighter(0.05f));
     setColour(juce::TextButton::textColourOffId, kYellow);
+}
+
+juce::Component* GlitchLookAndFeel::getParentComponentForMenuOptions(const juce::PopupMenu::Options& options)
+{
+    return tonwerkui::menuParentFor(options);
 }
 
 void GlitchLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float position,

@@ -1,4 +1,5 @@
 #include "StutterProcessor.h"
+#include "Platform.h"
 
 #include "StutterEditor.h"
 #include "StutterPresets.h"
@@ -195,7 +196,7 @@ void StutterProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     repeatNow.store(engine.repeatNumber(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* StutterProcessor::createEditor() { return new StutterEditor(*this); }
+juce::AudioProcessorEditor* StutterProcessor::createEditor() { return tonwerkui::forHost(new StutterEditor(*this)); }
 
 void StutterProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

@@ -1,4 +1,5 @@
 #include "PhysicalProcessor.h"
+#include "Platform.h"
 
 #include "PhysicalEditor.h"
 #include "PhysicalPresets.h"
@@ -416,7 +417,7 @@ void PhysicalProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PhysicalProcessor::createEditor() { return new PhysicalEditor(*this); }
+juce::AudioProcessorEditor* PhysicalProcessor::createEditor() { return tonwerkui::forHost(new PhysicalEditor(*this)); }
 
 int PhysicalProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

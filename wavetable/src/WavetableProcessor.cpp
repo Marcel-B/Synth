@@ -1,4 +1,5 @@
 #include "WavetableProcessor.h"
+#include "Platform.h"
 
 #include "WavetableEditor.h"
 #include "WavetablePresets.h"
@@ -441,7 +442,10 @@ void WavetableProcessor::applyDistortion(juce::AudioBuffer<float>& buffer, const
     }
 }
 
-juce::AudioProcessorEditor* WavetableProcessor::createEditor() { return new WavetableEditor(*this); }
+juce::AudioProcessorEditor* WavetableProcessor::createEditor()
+{
+    return tonwerkui::forHost(new WavetableEditor(*this));
+}
 
 int WavetableProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

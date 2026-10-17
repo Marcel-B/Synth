@@ -652,6 +652,27 @@ scripts/release-stats.sh /tmp/downloads.csv      # braucht gh und jq
 
 Besucher und Klone des Repos stehen unter Insights → Traffic, aber nur für die letzten 14 Tage.
 
+## Auf dem iPad (in Arbeit)
+
+Jedes Plugin lässt sich auch für das iPad bauen: als AUv3, das Logic Pro für iPad, GarageBand und AUM laden, in einer eigenen App, die das Plugin auch allein spielt (ein MIDI-Keyboard über USB öffnet sie von selbst, und sie spielt im Hintergrund weiter). Es sind dieselben Quellen wie auf dem Mac, nur ein weiteres Build-Ziel. Die Apps laufen nur auf dem iPad und nur quer, ab iPadOS 15.
+
+Was auf dem iPad anders ist (`common/Platform.h`):
+
+- **Größe**: Der Host bestimmt, wie groß die Oberfläche ist. Sie wird darin ganz gezeigt, mit ihren Proportionen vergrößert oder verkleinert, und Menüs öffnen sich in ihr.
+- **MIDI-Lernen**: Ein Finger, der etwa eine halbe Sekunde ruhig auf einem Regler liegt, öffnet das Menü, das am Mac der Rechtsklick öffnet.
+- **Dateien**: Klänge laden und speichern (Tonwerk Analog, FM, Synth), SysEx (Tonwerk DX) und eigene Samples (Tonwerk Granular, Tonwerk Sampler) gehen über die Dateien-App. Ein Sample wird dabei in den Speicher des Plugins kopiert, damit ein Projekt es beim nächsten Öffnen wiederfindet.
+
+Bauen braucht hier das volle Xcode, denn nur darin steckt das iOS-SDK; für den Mac bleibt es bei den Command Line Tools.
+
+```sh
+scripts/build-ios.sh simulator                      # für den iOS-Simulator, ohne Signatur
+TONWERK_TEAM_ID=ABCDE12345 scripts/build-ios.sh device   # für ein angeschlossenes iPad, mit dem Team des Developer-Kontos
+```
+
+Die Action `build.yml` baut bei jedem Push alle Apps für den Simulator, prüft, dass jede ihr AUv3 enthält, startet einige davon in einem iPad-Simulator und legt Bildschirmfotos als Artefakt `ipad-screenshots` ab.
+
+**Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale) und die Dateien-App. Verteilt wird später über TestFlight; dafür fehlen noch die Signatur und der Upload in der Action.
+
 ## Signieren mit Developer ID
 
 Mit einem Apple-Entwicklerkonto lassen sich Plugins und Apps mit **Developer ID** signieren und von Apple notarisieren. Dann braucht es keine Ad-hoc-Signatur und kein Entfernen der Quarantäne mehr, und die Plugins lassen sich weitergeben.

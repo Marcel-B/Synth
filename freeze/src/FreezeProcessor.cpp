@@ -1,4 +1,5 @@
 #include "FreezeProcessor.h"
+#include "Platform.h"
 
 #include "FreezeEditor.h"
 #include "FreezePresets.h"
@@ -212,7 +213,7 @@ void FreezeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     freezes = engine.freezesTaken();
 }
 
-juce::AudioProcessorEditor* FreezeProcessor::createEditor() { return new FreezeEditor(*this); }
+juce::AudioProcessorEditor* FreezeProcessor::createEditor() { return tonwerkui::forHost(new FreezeEditor(*this)); }
 
 void FreezeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

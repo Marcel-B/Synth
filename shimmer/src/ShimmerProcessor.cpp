@@ -1,4 +1,5 @@
 #include "ShimmerProcessor.h"
+#include "Platform.h"
 
 #include "ShimmerEditor.h"
 #include "ShimmerPresets.h"
@@ -164,7 +165,7 @@ void ShimmerProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     tailLevel.store(engine.levelNow(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ShimmerProcessor::createEditor() { return new ShimmerEditor(*this); }
+juce::AudioProcessorEditor* ShimmerProcessor::createEditor() { return tonwerkui::forHost(new ShimmerEditor(*this)); }
 
 void ShimmerProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

@@ -1,4 +1,5 @@
 #include "ScopeProcessor.h"
+#include "Platform.h"
 
 #include "ScopeEditor.h"
 #include "ScopePresets.h"
@@ -163,7 +164,7 @@ void ScopeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     playing.store(running, std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ScopeProcessor::createEditor() { return new ScopeEditor(*this); }
+juce::AudioProcessorEditor* ScopeProcessor::createEditor() { return tonwerkui::forHost(new ScopeEditor(*this)); }
 
 void ScopeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

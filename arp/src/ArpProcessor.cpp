@@ -1,4 +1,5 @@
 #include "ArpProcessor.h"
+#include "Platform.h"
 
 #include "ArpEditor.h"
 #include "ArpPresets.h"
@@ -215,7 +216,7 @@ void ArpProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
     keyCount = held;
 }
 
-juce::AudioProcessorEditor* ArpProcessor::createEditor() { return new ArpEditor(*this); }
+juce::AudioProcessorEditor* ArpProcessor::createEditor() { return tonwerkui::forHost(new ArpEditor(*this)); }
 
 void ArpProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
