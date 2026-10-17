@@ -110,6 +110,7 @@ juce::String ScopeScreen::caption() const
                  << (processor.playing.load() ? "SONG" : "EIGENER TAKT");
             break;
         case Mode::xy: text << "XY" << dot << "GONIOMETER" << dot << juce::roundToInt(shown.timeMs) << " MS"; break;
+        case Mode::tuner: text << utf8("STIMMGERÄT") << dot << "A3 = " << juce::roundToInt(shown.reference) << " HZ"; break;
     }
     if (shown.mode != Mode::xy)
     {
@@ -183,11 +184,16 @@ void ScopeScreen::refresh()
             case Channel::both: signal[(std::size_t) n] = 0.5f * (l + r); break;
         }
     }
-    if (++frame % 3 == 0)
+    // The readout every third frame from the sum; the tuner every frame from the chosen channel.
+    const bool tuning = shown.mode == Mode::tuner;
+    if (++frame % 3 == 0 || tuning)
     {
         for (std::size_t n = 0; n < left.size(); ++n)
-            second[n] = 0.5f * (left[n] + right[n]);
-        const float found = estimator.estimate(second.data(), count);
+            second[n] = tuning ? signal[n] : 0.5f * (left[n] + right[n]);
+        // Refined in every mode, so the readout's cents are as true as the tuner's.
+        const float found = estimator.refine(second.data(), count, estimator.estimate(second.data(), count));
+        if (tuning)
+            updateTuner(found);
         // Held a little while it is unsure, so the readout does not blink between notes.
         if (found > 0.0f)
             pitch = found;
@@ -198,7 +204,7 @@ void ScopeScreen::refresh()
     // The layer: what was there fades by the afterglow, the new trace goes on top.
     if (! layer.isValid())
         resized();
-    const float keep = shown.mode == Mode::bars ? 0.0f : std::clamp(shown.persistence, 0.0f, 1.0f) * 0.92f;
+    const float keep = shown.mode == Mode::bars || tuning ? 0.0f : std::clamp(shown.persistence, 0.0f, 1.0f) * 0.92f;
     if (keep <= 0.0f)
         layer.clear(layer.getBounds());
     else
@@ -211,10 +217,126 @@ void ScopeScreen::refresh()
             drawWave(g, plot);
         else if (shown.mode == Mode::xy)
             drawXy(g, plot);
-        else
+        else if (shown.mode == Mode::bars)
             drawBars(g, plot);
     }
     repaint();
+}
+
+void ScopeScreen::updateTuner(float hz)
+{
+    if (hz <= 0.0f)
+    {
+        // The last note stays a moment, dimmed, so a plucked string's decay does not blank it between readings.
+        if (++framesWithoutPitch > 45)
+            tunerNote = -1;
+        return;
+    }
+    framesWithoutPitch = 0;
+    const auto now = tuningOf(hz, shown.reference);
+    if (now.note != tunerNote)
+        tunerCents = now.cents;
+    else
+        tunerCents += 0.35f * (now.cents - tunerCents); // eased, so the needle does not shiver with the vibrato
+    tunerNote = now.note;
+    tunerHz = hz;
+    strobe += 0.6f * tunerCents;
+}
+
+void ScopeScreen::paintTuner(juce::Graphics& g, juce::Rectangle<float> plot)
+{
+    const bool sounding = tunerNote >= 0;
+    const float off = std::abs(tunerCents);
+    auto colour = ! sounding ? colours::muted : off <= kInTuneCents ? kGreen : off <= kCloseCents ? colours::yellow : colours::red;
+    if (framesWithoutPitch > 0)
+        colour = colour.withMultipliedAlpha(0.5f);
+    auto area = plot.reduced(plot.getWidth() * 0.06f, plot.getHeight() * 0.05f);
+
+    // The note, large, with its octave beside it as Logic counts (A3 = 440 Hz at the default reference).
+    auto noteBox = area.removeFromTop(area.getHeight() * 0.5f);
+    const float size = std::min(noteBox.getHeight() * 0.9f, area.getWidth() * 0.22f);
+    const juce::String name = sounding ? juce::String(noteName(tunerNote)) : juce::String("-");
+    const float nameWidth = 0.62f * size * (float) name.length();
+    auto nameBox = noteBox.withSizeKeepingCentre(nameWidth, noteBox.getHeight());
+    g.setFont(mono(size));
+    for (const float spread : { 4.0f, 2.0f })
+    {
+        g.setColour(colour.withMultipliedAlpha(0.12f));
+        for (const auto& shift : { juce::Point<float>(-spread, 0.0f), { spread, 0.0f }, { 0.0f, -spread }, { 0.0f, spread } })
+            g.drawText(name, nameBox.translated(shift.x, shift.y), juce::Justification::centred, false);
+    }
+    g.setColour(colour);
+    g.drawText(name, nameBox, juce::Justification::centred, false);
+    if (sounding)
+    {
+        g.setFont(mono(size * 0.35f));
+        g.drawText(juce::String(noteOctave(tunerNote)),
+                   juce::Rectangle<float>(nameBox.getRight() + 4.0f, nameBox.getCentreY(), size, size * 0.4f),
+                   juce::Justification::centredLeft, false);
+    }
+
+    // The scale from -50 to +50 cents, the in-tune zone green, the needle where the note is.
+    area.removeFromTop(area.getHeight() * 0.06f);
+    auto dial = area.removeFromTop(std::min(70.0f, area.getHeight() * 0.45f));
+    auto xOf = [&](float cents) { return dial.getX() + (std::clamp(cents, -50.0f, 50.0f) + 50.0f) / 100.0f * dial.getWidth(); };
+    const auto ticks = dial.withTrimmedBottom(16.0f);
+    g.setColour(kGreen.withAlpha(0.14f));
+    g.fillRect(juce::Rectangle<float>(xOf(-kInTuneCents), ticks.getY(), xOf(kInTuneCents) - xOf(-kInTuneCents), ticks.getHeight()));
+    for (int cents = -50; cents <= 50; cents += 5)
+    {
+        const bool major = cents % 25 == 0;
+        const float length = cents == 0 ? ticks.getHeight() : (major ? 0.6f : 0.3f) * ticks.getHeight();
+        g.setColour(cents == 0 ? kGreen.withAlpha(0.8f) : colours::text.withAlpha(major ? 0.5f : 0.25f));
+        g.drawVerticalLine(juce::roundToInt(xOf((float) cents)), ticks.getBottom() - length, ticks.getBottom());
+        if (major)
+        {
+            g.setFont(mono(10.0f));
+            g.setColour(colours::muted);
+            g.drawText((cents > 0 ? "+" : "") + juce::String(cents),
+                       juce::Rectangle<float>(xOf((float) cents) - 20.0f, ticks.getBottom() + 3.0f, 40.0f, 12.0f),
+                       juce::Justification::centred, false);
+        }
+    }
+    g.setColour(colours::border);
+    g.drawHorizontalLine(juce::roundToInt(ticks.getBottom()), dial.getX(), dial.getRight());
+    if (sounding)
+    {
+        juce::Path needle;
+        const float x = xOf(tunerCents);
+        needle.startNewSubPath(x, ticks.getY() - 4.0f);
+        needle.lineTo(x, ticks.getBottom());
+        strokeGlow(g, needle, colour, 2.0f);
+    }
+
+    // The strobe: stripes running the way the note is off, standing still when it is in tune.
+    area.removeFromTop(10.0f);
+    const auto band = area.removeFromTop(std::min(22.0f, area.getHeight() * 0.4f));
+    {
+        juce::Graphics::ScopedSaveState inside(g);
+        g.reduceClipRegion(band.toNearestInt());
+        constexpr float period = 28.0f;
+        const float shift = sounding ? std::fmod(strobe, period) : 0.0f;
+        g.setColour(sounding ? colour.withMultipliedAlpha(0.55f) : colours::border.withAlpha(0.4f));
+        for (float x = band.getX() - period + shift + (shift < 0.0f ? period : 0.0f); x < band.getRight(); x += period)
+            g.fillRect(juce::Rectangle<float>(x, band.getY(), period * 0.5f, band.getHeight()));
+    }
+    g.setColour(colours::border);
+    g.drawRect(band, 1.0f);
+
+    // In words: the pitch, the cents and which way to turn.
+    area.removeFromTop(8.0f);
+    juce::String words;
+    if (! sounding)
+        words = "SPIEL EINEN TON";
+    else
+    {
+        const int cents = juce::roundToInt(tunerCents);
+        words << juce::String(tunerHz, 1) << " HZ" << utf8(" · ") << (cents > 0 ? "+" : "") << cents << " CT"
+              << utf8(" · ") << (off <= kInTuneCents ? "STIMMT" : tunerCents < 0.0f ? "ZU TIEF" : "ZU HOCH");
+    }
+    g.setFont(mono(13.0f));
+    g.setColour(colour);
+    g.drawText(words, area.withHeight(18.0f), juce::Justification::centred, false);
 }
 
 void ScopeScreen::drawWave(juce::Graphics& g, juce::Rectangle<float> plot)
@@ -413,7 +535,7 @@ void ScopeScreen::paint(juce::Graphics& g)
                    juce::Justification::centred);
         g.drawText("M", juce::Rectangle<float>(c.x + 4.0f, c.y - radius, 12.0f, 12.0f), juce::Justification::centred);
     }
-    else
+    else if (shown.mode != Mode::tuner)
     {
         for (int i = 1; i < kDivisionsAcross; ++i)
             g.drawVerticalLine(juce::roundToInt(plot.getX() + plot.getWidth() * (float) i / kDivisionsAcross), plot.getY(),
@@ -448,6 +570,8 @@ void ScopeScreen::paint(juce::Graphics& g)
     g.drawRect(plot, 1.0f);
 
     g.drawImage(layer, plot);
+    if (shown.mode == Mode::tuner)
+        paintTuner(g, plot);
 
     // The readouts.
     const auto inner = area.reduced(12.0f, 8.0f);
@@ -459,7 +583,7 @@ void ScopeScreen::paint(juce::Graphics& g)
         readout = "GEHALTEN";
     else if (pitch > 0.0f)
     {
-        const double note = noteOf(pitch);
+        const double note = noteOf(pitch, shown.reference);
         const int nearest = (int) std::lround(note);
         const int cents = (int) std::lround((note - nearest) * 100.0);
         readout << (pitch < 100.0f ? juce::String(pitch, 1) : juce::String(juce::roundToInt(pitch))) << " HZ" << utf8(" · ") << noteName(nearest)
@@ -537,12 +661,14 @@ ScopeEditor::ScopeEditor(ScopeProcessor& p)
       trigger(p.state, "Trigger", { { { "trigger", "Flanke" }, { "triggerLevel", "Pegel" } } }),
       picture(p.state, "Bild",
               { { { "gain", utf8("Verstärkung") }, { "autoGain", "Auto" }, { "persistence", "Nachleuchten" },
-                  { "hold", "Halten" } } })
+                  { "hold", "Halten" } } }),
+      tuner(p.state, "Stimmen", { { { "reference", "Kammerton" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    for (auto* c : std::initializer_list<juce::Component*> { &presets, &screen, &view, &trigger, &picture })
+    for (auto* c : std::initializer_list<juce::Component*> { &presets, &screen, &view, &trigger, &picture, &tuner })
         addAndMakeVisible(*c);
-    const int minimumWidth = 2 * kMargin + view.preferredWidth() + trigger.preferredWidth() + picture.preferredWidth() + 2 * kGap;
+    const int minimumWidth = 2 * kMargin + view.preferredWidth() + trigger.preferredWidth() + picture.preferredWidth()
+                           + tuner.preferredWidth() + 3 * kGap;
     const int minimumHeight = 2 * kMargin + kHeader + 260 + kGap + view.preferredHeight();
     // The size the user left it at, kept with the project; read first, since setting the limits resizes and stores.
     const int width = (int) p.state.state.getProperty("editorWidth", minimumWidth);
@@ -570,6 +696,6 @@ void ScopeEditor::resized()
     auto controls = area.removeFromBottom(view.preferredHeight());
     area.removeFromBottom(kGap);
     screen.setBounds(area);
-    layoutRow(controls, { &view, &trigger, &picture });
+    layoutRow(controls, { &view, &trigger, &picture, &tuner });
 }
 } // namespace tonwerkscope

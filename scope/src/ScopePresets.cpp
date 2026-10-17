@@ -7,7 +7,7 @@ namespace tonwerkscope
 namespace
 {
 // Menu indices, named so the settings below read as what they are.
-constexpr float bars = (float) Mode::bars, xy = (float) Mode::xy;
+constexpr float bars = (float) Mode::bars, xy = (float) Mode::xy, tuner = (float) Mode::tuner;
 constexpr float freeRunning = (float) Trigger::free;
 constexpr float both = (float) Channel::both, side = (float) Channel::side;
 constexpr float quarter = 0, bar = 2, fourBars = 4;
@@ -37,6 +37,9 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         { "Goniometer", "Stereo", { { "mode", xy }, { "persistence", 0.7f } } },
         { "Links und Rechts", "Stereo", { { "channel", both }, { "time", 30 } } },
         { "Nur Seite", "Stereo", { { "channel", side }, { "time", 30 }, { "colour", yellow } } },
+
+        // A tuner for the instrument on the track; the reference stays at 440 Hz.
+        { "Stimmgerät", "Stimmen", { { "mode", tuner } } },
     };
     return presets;
 }
