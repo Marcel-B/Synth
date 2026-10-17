@@ -677,7 +677,7 @@ Die Action `build.yml` baut bei jedem Push die App für den Simulator, prüft, d
 
 Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App, signiert sie für den App Store und lädt sie zu TestFlight hoch; die Version ist die des letzten Tags, die Build-Nummer die Nummer des Laufs. Einmal einzurichten:
 
-1. In App Store Connect eine App mit der Bundle-ID `de.bvelop.tonwerk` anlegen (die ID vorher unter developer.apple.com → Identifiers registrieren). Die IDs der Plugins (`de.bvelop.tonwerk.<plugin>.<plugin>AUv3`) legt der Build selbst an.
+1. In App Store Connect eine App mit der Bundle-ID `de.bvelop.tonwerk` anlegen (die ID vorher unter developer.apple.com → Identifiers registrieren). Die IDs der Plugins (`de.bvelop.tonwerk.<plugin>`) legt der Build selbst an.
 2. Unter Benutzer und Zugriff → Integrationen einen API-Schlüssel mit der Rolle **Admin** erzeugen und die `.p8`-Datei laden (geht nur einmal).
 3. Im Repository unter Settings → Secrets and variables → Actions eintragen: `ASC_KEY_ID` (die zehn Zeichen im Dateinamen `AuthKey_….p8`), `ASC_ISSUER_ID` (über der Schlüsselliste) und `ASC_KEY_P8` (der ganze Inhalt der Datei, mit den Zeilen BEGIN und END). `APPLE_TEAM_ID` ist schon da.
 

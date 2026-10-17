@@ -61,8 +61,8 @@ set(TONWERK_IOS_OPTIONS
     STATUS_BAR_HIDDEN TRUE
     BACKGROUND_AUDIO_ENABLED TRUE)
 
-# An app extension's bundle id must begin with its app's, so on the iPad the plugins' ids sit under the app's
-# (de.bvelop.tonwerk.tonwerkdx, its AUv3 de.bvelop.tonwerk.tonwerkdx.tonwerkdxAUv3). The Mac keeps its ids.
+# An app extension's bundle id must be its app's plus one more part, so on the iPad the plugins' ids sit under the
+# app's (de.bvelop.tonwerk.tonwerkdx, which the AUv3 takes as it is, below). The Mac keeps its ids.
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(TONWERK_BUNDLE_PREFIX de.bvelop.tonwerk)
     # TestFlight takes every upload only with a build number of its own (CFBundleVersion); the app and its
@@ -1214,6 +1214,13 @@ if(TONWERK_APP)
         foreach(bundle Tonwerk ${tonwerk_extensions})
             target_sources(${bundle} PRIVATE "${tonwerk_privacy}")
             set_property(TARGET ${bundle} APPEND PROPERTY RESOURCE "${tonwerk_privacy}")
+        endforeach()
+        # JUCE names an AUv3 <plugin's id>.<its last part>AUv3, two parts past the app's id; App Store Connect takes
+        # only one (ITMS-90347), so each extension gets its plugin's id, de.bvelop.tonwerk.tonwerkdx.
+        foreach(extension ${tonwerk_extensions})
+            string(REGEX REPLACE "_AUv3$" "" plugin "${extension}")
+            get_target_property(plugin_id ${plugin} JUCE_BUNDLE_ID)
+            set_target_properties(${extension} PROPERTIES XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${plugin_id}")
         endforeach()
         set_target_properties(Tonwerk PROPERTIES
             XCODE_EMBED_APP_EXTENSIONS "${tonwerk_extensions}"

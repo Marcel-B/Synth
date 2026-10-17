@@ -63,6 +63,15 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      # App Store Connect takes only apps built with the iOS 26 SDK or later (ITMS-90725); the runner's default Xcode
+      # may be older, so the newest Xcode 26 or later it carries is chosen.
+      - name: Xcode 26
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -iv beta | sort -V | tail -1)
+          version=$(basename "$xcode" .app); version=${version#Xcode_}
+          (( ${version%%.*} >= 26 )) || { echo "::error::no Xcode 26 on the runner"; ls -d /Applications/Xcode*; exit 1; }
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
       - uses: hendrikmuhs/ccache-action@v1.2.24
         with:
           key: ios
@@ -93,7 +102,8 @@ jobs:
           for appex in "$app"/PlugIns/*.appex; do
             [[ -d "$appex" ]] || continue
             ext=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$appex/Info.plist")
-            [[ "$ext" == "$id".* ]] || { echo "::error::$ext does not begin with $id"; exit 1; }
+            # App Store Connect takes an extension's id only as the app's plus one part without a period.
+            [[ "$ext" =~ ^"$id"\.[^.]+$ ]] || { echo "::error::$ext is not $id plus one part"; exit 1; }
             type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Info.plist")
             [[ -f "$appex/PrivacyInfo.xcprivacy" ]] || { echo "::error::$appex has no privacy manifest"; exit 1; }
             echo "$(basename "$appex"): $type"
