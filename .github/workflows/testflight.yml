@@ -96,12 +96,27 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          xcodebuild -project build-ios/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
-            -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
-            -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-            archive > "$RUNNER_TEMP/archive.log" 2>&1 \
-            || { grep -E "error:" "$RUNNER_TEMP/archive.log" | head -50; tail -100 "$RUNNER_TEMP/archive.log"; exit 1; }
+          # Xcode fetches the 33 targets' profiles side by side and now and then refers to one it has not written yet
+          # ("Build input file cannot be found: ....mobileprovision"). The profiles are on the runner after that, so
+          # the archive is tried again, at most three times, and only for that error.
+          for attempt in 1 2 3; do
+            if xcodebuild -project build-ios/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
+              -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
+              -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
+              -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+              archive > "$RUNNER_TEMP/archive.log" 2>&1; then
+              break
+            fi
+            grep -E "error:" "$RUNNER_TEMP/archive.log" | sort -u | head -50
+            if [[ $attempt -lt 3 ]] && grep -q "error: Build input file cannot be found: .*\.mobileprovision" "$RUNNER_TEMP/archive.log" \
+              && ! grep "error:" "$RUNNER_TEMP/archive.log" | grep -vq "\.mobileprovision"; then
+              echo "Profiles were still arriving; attempt $((attempt + 1))"
+              ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null | wc -l
+              continue
+            fi
+            tail -100 "$RUNNER_TEMP/archive.log"
+            exit 1
+          done
           grep -E "ARCHIVE SUCCEEDED" "$RUNNER_TEMP/archive.log"
           ls "$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/Tonwerk.app/PlugIns"
       - name: Upload to TestFlight
