@@ -863,6 +863,37 @@ target_link_libraries(TonwerkMultiband
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Zone: a compressor on one range of the spectrum, a dynamic EQ with a side chain (zone/).
+juce_add_plugin(TonwerkZone
+    PRODUCT_NAME "Tonwerk Zone"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID de.bvelop.tonwerkzone
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwZn
+    FORMATS ${TONWERK_FORMATS}
+    IS_SYNTH FALSE
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Dynamics EQ
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_ZONE_SOURCES
+    zone/src/ZoneEditor.cpp
+    zone/src/ZonePresets.cpp
+    zone/src/ZoneProcessor.cpp)
+
+target_sources(TonwerkZone PRIVATE ${TONWERK_ZONE_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+# Borrows the state variable filter from Tonwerk Wobble.
+target_include_directories(TonwerkZone PRIVATE common wobble/src)
+target_compile_definitions(TonwerkZone PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkZone
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
 if(TONWERK_TESTS)
@@ -928,9 +959,11 @@ if(TONWERK_TESTS)
         tests/StutterTests.cpp
         ${TONWERK_MULTIBAND_SOURCES}
         tests/MultibandTests.cpp
+        ${TONWERK_ZONE_SOURCES}
+        tests/ZoneTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src)
+    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src)
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
@@ -960,6 +993,7 @@ if(TONWERK_TESTS)
         TONWERK_NEURO_NO_ENTRY=1
         TONWERK_STUTTER_NO_ENTRY=1
         TONWERK_MULTIBAND_NO_ENTRY=1
+        TONWERK_ZONE_NO_ENTRY=1
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp
