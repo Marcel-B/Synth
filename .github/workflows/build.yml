@@ -199,9 +199,18 @@ jobs:
           [[ -d "$app" ]] || { echo "::error::Tonwerk.app was not built"; exit 1; }
           id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist")
           /usr/libexec/PlistBuddy -c "Print :LSApplicationCategoryType" "$app/Contents/Info.plist"
-          sandboxed() { codesign -d --entitlements - --xml "$1" 2>/dev/null | plutil -extract com.apple.security.app-sandbox raw - 2>/dev/null | grep -q true; }
-          sandboxed "$app" || { echo "::error::the app is not sandboxed"; exit 1; }
-          codesign -d --entitlements - --xml "$app" 2>/dev/null | grep -q audio-input || { echo "::error::the app lacks audio-input"; exit 1; }
+          # The entitlements a bundle was signed with, as a plist file PlistBuddy can read.
+          entitlements() { codesign -d --entitlements - --xml "$1" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null; }
+          has() { /usr/libexec/PlistBuddy -c "Print :$2" "$RUNNER_TEMP/entitlements.plist" 2>/dev/null | grep -q true; }
+          sandboxed() { entitlements "$1" && has "$1" com.apple.security.app-sandbox; }
+          if ! sandboxed "$app"; then
+            echo "::error::the app is not sandboxed"
+            codesign -dvv "$app" 2>&1 | head -20
+            cat "$RUNNER_TEMP/entitlements.plist"; echo
+            find build-mac -name 'Tonwerk*.entitlements' -maxdepth 4 -exec sh -c 'echo "== $1"; cat "$1"' _ {} \;
+            exit 1
+          fi
+          has "$app" com.apple.security.device.audio-input || { echo "::error::the app lacks audio-input"; exit 1; }
           count=0
           for appex in "$app"/Contents/PlugIns/*.appex; do
             [[ -d "$appex" ]] || continue
