@@ -25,10 +25,10 @@ const std::vector<FactoryPreset>& factoryPresets()
         { "Init", "", {} },
 
         // The 808 recorded at C1, gliding between notes the way trap basses do.
-        { "808 Glide", "Bässe",
+        { "Sub-Kick Glide", "Bässe",
           { { "source", eightOhEight }, { "root", 36 }, { "voiceMode", legato }, { "glide", 70 },
             { "ampRelease", 120 }, { "velocity", 0.2f }, { "fxReverbMix", 0.0f }, { "master", -8 } } },
-        { "808 Dreck", "Bässe",
+        { "Sub-Kick Dreck", "Bässe",
           { { "source", eightOhEight }, { "root", 36 }, { "lofi", 0.35f }, { "filter", low24 }, { "cutoff", 2500 },
             { "ampRelease", 100 }, { "velocity", 0.2f }, { "fxReverbMix", 0.0f }, { "master", -8 } } },
         // The nylon string an octave down, its pluck closed by the filter envelope.

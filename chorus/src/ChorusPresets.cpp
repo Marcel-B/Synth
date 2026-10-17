@@ -45,7 +45,7 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         { "Sanftes Ensemble", "Ensemble",
           { { "mode", ensemble }, { "rate", 0.35f }, { "depth", 0.4f }, { "delay", 10 }, { "spread", 90 },
             { "highCut", 8000 }, { "mix", 0.45f }, { "output", -3 } } },
-        { "Orgel-Leslie", "Ensemble",
+        { "Orgel-Rotor", "Ensemble",
           { { "mode", ensemble }, { "rate", 0.9f }, { "depth", 0.9f }, { "delay", 4 }, { "spread", 120 },
             { "mix", 0.5f }, { "output", -3 } } },
 

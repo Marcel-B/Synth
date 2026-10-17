@@ -403,7 +403,7 @@ public:
         {
             MultibandProcessor p;
             p.setCurrentProgram(5);
-            expectEquals(p.getProgramName(5), juce::String("OTT"));
+            expectEquals(p.getProgramName(5), juce::String("Volldruck"));
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
             auto* editor = dynamic_cast<MultibandEditor*>(created.get());
             expect(editor != nullptr);

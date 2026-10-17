@@ -151,7 +151,7 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "voiceMode", legato }, { "glide", 40 }, { "env1Release", 80 },
             { "distOn", 1 }, { "distMode", tube }, { "distDrive", 0.5f }, { "master", -6 } } },
         // A sine that drops an octave in a moment and rings, saturated so it carries on small speakers.
-        { "808", "Bässe",
+        { "Boom-Bass", "Bässe",
           { { "aLevel", 0.9f }, { "filterOn", 0 },
             { "env1Decay", 1500 }, { "env1Sustain", 0 }, { "env1Release", 150 },
             { "env2Attack", 0 }, { "env2Decay", 60 }, { "env2Sustain", 0 },

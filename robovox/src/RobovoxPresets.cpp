@@ -10,8 +10,8 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         { "Init", "", {} },
         // Marcel's example: the carrier steps through the bass notes, two octaves under a man's voice, three under a
         // woman's, and the lowest harmonics stay up as a bass would.
-        { "Night City (Sänger)", "Tief", { { "bandwidth", 200 }, { "bass", 0.6f } } },
-        { "Night City (Sängerin)", "Tief", { { "octave", -3 }, { "bandwidth", 200 }, { "bass", 0.6f }, { "output", 2 } } },
+        { "Neonstadt (Sänger)", "Tief", { { "bandwidth", 200 }, { "bass", 0.6f } } },
+        { "Neonstadt (Sängerin)", "Tief", { { "octave", -3 }, { "bandwidth", 200 }, { "bass", 0.6f }, { "output", 2 } } },
         { "Dämon", "Tief", { { "octave", -3 }, { "formant", -5 }, { "bass", 0.8f }, { "sibilance", 0.3f }, { "output", 5 } } },
         // The carrier from a MIDI track in Logic's side chain: the bass line sings.
         { "MIDI-Bass", "Tief", { { "mode", 1 }, { "bass", 0.6f } } },

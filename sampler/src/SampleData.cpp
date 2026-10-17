@@ -526,7 +526,7 @@ SampleBank::SampleBank()
     samples[3] = make({ electricPiano() }, "E-Piano");
     samples[4] = make(strings(), "Streicher");
     samples[5] = make({ bell() }, "Glocke");
-    samples[6] = make({ eightOhEight() }, "808");
+    samples[6] = make({ eightOhEight() }, "Sub-Kick");
     samples[7] = make(choir(), "Chor");
     samples[8] = make({ guitar() }, "Gitarre");
 }
@@ -545,7 +545,7 @@ const Sample& SampleBank::sample(int index) const
 const std::vector<std::string>& SampleBank::names()
 {
     static const std::vector<std::string> list { "Vokal Ah", "Vokal-Chops", "Breakbeat", "E-Piano", "Streicher",
-                                                 "Glocke",   "808 (C1)",    "Chor",      "Gitarre",  "Eigene Datei" };
+                                                 "Glocke",   "Sub-Kick (C1)", "Chor",      "Gitarre",  "Eigene Datei" };
     return list;
 }
 
