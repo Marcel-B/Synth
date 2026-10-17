@@ -7,7 +7,8 @@
 
 /**
  * What differs on the iPad (AUv3 and the standalone app built for iOS), kept in one place so the plugins' own code stays
- * the same everywhere: the editor's size, files the user chooses.
+ * the same everywhere: the editor's size, files the user chooses. The Mac App Store's build (TONWERK_SANDBOX) shares
+ * the iPad's menus and files: its AUv3s run sandboxed in a process of their own, as on the iPad.
  */
 namespace tonwerkui
 {
@@ -74,7 +75,7 @@ inline juce::AudioProcessorEditor* forHost(juce::AudioProcessorEditor* editor)
  */
 inline juce::Component* menuParentFor(const juce::PopupMenu::Options& options)
 {
-#if JUCE_IOS
+#if JUCE_IOS || TONWERK_SANDBOX
     if (options.getParentComponent() == nullptr)
         if (auto* target = options.getTargetComponent())
             return target->getTopLevelComponent();
@@ -141,12 +142,12 @@ inline juce::String chosenName(const juce::FileChooser& chooser)
 }
 
 /**
- * A chosen file the plugin can open again later, when a project loads: on the iPad a copy in `folder` (the permission for
- * the original ends with the chooser), elsewhere the file itself.
+ * A chosen file the plugin can open again later, when a project loads: on the iPad and in the Mac's sandbox a copy in
+ * `folder` (the permission for the original ends with the chooser, or with the process), elsewhere the file itself.
  */
 inline juce::File keepChosen(const juce::FileChooser& chooser, const juce::File& folder)
 {
-#if JUCE_IOS
+#if JUCE_IOS || TONWERK_SANDBOX
     juce::MemoryBlock data;
     if (! readChosen(chooser, data) || ! folder.createDirectory())
         return {};
