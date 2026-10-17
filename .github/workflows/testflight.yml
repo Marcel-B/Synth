@@ -80,11 +80,13 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           # Static libraries stay out of the archive (SKIP_INSTALL), or Xcode makes a generic archive instead of an
-          # app's; the app itself sets it back. No LTO: with 33 binaries it would take hours.
+          # app's; the app itself sets it back. The dSYMs go up with the build so TestFlight's crash reports name
+          # functions. No LTO: with 33 binaries it would take hours.
           cmake -S . -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS \
             -DTONWERK_VERSION="$TONWERK_VERSION" -DTONWERK_BUILD_NUMBER="$TONWERK_BUILD_NUMBER" -DTONWERK_LTO=OFF \
             -DCMAKE_XCODE_GENERATE_SCHEME=ON \
             -DCMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL=YES \
+            -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
             -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE=Automatic \
             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="Apple Development" \
