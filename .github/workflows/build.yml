@@ -127,10 +127,9 @@ jobs:
           xcrun simctl bootstatus "$udid" -b
           app=build-ios/Tonwerk_artefacts/Release/Tonwerk.app
           xcrun simctl install "$udid" "$app"
-          xcrun simctl privacy "$udid" grant microphone de.bvelop.tonwerk || true
           mkdir -p ipad-screenshots
           # simctl hands SIMCTL_CHILD_* to the app; TONWERK_PLUGIN picks the plugin it opens.
-          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope"; do
+          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Bass" "Tonwerk Sampler"; do
             SIMCTL_CHILD_TONWERK_PLUGIN="$name" xcrun simctl launch "$udid" de.bvelop.tonwerk
             sleep 12
             xcrun simctl io "$udid" screenshot "ipad-screenshots/$name.png"
