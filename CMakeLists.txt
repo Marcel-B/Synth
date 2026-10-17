@@ -1182,6 +1182,7 @@ if(TONWERK_APP)
         COMPANY_WEBSITE "https://tonwerk.studio"
         BUNDLE_ID de.bvelop.tonwerk
         ${TONWERK_IOS_OPTIONS}
+        ${TONWERK_INPUT_PERMISSION}
         BLUETOOTH_PERMISSION_ENABLED TRUE
         BLUETOOTH_PERMISSION_TEXT "Verbindet MIDI-Keyboards über Bluetooth."
         # No encryption beyond the system's, so TestFlight asks no export questions.

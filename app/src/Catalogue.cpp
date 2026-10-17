@@ -11,6 +11,7 @@
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
 #include "SamplerProcessor.h"
+#include "ScopeProcessor.h"
 #include "WavetableProcessor.h"
 
 namespace tonwerkapp
@@ -45,6 +46,7 @@ const std::vector<Entry>& catalogue()
         entry<tonwerkneuro::NeuroProcessor>("Tonwerk Neuro"),
         entry<tonwerkexpander::ExpanderProcessor>("Tonwerk Expander"),
         entry<tonwerkgroove::GrooveProcessor>("Tonwerk Groovebox"),
+        { "Tonwerk Scope", [] { return std::make_unique<tonwerkscope::ScopeProcessor>(); }, true },
     };
     return entries;
 }

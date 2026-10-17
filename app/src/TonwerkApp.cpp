@@ -4,10 +4,13 @@
 
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#include <atomic>
+
 /**
  * Tonwerk for the iPad: one app with every plugin in it. Logic Pro for iPad, GarageBand and AUM load the plugins as the
  * AUv3s it carries; on its own the app plays one instrument at a time, with its own on-screen keyboard and a MIDI
- * keyboard (USB or Bluetooth). It builds on the desktop too (-DTONWERK_APP=ON), to try it without an iPad.
+ * keyboard (USB or Bluetooth), or shows the microphone's or the audio interface's input in Tonwerk Scope. It builds on
+ * the desktop too (-DTONWERK_APP=ON), to try it without an iPad.
  */
 namespace tonwerkapp
 {
@@ -22,12 +25,22 @@ class Player : public juce::AudioIODeviceCallback
 public:
     juce::AudioProcessorPlayer player;
     tonwerkui::ScopeBuffer scope;
+    /** The input into the plugin and its output kept from the speakers, which would play it back into the microphone. */
+    std::atomic<bool> listening { false };
 
     void audioDeviceIOCallbackWithContext(const float* const* inputs, int numInputs, float* const* outputs,
                                           int numOutputs, int numSamples,
                                           const juce::AudioIODeviceCallbackContext& context) override
     {
-        player.audioDeviceIOCallbackWithContext(inputs, numInputs, outputs, numOutputs, numSamples, context);
+        if (listening.load(std::memory_order_relaxed))
+        {
+            player.audioDeviceIOCallbackWithContext(inputs, numInputs, outputs, numOutputs, numSamples, context);
+            for (int channel = 0; channel < numOutputs; ++channel)
+                juce::FloatVectorOperations::clear(outputs[channel], numSamples);
+            return;
+        }
+        // With no inputs the player hands the plugin silence on its input channels.
+        player.audioDeviceIOCallbackWithContext(nullptr, 0, outputs, numOutputs, numSamples, context);
         if (numOutputs <= 0)
             return;
         // Left and right averaged, in pieces so the copy stays on the stack.
@@ -209,6 +222,10 @@ public:
         };
         addAndMakeVisible(showKeyboard);
 
+        input.setButtonText("Eingang");
+        input.onClick = [this] { chooseInput(); };
+        addChildComponent(input);
+
 #if JUCE_IOS
         bluetooth.setButtonText("Bluetooth-MIDI");
         bluetooth.onClick = [] { juce::BluetoothMidiDevicePairingDialogue::open(); };
@@ -308,11 +325,14 @@ public:
         title = bar.removeFromLeft(150);
         picker.setBounds(bar.removeFromLeft(280));
         bar.removeFromLeft(tonwerkui::kGap);
-        showKeyboard.setBounds(bar.removeFromLeft(90));
+        if (showKeyboard.isVisible())
+            showKeyboard.setBounds(bar.removeFromLeft(90));
+        if (input.isVisible())
+            input.setBounds(bar.removeFromLeft(110));
         if (bluetooth.isVisible())
             bluetooth.setBounds(bar.removeFromRight(150));
 
-        const bool keysShown = showKeyboard.getToggleState();
+        const bool keysShown = showKeyboard.isVisible() && showKeyboard.getToggleState();
         for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown, &scope })
             component->setVisible(keysShown);
         if (! keysShown)
@@ -364,6 +384,9 @@ private:
         frame.show(processor->hasEditor() ? processor->createEditorIfNeeded() : nullptr);
 
         picker.setButtonText(chosen.name + utf8(" \xe2\x96\xbe"));
+        showKeyboard.setVisible(! chosen.listens);
+        input.setVisible(chosen.listens);
+        listen(chosen.listens);
         // Each instrument keeps where its keyboard sat; the drums start on General MIDI's kick, C1.
         lowestKey = settings->getIntValue("lowestKey." + chosen.name, 36);
         settings->setValue("plugin", chosen.name);
@@ -379,6 +402,36 @@ private:
         if (current >= 0)
             settings->setValue("lowestKey." + catalogue()[(size_t) current].name, lowestKey);
         repaint(octaveLabel);
+    }
+
+    void listen(bool on)
+    {
+        if (! on)
+        {
+            audio.listening = false;
+            return;
+        }
+        juce::Component::SafePointer<MainComponent> self(this);
+        juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
+            if (self == nullptr || ! granted)
+                return;
+            // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
+            if (! self->inputsOpen)
+            {
+                self->devices.initialise(2, 2, nullptr, true);
+                self->inputsOpen = true;
+            }
+            self->audio.listening = true;
+        });
+    }
+
+    /** The device and its input channels: the iPad's microphone or a plugged-in interface's inputs. */
+    void chooseInput()
+    {
+        auto selector = std::make_unique<juce::AudioDeviceSelectorComponent>(devices, 1, 2, 0, 0, false, false, false,
+                                                                             false);
+        selector->setSize(420, 260);
+        juce::CallOutBox::launchAsynchronously(std::move(selector), input.getBounds(), this);
     }
 
     /** Without its scroll buttons the keyboard always starts at its range's bottom, so the range is what it shows. */
@@ -419,9 +472,10 @@ private:
     std::unique_ptr<juce::AudioProcessor> processor;
     int current = -1;
     int lowestKey = 36;
+    bool inputsOpen = false;
 
     juce::Rectangle<int> title, octaveLabel;
-    juce::TextButton picker, showKeyboard;
+    juce::TextButton picker, showKeyboard, input;
     juce::TextButton bluetooth;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard { keys, juce::MidiKeyboardComponent::horizontalKeyboard };
