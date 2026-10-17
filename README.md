@@ -800,6 +800,8 @@ cmake --build build --target TonwerkGroovebox_Standalone  # Lauf auf „Frei“ 
 cmake --build build --target TonwerkTape_Standalone
 ```
 
+Die Effekt-Apps lesen die Eingänge des Audio-Interfaces (in den Einstellungen unter „Active input channels“). Beim ersten Start fragt macOS, ob die App aufs Mikrofon zugreifen darf; ohne dieses OK kommt nur Stille an. Wer einmal abgelehnt hat, erlaubt es unter Systemeinstellungen → Datenschutz & Sicherheit → Mikrofon.
+
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
 
 ## Website
