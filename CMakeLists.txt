@@ -1216,11 +1216,25 @@ if(TONWERK_APP)
             set_property(TARGET ${bundle} APPEND PROPERTY RESOURCE "${tonwerk_privacy}")
         endforeach()
         # JUCE names an AUv3 <plugin's id>.<its last part>AUv3, two parts past the app's id; App Store Connect takes
-        # only one (ITMS-90347), so each extension gets its plugin's id, de.bvelop.tonwerk.tonwerkdx.
+        # only one (ITMS-90347), so each extension gets its plugin's id, de.bvelop.tonwerk.tonwerkdx. JUCE writes the
+        # id into the extension's Info.plist too (at configure time), and the export picks the profile by that one,
+        # so the extension gets a copy of the plist with the id replaced.
         foreach(extension ${tonwerk_extensions})
             string(REGEX REPLACE "_AUv3$" "" plugin "${extension}")
             get_target_property(plugin_id ${plugin} JUCE_BUNDLE_ID)
-            set_target_properties(${extension} PROPERTIES XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${plugin_id}")
+            string(REGEX MATCH "[^.]+$" last "${plugin_id}")
+            get_target_property(juce_plist ${extension} MACOSX_BUNDLE_INFO_PLIST)
+            file(READ "${juce_plist}" plist)
+            string(REPLACE "<string>${plugin_id}.${last}AUv3</string>" "<string>${plugin_id}</string>" plist "${plist}")
+            string(FIND "${plist}" "<string>${plugin_id}</string>" found)
+            if(found EQUAL -1)
+                message(FATAL_ERROR "${juce_plist} does not name ${plugin_id}.${last}AUv3")
+            endif()
+            set(tonwerk_plist "${CMAKE_CURRENT_BINARY_DIR}/${extension}_Info.plist")
+            file(WRITE "${tonwerk_plist}" "${plist}")
+            set_target_properties(${extension} PROPERTIES
+                XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${plugin_id}"
+                MACOSX_BUNDLE_INFO_PLIST "${tonwerk_plist}")
         endforeach()
         set_target_properties(Tonwerk PROPERTIES
             XCODE_EMBED_APP_EXTENSIONS "${tonwerk_extensions}"
