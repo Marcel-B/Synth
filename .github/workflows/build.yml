@@ -79,6 +79,20 @@ jobs:
             name="${dir#*:}"
             "$GITHUB_WORKSPACE/scripts/sign-macos.sh" "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"
           done
+      # An effect's standalone app hears its audio interface only with a microphone usage text and the audio-input
+      # entitlement; without them macOS delivers silence and never asks.
+      - name: Check the effects' input permission
+        run: |
+          for component in build/*_artefacts/Release/AU/*.component; do
+            type=$(/usr/libexec/PlistBuddy -c "Print :AudioComponents:0:type" "$component/Contents/Info.plist")
+            [[ "$type" == aufx || "$type" == aumf ]] || continue
+            app="${component%/AU/*}/Standalone/$(basename "$component" .component).app"
+            /usr/libexec/PlistBuddy -c "Print :NSMicrophoneUsageDescription" "$app/Contents/Info.plist" >/dev/null \
+              || { echo "::error::$app has no NSMicrophoneUsageDescription"; exit 1; }
+            codesign -d --entitlements - "$app" 2>/dev/null | grep -q audio-input \
+              || { echo "::error::$app lacks the audio-input entitlement"; exit 1; }
+            echo "$app: input permission ok"
+          done
       - name: Validate with auval
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
