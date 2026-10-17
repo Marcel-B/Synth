@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Groovebox, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze und Tonwerk Arp aus einem Release-Download (liegt im Zip neben den Plugins).
+# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze und Tonwerk Arp aus einem Release-Download (liegt im Zip neben den Plugins).
 #
 #   cd ~/Downloads/Tonwerk-Synth-<version>-macOS && zsh install.sh
 #
@@ -39,13 +39,14 @@ STUTTER="Tonwerk Stutter"
 MULTIBAND="Tonwerk Multiband"
 ZONE="Tonwerk Zone"
 SCOPE="Tonwerk Scope"
+EXPANDER="Tonwerk Expander"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
 VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
 
 xattr -dr com.apple.quarantine . 2>/dev/null || true
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE"; do
+for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER"; do
   rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
   cp -R "$PRODUCT.component" "$COMPONENTS/"
   cp -R "$PRODUCT.vst3" "$VST3/"
@@ -74,6 +75,7 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwSh Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwFl Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwNr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwEx Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwSt Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwMb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwZn Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
@@ -83,7 +85,7 @@ else
   echo "Installiert, aber auval ist fehlgeschlagen. Das Protokoll steht in /tmp/tonwerk-auval.log"
   exit 1
 fi
-echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO oder $GROOVEBOX."
+echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER oder $GROOVEBOX."
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE oder $SCOPE."
 echo "$WOBBLE auf jeder Spur, am liebsten dem Bass: Audio-FX > Audio Units > b-velop > $WOBBLE."
