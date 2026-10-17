@@ -7,6 +7,9 @@
 The look is the website's favicon: a dark panel with its top right corner cut off, the sign in one of Night City's
 colours with the other two shifted to the sides like a misaligned screen. Instruments draw it in yellow, effects in
 cyan, the MIDI effect in red. A new plugin gets an entry in ICONS and its PNGs, else CMake stops at its ICON_BIG.
+
+The iPad app that carries all plugins (icons/Tonwerk.png, APP_ICONS) fills the whole square without transparency:
+iPadOS rounds the corners itself, and App Store Connect refuses an app icon with an alpha channel.
 """
 
 import math
@@ -54,9 +57,10 @@ class Pen:
     def line(self, points, width=STROKE):
         pts = [to_screen(x, y) for x, y in points]
         w = px(width)
-        self.draw.line(pts, fill=255, width=w, joint="curve")
+        self.draw.line(pts, fill=255, width=w)
+        # A round cap on every corner: Pillow's own curved joints leave spikes along a curve's many short segments.
         r = w / 2
-        for x, y in (pts[0], pts[-1]):
+        for x, y in pts:
             self.draw.ellipse((x - r, y - r, x + r, y + r), fill=255)
 
     def curve(self, f, x0=-1.0, x1=1.0, steps=400, width=STROKE):
@@ -423,6 +427,11 @@ ICONS = {
     "TonwerkLFO": (lfo, MIDI),
 }
 
+# The iPad app with every plugin inside: Tonwerk Synth's sign, both engines.
+APP_ICONS = {
+    "Tonwerk": (synth, INSTRUMENT),
+}
+
 
 # --- the frame -------------------------------------------------------------------------------------------------------
 
@@ -444,17 +453,18 @@ def shifted(mask, dx):
     return ImageChops.offset(mask, dx, 0)
 
 
-def icon(glyph, colour):
+def icon(glyph, colour, full=False):
     others = [c for c in (YELLOW, CYAN, RED) if c != colour]
     left, right = (RED, CYAN) if colour == YELLOW else (others[0], others[1])
 
     canvas = Image.new("RGBA", (S, S), (0, 0, 0, 0))
 
     # The shadow under the square, as the Dock shows icons.
-    shadow = Image.new("L", (S, S), 0)
-    shadow.paste(body_mask(), (0, px(14)))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(px(20))).point(lambda v: v * 0.55)
-    canvas.paste(Image.new("RGBA", (S, S), (0, 0, 0, 255)), (0, 0), shadow)
+    if not full:
+        shadow = Image.new("L", (S, S), 0)
+        shadow.paste(body_mask(), (0, px(14)))
+        shadow = shadow.filter(ImageFilter.GaussianBlur(px(20))).point(lambda v: v * 0.55)
+        canvas.paste(Image.new("RGBA", (S, S), (0, 0, 0, 255)), (0, 0), shadow)
 
     face = Image.new("RGBA", (S, S), BACKGROUND + (255,))
     d = ImageDraw.Draw(face)
@@ -473,15 +483,22 @@ def icon(glyph, colour):
     face.paste(Image.new("RGBA", (S, S), right + (255,)), (0, 0), shifted(sign, px(SHIFT)))
     face.paste(Image.new("RGBA", (S, S), colour + (255,)), (0, 0), sign)
 
+    if full:
+        return face.convert("RGB").resize((SIZE, SIZE), Image.LANCZOS)
     canvas.paste(face, (0, 0), body_mask())
     return canvas.resize((SIZE, SIZE), Image.LANCZOS)
 
 
 def main():
-    names = sys.argv[1:] or list(ICONS)
+    names = sys.argv[1:] or list(ICONS) + list(APP_ICONS)
     (ROOT / "icons").mkdir(exist_ok=True)
     (ROOT / "website" / "icons").mkdir(exist_ok=True)
     for name in names:
+        if name in APP_ICONS:
+            glyph, colour = APP_ICONS[name]
+            icon(glyph, colour, full=True).save(ROOT / "icons" / f"{name}.png", optimize=True)
+            print(name)
+            continue
         glyph, colour = ICONS[name]
         img = icon(glyph, colour)
         img.save(ROOT / "icons" / f"{name}.png", optimize=True)

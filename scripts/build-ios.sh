@@ -1,6 +1,6 @@
 #!/bin/bash
-# Baut alle Plugins für das iPad: je eine App mit dem AUv3 darin (Logic Pro für iPad, GarageBand, AUM laden das AUv3,
-# die App spielt allein). Braucht das volle Xcode (nur dort gibt es das iOS-SDK) und CMake; der Mac-Build bleibt davon
+# Baut Tonwerk für das iPad: eine App mit den AUv3s aller Plugins darin (Logic Pro für iPad, GarageBand, AUM laden die
+# AUv3s, die App spielt die Instrumente und Effekte allein). Braucht das volle Xcode (nur dort gibt es das iOS-SDK) und CMake; der Mac-Build bleibt davon
 # unberührt und braucht weiter nur die Command Line Tools.
 #
 #   scripts/build-ios.sh simulator   für den iOS-Simulator, ohne Signatur
@@ -8,7 +8,7 @@
 #                                     (Xcode legt die Profile selbst an, wenn das Konto in Xcode angemeldet ist)
 #
 # TONWERK_IOS_BUILD_DIR wählt den Build-Ordner (build-ios), weitere CMake-Argumente stehen in TONWERK_IOS_CMAKE_ARGS.
-# Die Apps liegen danach unter <Ordner>/<Target>_artefacts/Release/Standalone/.
+# Die App liegt danach unter <Ordner>/Tonwerk_artefacts/Release/Tonwerk.app. Für TestFlight: .github/workflows/testflight.yml.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -42,4 +42,4 @@ if [[ "$kind" == device ]]; then
 fi
 cmake --build "$dir" --config Release --parallel "$(sysctl -n hw.ncpu)" -- "${xcode_args[@]}"
 
-find "$dir" -maxdepth 4 -path "*_artefacts/Release/Standalone/*.app" -print
+echo "$dir/Tonwerk_artefacts/Release/Tonwerk.app"

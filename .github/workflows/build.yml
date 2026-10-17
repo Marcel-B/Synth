@@ -83,20 +83,25 @@ jobs:
           } >> "$GITHUB_ENV"
       - name: Build
         run: scripts/build-ios.sh simulator
-      # Each app must carry its AUv3, or Logic Pro for iPad and AUM never see the plugin.
+      # The app must carry every plugin's AUv3, or Logic Pro for iPad and AUM never see it.
       - name: Check the AUv3s
         run: |
-          shopt -s nullglob
+          app=build-ios/Tonwerk_artefacts/Release/Tonwerk.app
+          [[ -d "$app" ]] || { echo "::error::Tonwerk.app was not built"; exit 1; }
+          id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Info.plist")
           count=0
-          for app in build-ios/*_artefacts/Release/Standalone/*.app; do
-            appex=$(find "$app/PlugIns" -maxdepth 1 -name "*.appex" | head -1)
-            [[ -n "$appex" ]] || { echo "::error::$app has no AUv3"; exit 1; }
+          for appex in "$app"/PlugIns/*.appex; do
+            [[ -d "$appex" ]] || continue
+            ext=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$appex/Info.plist")
+            [[ "$ext" == "$id".* ]] || { echo "::error::$ext does not begin with $id"; exit 1; }
             type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Info.plist")
-            echo "$(basename "$app"): $type"
+            [[ -f "$appex/PrivacyInfo.xcprivacy" ]] || { echo "::error::$appex has no privacy manifest"; exit 1; }
+            echo "$(basename "$appex"): $type"
             count=$((count + 1))
           done
-          echo "$count apps"
-          (( count > 0 )) || { echo "::error::no apps built"; exit 1; }
+          [[ -f "$app/PrivacyInfo.xcprivacy" ]] || { echo "::error::the app has no privacy manifest"; exit 1; }
+          echo "$count AUv3s"
+          (( count == 32 )) || { echo "::error::expected 32 AUv3s, found $count"; exit 1; }
       - name: Screenshots in the simulator
         run: |
           # An iPad the runner already has on its newest iOS runtime (not every device type runs on every runtime),
@@ -110,23 +115,24 @@ jobs:
           udid=$(echo "$pick" | awk '{print $2}')
           xcrun simctl boot "$udid" || true   # already booted is fine
           xcrun simctl bootstatus "$udid" -b
+          app=build-ios/Tonwerk_artefacts/Release/Tonwerk.app
+          xcrun simctl install "$udid" "$app"
+          xcrun simctl privacy "$udid" grant microphone de.bvelop.tonwerk || true
           mkdir -p ipad-screenshots
-          for name in "Tonwerk Wavetable" "Tonwerk Synth" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope" "Tonwerk Arp"; do
-            app=$(find build-ios -maxdepth 4 -path "*_artefacts/Release/Standalone/$name.app" | head -1)
-            id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Info.plist")
-            xcrun simctl install "$udid" "$app"
-            xcrun simctl privacy "$udid" grant microphone "$id" || true
-            xcrun simctl launch "$udid" "$id"
+          # simctl hands SIMCTL_CHILD_* to the app; TONWERK_PLUGIN picks the plugin it opens.
+          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope"; do
+            SIMCTL_CHILD_TONWERK_PLUGIN="$name" xcrun simctl launch "$udid" de.bvelop.tonwerk
             sleep 12
             xcrun simctl io "$udid" screenshot "ipad-screenshots/$name.png"
-            xcrun simctl terminate "$udid" "$id" || true
+            xcrun simctl terminate "$udid" de.bvelop.tonwerk || true
           done
-          # The simulator stays upright; the apps are landscape only, so the pictures are turned to show them upright.
+          # The simulator stays upright; the app is landscape only, so the pictures are turned to show it upright.
           for png in ipad-screenshots/*.png; do
             w=$(sips -g pixelWidth "$png" | awk '/pixelWidth/ {print $2}')
             h=$(sips -g pixelHeight "$png" | awk '/pixelHeight/ {print $2}')
             if (( w < h )); then sips -r 270 "$png" >/dev/null; fi
           done
+          # iPadOS registers the AUv3s with the app; hosts find them there.
           xcrun simctl spawn "$udid" pluginkit -m -v -p com.apple.AudioUnit-UI || true
       - uses: actions/upload-artifact@v4
         if: always()

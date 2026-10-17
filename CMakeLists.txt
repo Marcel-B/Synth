@@ -41,11 +41,11 @@ if(TONWERK_LTO)
 endif()
 
 # Audio Units exist only on the Mac; elsewhere the VST3 and the standalone app are built, which is enough for the tests.
-# On the iPad each plugin is an AUv3 inside its app (Logic Pro for iPad, GarageBand, AUM load the AUv3; the app plays on
-# its own). iOS needs the Xcode generator (its SDK and the app extension's embedding come only with Xcode); the Mac's own
+# On the iPad every plugin is an AUv3 inside the one Tonwerk app (app/, below; Logic Pro for iPad, GarageBand, AUM load
+# the AUv3s, the app plays them on its own). iOS needs the Xcode generator (its SDK and the app extension's embedding come only with Xcode); the Mac's own
 # build stays on the Command Line Tools.
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    set(TONWERK_FORMATS AUv3 Standalone)
+    set(TONWERK_FORMATS AUv3)
 elseif(APPLE)
     set(TONWERK_FORMATS AU VST3 Standalone)
 else()
@@ -60,6 +60,18 @@ set(TONWERK_IOS_OPTIONS
     REQUIRES_FULL_SCREEN TRUE
     STATUS_BAR_HIDDEN TRUE
     BACKGROUND_AUDIO_ENABLED TRUE)
+
+# An app extension's bundle id must begin with its app's, so on the iPad the plugins' ids sit under the app's
+# (de.bvelop.tonwerk.tonwerkdx, its AUv3 de.bvelop.tonwerk.tonwerkdx.tonwerkdxAUv3). The Mac keeps its ids.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(TONWERK_BUNDLE_PREFIX de.bvelop.tonwerk)
+    # TestFlight takes every upload only with a build number of its own (CFBundleVersion); the app and its
+    # extensions must carry the same one. The upload workflow passes its run number.
+    set(TONWERK_BUILD_NUMBER "${TONWERK_VERSION}" CACHE STRING "CFBundleVersion of the iPad app and its AUv3s")
+    list(APPEND TONWERK_IOS_OPTIONS BUILD_VERSION "${TONWERK_BUILD_NUMBER}")
+else()
+    set(TONWERK_BUNDLE_PREFIX de.bvelop)
+endif()
 
 # The effects' standalone apps read the audio interface's inputs. macOS hands an app without a microphone usage text in
 # its Info.plist nothing but silence there, without asking (the plugins live in the host, which has asked already).
@@ -116,9 +128,9 @@ function(tonwerk_add_synth target product bundle code edition)
         PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 endfunction()
 
-tonwerk_add_synth(TonwerkAnalog "Tonwerk Analog" de.bvelop.tonwerkanalog TwAn analog)
-tonwerk_add_synth(TonwerkFM "Tonwerk FM" de.bvelop.tonwerkfm TwFm fm)
-tonwerk_add_synth(TonwerkSynth "Tonwerk Synth" de.bvelop.tonwerksynth Twsy combined)
+tonwerk_add_synth(TonwerkAnalog "Tonwerk Analog" ${TONWERK_BUNDLE_PREFIX}.tonwerkanalog TwAn analog)
+tonwerk_add_synth(TonwerkFM "Tonwerk FM" ${TONWERK_BUNDLE_PREFIX}.tonwerkfm TwFm fm)
+tonwerk_add_synth(TonwerkSynth "Tonwerk Synth" ${TONWERK_BUNDLE_PREFIX}.tonwerksynth Twsy combined)
 
 # Chrome Glitch: an audio effect from the same repository, for a voice whose speech chrome fails (glitch/).
 juce_add_plugin(ChromeGlitch
@@ -126,7 +138,7 @@ juce_add_plugin(ChromeGlitch
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/ChromeGlitch.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.chromeglitch
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.chromeglitch
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE ChGl
     FORMATS ${TONWERK_FORMATS}
@@ -160,7 +172,7 @@ juce_add_plugin(TonwerkDistortion
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDistortion.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkdistortion
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkdistortion
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDs
     FORMATS ${TONWERK_FORMATS}
@@ -194,7 +206,7 @@ juce_add_plugin(TonwerkWavetable
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkWavetable.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkwavetable
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkwavetable
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwWt
     FORMATS ${TONWERK_FORMATS}
@@ -228,7 +240,7 @@ juce_add_plugin(TonwerkDX
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDX.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkdx
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkdx
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDx
     FORMATS ${TONWERK_FORMATS}
@@ -261,7 +273,7 @@ juce_add_plugin(TonwerkGranular
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGranular.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkgranular
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkgranular
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGr
     FORMATS ${TONWERK_FORMATS}
@@ -295,7 +307,7 @@ juce_add_plugin(TonwerkPhysical
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkPhysical.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkphysical
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkphysical
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwPh
     FORMATS ${TONWERK_FORMATS}
@@ -328,7 +340,7 @@ juce_add_plugin(TonwerkAdditiv
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkAdditiv.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkadditiv
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkadditiv
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwAd
     FORMATS ${TONWERK_FORMATS}
@@ -361,7 +373,7 @@ juce_add_plugin(TonwerkGroovebox
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGroovebox.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkgroovebox
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkgroovebox
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGb
     FORMATS ${TONWERK_FORMATS}
@@ -395,7 +407,7 @@ juce_add_plugin(TonwerkRobovox
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkRobovox.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkrobovox
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkrobovox
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwRv
     FORMATS ${TONWERK_FORMATS}
@@ -430,7 +442,7 @@ juce_add_plugin(TonwerkWobble
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkWobble.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkwobble
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkwobble
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwWb
     FORMATS ${TONWERK_FORMATS}
@@ -464,7 +476,7 @@ juce_add_plugin(TonwerkPD
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkPD.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkpd
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkpd
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwPd
     FORMATS ${TONWERK_FORMATS}
@@ -497,7 +509,7 @@ juce_add_plugin(TonwerkTape
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkTape.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerktape
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerktape
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwTp
     FORMATS ${TONWERK_FORMATS}
@@ -531,7 +543,7 @@ juce_add_plugin(TonwerkFreeze
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkFreeze.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkfreeze
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkfreeze
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwFz
     FORMATS ${TONWERK_FORMATS}
@@ -565,7 +577,7 @@ juce_add_plugin(TonwerkArp
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkArp.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkarp
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkarp
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwAr
     FORMATS ${TONWERK_FORMATS}
@@ -598,7 +610,7 @@ juce_add_plugin(TonwerkSampler
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkSampler.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerksampler
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerksampler
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSm
     FORMATS ${TONWERK_FORMATS}
@@ -631,7 +643,7 @@ juce_add_plugin(TonwerkBass
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkBass.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkbass
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkbass
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwBs
     FORMATS ${TONWERK_FORMATS}
@@ -663,7 +675,7 @@ juce_add_plugin(TonwerkVocoder
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkVocoder.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkvocoder
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkvocoder
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwVc
     FORMATS ${TONWERK_FORMATS}
@@ -696,7 +708,7 @@ juce_add_plugin(TonwerkDelay
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDelay.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkdelay
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkdelay
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwDl
     FORMATS ${TONWERK_FORMATS}
@@ -729,7 +741,7 @@ juce_add_plugin(TonwerkChorus
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkChorus.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkchorus
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkchorus
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwCh
     FORMATS ${TONWERK_FORMATS}
@@ -762,7 +774,7 @@ juce_add_plugin(TonwerkGlue
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkGlue.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkglue
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkglue
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwGl
     FORMATS ${TONWERK_FORMATS}
@@ -795,7 +807,7 @@ juce_add_plugin(TonwerkShimmer
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkShimmer.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkshimmer
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkshimmer
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSh
     FORMATS ${TONWERK_FORMATS}
@@ -828,7 +840,7 @@ juce_add_plugin(TonwerkFilter
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkFilter.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkfilter
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkfilter
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwFl
     FORMATS ${TONWERK_FORMATS}
@@ -862,7 +874,7 @@ juce_add_plugin(TonwerkNeuro
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkNeuro.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkneuro
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkneuro
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwNr
     FORMATS ${TONWERK_FORMATS}
@@ -894,7 +906,7 @@ juce_add_plugin(TonwerkStutter
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkStutter.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkstutter
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkstutter
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSt
     FORMATS ${TONWERK_FORMATS}
@@ -928,7 +940,7 @@ juce_add_plugin(TonwerkMultiband
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkMultiband.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkmultiband
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkmultiband
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwMb
     FORMATS ${TONWERK_FORMATS}
@@ -962,7 +974,7 @@ juce_add_plugin(TonwerkZone
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkZone.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkzone
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkzone
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwZn
     FORMATS ${TONWERK_FORMATS}
@@ -996,7 +1008,7 @@ juce_add_plugin(TonwerkScope
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkScope.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkscope
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkscope
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwSc
     FORMATS ${TONWERK_FORMATS}
@@ -1029,7 +1041,7 @@ juce_add_plugin(TonwerkExpander
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkExpander.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerkexpander
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkexpander
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwEx
     FORMATS ${TONWERK_FORMATS}
@@ -1062,7 +1074,7 @@ juce_add_plugin(TonwerkLFO
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkLFO.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
-    BUNDLE_ID de.bvelop.tonwerklfo
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerklfo
     PLUGIN_MANUFACTURER_CODE Bvlp
     PLUGIN_CODE TwLf
     FORMATS ${TONWERK_FORMATS}
@@ -1087,6 +1099,131 @@ target_compile_definitions(TonwerkLFO PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(TonwerkLFO
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
+# Tonwerk, the iPad app (app/): every plugin's AUv3 inside one app, which also plays the instruments and effects on its
+# own from the same sources the tests compile. It builds on the desktop too (-DTONWERK_APP=ON) to try it there.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(TONWERK_APP_DEFAULT ON)
+else()
+    set(TONWERK_APP_DEFAULT OFF)
+endif()
+option(TONWERK_APP "Build the Tonwerk app with every plugin" ${TONWERK_APP_DEFAULT})
+set(TONWERK_ALL_SOURCES
+    ${TONWERK_SOURCES}
+    ${TONWERK_UI_SOURCES}
+    common/EffectPresets.cpp
+    ${CHROME_GLITCH_SOURCES}
+    ${TONWERK_DISTORTION_SOURCES}
+    ${TONWERK_WAVETABLE_SOURCES}
+    ${TONWERK_DX_SOURCES}
+    ${TONWERK_GRANULAR_SOURCES}
+    ${TONWERK_PHYSICAL_SOURCES}
+    ${TONWERK_ADDITIVE_SOURCES}
+    ${TONWERK_GROOVEBOX_SOURCES}
+    ${TONWERK_ROBOVOX_SOURCES}
+    ${TONWERK_WOBBLE_SOURCES}
+    ${TONWERK_PD_SOURCES}
+    ${TONWERK_TAPE_SOURCES}
+    ${TONWERK_FREEZE_SOURCES}
+    ${TONWERK_SAMPLER_SOURCES}
+    ${TONWERK_BASS_SOURCES}
+    ${TONWERK_VOCODER_SOURCES}
+    ${TONWERK_DELAY_SOURCES}
+    ${TONWERK_CHORUS_SOURCES}
+    ${TONWERK_GLUE_SOURCES}
+    ${TONWERK_SHIMMER_SOURCES}
+    ${TONWERK_FILTER_SOURCES}
+    ${TONWERK_NEURO_SOURCES}
+    ${TONWERK_STUTTER_SOURCES}
+    ${TONWERK_MULTIBAND_SOURCES}
+    ${TONWERK_ZONE_SOURCES}
+    ${TONWERK_SCOPE_SOURCES}
+    ${TONWERK_EXPANDER_SOURCES})
+set(TONWERK_ALL_INCLUDES src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src
+    groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src
+    chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src)
+# Each plugin defines the factory a host calls; the app and the tests make their processors themselves.
+set(TONWERK_NO_ENTRIES
+    CHROME_GLITCH_NO_ENTRY=1
+    TONWERK_DISTORTION_NO_ENTRY=1
+    TONWERK_WAVETABLE_NO_ENTRY=1
+    TONWERK_DX_NO_ENTRY=1
+    TONWERK_GRANULAR_NO_ENTRY=1
+    TONWERK_PHYSICAL_NO_ENTRY=1
+    TONWERK_ADDITIVE_NO_ENTRY=1
+    TONWERK_GROOVEBOX_NO_ENTRY=1
+    TONWERK_ROBOVOX_NO_ENTRY=1
+    TONWERK_WOBBLE_NO_ENTRY=1
+    TONWERK_PD_NO_ENTRY=1
+    TONWERK_TAPE_NO_ENTRY=1
+    TONWERK_FREEZE_NO_ENTRY=1
+    TONWERK_ARP_NO_ENTRY=1
+    TONWERK_SAMPLER_NO_ENTRY=1
+    TONWERK_BASS_NO_ENTRY=1
+    TONWERK_VOCODER_NO_ENTRY=1
+    TONWERK_DELAY_NO_ENTRY=1
+    TONWERK_CHORUS_NO_ENTRY=1
+    TONWERK_GLUE_NO_ENTRY=1
+    TONWERK_SHIMMER_NO_ENTRY=1
+    TONWERK_FILTER_NO_ENTRY=1
+    TONWERK_NEURO_NO_ENTRY=1
+    TONWERK_STUTTER_NO_ENTRY=1
+    TONWERK_MULTIBAND_NO_ENTRY=1
+    TONWERK_ZONE_NO_ENTRY=1
+    TONWERK_SCOPE_NO_ENTRY=1
+    TONWERK_EXPANDER_NO_ENTRY=1
+    TONWERK_LFO_NO_ENTRY=1)
+
+if(TONWERK_APP)
+    juce_add_gui_app(Tonwerk
+        PRODUCT_NAME "Tonwerk"
+        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/Tonwerk.png"
+        COMPANY_NAME "b-velop"
+        COMPANY_WEBSITE "https://tonwerk.studio"
+        BUNDLE_ID de.bvelop.tonwerk
+        ${TONWERK_IOS_OPTIONS}
+        ${TONWERK_INPUT_PERMISSION}
+        BLUETOOTH_PERMISSION_ENABLED TRUE
+        BLUETOOTH_PERMISSION_TEXT "Verbindet MIDI-Keyboards über Bluetooth."
+        # No encryption beyond the system's, so TestFlight asks no export questions.
+        PLIST_TO_MERGE "<plist><dict><key>ITSAppUsesNonExemptEncryption</key><false/></dict></plist>")
+    target_sources(Tonwerk PRIVATE app/src/TonwerkApp.cpp app/src/Catalogue.cpp ${TONWERK_ALL_SOURCES})
+    target_include_directories(Tonwerk PRIVATE ${TONWERK_ALL_INCLUDES})
+    target_compile_definitions(Tonwerk PRIVATE
+        ${TONWERK_DEFINITIONS}
+        ${TONWERK_NO_ENTRIES}
+        JUCE_APPLICATION_NAME_STRING="Tonwerk"
+        JUCE_APPLICATION_VERSION_STRING="${TONWERK_VERSION}")
+    target_link_libraries(Tonwerk
+        PRIVATE juce::juce_audio_utils juce::juce_dsp
+        PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        # Every plugin's AUv3 goes into the app's PlugIns folder.
+        set(tonwerk_extensions
+            TonwerkAnalog_AUv3 TonwerkFM_AUv3 TonwerkSynth_AUv3 ChromeGlitch_AUv3 TonwerkDistortion_AUv3
+            TonwerkWavetable_AUv3 TonwerkDX_AUv3 TonwerkGranular_AUv3 TonwerkPhysical_AUv3 TonwerkAdditiv_AUv3
+            TonwerkGroovebox_AUv3 TonwerkRobovox_AUv3 TonwerkWobble_AUv3 TonwerkPD_AUv3 TonwerkTape_AUv3
+            TonwerkFreeze_AUv3 TonwerkArp_AUv3 TonwerkSampler_AUv3 TonwerkBass_AUv3 TonwerkVocoder_AUv3
+            TonwerkDelay_AUv3 TonwerkChorus_AUv3 TonwerkGlue_AUv3 TonwerkShimmer_AUv3 TonwerkFilter_AUv3
+            TonwerkNeuro_AUv3 TonwerkStutter_AUv3 TonwerkMultiband_AUv3 TonwerkZone_AUv3 TonwerkScope_AUv3
+            TonwerkExpander_AUv3 TonwerkLFO_AUv3)
+        add_dependencies(Tonwerk ${tonwerk_extensions})
+        # App Store Connect wants a privacy manifest in the app and in each extension.
+        set(tonwerk_privacy "${CMAKE_CURRENT_SOURCE_DIR}/app/PrivacyInfo.xcprivacy")
+        foreach(bundle Tonwerk ${tonwerk_extensions})
+            target_sources(${bundle} PRIVATE "${tonwerk_privacy}")
+            set_property(TARGET ${bundle} APPEND PROPERTY RESOURCE "${tonwerk_privacy}")
+        endforeach()
+        set_target_properties(Tonwerk PROPERTIES
+            XCODE_EMBED_APP_EXTENSIONS "${tonwerk_extensions}"
+            XCODE_EMBED_APP_EXTENSIONS_REMOVE_HEADERS_ON_COPY ON
+            XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY ON
+            # The app is what an archive for TestFlight holds, even when the upload sets SKIP_INSTALL for the rest.
+            XCODE_ATTRIBUTE_SKIP_INSTALL NO
+            XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)")
+    endif()
+endif()
 
 # The tests compile the same sources into a console app and run the DSP, the JSON and the parameters without a host.
 option(TONWERK_TESTS "Build the tests" ON)
@@ -1165,40 +1302,11 @@ if(TONWERK_TESTS AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
         tests/MidiLearnTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
-    target_include_directories(TonwerkSynthTests PRIVATE src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src)
+    target_include_directories(TonwerkSynthTests PRIVATE ${TONWERK_ALL_INCLUDES})
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
-        # Each plugin defines the factory a host calls; the tests make their processors themselves.
-        CHROME_GLITCH_NO_ENTRY=1
-        TONWERK_DISTORTION_NO_ENTRY=1
-        TONWERK_WAVETABLE_NO_ENTRY=1
-        TONWERK_DX_NO_ENTRY=1
-        TONWERK_GRANULAR_NO_ENTRY=1
-        TONWERK_PHYSICAL_NO_ENTRY=1
-        TONWERK_ADDITIVE_NO_ENTRY=1
-        TONWERK_GROOVEBOX_NO_ENTRY=1
-        TONWERK_ROBOVOX_NO_ENTRY=1
-        TONWERK_WOBBLE_NO_ENTRY=1
-        TONWERK_PD_NO_ENTRY=1
-        TONWERK_TAPE_NO_ENTRY=1
-        TONWERK_FREEZE_NO_ENTRY=1
-        TONWERK_ARP_NO_ENTRY=1
-        TONWERK_SAMPLER_NO_ENTRY=1
-        TONWERK_BASS_NO_ENTRY=1
-        TONWERK_VOCODER_NO_ENTRY=1
-        TONWERK_DELAY_NO_ENTRY=1
-        TONWERK_CHORUS_NO_ENTRY=1
-        TONWERK_GLUE_NO_ENTRY=1
-        TONWERK_SHIMMER_NO_ENTRY=1
-        TONWERK_FILTER_NO_ENTRY=1
-        TONWERK_NEURO_NO_ENTRY=1
-        TONWERK_STUTTER_NO_ENTRY=1
-        TONWERK_MULTIBAND_NO_ENTRY=1
-        TONWERK_ZONE_NO_ENTRY=1
-        TONWERK_SCOPE_NO_ENTRY=1
-        TONWERK_EXPANDER_NO_ENTRY=1
-        TONWERK_LFO_NO_ENTRY=1
+        ${TONWERK_NO_ENTRIES}
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

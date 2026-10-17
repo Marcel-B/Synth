@@ -1,0 +1,133 @@
+# Builds Tonwerk for the iPad (the app with every plugin's AUv3), signs it for the App Store and uploads it to
+# TestFlight. Started by hand (Actions → TestFlight → Run workflow). Needs the repository secrets
+#   APPLE_TEAM_ID   the team id of the developer account (already there for the Mac's signing)
+#   ASC_KEY_ID      the App Store Connect API key's id (the ten characters in AuthKey_<id>.p8)
+#   ASC_ISSUER_ID   the issuer id above the key list in App Store Connect
+#   ASC_KEY_P8      the contents of AuthKey_<id>.p8
+# The key needs the Admin role: with it Xcode registers the plugins' bundle ids, makes the distribution certificate and
+# the profiles itself (cloud-managed signing), so nothing has to be set up by hand but the app's entry in App Store
+# Connect (bundle id de.bvelop.tonwerk).
+name: TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (leer: die des letzten Tags)"
+        required: false
+        type: string
+
+jobs:
+  upload:
+    name: iPad-App zu TestFlight
+    runs-on: macos-15
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check the secrets
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          missing=0
+          for name in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [[ -n "${!name}" ]] || { echo "::error::secret $name is missing"; missing=1; }
+          done
+          exit $missing
+      - name: Version and build number
+        run: |
+          version="${{ inputs.version }}"
+          if [[ -z "$version" ]]; then
+            version=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.1.0)
+          fi
+          version="${version#v}"
+          # TestFlight takes each upload only with a new build number; the run number grows with every run.
+          echo "TONWERK_VERSION=$version" >> "$GITHUB_ENV"
+          echo "TONWERK_BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "Tonwerk $version ($GITHUB_RUN_NUMBER)"
+      - name: API key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey.p8"
+          printf '%s\n' "$ASC_KEY_P8" > "$key"
+          chmod 600 "$key"
+          echo "ASC_KEY_PATH=$key" >> "$GITHUB_ENV"
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: testflight
+          max-size: 2G
+      # Xcode ignores CMake's compiler launchers; its compiler settings point at ccache instead (as in build.yml).
+      - name: ccache for Xcode
+        run: |
+          bin="$RUNNER_TEMP/ccache-bin"
+          mkdir -p "$bin"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang)" > "$bin/clang"
+          printf '#!/bin/sh\nexec ccache "%s" "$@"\n' "$(xcrun -f clang++)" > "$bin/clang++"
+          chmod +x "$bin/clang" "$bin/clang++"
+          {
+            echo "CCACHE_SLOPPINESS=clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros"
+            echo "CCACHE_FILECLONE=true"
+            echo "CCACHE_DEPEND=true"
+            echo "CCACHE_BIN=$bin"
+          } >> "$GITHUB_ENV"
+      - name: Configure
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Static libraries stay out of the archive (SKIP_INSTALL), or Xcode makes a generic archive instead of an
+          # app's; the app itself sets it back. No LTO: with 33 binaries it would take hours.
+          cmake -S . -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS \
+            -DTONWERK_VERSION="$TONWERK_VERSION" -DTONWERK_BUILD_NUMBER="$TONWERK_BUILD_NUMBER" -DTONWERK_LTO=OFF \
+            -DCMAKE_XCODE_GENERATE_SCHEME=ON \
+            -DCMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL=YES \
+            -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE=Automatic \
+            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="Apple Development" \
+            -DCMAKE_XCODE_ATTRIBUTE_CC="$CCACHE_BIN/clang" -DCMAKE_XCODE_ATTRIBUTE_CXX="$CCACHE_BIN/clang++" \
+            -DCMAKE_XCODE_ATTRIBUTE_LD="$(xcrun -f clang)" -DCMAKE_XCODE_ATTRIBUTE_LDPLUSPLUS="$(xcrun -f clang++)" \
+            -DCMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE=NO
+      - name: Archive
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild -project build-ios/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
+            -destination generic/platform=iOS -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
+            -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            archive > "$RUNNER_TEMP/archive.log" 2>&1 \
+            || { grep -E "error:" "$RUNNER_TEMP/archive.log" | head -50; tail -100 "$RUNNER_TEMP/archive.log"; exit 1; }
+          grep -E "ARCHIVE SUCCEEDED" "$RUNNER_TEMP/archive.log"
+          ls "$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/Tonwerk.app/PlugIns"
+      - name: Upload to TestFlight
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          options="$RUNNER_TEMP/ExportOptions.plist"
+          cat > "$options" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key><string>app-store-connect</string>
+              <key>destination</key><string>upload</string>
+              <key>teamID</key><string>$APPLE_TEAM_ID</string>
+              <key>signingStyle</key><string>automatic</string>
+              <key>manageAppVersionAndBuildNumber</key><false/>
+              <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" -exportOptionsPlist "$options" \
+            -exportPath "$RUNNER_TEMP/export" -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+      - name: Remove the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8"

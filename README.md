@@ -654,7 +654,7 @@ Besucher und Klone des Repos stehen unter Insights → Traffic, aber nur für di
 
 ## Auf dem iPad (in Arbeit)
 
-Jedes Plugin lässt sich auch für das iPad bauen: als AUv3, das Logic Pro für iPad, GarageBand und AUM laden, in einer eigenen App, die das Plugin auch allein spielt (ein MIDI-Keyboard über USB öffnet sie von selbst, und sie spielt im Hintergrund weiter). Es sind dieselben Quellen wie auf dem Mac, nur ein weiteres Build-Ziel. Die Apps laufen nur auf dem iPad und nur quer, ab iPadOS 15.
+Auf dem iPad kommt alles in einer App: **Tonwerk**. Sie bringt jedes Plugin als AUv3 mit, das Logic Pro für iPad, GarageBand und AUM laden, und spielt die Instrumente und Effekte auch allein: oben das Plugin auswählen, unten die Tastatur, dazu ein MIDI-Keyboard über USB oder Bluetooth (Knopf **Bluetooth-MIDI**). Für die Effekte schaltet **Eingang** das Mikrofon oder die Eingänge des Audio-Interfaces ein; ohne Kopfhörer pfeift es dann. Die App merkt sich das gewählte Plugin und den Klang jedes Plugins und spielt im Hintergrund weiter. Tonwerk Arp und Tonwerk LFO gibt es nur als AUv3 im Host, denn allein hört niemand, was sie senden. Es sind dieselben Quellen wie auf dem Mac, nur ein weiteres Build-Ziel. Die App läuft nur auf dem iPad und nur quer, ab iPadOS 15.
 
 Was auf dem iPad anders ist (`common/Platform.h`):
 
@@ -669,9 +669,21 @@ scripts/build-ios.sh simulator                      # für den iOS-Simulator, oh
 TONWERK_TEAM_ID=ABCDE12345 scripts/build-ios.sh device   # für ein angeschlossenes iPad, mit dem Team des Developer-Kontos
 ```
 
-Die Action `build.yml` baut bei jedem Push alle Apps für den Simulator, prüft, dass jede ihr AUv3 enthält, startet einige davon in einem iPad-Simulator und legt Bildschirmfotos als Artefakt `ipad-screenshots` ab.
+Die App liegt danach unter `build-ios/Tonwerk_artefacts/Release/Tonwerk.app`. Auf dem Mac oder unter Linux lässt sie sich mit `-DTONWERK_APP=ON` ebenfalls bauen (`cmake --build build --target Tonwerk`), um sie ohne iPad auszuprobieren.
 
-**Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale) und die Dateien-App. Verteilt wird später über TestFlight; dafür fehlen noch die Signatur und der Upload in der Action.
+Die Action `build.yml` baut bei jedem Push die App für den Simulator, prüft, dass sie alle 32 AUv3s enthält, öffnet einige Plugins darin in einem iPad-Simulator und legt Bildschirmfotos als Artefakt `ipad-screenshots` ab.
+
+### TestFlight
+
+Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App, signiert sie für den App Store und lädt sie zu TestFlight hoch; die Version ist die des letzten Tags, die Build-Nummer die Nummer des Laufs. Einmal einzurichten:
+
+1. In App Store Connect eine App mit der Bundle-ID `de.bvelop.tonwerk` anlegen (die ID vorher unter developer.apple.com → Identifiers registrieren). Die IDs der Plugins (`de.bvelop.tonwerk.<plugin>.<plugin>AUv3`) legt der Build selbst an.
+2. Unter Benutzer und Zugriff → Integrationen einen API-Schlüssel mit der Rolle **Admin** erzeugen und die `.p8`-Datei laden (geht nur einmal).
+3. Im Repository unter Settings → Secrets and variables → Actions eintragen: `ASC_KEY_ID` (die zehn Zeichen im Dateinamen `AuthKey_….p8`), `ASC_ISSUER_ID` (über der Schlüsselliste) und `ASC_KEY_P8` (der ganze Inhalt der Datei, mit den Zeilen BEGIN und END). `APPLE_TEAM_ID` ist schon da.
+
+Nach dem Upload prüft Apple den Build einige Minuten; dann erscheint er in App Store Connect unter TestFlight, und wer dort als interner Tester eingetragen ist, installiert ihn mit der App TestFlight.
+
+**Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action, die App auch unter Linux gebaut und gestartet. Der Upload zu TestFlight ist noch nicht gelaufen. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale), Bluetooth-MIDI und die Dateien-App.
 
 ## Signieren mit Developer ID
 
