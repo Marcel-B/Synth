@@ -86,8 +86,9 @@ jobs:
       # Each app must carry its AUv3, or Logic Pro for iPad and AUM never see the plugin.
       - name: Check the AUv3s
         run: |
+          shopt -s nullglob
           count=0
-          for app in build-ios/*_artefacts/Release-iphonesimulator/Standalone/*.app; do
+          for app in build-ios/*_artefacts/Release/Standalone/*.app; do
             appex=$(find "$app/PlugIns" -maxdepth 1 -name "*.appex" | head -1)
             [[ -n "$appex" ]] || { echo "::error::$app has no AUv3"; exit 1; }
             type=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionAttributes:AudioComponents:0:type" "$appex/Info.plist")
@@ -95,6 +96,7 @@ jobs:
             count=$((count + 1))
           done
           echo "$count apps"
+          (( count > 0 )) || { echo "::error::no apps built"; exit 1; }
       - name: Screenshots in the simulator
         run: |
           runtime=$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | last | .identifier')
@@ -105,7 +107,7 @@ jobs:
           xcrun simctl bootstatus "$udid" -b
           mkdir -p ipad-screenshots
           for name in "Tonwerk Wavetable" "Tonwerk Synth" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Delay" "Tonwerk Scope" "Tonwerk Arp"; do
-            app=$(find build-ios -maxdepth 4 -path "*Release-iphonesimulator/Standalone/$name.app" | head -1)
+            app=$(find build-ios -maxdepth 4 -path "*_artefacts/Release/Standalone/$name.app" | head -1)
             id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Info.plist")
             xcrun simctl install "$udid" "$app"
             xcrun simctl privacy "$udid" grant microphone "$id" || true

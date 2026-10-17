@@ -8,7 +8,7 @@
 #                                     (Xcode legt die Profile selbst an, wenn das Konto in Xcode angemeldet ist)
 #
 # TONWERK_IOS_BUILD_DIR wählt den Build-Ordner (build-ios), weitere CMake-Argumente stehen in TONWERK_IOS_CMAKE_ARGS.
-# Die Apps liegen danach unter <Ordner>/<Target>_artefacts/Release-iphone*/Standalone/.
+# Die Apps liegen danach unter <Ordner>/<Target>_artefacts/Release/Standalone/.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -42,4 +42,4 @@ if [[ "$kind" == device ]]; then
 fi
 cmake --build "$dir" --config Release --parallel "$(sysctl -n hw.ncpu)" -- "${xcode_args[@]}"
 
-find "$dir" -maxdepth 4 -path "*Release-$sdk/Standalone/*.app" -print
+find "$dir" -maxdepth 4 -path "*_artefacts/Release/Standalone/*.app" -print
