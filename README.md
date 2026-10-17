@@ -885,6 +885,8 @@ Die Action `website.yml` prüft die Seite in jedem Pull Request und veröffentli
 
 ## Lizenz
 
-Tonwerk Synth steht unter der [GNU Affero General Public License v3](LICENSE) (AGPL-3.0) mit einer Zusatzbedingung nach Abschnitt 7(b), die die Namensnennung verlangt (siehe [NOTICE](NOTICE)). Kurz gesagt: Jeder darf den Code nutzen, ändern und weitergeben, auch in eigenen Projekten, aber nur wenn der Code offen bleibt (unter derselben Lizenz, auch bei Nutzung über ein Netzwerk) und der Hinweis „Tonwerk Synth by Marcel Benders“ mit Link zu diesem Repository erhalten bleibt. Geänderte Fassungen müssen als geändert erkennbar sein.
+Tonwerk Synth steht unter der [PolyForm Noncommercial License 1.0.0](LICENSE) (siehe auch [NOTICE](NOTICE)). Kurz gesagt: Jeder darf den Code lesen, für sich bauen, ändern und weitergeben, solange es nicht kommerziell ist und der Lizenztext und der Hinweis „Tonwerk Synth by Marcel Benders“ mit Link zu diesem Repository dabei sind. Verkaufen, in ein bezahltes Produkt oder eine bezahlte Arbeit einbauen oder sonst damit Geld verdienen geht nur mit Marcels schriftlicher Erlaubnis; frag dafür über ein Issue. Geänderte Fassungen sollen als geändert erkennbar sein.
 
-Die Plugins nutzen [JUCE](https://juce.com) 8, das unter AGPLv3 oder einer kommerziellen Lizenz steht; die weitergegebenen Builds nutzen JUCE unter der AGPLv3. Das VST3 SDK, das JUCE mitbringt, steht unter der MIT-Lizenz.
+Bis Version 0.5.0 (Quelltext bis Commit `c9ab322`, 17.10.2026) stand das Projekt unter der AGPL-3.0 mit Namensnennung; wer diese Fassungen hat, darf sie weiter unter der AGPL nutzen.
+
+Die Plugins nutzen [JUCE](https://juce.com) 8, das unter AGPLv3 oder einer kommerziellen Lizenz steht. Die Builds, die Marcel weitergibt, nutzen JUCE unter seiner eigenen JUCE-Lizenz. Code unter PolyForm Noncommercial lässt sich nicht mit der AGPL-Fassung von JUCE verbinden; wer selbst baut, braucht deshalb eine eigene JUCE-Lizenz (die kostenlose Starter-Lizenz reicht für private Builds). Das VST3 SDK, das JUCE mitbringt, steht unter der MIT-Lizenz.

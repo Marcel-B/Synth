@@ -156,7 +156,7 @@ A further plugin in the same CMake project: `TonwerkLFO` (MIDI effect, `aumi TwL
 
 ## Conventions
 
-- License: AGPL-3.0 with a section 7(b) attribution term (`LICENSE`, `NOTICE`), Marcel's choice. Distributed builds use JUCE under its AGPLv3, so any other license must stay AGPLv3-compatible.
+- License: PolyForm Noncommercial 1.0.0 (`LICENSE`) with a `Required Notice:` attribution line in `NOTICE`, Marcel's choice from 2026-10-18 (no commercial use without his permission); up to 0.5.0 / commit c9ab322 it was AGPL-3.0. Distributed builds use JUCE under Marcel's own JUCE licence (Starter), which forbids open-source terms on JUCE products, so never bring in code whose licence requires releasing source (GPL, AGPL); permissive code (MIT, BSD, Apache) is fine.
 - Commit messages and branch names are German; code and comments English; UI strings German.
 - Comments explain why. Tests (`tests/`, JUCE `UnitTest`s run by `TonwerkSynthTests`) come with every change; DSP tests measure the sound (levels, duty cycle, envelope timing), not implementation details.
 - 0.2.0 runs in Logic on Marcel's MacBook (his screenshot, 2026-10-01); anything newer has not been heard there unless a commit or the README says so. Say what was and was not tested.
