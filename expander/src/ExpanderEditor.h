@@ -53,11 +53,14 @@ public:
 private:
     void timerCallback() override;
     void choosePreset(int index);
+    /** Saves the patch as a picture of the hardware module's knob positions (`drawHardwareSheet`). */
+    void exportHardwareSheet();
 
     ExpanderProcessor& synth;
     tonwerkui::LookAndFeel lookAndFeel;
     juce::ComboBox presets;
-    juce::TextButton previous { "<" }, next { ">" };
+    juce::TextButton previous { "<" }, next { ">" }, hardwareSheet { "Hardware-Blatt" };
+    std::unique_ptr<juce::FileChooser> chooser;
     tonwerkui::ScopeView scope;
     Section osc1, osc2;
     FilterSection filter;
