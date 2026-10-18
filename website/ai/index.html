@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk-AI · Tonwerk Studio</title>
+  <meta name="description" content="Tonwerk-AI für iPhone, iPad und Mac: Songs mit YuE2 und ACE-Step auf dem eigenen Mac erzeugen, anhören, bearbeiten und als Logic-Projekt öffnen. Ohne Konto, ohne Cloud-Zwang.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/ai/">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Navigation von Tonwerk-AI">
+        <a href="#funktionen">Funktionen</a>
+        <a href="einrichtung.html">Einrichtung</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="#hilfe" class="optional">Hilfe</a>
+        <a href="../">Plugins</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <div class="app-title">
+      <img src="../icons/TonwerkAI.png" alt="" width="64" height="64">
+      <h1>Tonwerk-AI</h1>
+    </div>
+    <p class="lead-text">Songs auf dem eigenen Mac erzeugen und vom iPhone, iPad oder Mac aus steuern. Tonwerk-AI ist eine App für einen Server, den du selbst betreibst: Er rechnet mit den Musikmodellen <a href="https://github.com/multimodal-art-projection/YuE">YuE2</a> und <a href="https://github.com/ace-step/ACE-Step-1.5">ACE-Step</a> auf einem Mac mit Apple Silicon, die App zeigt Bibliothek, Warteschlange und Werkzeuge und spielt die Songs ab. Es gibt kein Konto und keinen Dienst von mir dazwischen.</p>
+    <p class="note">Die App ist im Test und kommt über TestFlight. Für Tonwerk-AI ohne Server gibt es einen <a href="einrichtung.html#demo">Demo-Modus</a> mit einer eingebauten Beispielbibliothek. Die Plugins für Logic und andere DAWs (Tonwerk ohne „AI“) stehen auf der <a href="../">Startseite</a>.</p>
+
+    <div class="columns compact">
+      <div class="panel">
+        <h3>Dein Mac rechnet</h3>
+        <p>Die Modelle laufen auf deinem Mac mini oder MacBook, eins nach dem anderen, damit der Speicher reicht. Songs, Texte und Aufnahmen bleiben dort.</p>
+      </div>
+      <div class="panel">
+        <h3>Die App steuert</h3>
+        <p>iPhone, iPad und Mac verbinden sich über <a href="https://tailscale.com">Tailscale</a> mit dem Server, auch unterwegs. Wer nicht in deinem Tailnet ist, erreicht ihn nicht.</p>
+      </div>
+      <div class="panel">
+        <h3>Logic im Blick</h3>
+        <p>Jeder Song kommt mit Partitur. Die App macht daraus MIDI und ein Logic-Projekt, spielt Spuren auf MIDI-Geräten oder den Tonwerk-Synths.</p>
+      </div>
+    </div>
+
+    <p><a class="button" href="einrichtung.html">Zur Einrichtung</a></p>
+
+    <h2 id="funktionen">Funktionen</h2>
+    <p>Die App hat links (auf dem iPhone im Menü) die Seiten <b>Erstellen</b>, <b>Bibliothek</b>, <b>Zum Anhören</b>, die <b>Warteschlange</b> und die Playlists, darunter die Werkzeuge. Welche Werkzeuge rechnen können, hängt davon ab, was auf dem Server eingerichtet ist (siehe <a href="einrichtung.html#optionen">Optionen</a>); fehlt etwas, sagt die Seite, was.</p>
+
+    <h3>Erstellen</h3>
+    <ul>
+      <li><b>Stil</b> aus Bausteinen (Genre, Stimme, Instrumente, Stimmung, Tempo, Sprache) oder frei geschrieben; „Bewährt“ bietet die Bausteine deiner bestbewerteten Songs an.</li>
+      <li><b>Songtext</b> mit Abschnitten wie <code>[Verse]</code>, <code>[Chorus]</code> oder <code>[Bridge]</code>. YuE2 singt Texte, schreibt aber keine: <b>Text entwerfen</b> lässt ein Sprachmodell aus Stichwörtern oder einem Foto einen deutschen oder englischen Text schreiben, lokal in LM Studio oder, mit eigenem Schlüssel, mit Claude. Eine kurze Anweisung („Refrain eingängiger“) überarbeitet einen Entwurf.</li>
+      <li><b>Partitur</b> im ABC-Format: eigene, übernommene oder transkribierte Melodien, in jede der 24 Tonarten versetzbar, auch von Dur nach Moll.</li>
+      <li><b>Qualität</b> Entwurf oder voll, Länge bis 10 Minuten, 1 bis 10 Songs auf einmal, Seed und die erweiterten Parameter des Modells (Sampling, Schritte, eigene Klang-LoRA).</li>
+      <li><b>Vorlagen</b> speichern Stil und Parameter unter einem Namen; <b>Alles übernehmen</b> bei einem Song trägt alles ein, womit er entstand.</li>
+    </ul>
+
+    <h3>Bibliothek und Player</h3>
+    <ul>
+      <li>Alle Songs mit Suche in Titel, Stil oder Text, Bewertung mit 1 bis 5 Sternen, Sortierung nach Datum, Sternen, Dauer und Tempo. <b>Zum Anhören</b> sammelt Songs, die seit über einer Woche unbewertet sind.</li>
+      <li>Tempo, Tonart und wie deutlich der Text gesungen ist, vom Server einmal gehört. Notizen, eigene Titel und eigene Cover je Song (Foto, Datei oder von FLUX.2 Klein auf dem Mac gemalt).</li>
+      <li>Der Player läuft im Hintergrund, mit Sperrbildschirm, Kontrollzentrum und AirPods. Vollbild mit großem Cover, Analyzer in der Farbe des Covers und dem Songtext, dessen gesungene Zeile mitläuft.</li>
+      <li>Playlists, die auf allen Geräten gleich sind, weil sie auf dem Server liegen.</li>
+      <li><b>Teilen / Exportieren</b> als kleine AAC für Messenger, MP3, M4A oder FLAC, mit Titel, Text, Cover und auf −14 LUFS gebracht.</li>
+      <li><b>Musikvideo</b> aus Cover, Analyzer, Partikeln oder Plasmakugel und dem mitlaufenden Text, für YouTube (16:9) oder Shorts und Reels (9:16), auf Wunsch aus eigenen Fotos und Clips auf die Beats geschnitten.</li>
+    </ul>
+
+    <h3>Warteschlange</h3>
+    <p>Was rechnet und was wartet, live: jeder Song mit seinen Schritten (Partitur, Tokens, Synthese, Audio) und ihrer Dauer, dazu Fassungen, Stems, Sprachaufnahmen, Bilder und Videos. Kacheln oben zeigen, welches Modell gerade den Speicher hat. Fertige Songs lassen sich als Playlist übernehmen, das Protokoll des Workers steht darunter.</p>
+
+    <h3>Werkzeuge</h3>
+    <dl class="tools">
+      <dt>Logic</dt>
+      <dd>Ein Song oder eine eigene MIDI-Datei oder <code>score.abc</code> wird zur Vorschau mit Pianorolle, Spuren und Mischpult. Jede Spur spielt auf einem MIDI-Gerät (auch über Bluetooth) oder einem Tonwerk-Synth. Export als MIDI, MusicXML oder Logic-Projekt mit Audio, auf Wunsch mit Gesang aus den Stems, Begleitstimmen und Bass und Schlagzeug aus den Stems.</dd>
+      <dt>Instrumente</dt>
+      <dd>Die Klänge der Tonwerk-Synths (Analog und FM) bearbeiten und auf einer Testtastatur spielen; die Bibliothek deiner MIDI-Geräte.</dd>
+      <dt>Stimmen</dt>
+      <dd>Songs in Stems trennen (Gesang trocken und mit Hall, Instrumental, Bass, Schlagzeug), einen Song mit einer Referenzstimme neu singen lassen (Seed-VC), eine eigene Gesangsspur mit einer anderen Stimme singen.</dd>
+      <dt>Transkription</dt>
+      <dd>Eine Aufnahme mit SheetSage2 zur Melodie-Partitur, oder mit Basic Pitch zu MIDI, wie gesungen.</dd>
+      <dt>Sprachlabor</dt>
+      <dd>Text mit lokalen Sprachmodellen sprechen lassen, auch mit einer im Mikrofon aufgenommenen Stimme; Sprachaufnahmen von Rauschen befreien.</dd>
+      <dt>ACE-Step</dt>
+      <dd>Das zweite Songmodell mit eigenen Parametern, auch für Cover und Neuberechnung einzelner Stellen eines Songs.</dd>
+      <dt>Ausarbeitung</dt>
+      <dd>Eine geschriebene Song-Idee (Aufbau, Akkorde, Text, Melodie) wird mit Claude zu einem Songplan: Partitur und Text für YuE2, Vorgaben für ACE-Step und ein MIDI-Entwurf mit Begleitung.</dd>
+      <dt>Begleitstimmen</dt>
+      <dd>Zu einer Melodie parallele Stimmen, Bordun und Chorsatz als MIDI.</dd>
+      <dt>Auswertung</dt>
+      <dd>Womit die bewerteten Songs gemacht wurden, gegen ihre Sterne: welche Bausteine, Modelle und Einstellungen sich bewähren.</dd>
+      <dt>Protokoll, Speicher, Vorlagen</dt>
+      <dd>Das Protokoll des Servers mit einem Bericht zum Kopieren, wohin der Speicherplatz geht samt Aufräumen, und die gespeicherten Vorlagen.</dd>
+    </dl>
+
+    <h3>Modelle und Lizenzen</h3>
+    <p>Tonwerk-AI bringt keine Modelle mit; der Server lädt sie bei der Einrichtung aus ihren Quellen, und es gelten deren Lizenzen. Die Gewichte von YuE2 stehen unter CC BY-NC 4.0, Einzelpersonen dürfen damit erzeugte Songs aber ausdrücklich verkaufen und vermarkten (<a href="https://github.com/multimodal-art-projection/YuE/blob/main/MODEL_LICENSE">MODEL_LICENSE</a>). ACE-Step (MIT) und FLUX.2 Klein 4B (Apache 2.0) sind frei nutzbar, FLUX.2 Klein 9B nur nicht kommerziell.</p>
+
+    <h2 id="hilfe">Hilfe und Kontakt</h2>
+    <p>Fragen, Fehler oder Wünsche zu Tonwerk-AI an <a href="mailto:marcel@tonwerk.studio">marcel@tonwerk.studio</a> oder als <a href="https://github.com/Marcel-B/YuE-UI/issues">Issue auf GitHub</a>. Bei einem Fehler hilft der Bericht aus <b>Werkzeuge → Protokoll</b>: Er nennt Version, Zustand des Servers und die letzten Warnungen, aber keine Einstellungen, Schlüssel oder Adressen.</p>
+    <p>Häufige Fragen stehen in der <a href="einrichtung.html#probleme">Einrichtung unter Probleme</a>.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="https://github.com/Marcel-B/YuE-UI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
