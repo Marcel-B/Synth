@@ -4,6 +4,7 @@
 #include "ExpanderProcessor.h"
 #include "HardwarePanel.h"
 #include "HardwareSheet.h"
+#include "Platform.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
@@ -624,6 +625,20 @@ public:
             expectLessThan(panel.vcoModulation[0].position, 0.5f); // vibrato wins over PWM
             expect(panel.assign == Assign::duo && ! panel.secondSilent);
             expectGreaterOrEqual((int) panel.notes.size(), 3);     // both waves, vibrato with PWM, eight voices
+        }
+
+        beginTest("A sheet is written into the chosen file itself, replacing a longer one");
+        {
+            // The Mac's sandbox allows writing only the chosen file, no hidden sibling to move over it.
+            juce::TemporaryFile temp(".png");
+            const auto file = temp.getFile();
+            expect(file.replaceWithText("ein viel zu langer alter Inhalt"));
+            const char fresh[] = "PNG";
+            expect(tonwerkui::writeInPlace(file, fresh, 3));
+            expectEquals(file.loadFileAsString(), juce::String("PNG"));
+            const auto siblings = file.getParentDirectory().findChildFiles(juce::File::findFiles, false,
+                                                                          "*" + file.getFileNameWithoutExtension() + "*");
+            expectEquals(siblings.size(), 1);
         }
 
         beginTest("Every factory sound draws its hardware sheet");

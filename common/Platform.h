@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <algorithm>
+#include <cstring>
 #include <memory>
 
 /**
@@ -108,36 +109,40 @@ inline juce::String readChosenText(const juce::FileChooser& chooser)
     return readChosen(chooser, data) ? data.toString() : juce::String();
 }
 
+/**
+ * Writes `size` bytes into `file` in place. `File::replaceWithData` writes a hidden sibling first and moves it over the
+ * file, which the Mac's sandbox refuses (only the chosen file itself may be written), so a save there did nothing.
+ */
+inline bool writeInPlace(const juce::File& file, const void* data, size_t size)
+{
+    juce::FileOutputStream stream(file);
+    if (! stream.openedOk() || ! stream.setPosition(0) || stream.truncate().failed())
+        return false;
+    const bool written = stream.write(data, size);
+    stream.flush();
+    return written && stream.getStatus().wasOk();
+}
+
 /** Writes the file the user chose to save as; on the iPad through the URL (the picker made the file empty). */
-inline bool writeChosenText(const juce::FileChooser& chooser, const juce::String& text)
+inline bool writeChosenData(const juce::FileChooser& chooser, const void* data, size_t size)
 {
 #if JUCE_IOS
     if (auto stream = chooser.getURLResult().createOutputStream())
     {
-        const bool written = stream->writeText(text, false, false, nullptr);
+        const bool written = stream->write(data, size);
         stream->flush();
         return written;
     }
     return false;
 #else
-    return chooser.getResult().replaceWithText(text);
+    return writeInPlace(chooser.getResult(), data, size);
 #endif
 }
 
-/** As `writeChosenText`, for bytes (a picture). */
-inline bool writeChosenData(const juce::FileChooser& chooser, const juce::MemoryBlock& data)
+inline bool writeChosenText(const juce::FileChooser& chooser, const juce::String& text)
 {
-#if JUCE_IOS
-    if (auto stream = chooser.getURLResult().createOutputStream())
-    {
-        const bool written = stream->write(data.getData(), data.getSize());
-        stream->flush();
-        return written;
-    }
-    return false;
-#else
-    return chooser.getResult().replaceWithData(data.getData(), data.getSize());
-#endif
+    const auto utf8 = text.toRawUTF8();
+    return writeChosenData(chooser, utf8, std::strlen(utf8));
 }
 
 /** Where a plugin keeps copies of the files chosen on the iPad: Application Support/<plugin>/Dateien. */
