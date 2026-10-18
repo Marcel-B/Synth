@@ -1,0 +1,7 @@
+Bauteil;Wert;Gehäuse;Seite;Hinweis
+J3;Potis;PinSocket_1x14_P2.54mm_Vertical;vorn;Pin 1 oben
+J4;Buchsen;PinSocket_1x14_P2.54mm_Vertical;vorn;Pin 1 oben
+J1;Eurorack;IDC-Header_2x05_P2.54mm_Vertical;hinten;Pin 1 = -12 V (roter Streifen)
+U1;R-78E5.0-0.5;Converter_DCDC_RECOM_R-78E-0.5_THT;hinten;
+SW1;RESET;SW_SPST_TL3342;hinten;E-Switch TL3342, optional
+SW2;BOOT;SW_SPST_TL3342;hinten;E-Switch TL3342, optional

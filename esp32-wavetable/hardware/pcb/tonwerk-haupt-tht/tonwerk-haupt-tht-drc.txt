@@ -1,0 +1,261 @@
+** Drc report for tonwerk-haupt-tht/tonwerk-haupt-tht.kicad_pcb **
+** Created on 2026-10-11 08:38:42 **
+
+** Found 72 DRC violations **
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(165.1500 mm, 151.9000 mm): Reference 'C27'
+    @(164.0300 mm, 153.5200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(166.2700 mm, 153.5200 mm): Line on B.Silkscreen
+    @(165.1500 mm, 151.9000 mm): Reference 'C27'
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(148.0300 mm, 145.0000 mm): Line on B.Silkscreen
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(150.7700 mm, 138.4600 mm): Line on B.Silkscreen
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(150.7700 mm, 145.0000 mm): Line on B.Silkscreen
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(156.0300 mm, 145.5000 mm): Line on B.Silkscreen
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+    @(154.7700 mm, 138.9600 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(152.0300 mm, 145.5000 mm): Line on B.Silkscreen
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(104.2500 mm, 85.4000 mm): Reference 'C36'
+    @(105.3700 mm, 87.0200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(103.1300 mm, 93.0200 mm): Line on B.Silkscreen
+    @(104.2500 mm, 91.4000 mm): Reference 'C37'
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(105.3700 mm, 93.0200 mm): Line on B.Silkscreen
+    @(104.2500 mm, 91.4000 mm): Reference 'C37'
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(104.2500 mm, 97.4000 mm): Reference 'C38'
+    @(105.3700 mm, 99.0200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(104.2500 mm, 97.4000 mm): Reference 'C38'
+    @(103.1300 mm, 99.0200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(104.2500 mm, 85.4000 mm): Reference 'C36'
+    @(103.1300 mm, 87.0200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(116.7500 mm, 110.8000 mm): Reference 'C40'
+    @(117.8700 mm, 112.4200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(116.7500 mm, 110.8000 mm): Reference 'C40'
+    @(115.6300 mm, 112.4200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(125.7500 mm, 150.3000 mm): Reference 'C18'
+    @(124.6300 mm, 151.9200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(125.7500 mm, 150.3000 mm): Reference 'C18'
+    @(126.8700 mm, 151.9200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(110.2500 mm, 149.8000 mm): Reference 'C15'
+    @(109.1300 mm, 151.4200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(110.2500 mm, 149.8000 mm): Reference 'C15'
+    @(111.3700 mm, 151.4200 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(138.1000 mm, 140.5400 mm): Footprint Text 'GND' of U5
+    @(139.1600 mm, 146.0800 mm): Line on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(139.1600 mm, 146.0800 mm): Line on B.Silkscreen
+    @(138.1000 mm, 138.0000 mm): Footprint Text 'VIN' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(139.1600 mm, 146.0800 mm): Line on B.Silkscreen
+    @(138.1000 mm, 143.0800 mm): Footprint Text 'LCK' of U5
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(138.1000 mm, 150.7000 mm): Footprint Text 'SCK' of U5
+    @(138.9900 mm, 150.6000 mm): Line on B.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(120.8000 mm, 149.2500 mm): Reference 'C17'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(165.1500 mm, 151.9000 mm): Reference 'C27'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.8000 mm, 69.3500 mm): Reference 'C6'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(114.8000 mm, 152.7500 mm): Reference 'C19'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(152.0000 mm, 79.3500 mm): Reference 'C30'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(140.6000 mm, 65.8500 mm): Reference 'C39'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.8000 mm, 65.8500 mm): Reference 'C4'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.3000 mm, 145.7500 mm): Reference 'C13'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(139.0951 mm, 114.7601 mm): Reference 'C3'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(129.6000 mm, 101.3500 mm): Reference 'C34'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(154.0951 mm, 117.7601 mm): Reference 'C5'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.3000 mm, 138.7500 mm): Reference 'C11'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(104.2500 mm, 85.4000 mm): Reference 'C36'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(160.5951 mm, 111.2601 mm): Reference 'C2'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(154.0951 mm, 111.2601 mm): Reference 'C1'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(116.7500 mm, 110.8000 mm): Reference 'C40'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(163.0000 mm, 97.8500 mm): Reference 'C31'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(111.7300 mm, 110.8700 mm): Reference 'Q1'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(164.0000 mm, 101.3500 mm): Reference 'C32'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(121.3000 mm, 145.7500 mm): Reference 'C14'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(105.7300 mm, 65.9700 mm): Reference 'U3'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(104.2500 mm, 91.4000 mm): Reference 'C37'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(164.0000 mm, 104.8500 mm): Reference 'C33'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(114.8000 mm, 149.2500 mm): Reference 'C16'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(125.7500 mm, 150.3000 mm): Reference 'C18'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(104.2500 mm, 97.4000 mm): Reference 'C38'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.7000 mm, 109.7500 mm): Reference 'C28'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(110.2500 mm, 149.8000 mm): Reference 'C15'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.1000 mm, 138.0000 mm): Footprint Text 'VIN' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(152.5000 mm, 144.3500 mm): Footprint Text 'PCM5102-Modul' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.1000 mm, 140.5400 mm): Footprint Text 'GND' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.1000 mm, 143.0800 mm): Footprint Text 'LCK' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.1000 mm, 145.6200 mm): Footprint Text 'DIN' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(138.1000 mm, 150.7000 mm): Footprint Text 'SCK' of U5
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.3000 mm, 135.2500 mm): Reference 'C10'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(128.1000 mm, 104.8500 mm): Reference 'C35'
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(115.3000 mm, 142.2500 mm): Reference 'C12'
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on F.Cu
+    @(106.7400 mm, 110.2000 mm): PTH pad 23 [GND] of U4
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on F.Cu
+    @(134.5000 mm, 140.5400 mm): PTH pad 2 [GND] of U5
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on F.Cu
+    @(116.5500 mm, 142.2500 mm): PTH pad 2 [GND] of C12
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on B.Cu
+    @(136.0200 mm, 78.8200 mm): PTH pad 14 [GND] of U9
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on B.Cu
+    @(159.5400 mm, 163.8700 mm): PTH pad 3 [GND] of J1
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 61.0000 mm): Line on Edge.Cuts
+    @(168.1000 mm, 120.0100 mm): Footprint Text 'K' of D1
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(102.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(105.2000 mm, 107.8000 mm): Footprint Text 'J3 25,4' of U4
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 61.0000 mm): Line on Edge.Cuts
+    @(168.1800 mm, 162.6000 mm): Reference 'J1'
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(161.5800 mm, 168.5500 mm): Line on B.Silkscreen
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(162.5800 mm, 168.5500 mm): Line on B.Silkscreen
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(162.0800 mm, 167.5500 mm): Line on B.Silkscreen
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** End of Report **

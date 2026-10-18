@@ -1,0 +1,15 @@
+Anzahl;Bauteil;Typ;Platine;Bezugsquelle (Beispiel)
+10;Potentiometer;Alpha RV09 9 mm vertikal, B10K linear, D-Achse (Footprint Alpha RD901F);Bedien;Thonk, Exploding Shed
+10;Drehknopf;für 6-mm-D-Achse, max. 13 mm Durchmesser;—;Thonk, Exploding Shed
+8;Klinkenbuchse;Thonkiconn PJ398SM;Bedien;Thonk, Exploding Shed
+2;Taster;6 × 6 mm, 13 mm hoch;Bedien;Reichelt
+2;RGB-LED;WS2812D-F5 5 mm bedrahtet (Pinbelegung 1 DIN, 2 VDD, 3 GND, 4 DOUT prüfen);Bedien;AliExpress, Reichelt
+2;Kondensator;100 nF 0805 (C1, C2, Rückseite);Bedien;Reichelt
+2;Stiftleiste;1 × 14, RM 2,54 mm, gerade;Bedien;Reichelt
+2;Buchsenleiste;1 × 14, RM 2,54 mm, gerade, 8,5 mm hoch;Haupt;Reichelt
+1;Wannenstecker;2 × 5, RM 2,54 mm;Haupt;Reichelt, Thonk
+1;Schaltregler;Recom R-78E5.0-0.5;Haupt;Reichelt, Mouser
+1;Eurorack-Kabel;Flachband 10 auf 16 pol.;—;Thonk
+2;Abstandsbolzen;M3 × 11 mm, Innen/Innen, + 4 Schrauben M3 × 5;—;Reichelt
+4;Rack-Schrauben;M3 × 6 mit Nylon-Unterlegscheiben;—;Thonk
+1;Frontplatte;hardware/frontplatte.stl drucken;—;3D-Druck

@@ -1,0 +1,10 @@
+Manufacturer Part Number,Quantity,Description,Designators
+MCP6004-I/P,2,Ersatz Op-Amp 4-fach DIP-14,Reserve U7 U8
+TL072CP,1,Ersatz Op-Amp 2-fach DIP-8,Reserve U6
+SN74HCT125N,1,Ersatz Puffer DIP-14,Reserve U10
+MCP1700-3002E/TO,2,Ersatz LDO 3.0 V TO-92,Reserve U3
+BC547BTA,4,Ersatz NPN TO-92,Reserve Q1
+C315C104K5R5TA,10,Ersatz Kerko 100 nF RM 2.54,Reserve
+MFR-25FBF52-100K,10,Ersatz Widerstand 100k 1 %,Reserve
+MFR-25FBF52-10K,10,Ersatz Widerstand 10k 1 %,Reserve
+MFR-25FBF52-1K,10,Ersatz Widerstand 1k 1 %,Reserve

@@ -1,0 +1,30 @@
+Menge;Suchbegriff bei Reichelt;Bauteil;Platz auf der Platine;worauf achten
+1;MCP3208-CI/P;ADC 12 Bit 8 Kanäle DIP-16;Haupt U9;Gehäuse DIP-16 (nicht SOIC)
+2;MCP6004-I/P;Op-Amp 4-fach DIP-14;Haupt U7 U8;Endung I/P = DIP
+1;TL072;Op-Amp 2-fach DIP-8;Haupt U6;DIP-8
+1;74HCT32;4 ODER-Gatter DIP-14 (statt 74HCT125, passt in dieselben Löcher);Haupt U10;HCT, nicht HC; 74HCT125 in DIP geht auch, falls doch zu finden
+1;MCP1700-3002E/TO;LDO 3,0 V TO-92;Haupt U3;TO-92, 3,0 V (3002)
+1;BC547;NPN TO-92;Haupt Q1;BC547B oder C geht auch
+1;R-78E5.0-0.5;Schaltregler 12 V auf 5 V SIP-3;Haupt U1;Recom, 5 V, 0,5 A
+3;1N5817;Schottky-Diode DO-41;Haupt D1-D3;
+10;Metallschichtwiderstand 100k 1 %;Widerstand 0207 1/4 W;Haupt;0207 = 6 mm lang, 1 %
+7;Metallschichtwiderstand 1k 1 %;Widerstand 0207 1/4 W;Haupt;
+5;Metallschichtwiderstand 10k 1 %;Widerstand 0207 1/4 W;Haupt;
+4;Metallschichtwiderstand 30k 1 %;Widerstand 0207 1/4 W;Haupt;
+2;Metallschichtwiderstand 6,8k 1 %;Widerstand 0207 1/4 W;Haupt;
+1;Metallschichtwiderstand 37,4k 1 %;Widerstand 0207 1/4 W;Haupt;E96-Wert
+1;Metallschichtwiderstand 17,4k 1 %;Widerstand 0207 1/4 W;Haupt;E96-Wert
+1;Metallschichtwiderstand 16k 1 %;Widerstand 0207 1/4 W;Haupt;
+1;Metallschichtwiderstand 330 Ohm 1 %;Widerstand 0207 1/4 W;Haupt;
+1;Metallschichtwiderstand 10 Ohm 1 %;Widerstand 0207 1/4 W;Haupt;
+20;Keramikkondensator 100 nF X7R RM 2,54;Kerko 100 nF 50 V;18 Haupt + 2 Bedien;Rastermaß 2,54 mm (nicht 5,08)
+5;Keramikkondensator 10 nF X7R RM 2,54;Kerko 10 nF 50 V;Haupt;Rastermaß 2,54 mm
+2;Keramikkondensator 1 µF X7R RM 2,54;Kerko 1 µF 25 V oder 50 V;Haupt;Rastermaß 2,54 mm
+4;Elko radial 10 µF 50 V;Elko 10 µF;Haupt;5 mm Durchmesser, Rastermaß 2 mm, höchstens 11 mm hoch
+3;IC-Fassung 14-polig;Präzisions- oder Federkontakt;Haupt U7 U8 U10;die billigen Federkontakt-Fassungen reichen
+1;IC-Fassung 16-polig;;Haupt U9;
+1;IC-Fassung 8-polig;;Haupt U6;
+2;Buchsenleiste 1x40 gerade RM 2,54;für DevKit und J3/J4;Haupt U4 J3 J4;jede Leiste in 22 + 14 schneiden (an der Schnittstelle geht ein Kontakt verloren, 22 + 1 + 14 = 37 passt)
+1;Buchsenleiste 1x6 gerade RM 2,54;für das PCM5102-Modul;Haupt U5;die Reste der 1x40 sind zu kurz (je 3 Kontakte)
+1;Stiftleiste 1x40 gerade RM 2,54;in 2 × 14 brechen;Bedien J3 J4;Stiftleisten lassen sich ohne Verlust brechen
+1;Wannenstecker 10-polig gerade;Eurorack-Stromanschluss 2x5;Haupt J1;gerade, nicht gewinkelt

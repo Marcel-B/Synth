@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name "tonwerk")(type "KiCad")(uri "${KIPRJMOD}/../lib/tonwerk.pretty")(options "")(descr "Tonwerk: DevKit und PCM5102-Modul auf Buchsenleisten"))
+)

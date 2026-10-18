@@ -1,0 +1,38 @@
+Pos;Anzahl;Bauteil;Wert / Typ;Gehäuse;Wofür;Bezugsquelle (Beispiel);ca. Preis gesamt (EUR)
+1;1;Mikrocontroller-Board;ESP32-S3-DevKitC-1 N16R8 (16 MB Flash, 8 MB Octal-PSRAM) oder baugleicher Klon (z. B. YD-ESP32-S3 N16R8);Modul;DSP, Steuerung, USB zum Flashen;Mouser, Reichelt, AliExpress;12,00
+2;1;DAC-Modul;PCM5102A-Breakout (GY-PCM5102, lila);Modul;Audio, 2 Kanäle, 32 bit, 48 kHz;AliExpress, Amazon;4,00
+3;1;ADC;MCP3208-CI/P (8 Kanäle, 12 bit, SPI);DIP-16;5 CV-Eingänge (3 Kanäle frei);Reichelt, Mouser;4,50
+4;1;Spannungsreferenz;REF3030AIDBZR (3,0 V);SOT-23;VREF für ADC, Potis, Bias;Mouser, LCSC;1,50
+5;2;Op-Amp Rail-to-Rail;MCP6004-I/P (4-fach, 3,3 V);DIP-14;CV-Eingangsstufen (5 von 8 genutzt);Reichelt, Mouser;1,20
+6;1;Op-Amp;TL072CP;DIP-8;Ausgangsverstärker ±5 V;Reichelt;0,50
+7;1;Schaltregler;Recom R-78E5.0-0.5 (12 V → 5 V, 500 mA);SIP-3;5-V-Versorgung aus +12 V;Reichelt, Mouser;3,50
+8;2;Schottky-Diode;1N5817;DO-41;Verpolschutz ±12 V;Reichelt;0,20
+9;1;Schottky-Diode;1N5819;DO-41;trennt 5 V vom USB des DevKits;Reichelt;0,10
+10;1;Transistor;MMBT3904 (oder BC547 bedrahtet);SOT-23 / TO-92;Gate-Eingang;Reichelt;0,10
+11;1;Pegelwandler;74AHCT1G125 (oder 74HCT125 bedrahtet);SOT-23-5 / DIP-14;3,3 V → 5 V für die LED-Daten;Mouser, Reichelt;0,40
+12;2;RGB-LED adressierbar;WS2812D-F5 (5 mm bedrahtet);5 mm;Anzeige Warp-Modus / Tabelle und Filtermodus;AliExpress, Reichelt;1,00
+13;10;Potentiometer;Alpha RV09 9 mm vertikal, 10k linear (B10K), D-Achse;PCB;TUNE, FINE, TABLE, POSITION, WARP, CUTOFF, RESO, DECAY, POS CV, CUT CV;Thonk, Exploding Shed, Synthrotek;10,00
+14;10;Drehknopf;für D-Achse 6 mm, max. 13 mm Durchmesser (z. B. Davies 1900H-Klon oder Thonk „Rogan“-Stil);—;auf die Potis;Thonk, Exploding Shed;8,00
+15;8;Klinkenbuchse;Thonkiconn PJ398SM (3,5 mm mono, mit Schaltkontakt);PCB;V/OCT, GATE, TABLE, POS, WARP, CUTOFF, OSC, VOICE;Thonk, Exploding Shed;4,00
+16;2;Taster;6 × 6 mm, 13 mm Höhe (Stößel 3,5 mm), oder Taster mit Kappe passend zum 4-mm-Loch;THT;WARP, FILTER;Reichelt;0,40
+17;1;Stromanschluss;Wannenstecker 2 × 5, RM 2,54 mm + Flachbandkabel 10 auf 16 pol.;THT;Eurorack-Bus;Thonk, Reichelt;2,00
+18;5;Widerstand 0,1 %;100k;0805 oder 0207;Eingangswiderstand CV-Stufen;Reichelt, Mouser;2,50
+19;1;Widerstand 0,1 %;37,4k;0805 oder 0207;Rückkopplung V/OCT;Mouser;0,50
+20;4;Widerstand 1 %;30k;0805 oder 0207;Rückkopplung übrige CV;Reichelt;0,10
+21;2;Widerstand 1 %;10k + 17,4k;0805 oder 0207;Bias-Teiler V/OCT (1,905 V);Reichelt;0,10
+22;2;Widerstand 1 %;16k + 10k;0805 oder 0207;Bias-Teiler CV (1,154 V), einer für alle vier;Reichelt;0,10
+23;7;Widerstand 1 %;1k;0805 oder 0207;vor dem ADC (5) und an den Ausgängen (2);Reichelt;0,10
+24;3;Widerstand 1 %;100k;0805 oder 0207;Gate (2) und Gate-Schaltkontakt an +12 V (1);Reichelt;0,05
+25;3;Widerstand 1 %;10k;0805 oder 0207;Gate-Pull-up (1), Ausgangsstufe Rg (2);Reichelt;0,05
+26;2;Widerstand 1 %;6,8k;0805 oder 0207;Ausgangsstufe Rf;Reichelt;0,05
+27;1;Widerstand;10 Ω;0805 oder 0207;Filter vor der Referenz;Reichelt;0,05
+28;1;Widerstand;330 Ω;0805 oder 0207;LED-Datenleitung;Reichelt;0,05
+29;5;Kondensator;10 nF C0G;0805 oder RM 5;vor den ADC-Eingängen;Reichelt;0,25
+30;16;Kondensator;100 nF X7R;0805 oder RM 5;Potis (10), Bias (2), Abblockung ICs und LEDs;Reichelt;0,80
+31;4;Elko;10 µF 25 V;radial;±12 V, 5 V, Referenz;Reichelt;0,40
+32;2;IC-Fassung;DIP-14;—;MCP6004;Reichelt;0,30
+33;1;IC-Fassung;DIP-16 + DIP-8;—;MCP3208, TL072;Reichelt;0,30
+34;2;Stiftleiste / Buchsenleiste;2 × 22 pol. Buchsenleisten für das DevKit, 1 × 6 für den DAC;—;Module steckbar;Reichelt;2,00
+35;1;Lochraster- oder Platine;zwei Ebenen: Bedienplatine (Potis, Buchsen, LEDs, Taster, max. 66 × 110 mm) parallel hinter der Front, Hauptplatine dahinter;—;Aufbau;JLCPCB / Lochraster;5,00
+36;1;Frontplatte;frontplatte.stl (PLA/PETG, 2,5 mm) oder Alu nach frontplatte-bohrplan.svg;—;14 TE;3D-Druck;1,00
+37;4;Schrauben;M3 × 6 mit Nylon-Unterlegscheiben;—;Befestigung im Rack;Thonk;0,50
