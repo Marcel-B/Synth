@@ -29,7 +29,7 @@ const std::vector<FactoryPreset>& factoryPresets()
           { { "wave", square }, { "cutoff", 350 }, { "resonance", 0.7f }, { "envMod", 0.55f }, { "decay", 400 },
             { "master", -7 } } },
         // Through a pedal after the filter, as most acid records were.
-        { "Verzerrt 303", "Bässe",
+        { "Verzerrt Acid", "Bässe",
           { { "cutoff", 300 }, { "resonance", 0.8f }, { "envMod", 0.7f }, { "decay", 400 }, { "drive", 0.6f },
             { "master", -6 } } },
         { "Tiefer Rumpel", "Bässe",

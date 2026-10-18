@@ -410,6 +410,16 @@ public:
         choose(index);
 
         setSize(1280, 800);
+
+        // TONWERK_SCREENSHOT=<file> (CI's store pictures): once the plugin has drawn, the content laid out at
+        // TONWERK_SCREENSHOT_SIZE points is written at twice that as a PNG, whatever screen the simulator or runner has
+        // (a booted simulator stands upright, the runner's display is 1024 x 768).
+        const auto shot = juce::SystemStats::getEnvironmentVariable("TONWERK_SCREENSHOT", {});
+        if (shot.isNotEmpty())
+            juce::Timer::callAfterDelay(8000, [safe = juce::Component::SafePointer<MainComponent>(this), shot] {
+                if (safe != nullptr)
+                    safe->writeScreenshot(shot);
+            });
     }
 
     ~MainComponent() override
@@ -422,6 +432,29 @@ public:
         frame.show(nullptr);
         processor.reset();
         setLookAndFeel(nullptr);
+    }
+
+    /** A relative name lands in the app's Documents folder (inside the container on iOS and in the Mac's sandbox). */
+    void writeScreenshot(const juce::String& name)
+    {
+        const auto size = juce::StringArray::fromTokens(
+            juce::SystemStats::getEnvironmentVariable("TONWERK_SCREENSHOT_SIZE", "1280x800"), "x", {});
+        // Out of its window, which would hold it to the screen's size; the app is done once the picture is written.
+        if (auto* parent = getParentComponent())
+            parent->removeChildComponent(this);
+        setSize(size[0].getIntValue(), size[1].getIntValue());
+        const auto image = createComponentSnapshot(getLocalBounds(), true, 2.0f);
+        const auto file = juce::File::isAbsolutePath(name)
+                              ? juce::File(name)
+                              : juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile(name);
+        file.deleteFile();
+        juce::FileOutputStream out(file);
+        if (out.openedOk())
+            juce::PNGImageFormat().writeImageToStream(image, out);
+        out.flush();
+#if ! JUCE_IOS
+        juce::JUCEApplicationBase::quit();
+#endif
     }
 
     /** Keeps the plugin's sound and the choice; iOS may end a suspended app without asking. */

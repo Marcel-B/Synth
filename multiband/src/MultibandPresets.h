@@ -7,7 +7,7 @@
 namespace tonwerkmultiband
 {
 /** The preset menu's groups. Kept here, as Tonwerk Freeze keeps its own. */
-inline constexpr std::array<const char*, 5> kMultibandCategories { "Mix", "OTT", "Drums", "Bass", "Gesang" };
+inline constexpr std::array<const char*, 5> kMultibandCategories { "Mix", "Druck", "Drums", "Bass", "Gesang" };
 
 /**
  * The host's programs, in order; the first is the effect at its defaults. New sounds go at the end. Each is leveled to

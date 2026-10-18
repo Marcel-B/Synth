@@ -25,7 +25,7 @@ const std::vector<FactoryPreset>& factoryPresets()
         { "Init", "", {} },
 
         // The CZ's bass: a saw whose bend snaps shut, over a square an octave down.
-        { "CZ-Bass", "Bässe",
+        { "PD-Bass", "Bässe",
           { { "lines", both }, { "line1Depth", 0.85f }, { "line1DcwDecay", 250 }, { "line1DcwSustain", 0.1f },
             { "line1AmpDecay", 1200 }, { "line1AmpSustain", 0.7f }, { "line1AmpRelease", 120 },
             { "line2Wave", square }, { "line2Depth", 0.4f }, { "line2Octave", -1 }, { "line2Level", 0.6f },
@@ -84,7 +84,7 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "lfo2Amount", 0.3f }, { "voiceMode", mono }, { "master", 0 } } },
 
         // Two saws a few cents apart, slow in and out, through the chorus: the CZ's string pad.
-        { "CZ-Streicher", "Flächen",
+        { "PD-Streicher", "Flächen",
           { { "lines", doubled }, { "detuneFine", 9 }, { "line1Depth", 0.45f }, { "line1DcwAttack", 600 },
             { "line1DcwDecay", 1500 }, { "line1DcwSustain", 0.6f }, { "line1AmpAttack", 400 },
             { "line1AmpSustain", 1.0f }, { "line1AmpRelease", 1200 }, { "chorusMix", 0.6f }, { "fxReverbMix", 0.3f },
@@ -126,7 +126,7 @@ const std::vector<FactoryPreset>& factoryPresets()
             { "fxReverbMix", 0.4f }, { "master", -13 } } },
 
         // A bend that closes as the note dies, a quiet square an octave up for the hammer's ring.
-        { "CZ-Piano", "Tasten",
+        { "PD-Piano", "Tasten",
           { { "lines", both }, { "line1Depth", 0.6f }, { "line1DcwDecay", 900 }, { "line1DcwSustain", 0.0f },
             { "line1AmpDecay", 2500 }, { "line1AmpSustain", 0.0f }, { "line1AmpRelease", 400 },
             { "line2Wave", square }, { "line2Octave", 1 }, { "line2Level", 0.3f }, { "line2DcwDecay", 300 },
