@@ -402,7 +402,19 @@ public:
         const auto& entries = catalogue();
         auto last = juce::SystemStats::getEnvironmentVariable("TONWERK_PLUGIN", {});
         if (last.isEmpty())
-            last = settings->getValue("plugin", entries.front().name);
+            last = settings->getBoolValue("starting", false) ? entries.front().name
+                                                            : settings->getValue("plugin", entries.front().name);
+        // A start that never got as far as being shown (killed while black) starts the next one on the first
+        // instrument, so a plugin that hangs at its start cannot keep the app from opening.
+        settings->setValue("starting", true);
+        settings->saveIfNeeded();
+        juce::Timer::callAfterDelay(5000, [safe = juce::Component::SafePointer<MainComponent>(this)] {
+            if (safe != nullptr)
+            {
+                safe->settings->setValue("starting", false);
+                safe->settings->saveIfNeeded();
+            }
+        });
         int index = 0;
         for (size_t i = 0; i < entries.size(); ++i)
             if (entries[i].name == last)
@@ -580,17 +592,24 @@ private:
             audio.listening = false;
             return;
         }
+        // Later, never inside the constructor: when the app starts on Tonwerk Scope, the input would open before the
+        // app has a window (on iOS JUCE grants the permission request at once, so the device opens right here), and
+        // iPadOS would ask for the microphone over a black screen.
         juce::Component::SafePointer<MainComponent> self(this);
-        juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
-            if (self == nullptr || ! granted)
+        juce::MessageManager::callAsync([self] {
+            if (self == nullptr || self->current < 0 || ! catalogue()[(size_t) self->current].listens)
                 return;
-            // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
-            if (! self->inputsOpen)
-            {
-                self->devices.initialise(2, 2, nullptr, true);
-                self->inputsOpen = true;
-            }
-            self->audio.listening = true;
+            juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
+                if (self == nullptr || ! granted)
+                    return;
+                // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
+                if (! self->inputsOpen)
+                {
+                    self->devices.initialise(2, 2, nullptr, true);
+                    self->inputsOpen = true;
+                }
+                self->audio.listening = true;
+            });
         });
     }
 
