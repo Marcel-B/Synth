@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datenschutz · Tonwerk-AI</title>
+  <meta name="description" content="Datenschutzerklärung der App Tonwerk-AI für iPhone, iPad und Mac.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/ai/datenschutz.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Navigation von Tonwerk-AI">
+        <a href="./#funktionen">Funktionen</a>
+        <a href="einrichtung.html">Einrichtung</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="./#hilfe" class="optional">Hilfe</a>
+        <a href="../">Plugins</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Datenschutz</h1>
+    <p>Diese Erklärung gilt für die App <b>Tonwerk-AI</b> für iPhone, iPad und Mac (Bundle-ID <code>de.bvelop.tonwerk.ai</code>) und für den Server, mit dem sie arbeitet. Für diese Website gilt die <a href="../datenschutz.html">Datenschutzerklärung von tonwerk.studio</a>.</p>
+
+    <h2>Kurz gesagt</h2>
+    <p>Tonwerk-AI sammelt keine Daten für mich. Es gibt kein Konto, keine Werbung, kein Tracking, keine Analyse und keine Bibliotheken von Dritten in der App. Die App spricht nur mit dem Server, dessen Adresse du selbst einträgst, und der läuft auf deinem eigenen Mac. Ich erhalte davon nichts.</p>
+
+    <h2>Verantwortlicher</h2>
+    <p>Marcel Benders, Anschrift im <a href="../impressum.html">Impressum</a>, E-Mail <a href="mailto:marcel@tonwerk.studio">marcel@tonwerk.studio</a>.</p>
+
+    <h2>Was die App verarbeitet</h2>
+    <p>Alles, was du in der App erstellst oder auswählst, geht an deinen Server und wird dort gespeichert: Stil, Songtexte, Partituren, Bewertungen, Notizen, Playlists, Fotos für Cover oder Textentwürfe, Aufnahmen und Dateien, die du hochlädst. Die App lädt von dort Songs, Cover und den Stand der Warteschlange. Die Verbindung läuft über HTTPS, unterwegs durch das verschlüsselte Netz von Tailscale.</p>
+    <p>Auf dem Gerät selbst merkt sich die App nur ihre Einstellungen: die Adresse des Servers und die zuletzt eingegebenen Formulare (in den App-Einstellungen von iOS bzw. macOS). Dateien, die du exportierst oder teilst, landen dort, wohin du sie speicherst oder schickst. Im <b>Demo-Modus</b> spricht die App mit niemandem; die Beispielsongs liegen in der App, Änderungen nur im Arbeitsspeicher.</p>
+
+    <h3>Berechtigungen</h3>
+    <dl class="tools">
+      <dt>Lokales Netzwerk</dt>
+      <dd>um deinen Server zu erreichen, wenn er im selben Netz oder auf demselben Mac läuft.</dd>
+      <dt>Mikrofon</dt>
+      <dd>nur im Sprachlabor, wenn du eine Stimme aufnimmst. Die Aufnahme geht an deinen Server, der sie als Vorlage für die Sprachmodelle speichert.</dd>
+      <dt>Bluetooth</dt>
+      <dd>um Spuren der Logic-Seite auf Bluetooth-MIDI-Instrumenten zu spielen. Dabei werden nur MIDI-Noten gesendet.</dd>
+      <dt>Fotos und Dateien</dt>
+      <dd>über die Auswahl des Systems: Die App sieht nur das Foto oder die Datei, die du auswählst, und schickt sie an deinen Server.</dd>
+    </dl>
+
+    <h2 id="server">Dein Server</h2>
+    <p>Den Server betreibst du selbst, auf deinem Mac; für die Daten dort bist du verantwortlich, nicht ich. Er rechnet mit lokalen Modellen, die Songs verlassen den Mac nicht. Nur wenn du es einrichtest, verbindet er sich mit diesen Diensten:</p>
+    <dl class="tools">
+      <dt>Anthropic (Claude)</dt>
+      <dd>Liegt ein eigener API-Schlüssel von Anthropic auf dem Server, gehen an Anthropic PBC (USA): bei <b>Text entwerfen</b> mit einem Claude-Modell die Stichwörter, der Stil, ein gewähltes Foto und der Text; bei der <b>Ausarbeitung</b> die Song-Idee und deine Wünsche; beim <b>Cover malen</b> die Beschreibung, um sie ins Englische zu übersetzen. Es gilt die <a href="https://www.anthropic.com/legal/privacy">Datenschutzerklärung von Anthropic</a>. Ohne Schlüssel geht nichts dorthin; die lokalen Sprachmodelle in LM Studio bleiben auf dem Mac.</dd>
+      <dt>Nextcloud</dt>
+      <dd>die nächtliche Sicherung von Datenbank und Songs, in die Nextcloud, deren Adresse du einträgst.</dd>
+      <dt>Downloads</dt>
+      <dd>Bei der Einrichtung und beim ersten Gebrauch lädt der Server Programme und Modelle von ihren Quellen (etwa GitHub, Homebrew, Hugging Face); dabei sehen diese Anbieter die Adresse deines Macs.</dd>
+      <dt>Web-Push</dt>
+      <dd>nur für die Weboberfläche im Browser: Schaltest du dort Benachrichtigungen ein, gehen die Meldungen über den Push-Dienst deines Browsers (Apple, Google oder Mozilla). Die App nutzt keine Push-Mitteilungen.</dd>
+      <dt>Tailscale</dt>
+      <dd>verbindet deine Geräte; Tailscale Inc. (Kanada/USA) sieht dafür, welche Geräte in deinem Tailnet sind, nicht den Inhalt der Verbindung. Es gilt die <a href="https://tailscale.com/privacy-policy">Datenschutzerklärung von Tailscale</a>.</dd>
+    </dl>
+
+    <h2>Apple, App Store und TestFlight</h2>
+    <p>Die App wird über Apple verteilt; dafür gilt die <a href="https://www.apple.com/de/legal/privacy/">Datenschutzrichtlinie von Apple</a>. Im Test über <b>TestFlight</b> stellt Apple mir den Namen und die E-Mail-Adresse zur Verfügung, mit der du eingeladen wurdest, dazu Gerät, Systemversion, Installationen und Absturzberichte sowie Feedback und Bildschirmfotos, die du selbst in TestFlight abschickst. Ich nutze das nur, um die App zu verbessern und dir zu antworten, und lösche es, wenn der Test endet oder du es verlangst. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO; das berechtigte Interesse ist eine fehlerfreie App. Hast du in den Einstellungen deines Geräts dem Teilen von Analysedaten mit App-Entwicklern zugestimmt, gibt Apple mir anonymisierte Absturz- und Nutzungsstatistiken; das lässt sich dort jederzeit abschalten.</p>
+
+    <h2>Kontakt per E-Mail</h2>
+    <p>Schreibst du mir, verwende ich deine Adresse und Nachricht nur, um zu antworten (Art. 6 Abs. 1 lit. b und f DSGVO), und lösche sie, wenn die Sache erledigt ist.</p>
+
+    <h2>Deine Rechte</h2>
+    <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten, auf Datenübertragbarkeit, auf Widerspruch und auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde, etwa der Landesbeauftragten für Datenschutz und Informationsfreiheit Nordrhein-Westfalen. Die Daten auf deinem Server kannst du dort selbst einsehen und löschen; die App zu löschen entfernt ihre Einstellungen vom Gerät.</p>
+
+    <p class="stand">Stand: 18. Oktober 2026</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="https://github.com/Marcel-B/YuE-UI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
