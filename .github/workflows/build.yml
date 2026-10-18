@@ -236,24 +236,36 @@ jobs:
         run: |
           app=build-mac/Tonwerk_artefacts/Release/Tonwerk.app
           mkdir -p mac-screenshots
+          system_profiler SPDisplaysDataType | grep -i -E "resolution|retina" || true
+          # The largest window Tonwerk owns, as "x y width height" in points; every window goes to the log.
           cat > "$RUNNER_TEMP/bounds.swift" <<'EOF'
           import CoreGraphics
+          import Foundation
           let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
-          for w in windows where (w[kCGWindowOwnerName as String] as? String) == "Tonwerk" {
-              if let b = w[kCGWindowBounds as String] as? [String: CGFloat], let h = b["Height"], h >= 800 {
-                  print("\(Int(b["X"]!)) \(Int(b["Y"]!)) \(Int(b["Width"]!)) \(Int(h))"); break
-              }
+          var best: [String: CGFloat]? = nil
+          for w in windows {
+              let owner = w[kCGWindowOwnerName as String] as? String ?? "?"
+              guard let b = w[kCGWindowBounds as String] as? [String: CGFloat] else { continue }
+              FileHandle.standardError.write("\(owner): \(b)\n".data(using: .utf8)!)
+              if owner.hasPrefix("Tonwerk"), (b["Height"] ?? 0) > (best?["Height"] ?? 0) { best = b }
           }
+          if let b = best { print("\(Int(b["X"]!)) \(Int(b["Y"]!)) \(Int(b["Width"]!)) \(Int(b["Height"]!))") }
           EOF
+          swiftc -O "$RUNNER_TEMP/bounds.swift" -o "$RUNNER_TEMP/bounds"
           for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Bass" "Tonwerk Granular"; do
             TONWERK_PLUGIN="$name" "$app/Contents/MacOS/Tonwerk" &
             pid=$!
             sleep 12
-            read -r x y w h < <(swift "$RUNNER_TEMP/bounds.swift")
-            echo "$name: window $x,$y ${w}x$h"
-            # The content is the window's lowest 800 points.
-            screencapture -x -R "$x,$((y + h - 800)),1280,800" "mac-screenshots/$name.png"
-            sips -g pixelWidth -g pixelHeight "mac-screenshots/$name.png" | tail -2
+            bounds=$("$RUNNER_TEMP/bounds" || true)
+            echo "$name: window $bounds"
+            if [[ -z "$bounds" ]]; then
+              screencapture -x "mac-screenshots/screen-$name.png" || true
+            else
+              read -r x y w h <<<"$bounds"
+              # The content is the window's lowest 800 points (below the title bar).
+              screencapture -x -R "$x,$((y + h - 800)),1280,800" "mac-screenshots/$name.png" || true
+              sips -g pixelWidth -g pixelHeight "mac-screenshots/$name.png" | tail -2 || true
+            fi
             kill "$pid"; wait "$pid" 2>/dev/null || true
           done
       - uses: actions/upload-artifact@v4
