@@ -6,6 +6,8 @@ Stand 2026-10-10. **Nichts davon ist auf echter Hardware aufgebaut oder gehört 
 
 ![Frontplatte](hardware/frontplatte-vorschau.png)
 
+Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren.
+
 ## Die Idee in einem Absatz
 
 Ein monophoner Wavetable-Oszillator mit eingebautem Filter und Hüllkurve. Er klingt wie eine Stimme des Plugins: dieselben zehn Tabellen (aus denselben Formeln berechnet), dieselben Warp-Modi, derselbe Filter (SVF 12/24 dB, Hochpass, Bandpass, Notch, Kamm, mit Drive), dieselbe Hüllkurve. Zwei Ausgänge: **OSC** ist der reine Oszillator (wie ein VCO, für externe Filter), **VOICE** ist dieselbe Stimme durch Filter und VCA. LFOs, Modulationsmatrix, Effekte und Polyphonie des Plugins fallen weg; das übernimmt im Modularsystem das Patchen.
@@ -89,6 +91,8 @@ cd firmware
 idf.py set-target esp32s3
 idf.py build flash monitor          # Port wird erkannt, sonst -p /dev/cu.usbmodem…
 ```
+
+Fertig gebaut: [firmware/modul/tonwerk-modul.bin](firmware/modul/tonwerk-modul.bin), eine Datei für Adresse 0x0 (Web-Flasher wie beim Steckbrett-Test unten).
 
 Oder mit PlatformIO: `pio run -t upload -t monitor` im Ordner `firmware`. Der serielle Monitor zeigt alle 5 s die Last des Audio-Kerns.
 
