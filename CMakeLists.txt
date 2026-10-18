@@ -1085,7 +1085,8 @@ juce_add_plugin(TonwerkExpander
 set(TONWERK_EXPANDER_SOURCES
     expander/src/ExpanderEditor.cpp
     expander/src/ExpanderPresets.cpp
-    expander/src/ExpanderProcessor.cpp)
+    expander/src/ExpanderProcessor.cpp
+    expander/src/HardwareSheet.cpp)
 
 target_sources(TonwerkExpander PRIVATE ${TONWERK_EXPANDER_SOURCES} src/EffectsChain.cpp ${TONWERK_UI_SOURCES})
 target_include_directories(TonwerkExpander PRIVATE src common wavetable/src)

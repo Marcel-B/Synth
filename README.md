@@ -257,6 +257,10 @@ Ein monophoner Bass für Reese- und Neuro-Sounds, wie man sie aus Drum and Bass 
 - **Amp** und **Mod**: zwei ADSR-Hüllkurven, die erste für die Lautstärke, die zweite für Filter und FM-Index.
 - **LFO**: sechs Formen, frei (**Rate**) oder im Songtempo (**Raster** von 4 Takten bis 1/32, auch triolisch und punktiert). **Neustart**: mit jeder neuen Note beginnt er unten, sonst läuft er auf den Takten des Songs. **Cutoff** bewegt den Filter bis 5 Oktaven nach oben, **FM** den Index. Danach **Delay** und **Hall** wie in den anderen Tonwerk-Synths.
 
+**Hardware-Blatt**: Der Knopf **Hardware-Blatt** oben rechts speichert den gerade eingestellten Klang (Werksklang oder eigener Patch) als Bild für ein echtes Expander-Modul dieser Bauart mit Zwei-Stimmen-Steuerung (zwei VCOs mit Sync, Filter mit Notch-Regler LP–HP und BP-Schalter, Mixer Säge–aus–Puls, zwei ADS-Hüllkurven, LFO; Assign UNI/SPLIT/DUO, Pan, Portamento). Jeder Regler ist auf seine Stellung gedreht und als Uhrzeit beschriftet (ganz links 7 Uhr, Mitte 12, ganz rechts 5 Uhr), die Schalter stehen richtig, und darunter steht, was am Modul nicht 1:1 geht (Säge und Puls zugleich, Vibrato und PWM zugleich, Release länger als der Decay, mehr als zwei Stimmen, Delay und Hall …). Die Skalen der Hardware sind nicht beschriftet und deshalb geschätzt (Cutoff 20 Hz bis 20 kHz, Hüllkurven 1 ms bis 5 bzw. 10 s, LFO 0,05 bis 20 Hz, alle logarithmisch, in `expander/src/HardwarePanel.h`): ein Startpunkt, die VCO-Stimmung und die Feinheiten macht das Ohr. Ungetestet an einem echten Modul.
+
+![Hardware-Blatt von Sync-Lead](docs/expander-hardware.png)
+
 **Presets**: 15 eigene Klänge, auf −12 LUFS eingepegelt, die Liste steht unter [Werksklänge](#werksklänge).
 
 **CPU:** eine Stimme, Filter alle 16 Samples neu berechnet; ein Riff mit FM, Wobble, Delay und Hall rechnet der Test etwa 50-mal schneller als Echtzeit.
@@ -279,7 +283,7 @@ Ein achtstimmiger Synth nach Art der klassischen Expander-Module der Siebziger: 
 
 **CPU:** Hüllkurven und Oszillatoren pro Sample, Tonhöhe, Filterfrequenz und Pulsbreite alle 16 Samples mit Rampen dazwischen; acht Stimmen mit Sync, PWM, Delay und Hall rechnet der Test etwa 25- bis 30-mal schneller als Echtzeit.
 
-**Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonhöhe, Oktave, Halbton und Fein, Pulsbreite 50, 25 und 10 % auf ein halbes Prozent genau ohne Gleichanteil, Sync wiederholt sich exakt mit der Periode von VCO 1, Rückfaltungen bei C7 unter −50 dB für Säge, Puls und Sync, Tiefpass, Notch, Hochpass und Bandpass an Obertönen nachgemessen, Resonanz, alle Modi bei voller Resonanz begrenzt, Filter-Hüllkurve, Anschlag, acht Stimmen und Stimmenklau, Mono, Unison so laut wie eine Stimme, Drift zwischen den Stimmen, Glide, LFO-Einsatz, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten) und die Oberfläche als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört.
+**Getestet und ungetestet:** Unter Linux gebaut und getestet (Tonhöhe, Oktave, Halbton und Fein, Pulsbreite 50, 25 und 10 % auf ein halbes Prozent genau ohne Gleichanteil, Sync wiederholt sich exakt mit der Periode von VCO 1, Rückfaltungen bei C7 unter −50 dB für Säge, Puls und Sync, Tiefpass, Notch, Hochpass und Bandpass an Obertönen nachgemessen, Resonanz, alle Modi bei voller Resonanz begrenzt, Filter-Hüllkurve, Anschlag, acht Stimmen und Stimmenklau, Mono, Unison so laut wie eine Stimme, Drift zwischen den Stimmen, Glide, LFO-Einsatz, alle Presets und ihre Lautheit, CPU, Zustand, Anzeige mit Einheiten, Reglerstellungen des Hardware-Blatts) und die Oberfläche und die Hardware-Blätter aller Werksklänge als Bild angesehen. `auval` läuft in der GitHub Action. In Logic ist er noch nicht gehört.
 
 ## Tonwerk Groovebox (Instrument)
 

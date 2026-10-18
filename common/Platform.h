@@ -124,6 +124,22 @@ inline bool writeChosenText(const juce::FileChooser& chooser, const juce::String
 #endif
 }
 
+/** As `writeChosenText`, for bytes (a picture). */
+inline bool writeChosenData(const juce::FileChooser& chooser, const juce::MemoryBlock& data)
+{
+#if JUCE_IOS
+    if (auto stream = chooser.getURLResult().createOutputStream())
+    {
+        const bool written = stream->write(data.getData(), data.getSize());
+        stream->flush();
+        return written;
+    }
+    return false;
+#else
+    return chooser.getResult().replaceWithData(data.getData(), data.getSize());
+#endif
+}
+
 /** Where a plugin keeps copies of the files chosen on the iPad: Application Support/<plugin>/Dateien. */
 inline juce::File keptFilesFolder(const juce::String& plugin)
 {

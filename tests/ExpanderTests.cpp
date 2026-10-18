@@ -2,6 +2,8 @@
 #include "ExpanderEngine.h"
 #include "ExpanderPresets.h"
 #include "ExpanderProcessor.h"
+#include "HardwarePanel.h"
+#include "HardwareSheet.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_core/juce_core.h>
@@ -579,6 +581,72 @@ public:
             expectWithinAbsoluteError(loaded.readSettings().cutoff, 812.0f, 0.5f);
             expectWithinAbsoluteError(loaded.readSettings().osc2.fine, -9.0f, 0.1f);
             expectWithinAbsoluteError(loaded.readSettings().mode, 0.3f, 0.001f);
+        }
+
+        beginTest("A patch becomes the hardware module's knob positions as clock hours");
+        {
+            using namespace hardware;
+            expectEquals(juce::String(clockOf(0.0f)), juce::String("7:00"));
+            expectEquals(juce::String(clockOf(0.5f)), juce::String("12:00"));
+            expectEquals(juce::String(clockOf(1.0f)), juce::String("5:00"));
+            expectEquals(juce::String(clockOf(0.25f)), juce::String("9:30"));
+
+            Settings s;
+            s.cutoff = std::sqrt(kCutoffLow * kCutoffHigh); // halfway on a logarithmic knob
+            s.osc2.wave = Wave::pulse;
+            s.osc2.level = 1.0f;
+            s.osc1.level = 0.0f;
+            s.sync = true;
+            s.envPitch = 24.0f;
+            s.voiceMode = VoiceMode::mono;
+            s.mode = 1.0f;
+            s.envCutoff = -0.5f;
+            auto panel = panelFor(s);
+            expectWithinAbsoluteError(panel.cutoff.position, 0.5f, 0.001f);
+            expectEquals(panel.notch.value, std::string("HP"));
+            expectWithinAbsoluteError(panel.mixer[1].position, 1.0f, 0.001f);  // all pulse: fully right
+            expectWithinAbsoluteError(panel.mixer[0].position, 0.5f, 0.001f);  // off in the middle
+            expect(panel.sync);
+            expect(panel.vcoSource[1] == VcoSource::env);
+            expectWithinAbsoluteError(panel.vcoModulation[1].position, 0.25f, 0.001f); // two of four octaves to FREQ
+            expectLessThan(panel.vcfModulation.position, 0.5f);                          // the envelope closes it
+            expect(panel.assign == Assign::uni && panel.secondSilent);
+            expect(panel.notes.empty() || std::none_of(panel.notes.begin(), panel.notes.end(), [](const std::string& n) {
+                       return n.find("acht Stimmen") != std::string::npos;
+                   }));
+
+            s.osc1.wave = Wave::both;
+            s.lfoPitch = 30.0f;
+            s.lfoPwm = 0.5f;
+            s.voiceMode = VoiceMode::poly;
+            panel = panelFor(s);
+            expect(panel.vcoSource[0] == VcoSource::lfo);
+            expectLessThan(panel.vcoModulation[0].position, 0.5f); // vibrato wins over PWM
+            expect(panel.assign == Assign::duo && ! panel.secondSilent);
+            expectGreaterOrEqual((int) panel.notes.size(), 3);     // both waves, vibrato with PWM, eight voices
+        }
+
+        beginTest("Every factory sound draws its hardware sheet");
+        {
+            const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+            ExpanderProcessor p;
+            for (int i = 0; i < p.getNumPrograms(); ++i)
+            {
+                p.setCurrentProgram(i);
+                const auto image = drawHardwareSheet(p.readSettings(), p.getProgramName(i));
+                expectEquals(image.getWidth(), 1800);
+                // The knobs' pointers are white on black: something was drawn on the panel.
+                expect(image.getPixelAt(905, 250) != image.getPixelAt(5, 5));
+                if (dir.isNotEmpty() && (i == 4 || juce::SystemStats::getEnvironmentVariable("TONWERK_HARDWARE_ALL", {}).isNotEmpty()))
+                {
+                    const auto fileName = i == 4 ? juce::String("expander-hardware")
+                                             : "expander-hardware-" + juce::File::createLegalFileName(p.getProgramName(i));
+                    auto file = juce::File(dir).getChildFile(fileName + ".png");
+                    file.deleteFile();
+                    juce::FileOutputStream stream(file);
+                    juce::PNGImageFormat().writeImageToStream(image, stream);
+                }
+            }
         }
 
         beginTest("The editor shows the scope, the filter's curve and the voices");

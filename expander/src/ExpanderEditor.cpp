@@ -1,6 +1,8 @@
 #include "ExpanderEditor.h"
 
 #include "ExpanderPresets.h"
+#include "HardwareSheet.h"
+#include "Platform.h"
 #include "PresetCategories.h"
 
 #include <complex>
@@ -191,10 +193,12 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
         if (juce::isPositiveAndBelow(to, (int) menu.size()))
             choosePreset(menu[(std::size_t) to]);
     };
+    hardwareSheet.setTooltip(juce::String::fromUTF8("Speichert die Reglerstellungen dieses Klangs fürs Hardware-Modul als Bild"));
+    hardwareSheet.onClick = [this] { exportHardwareSheet(); };
     previous.onClick = [step] { step(-1); };
     next.onClick = [step] { step(1); };
     scope.setCaption("OSZILLOSKOP");
-    for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &scope, &osc1, &osc2, &filter,
+    for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &hardwareSheet, &scope, &osc1, &osc2, &filter,
                                                             &filterEnvelope, &ampEnvelope, &lfo, &voices, &effects,
                                                             &keyboard })
         addAndMakeVisible(*c);
@@ -235,6 +239,31 @@ void ExpanderEditor::choosePreset(int index)
     presets.setSelectedId(index + 1, juce::dontSendNotification);
 }
 
+void ExpanderEditor::exportHardwareSheet()
+{
+    const auto name = synth.presetName().isNotEmpty() ? synth.presetName() : juce::String("Klang");
+    const auto start = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+                           .getChildFile(juce::File::createLegalFileName(name + " Hardware") + ".png");
+    chooser = std::make_unique<juce::FileChooser>("Hardware-Blatt speichern", start, "*.png");
+    juce::Component::SafePointer<ExpanderEditor> safe(this);
+    chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
+                             | juce::FileBrowserComponent::warnAboutOverwriting,
+                         [safe, name](const juce::FileChooser& fc) {
+                             if (safe == nullptr || tonwerkui::nothingChosen(fc))
+                                 return;
+                             juce::MemoryOutputStream png;
+                             juce::PNGImageFormat().writeImageToStream(
+                                 drawHardwareSheet(safe->synth.readSettings(), name), png);
+#if JUCE_IOS || TONWERK_SANDBOX
+                             // The picker names the file; the sandbox allows only the file chosen.
+                             tonwerkui::writeChosenData(fc, png.getMemoryBlock());
+#else
+                             const auto file = fc.getResult().withFileExtension("png");
+                             file.replaceWithData(png.getData(), png.getDataSize());
+#endif
+                         });
+}
+
 void ExpanderEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
@@ -251,6 +280,8 @@ void ExpanderEditor::resized()
     presets.setBounds(header.removeFromRight(220));
     header.removeFromRight(4);
     previous.setBounds(header.removeFromRight(28));
+    header.removeFromRight(12);
+    hardwareSheet.setBounds(header.removeFromRight(120));
 
     keyboard.setBounds(area.removeFromBottom(kKeyboard));
     keyboard.setKeyWidth((float) keyboard.getWidth() / 35.0f);
