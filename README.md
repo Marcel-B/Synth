@@ -881,7 +881,7 @@ Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfl�
 
 ## Eurorack-Modul mit ESP32 (in Arbeit)
 
-In [esp32-wavetable/](esp32-wavetable/) liegt Tonwerk Wavetable als 14-TE-Eurorack-Modul: Firmware f체r ein ESP32-S3 (ESP-IDF) mit derselben Klangerzeugung wie das Plugin, Schaltplan, KiCad-Platinen (SMD und bedrahtet), St체cklisten und die Frontplatte zum Drucken. Der Host-Test in `esp32-wavetable/firmware/host/` vergleicht die Portierung mit dem Plugin aus diesem Repo (`make test`). Die bedrahteten Platinen sind gefertigt, aber noch nicht best체ckt; auf echter Hardware hat das Modul noch keinen Ton gemacht. Alles Weitere im [README des Moduls](esp32-wavetable/README.md).
+In [esp32-wavetable/](esp32-wavetable/) liegt Tonwerk Wavetable als 14-TE-Eurorack-Modul: Firmware f체r ein ESP32-S3 (ESP-IDF) mit derselben Klangerzeugung wie das Plugin, Schaltplan, KiCad-Platinen (SMD und bedrahtet), St체cklisten und die Frontplatte zum Drucken. Der Host-Test in `esp32-wavetable/firmware/host/` vergleicht die Portierung mit dem Plugin aus diesem Repo (`make test`). Die bedrahteten Platinen sind gefertigt, aber noch nicht best체ckt; auf echter Hardware hat das Modul noch keinen Ton gemacht. Alles Weitere im [README des Moduls](esp32-wavetable/README.md), Schritt f체r Schritt zum Nachbauen in der [Bauanleitung](esp32-wavetable/BAUANLEITUNG.md).
 
 ## Website
 
