@@ -227,6 +227,41 @@ jobs:
           # Registered with the system, a host finds them; shown for the log only.
           pluginkit -a "$app"/Contents/PlugIns/*.appex || true
           pluginkit -m -v -p com.apple.AudioUnit-UI | grep -i tonwerk || true
+      # For the store page: the window's content is 1280 x 800, one of the store's 16:10 sizes, so the shot is the
+      # window without its title bar (2560 x 1600 on a Retina display). Kept from failing the build: it depends on the
+      # runner's display and its screen recording permission.
+      - name: Screenshots for the Mac App Store
+        continue-on-error: true
+        run: |
+          app=build-mac/Tonwerk_artefacts/Release/Tonwerk.app
+          mkdir -p mac-screenshots
+          cat > "$RUNNER_TEMP/bounds.swift" <<'EOF'
+          import CoreGraphics
+          let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+          for w in windows where (w[kCGWindowOwnerName as String] as? String) == "Tonwerk" {
+              if let b = w[kCGWindowBounds as String] as? [String: CGFloat], let h = b["Height"], h >= 800 {
+                  print("\(Int(b["X"]!)) \(Int(b["Y"]!)) \(Int(b["Width"]!)) \(Int(h))"); break
+              }
+          }
+          EOF
+          for name in "Tonwerk Wavetable" "Tonwerk Analog" "Tonwerk Groovebox" "Tonwerk DX" "Tonwerk Bass" "Tonwerk Granular"; do
+            TONWERK_PLUGIN="$name" "$app/Contents/MacOS/Tonwerk" &
+            pid=$!
+            sleep 12
+            read -r x y w h < <(swift "$RUNNER_TEMP/bounds.swift")
+            echo "$name: window $x,$y ${w}x$h"
+            # The content is the window's lowest 800 points.
+            screencapture -x -R "$x,$((y + h - 800)),1280,800" "mac-screenshots/$name.png"
+            sips -g pixelWidth -g pixelHeight "mac-screenshots/$name.png" | tail -2
+            kill "$pid"; wait "$pid" 2>/dev/null || true
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-screenshots
+          path: mac-screenshots
+          if-no-files-found: ignore
+          retention-days: 30
 
   macos:
     name: Audio Unit (macOS)
