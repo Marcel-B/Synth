@@ -392,29 +392,27 @@ public:
         chooser.onChoose = [this](int index) { choose(index); };
         addChildComponent(chooser);
 
-        devices.initialise(0, 2, nullptr, true);
-        devices.addAudioCallback(&audio);
-        devices.addMidiInputDeviceCallback({}, &audio.player);
-        enableMidiInputs();
-        startTimer(2000);
+        // The audio device opens once the window has drawn: when iPadOS's audio was stuck (Marcel's iPad, until a
+        // restart), opening it hung, and inside the constructor that kept the screen black. Tonwerk Scope's input
+        // opens after it (listen).
+        juce::Timer::callAfterDelay(250, [safe = juce::Component::SafePointer<MainComponent>(this)] {
+            if (safe == nullptr)
+                return;
+            safe->devices.initialise(0, 2, nullptr, true);
+            safe->devices.addAudioCallback(&safe->audio);
+            safe->devices.addMidiInputDeviceCallback({}, &safe->audio.player);
+            safe->enableMidiInputs();
+            safe->startTimer(2000);
+            safe->audioOpen = true;
+            if (safe->current >= 0)
+                safe->listen(catalogue()[(size_t) safe->current].listens);
+        });
 
         // TONWERK_PLUGIN=<name> opens that plugin, for the simulator's screenshots in CI.
         const auto& entries = catalogue();
         auto last = juce::SystemStats::getEnvironmentVariable("TONWERK_PLUGIN", {});
         if (last.isEmpty())
-            last = settings->getBoolValue("starting", false) ? entries.front().name
-                                                            : settings->getValue("plugin", entries.front().name);
-        // A start that never got as far as being shown (killed while black) starts the next one on the first
-        // instrument, so a plugin that hangs at its start cannot keep the app from opening.
-        settings->setValue("starting", true);
-        settings->saveIfNeeded();
-        juce::Timer::callAfterDelay(5000, [safe = juce::Component::SafePointer<MainComponent>(this)] {
-            if (safe != nullptr)
-            {
-                safe->settings->setValue("starting", false);
-                safe->settings->saveIfNeeded();
-            }
-        });
+            last = settings->getValue("plugin", entries.front().name);
         int index = 0;
         for (size_t i = 0; i < entries.size(); ++i)
             if (entries[i].name == last)
@@ -592,24 +590,20 @@ private:
             audio.listening = false;
             return;
         }
-        // Later, never inside the constructor: when the app starts on Tonwerk Scope, the input would open before the
-        // app has a window (on iOS JUCE grants the permission request at once, so the device opens right here), and
-        // iPadOS would ask for the microphone over a black screen.
+        // Not before the device is open (it opens once the window has drawn, and calls this then).
+        if (! audioOpen)
+            return;
         juce::Component::SafePointer<MainComponent> self(this);
-        juce::MessageManager::callAsync([self] {
-            if (self == nullptr || self->current < 0 || ! catalogue()[(size_t) self->current].listens)
+        juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
+            if (self == nullptr || ! granted)
                 return;
-            juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio, [self](bool granted) {
-                if (self == nullptr || ! granted)
-                    return;
-                // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
-                if (! self->inputsOpen)
-                {
-                    self->devices.initialise(2, 2, nullptr, true);
-                    self->inputsOpen = true;
-                }
-                self->audio.listening = true;
-            });
+            // Asked for only now, so an instrument never makes iPadOS ask for the microphone.
+            if (! self->inputsOpen)
+            {
+                self->devices.initialise(2, 2, nullptr, true);
+                self->inputsOpen = true;
+            }
+            self->audio.listening = true;
         });
     }
 
@@ -657,6 +651,7 @@ private:
     std::unique_ptr<juce::AudioProcessor> processor;
     int current = -1;
     int lowestKey = 36;
+    bool audioOpen = false;
     bool inputsOpen = false;
 
     juce::Rectangle<int> title, octaveLabel;
