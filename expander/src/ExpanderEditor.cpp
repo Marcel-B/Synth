@@ -256,11 +256,22 @@ void ExpanderEditor::exportHardwareSheet()
                                  drawHardwareSheet(safe->synth.readSettings(), name), png);
 #if JUCE_IOS || TONWERK_SANDBOX
                              // The picker names the file; the sandbox allows only the file chosen.
-                             tonwerkui::writeChosenData(fc, png.getMemoryBlock());
+                             const auto shown = tonwerkui::chosenName(fc);
+                             const bool written = tonwerkui::writeChosenData(fc, png.getData(), png.getDataSize());
 #else
                              const auto file = fc.getResult().withFileExtension("png");
-                             file.replaceWithData(png.getData(), png.getDataSize());
+                             const auto shown = file.getFullPathName();
+                             const bool written = tonwerkui::writeInPlace(file, png.getData(), png.getDataSize());
 #endif
+                             if (! written)
+                                 juce::AlertWindow::showAsync(
+                                     juce::MessageBoxOptions()
+                                         .withIconType(juce::MessageBoxIconType::WarningIcon)
+                                         .withTitle("Hardware-Blatt")
+                                         .withMessage(shown + juce::String::fromUTF8(" ließ sich nicht schreiben."))
+                                         .withButton("OK")
+                                         .withAssociatedComponent(safe.getComponent()),
+                                     nullptr);
                          });
 }
 
