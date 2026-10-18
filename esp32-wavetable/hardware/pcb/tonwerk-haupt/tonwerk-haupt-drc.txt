@@ -1,0 +1,37 @@
+** Drc report for /home/user/esp32-wavetable/hardware/pcb/tonwerk-haupt/tonwerk-haupt.kicad_pcb **
+** Created on 2026-10-10 23:34:50 **
+
+** Found 7 DRC violations **
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(161.2700 mm, 133.7200 mm): PCB Text '-12V' on B.Silkscreen
+    @(160.0000 mm, 134.8200 mm): Reference 'J1'
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(155.6500 mm, 106.1000 mm): Reference 'U10'
+    @(-1.3000 mm, 1.5100 mm): Polygon on B.Silkscreen
+[silk_overlap]: Silkscreen overlap
+    Rule: board setup constraints silk; Severity: warning
+    @(130.9200 mm, 116.1000 mm): Reference 'U3'
+    @(-1.1625 mm, 1.5100 mm): Polygon on B.Silkscreen
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; Severity: warning
+    @(145.9000 mm, 85.9000 mm): Reference 'U4'
+[starved_thermal]: Thermal relief connection to zone incomplete (zone min spoke count 2; actual 1)
+    Local override; Severity: warning
+    @(102.4000 mm, 61.0000 mm): Zone [GND] on F.Cu
+    @(124.2000 mm, 96.4800 mm): PTH pad 13 [GND] of J3
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(126.7000 mm, 167.0600 mm): Line on B.Silkscreen
+[silk_edge_clearance]: Silkscreen clipped by board edge
+    Rule: board setup constraints silk; Severity: warning
+    @(168.4000 mm, 168.5000 mm): Line on Edge.Cuts
+    @(117.3000 mm, 167.0600 mm): Line on B.Silkscreen
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** End of Report **

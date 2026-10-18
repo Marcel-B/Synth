@@ -1,0 +1,29 @@
+Anzahl;Bauteil;Wert;Bauteile;Gehäuse;Seite;Hinweis
+1;Widerstand;10;R3;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;Filter für die Analog-Chips
+10;Widerstand;100k;R7 R8 R20 R23 R26 R29 R32 R44 R45 R47;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;R47: ohne Kabel ist das Gate an
+5;Widerstand;10k;R9 R12 R40 R43 R46;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+1;Widerstand;16k;R42;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+1;Widerstand;17.4k;R41;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+7;Widerstand;1k;R11 R14 R22 R25 R28 R31 R34;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+4;Widerstand;30k;R24 R27 R30 R33;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+1;Widerstand;330;R48;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+1;Widerstand;37.4k;R21;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+2;Widerstand;6.8k;R10 R13;R_Axial_DIN0207_L6.3mm_D2.5mm_P10.16mm_Horizontal;hinten;
+3;Diode;1N5817;D1 D2 D3;D_DO-41_SOD81_P10.16mm_Horizontal;hinten;"D1: Ring zur Kathode; D2: Ring zur Kathode; D3: trennt den Regler vom USB des DevKits"
+18;Keramikkondensator;100n;C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C27 C28 C35 C36 C37 C38 C39 C40;C_Disc_D3.0mm_W2.0mm_P2.50mm;hinten;
+5;Keramikkondensator;10n;C30 C31 C32 C33 C34;C_Disc_D3.0mm_W2.0mm_P2.50mm;hinten;
+2;Keramikkondensator;1u;C4 C6;C_Disc_D3.0mm_W2.0mm_P2.50mm;hinten;
+1;;BC547;Q1;TO-92_Inline;hinten;C B E, flache Seite vorn
+1;;MCP1700-3002E/TO;U3;TO-92_Inline;hinten;"3,0 V; Pin 1 GND, 2 IN, 3 OUT"
+1;IC-Fassung + IC;74HCT125;U10;DIP-14_W7.62mm;hinten;"74HCT125 oder 74AHCT125, nicht 74HC125, oder 74HCT32 (passt ohne Änderung); Fassung DIP-14"
+1;IC-Fassung + IC;MCP3208-CI/P;U9;DIP-16_W7.62mm;hinten;Fassung DIP-16
+2;IC-Fassung + IC;MCP6004-I/P;U7 U8;DIP-14_W7.62mm;hinten;Fassung DIP-14
+1;IC-Fassung + IC;TL072;U6;DIP-8_W7.62mm;hinten;Fassung DIP-8
+1;Lötpunkte;DAC L/G/R;J13;PinHeader_1x03_P2.54mm_Vertical;hinten;drei Drähte vom Ausgang des Moduls
+4;Elko;10u 25V;C1 C2 C3 C5;CP_Radial_D5.0mm_P2.00mm;hinten;"C1: Elko, + an +12V; C2: Elko, + an GND; C3: Elko, + an +5V; C5: Elko, + an +3V3A"
+1;Buchsenleiste;Buchsen;J4;PinSocket_1x14_P2.54mm_Vertical;vorn;Pin 1 oben
+1;Modul auf Buchsenleiste;ESP32-S3-DevKitC-1-N16R8;U4;ESP32-S3-DevKitC-1_Socket;hinten;auf 2 Buchsenleisten 1x22, USB zur Unterkante
+1;Modul auf Buchsenleiste;GY-PCM5102;U5;GY-PCM5102_Socket;hinten;"auf Buchsenleiste 1x6; SCK an GND"
+1;Buchsenleiste;Potis;J3;PinSocket_1x14_P2.54mm_Vertical;vorn;Pin 1 oben
+1;Schaltregler;R-78E5.0-0.5;U1;Converter_DCDC_RECOM_R-78E-0.5_THT;hinten;
+1;Wannenstecker;Eurorack;J1;IDC-Header_2x05_P2.54mm_Vertical;hinten;Pin 1 = -12 V (roter Streifen)

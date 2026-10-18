@@ -1,0 +1,43 @@
+Anzahl;Bauteil;Typ;Platine;Bezugsquelle (Vorschlag);ca. Preis gesamt (EUR, geschätzt)
+1;Platinen;tonwerk-bedien-tht + tonwerk-haupt-tht, je 5 Stück, 2 Lagen, 1,6 mm, HASL, unbestückt (Gerber-Zips in fertigung/);—;JLCPCB;15-30 inkl. Versand (beide über 100 mm, also nicht im 2-Dollar-Tarif)
+1;Mikrocontroller-Board;ESP32-S3-DevKitC-1 N16R8 (16 MB Flash, 8 MB PSRAM), Original oder Klon mit gleicher Pinbelegung;Haupt U4;AliExpress (Klon), Reichelt/Mouser (Original);6-15
+1;DAC-Modul;PCM5102A-Modul GY-PCM5102 (lila, 6-polige Leiste VIN GND LCK DIN BCK SCK);Haupt U5;AliExpress;2-4
+1;ADC;MCP3208-CI/P (DIP-16);Haupt U9;Reichelt;4,50
+2;Op-Amp;MCP6004-I/P (DIP-14);Haupt U7 U8;Reichelt;1,40
+1;Op-Amp;TL072 (DIP-8);Haupt U6;Reichelt;0,40
+1;Puffer;74HCT125 oder 74AHCT125 (DIP-14), nicht 74HC125; gleichwertig ohne Änderung an der Platine: 74HCT32 (DIP-14);Haupt U10;Reichelt;0,40
+1;Spannungsregler 3,0 V;MCP1700-3002E/TO (TO-92);Haupt U3;Reichelt, Mouser;0,50
+1;Transistor;BC547 (TO-92);Haupt Q1;Reichelt;0,10
+1;Schaltregler;Recom R-78E5.0-0.5 (SIP-3);Haupt U1;Reichelt, Mouser;3,00
+3;Schottky-Diode;1N5817 (DO-41);Haupt D1-D3;Reichelt;0,20
+4;IC-Fassung;3 × DIP-14, 1 × DIP-16 (dazu 1 × DIP-8, siehe nächste Zeile);Haupt;Reichelt;0,60
+1;IC-Fassung;DIP-8;Haupt;Reichelt;0,10
+10;Widerstand 1 %;100k (Metallschicht 0207, 1/4 W);Haupt;Reichelt;0,80
+7;Widerstand 1 %;1k;Haupt;Reichelt;0,60
+5;Widerstand 1 %;10k;Haupt;Reichelt;0,40
+4;Widerstand 1 %;30k;Haupt;Reichelt;0,30
+2;Widerstand 1 %;6,8k;Haupt;Reichelt;0,20
+1;Widerstand 1 %;37,4k;Haupt;Reichelt;0,10
+1;Widerstand 1 %;17,4k;Haupt;Reichelt;0,10
+1;Widerstand 1 %;16k;Haupt;Reichelt;0,10
+1;Widerstand 1 %;330 Ω;Haupt;Reichelt;0,10
+1;Widerstand 1 %;10 Ω;Haupt;Reichelt;0,10
+20;Keramikkondensator;100 nF X7R, Rastermaß 2,54 mm (18 Haupt, 2 Bedien);beide;Reichelt;1,20
+5;Keramikkondensator;10 nF, Rastermaß 2,54 mm;Haupt;Reichelt;0,30
+2;Keramikkondensator;1 µF X7R, Rastermaß 2,54 mm;Haupt;Reichelt;0,30
+4;Elko;10 µF 25 V radial, 5 mm Durchmesser, höchstens 11 mm hoch, Rastermaß 2 mm;Haupt;Reichelt;0,40
+2;Buchsenleiste;1 × 22, RM 2,54 mm, 8,5 mm hoch (oder 2 × 1 × 40 kürzen);Haupt (DevKit);Reichelt, AliExpress;1,50
+1;Buchsenleiste;1 × 6, RM 2,54 mm, 8,5 mm hoch;Haupt (DAC-Modul);Reichelt;0,30
+2;Buchsenleiste;1 × 14, RM 2,54 mm, 8,5 mm hoch;Haupt J3 J4;Reichelt;0,80
+2;Stiftleiste;1 × 14, RM 2,54 mm, gerade;Bedien J3 J4;Reichelt;0,30
+1;Wannenstecker;2 × 5, RM 2,54 mm, gerade;Haupt J1;Reichelt;0,30
+—;Schaltdraht;3 kurze Drähte vom Ausgang des DAC-Moduls (L, Masse, R) zu J13;Haupt;Restekiste;—
+10;Potentiometer;Alpha 9 mm vertikal, B10K linear (Footprint Alpha RD901F), Achse passend zu den Knöpfen;Bedien;AliExpress, Thonk;3-6
+10;Drehknopf;passend zur Poti-Achse, max. 13 mm Durchmesser;—;AliExpress;2-4
+8;Klinkenbuchse;PJ398SM (Thonkiconn oder Nachbau);Bedien;AliExpress, Thonk;2-4
+2;Taster;6 × 6 mm, 13 mm hoch;Bedien;AliExpress, Reichelt;0,50
+2;RGB-LED;WS2812D-F5, 5 mm bedrahtet (Pinbelegung 1 DIN, 2 VDD, 3 GND, 4 DOUT prüfen);Bedien;AliExpress;1-2
+1;Eurorack-Kabel;Flachband 10 auf 16 pol.;—;AliExpress, Thonk;1-2
+2;Abstandsbolzen;M3 × 11 mm Innen/Innen + 4 Schrauben M3 × 5;—;Reichelt, AliExpress;1,00
+4;Rack-Schrauben;M3 × 6 mit Nylon-Unterlegscheiben;—;AliExpress, Thonk;0,50
+1;Frontplatte;hardware/frontplatte.stl drucken;—;3D-Druck;1,00

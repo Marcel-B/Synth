@@ -1,0 +1,6 @@
+# 16 MB flash: the app, settings and a copy of the computed wavetables (5.7 MB, see hw::storeTables).
+# Name,    Type, SubType, Offset,   Size
+nvs,       data, nvs,     0x9000,   0x6000
+phy_init,  data, phy,     0xf000,   0x1000
+factory,   app,  factory, 0x10000,  3M
+tables,    data, 0x40,    0x310000, 6M

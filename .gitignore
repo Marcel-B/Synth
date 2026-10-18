@@ -3,3 +3,7 @@ build-*/
 .DS_Store
 .vscode/
 .idea/
+esp32-wavetable/firmware/sdkconfig
+esp32-wavetable/firmware/sdkconfig.old
+esp32-wavetable/firmware/host/host-test
+esp32-wavetable/firmware/host/hoerproben/

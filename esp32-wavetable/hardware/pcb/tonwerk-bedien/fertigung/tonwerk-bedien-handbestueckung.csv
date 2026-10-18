@@ -1,0 +1,25 @@
+Bauteil;Wert;Gehäuse;Seite;Hinweis
+J3;Potis;PinHeader_1x14_P2.54mm_Vertical;hinten;Pin 1 oben
+J4;Buchsen;PinHeader_1x14_P2.54mm_Vertical;hinten;Pin 1 oben
+RV1;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;TUNE
+RV2;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;FINE
+RV3;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;TABLE
+RV4;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;POSITION
+RV5;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;WARP
+RV6;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;CUTOFF
+RV7;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;RESO
+RV8;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;DECAY
+RV9;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;POS CV
+RV10;B10K;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;CUT CV
+J5;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;V/OCT
+J6;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;GATE
+J7;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;TABLE
+J8;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;POS
+J9;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;WARP
+J10;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;CUTOFF
+J11;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;OSC
+J12;PJ398SM;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;VOICE
+SW1;WARP;SW_PUSH_6mm_H13mm;vorn;
+SW2;FILTER;SW_PUSH_6mm_H13mm;vorn;
+D1;WS2812D-F5;LED_D5.0mm-4_RGB;vorn;
+D2;WS2812D-F5;LED_D5.0mm-4_RGB;vorn;

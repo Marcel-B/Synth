@@ -1,0 +1,9 @@
+Anzahl;Bauteil;Wert;Bauteile;Gehäuse;Seite;Hinweis
+2;Keramikkondensator;100n;C1 C2;C_Disc_D3.0mm_W2.0mm_P2.50mm;hinten;
+1;Stiftleiste;Buchsen;J4;PinHeader_1x14_P2.54mm_Vertical;hinten;Pin 1 oben
+1;Stiftleiste;Potis;J3;PinHeader_1x14_P2.54mm_Vertical;hinten;Pin 1 oben
+10;Poti;B10K;RV1 RV2 RV3 RV4 RV5 RV6 RV7 RV8 RV9 RV10;Potentiometer_Alpha_RD901F-40-00D_Single_Vertical;vorn;"RV1: TUNE; RV2: FINE; RV3: TABLE; RV4: POSITION; RV5: WARP; RV6: CUTOFF; RV7: RESO; RV8: DECAY; RV9: POS CV; RV10: CUT CV"
+1;Taster;FILTER;SW2;SW_PUSH_6mm_H13mm;vorn;
+8;Klinkenbuchse;PJ398SM;J5 J6 J7 J8 J9 J10 J11 J12;Jack_3.5mm_QingPu_WQP-PJ398SM_Vertical_CircularHoles;vorn;"J5: V/OCT; J6: GATE; J7: TABLE; J8: POS; J9: WARP; J10: CUTOFF; J11: OSC; J12: VOICE"
+1;Taster;WARP;SW1;SW_PUSH_6mm_H13mm;vorn;
+2;RGB-LED;WS2812D-F5;D1 D2;LED_D5.0mm-4_RGB;vorn;

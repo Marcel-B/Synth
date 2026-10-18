@@ -877,6 +877,10 @@ Die Effekt-Apps lesen die Eingänge des Audio-Interfaces (in den Einstellungen u
 
 Mit `TONWERK_EDITOR_PNG_DIR=<ordner>` schreiben die Tests ein Bild jeder Oberfläche dorthin, mit `TONWERK_PRESET_WAV_DIR=<ordner>` jeden Werksklang als WAV mit seiner Testphrase (bei den Effekten mit ihrem Testsignal, dazu die trockenen Signale unter `Quellen`). `TONWERK_TEST_CATEGORY=Presets` lässt nur eine Testgruppe laufen, etwa beim Abstimmen von Klängen. Unter Linux braucht JUCE ein paar Pakete, siehe `.github/workflows/build.yml`. Dort entstehen VST3 und App, die Audio Unit nur auf dem Mac.
 
+## Eurorack-Modul mit ESP32 (in Arbeit)
+
+In [esp32-wavetable/](esp32-wavetable/) liegt Tonwerk Wavetable als 14-TE-Eurorack-Modul: Firmware für ein ESP32-S3 (ESP-IDF) mit derselben Klangerzeugung wie das Plugin, Schaltplan, KiCad-Platinen (SMD und bedrahtet), Stücklisten und die Frontplatte zum Drucken. Der Host-Test in `esp32-wavetable/firmware/host/` vergleicht die Portierung mit dem Plugin aus diesem Repo (`make test`). Die bedrahteten Platinen sind gefertigt, aber noch nicht bestückt; auf echter Hardware hat das Modul noch keinen Ton gemacht. Alles Weitere im [README des Moduls](esp32-wavetable/README.md).
+
 ## Website
 
 Die Seite [tonwerk.studio](https://tonwerk.studio) liegt in `website/` (HTML, CSS und etwas JavaScript, ohne Build-Werkzeug, ohne fremde Schriften oder Tracker). Die Bildschirmfotos kommen aus `docs/`, dieselben wie im README. `scripts/build-website.sh` stellt beides in `build/site` zusammen und bricht ab, wenn ein Bild fehlt oder ein Plugin aus `CMakeLists.txt` keine Karte auf der Seite hat. Ein neues Plugin braucht also eine Karte in `website/index.html` (eine bestehende kopieren) und sein Bild in `docs/`.
