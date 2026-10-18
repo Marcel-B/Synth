@@ -114,15 +114,15 @@ jobs:
           (( count == 32 )) || { echo "::error::expected 32 AUv3s, found $count"; exit 1; }
       - name: Screenshots in the simulator
         run: |
-          # An iPad the runner already has on its newest iOS runtime (not every device type runs on every runtime),
-          # an iPad Pro if there is one.
-          ipads=$(xcrun simctl list devices available -j | jq -r '.devices | to_entries[] | select(.key | test("SimRuntime.iOS"))
-            | .key as $rt | .value[] | select(.name | startswith("iPad")) | "\($rt) \(.udid) \(.name)"' | sort)
-          echo "$ipads"
-          newest=$(echo "$ipads" | tail -1 | awk '{print $1}')
-          pick=$( (echo "$ipads" | grep "^$newest " | grep "iPad Pro" || echo "$ipads" | grep "^$newest ") | tail -1)
-          echo "simulator: $pick"
-          udid=$(echo "$pick" | awk '{print $2}')
+          # The store takes iPad shots only at the 13" sizes (2752 x 2064 for the 13-inch iPad Pro), so an iPad Pro 13-inch
+          # on the newest iOS runtime, made when the runner has none.
+          runtime=$(xcrun simctl list runtimes available -j | jq -r '[.runtimes[] | select(.platform == "iOS")] | last | .identifier')
+          udid=$(xcrun simctl list devices available -j | jq -r --arg rt "$runtime" '.devices[$rt][]? | select(.name | test("iPad Pro 13")) | .udid' | tail -1)
+          if [[ -z "$udid" ]]; then
+            type=$(xcrun simctl list devicetypes -j | jq -r '[.devicetypes[] | select(.name | test("iPad Pro 13"))] | last | .identifier')
+            udid=$(xcrun simctl create "iPad Pro 13" "$type" "$runtime")
+          fi
+          echo "simulator: $runtime $udid"
           xcrun simctl boot "$udid" || true   # already booted is fine
           xcrun simctl bootstatus "$udid" -b
           app=build-ios/Tonwerk_artefacts/Release/Tonwerk.app
@@ -140,7 +140,8 @@ jobs:
           for png in ipad-screenshots/*.png; do
             w=$(sips -g pixelWidth "$png" | awk '/pixelWidth/ {print $2}')
             h=$(sips -g pixelHeight "$png" | awk '/pixelHeight/ {print $2}')
-            if (( w < h )); then sips -r 270 "$png" >/dev/null; fi
+            if (( w < h )); then sips -r 270 "$png" >/dev/null; read -r w h <<<"$h $w"; fi
+            [[ "${w}x$h" == 2752x2064 || "${w}x$h" == 2732x2048 ]] || echo "::warning::$png is ${w}x$h, not a 13-inch store size"
           done
           # iPadOS registers the AUv3s with the app; hosts find them there.
           xcrun simctl spawn "$udid" pluginkit -m -v -p com.apple.AudioUnit-UI || true
