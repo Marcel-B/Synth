@@ -7,7 +7,9 @@
 #   ASC_KEY_P8      the contents of AuthKey_<id>.p8
 # The key needs the Admin role: with it Xcode registers the plugins' bundle ids, makes the distribution certificate and
 # the profiles itself (cloud-managed signing), so nothing has to be set up by hand but the app's entry in App Store
-# Connect (bundle id de.bvelop.tonwerk).
+# Connect (bundle id de.bvelop.tonwerk). Only the export signs with the team: signing the archive made each fresh
+# runner create an Apple Development certificate of its own, until the account's limit refused the next. The
+# cloud-managed distribution certificate the export uses takes no such slot.
 name: TestFlight
 
 on:
@@ -52,10 +54,16 @@ jobs:
             echo "TONWERK_CMAKE_PLATFORM=-DCMAKE_SYSTEM_NAME=iOS" >> "$GITHUB_ENV"
             echo "TONWERK_DESTINATION=generic/platform=iOS" >> "$GITHUB_ENV"
             echo "TONWERK_PLUGINS=Tonwerk.app/PlugIns" >> "$GITHUB_ENV"
+            # Unsigned; the bundles carry no entitlements on the iPad that the export would have to keep.
+            echo "TONWERK_ARCHIVE_SIGNING=CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO" >> "$GITHUB_ENV"
           else
             echo "TONWERK_CMAKE_PLATFORM=-DTONWERK_MAC_STORE=ON" >> "$GITHUB_ENV"
             echo "TONWERK_DESTINATION=generic/platform=macOS" >> "$GITHUB_ENV"
             echo "TONWERK_PLUGINS=Tonwerk.app/Contents/PlugIns" >> "$GITHUB_ENV"
+            # Ad hoc, which needs no certificate: the export re-signs every bundle with the entitlements it finds in
+            # the archive's signatures, and an unsigned archive has none, so the store would get the app and its
+            # AUv3s without the sandbox (refused).
+            echo "TONWERK_ARCHIVE_SIGNING=CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual PROVISIONING_PROFILE_SPECIFIER=" >> "$GITHUB_ENV"
           fi
       - name: Check the secrets
         env:
@@ -119,39 +127,36 @@ jobs:
             -DCMAKE_XCODE_ATTRIBUTE_SKIP_INSTALL=YES \
             -DCMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT=dwarf-with-dsym \
             -DCMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_STYLE=Automatic \
-            -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY="Apple Development" \
             -DCMAKE_XCODE_ATTRIBUTE_CC="$CCACHE_BIN/clang" -DCMAKE_XCODE_ATTRIBUTE_CXX="$CCACHE_BIN/clang++" \
             -DCMAKE_XCODE_ATTRIBUTE_LD="$(xcrun -f clang)" -DCMAKE_XCODE_ATTRIBUTE_LDPLUSPLUS="$(xcrun -f clang++)" \
             -DCMAKE_XCODE_ATTRIBUTE_COMPILER_INDEX_STORE_ENABLE=NO
       - name: Archive
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          # Xcode fetches the 33 targets' profiles side by side and now and then refers to one it has not written yet
-          # ("Build input file cannot be found: ....mobileprovision"). The profiles are on the runner after that, so
-          # the archive is tried again, at most three times, and only for that error.
-          for attempt in 1 2 3; do
-            if xcodebuild -project build-store/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
-              -destination "$TONWERK_DESTINATION" -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
-              -allowProvisioningUpdates -authenticationKeyPath "$ASC_KEY_PATH" \
-              -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
-              archive > "$RUNNER_TEMP/archive.log" 2>&1; then
-              break
-            fi
-            grep -E "error:" "$RUNNER_TEMP/archive.log" | sort -u | head -50
-            if [[ $attempt -lt 3 ]] && grep -q "error: Build input file cannot be found: .*\.mobileprovision" "$RUNNER_TEMP/archive.log" \
-              && ! grep "error:" "$RUNNER_TEMP/archive.log" | grep -vq "\.mobileprovision"; then
-              echo "Profiles were still arriving; attempt $((attempt + 1))"
-              ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/ 2>/dev/null | wc -l
-              continue
-            fi
-            tail -100 "$RUNNER_TEMP/archive.log"
-            exit 1
-          done
+          # No API key here: the archive signs nothing with the team (see the top), so it needs no profiles either.
+          # $TONWERK_ARCHIVE_SIGNING is split into its settings on purpose.
+          # shellcheck disable=SC2086
+          xcodebuild -project build-store/TonwerkSynth.xcodeproj -scheme Tonwerk -configuration Release \
+            -destination "$TONWERK_DESTINATION" -archivePath "$RUNNER_TEMP/Tonwerk.xcarchive" \
+            $TONWERK_ARCHIVE_SIGNING archive > "$RUNNER_TEMP/archive.log" 2>&1 \
+            || { grep -E "error:" "$RUNNER_TEMP/archive.log" | sort -u | head -50; tail -100 "$RUNNER_TEMP/archive.log"; exit 1; }
           grep -E "ARCHIVE SUCCEEDED" "$RUNNER_TEMP/archive.log"
-          ls "$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/$TONWERK_PLUGINS"
+      # The export signs only what the archive holds: every AUv3 must be in it, and on the Mac each bundle must carry
+      # the sandbox in its ad hoc signature for the export to keep it.
+      - name: Check the archive
+        run: |
+          app="$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/${TONWERK_PLUGINS%%/*}"
+          plugins="$RUNNER_TEMP/Tonwerk.xcarchive/Products/Applications/$TONWERK_PLUGINS"
+          ls "$plugins"
+          count=$(find "$plugins" -maxdepth 1 -name '*.appex' | wc -l | tr -d ' ')
+          echo "$count AUv3s"
+          (( count == 32 )) || { echo "::error::expected 32 AUv3s in the archive, found $count"; exit 1; }
+          [[ "${{ matrix.platform }}" == Mac ]] || exit 0
+          for bundle in "$app" "$plugins"/*.appex; do
+            codesign -d --entitlements - --xml "$bundle" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null
+            /usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" "$RUNNER_TEMP/entitlements.plist" 2>/dev/null \
+              | grep -q true || { echo "::error::$(basename "$bundle") has no sandbox in the archive"; exit 1; }
+          done
+          echo "app and AUv3s sandboxed"
       - name: Upload to TestFlight
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

@@ -699,6 +699,8 @@ Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App
 
 Für den Mac kommt einmal dazu: in App Store Connect bei der App Tonwerk unter **Plattform hinzufügen** macOS wählen. Zertifikate und Profile für den Mac legt der Build wie beim iPad selbst an.
 
+Signiert wird erst beim Export für App Store Connect, mit dem Distributionszertifikat, das Apple in der Cloud verwaltet; das Archiv selbst bleibt unsigniert (iPad) oder ad hoc signiert (Mac, damit die Sandbox der App und der Plugins im Export erhalten bleibt). So legt nicht jeder Lauf ein eigenes Entwicklungszertifikat an, bis Apples Grenze erreicht ist.
+
 Nach dem Upload prüft Apple den Build einige Minuten; dann erscheint er in App Store Connect unter TestFlight, und wer dort als interner Tester eingetragen ist, installiert ihn mit der App TestFlight.
 
 **Getestet und ungetestet:** Gebaut und im Simulator gestartet in der GitHub Action, die App auch unter Linux gebaut und gestartet. Der Upload zu TestFlight lief am 17.10.2026 durch (Build 0.5.0 (2) wurde wegen der IDs der Erweiterungen abgelehnt, 0.5.0 (4) angenommen und von Marcel auf dem iPad installiert, 0.5.0 (6) mit der neuen Tastatur hochgeladen). Die Mac-Version ist bisher nur gebaut, noch nicht hochgeladen und nirgends gestartet. Auf einem echten iPad, in Logic Pro für iPad, GarageBand oder AUM noch nicht ausprobiert, ebenso wenig das Laden aus Tonwerk über das Netz (Tailscale), Bluetooth-MIDI und die Dateien-App.
