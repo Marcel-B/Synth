@@ -38,8 +38,8 @@
     <h2 id="server">1. Server installieren</h2>
     <p>Auf dem Mac, der rechnen soll, im Terminal:</p>
     <pre>xcode-select --install
-git clone https://github.com/Marcel-B/Tonwerk-AI.git ~/repos/YueUI
-~/repos/YueUI/deploy/setup-mac.sh</pre>
+git clone https://github.com/Marcel-B/Tonwerk-AI.git ~/repos/Tonwerk-AI
+~/repos/Tonwerk-AI/deploy/setup-mac.sh</pre>
     <p>Die erste Zeile installiert Apples Command Line Tools (git, Compiler), falls sie fehlen. Das Skript prüft dann den Mac und installiert, was fehlt: Homebrew, uv, ffmpeg, Node.js und das .NET 10 SDK. Danach holt es YuE2 als Checkout von YuE Studio in der geprüften Version, baut die Brücke zur Neural Engine, lädt die Modelle (etwa 7 GB) und startet den Server als Dienst, der mit der Anmeldung des Benutzers läuft. Am Ende rechnet es einmal zur Probe.</p>
     <p>Das Skript darf beliebig oft laufen; was schon da ist, überspringt es. Ist die App YuE Studio schon installiert, nutzt der Server deren Modelle und Songordner (<code>~/Music/YuE Studio</code>) mit, beide sehen dieselbe Bibliothek.</p>
 
@@ -58,7 +58,7 @@ git clone https://github.com/Marcel-B/Tonwerk-AI.git ~/repos/YueUI
       <dt><code>--all</code></dt><dd>alles oben</dd>
     </dl>
     <p>Eine Option später nachrüsten, ohne die früheren zu verlieren:</p>
-    <pre>~/repos/YueUI/deploy/setup-mac.sh $(cat "$HOME/Library/Application Support/YuE UI/setup-options") --images</pre>
+    <pre>~/repos/Tonwerk-AI/deploy/setup-mac.sh $(cat "$HOME/Library/Application Support/YuE UI/setup-options") --images</pre>
     <p>Modelle laden beim ersten Gebrauch, die Seite in der App zeigt so lange, dass sie lädt.</p>
 
     <h3 id="updates">Updates</h3>
