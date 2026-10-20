@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-Tonwerk Synth: the two browser synthesizers of Tonwerk (repository `Marcel-B/YuE-UI`, `src/YueUI.Api/ClientApp/src/logic/synth.ts`, `fm.ts`, `envelope.ts`, `effects.ts`) as JUCE instrument plugins for Logic Pro: Tonwerk Analog (`aumu TwAn Bvlp`) and Tonwerk FM (`aumu TwFm Bvlp`), plus Tonwerk Synth (`aumu Twsy Bvlp`), the first plugin with both engines, kept so Logic projects made with it still open. Audio Unit (v2 component, the format Logic loads), VST3 and a standalone app from one CMake project. README.md (German) is the user documentation.
+Tonwerk Synth: the two browser synthesizers of Tonwerk (repository `Marcel-B/Tonwerk-AI`, formerly `YuE-UI`, `src/YueUI.Api/ClientApp/src/logic/synth.ts`, `fm.ts`, `envelope.ts`, `effects.ts`) as JUCE instrument plugins for Logic Pro: Tonwerk Analog (`aumu TwAn Bvlp`) and Tonwerk FM (`aumu TwFm Bvlp`), plus Tonwerk Synth (`aumu Twsy Bvlp`), the first plugin with both engines, kept so Logic projects made with it still open. Audio Unit (v2 component, the format Logic loads), VST3 and a standalone app from one CMake project. README.md (German) is the user documentation.
 
 ## Commands
 
