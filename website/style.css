@@ -348,6 +348,13 @@ dialog button:hover { border-color: var(--cyan); color: var(--cyan); }
 .tools dt { color: var(--yellow); font-weight: 700; margin-top: 14px; }
 .tools dd { margin: 2px 0 0; color: var(--text); }
 .stand { color: var(--muted); font-size: 14px; margin-top: 36px; }
+.table-scroll { overflow-x: auto; margin: 12px 0; }
+.page table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+.page th { color: var(--yellow); text-align: left; font-weight: 700; border-bottom: 1px solid var(--border); padding: 6px 8px; }
+.page td { border-bottom: 1px solid var(--border); padding: 6px 8px; vertical-align: top; }
+.download { background: var(--panel); border-left: 3px solid var(--yellow); padding: 16px 20px; margin: 24px 0; }
+.download .button { margin: 0 12px 8px 0; }
+.download p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
 .todo { background: rgba(255, 0, 60, 0.12); border-left: 3px solid var(--red); padding: 2px 6px; }
 
 @media (max-width: 720px) {

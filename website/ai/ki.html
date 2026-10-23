@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KI und Verantwortung · Tonwerk-AI</title>
+  <meta name="description" content="Was Tonwerk-AI mit KI erzeugt, wie die Dateien gekennzeichnet sind, welche Lizenzen die Modelle haben und worauf du beim Veröffentlichen achten musst.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/ai/ki.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Navigation von Tonwerk-AI">
+        <a href="./#funktionen">Funktionen</a>
+        <a href="einrichtung.html">Einrichtung</a>
+        <a href="ki.html">KI</a>
+        <a href="datenschutz.html" class="optional">Datenschutz</a>
+        <a href="../">Plugins</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>KI und Verantwortung</h1>
+    <p class="lead-text">Songs, Stimmen, Sprache, Cover und Texte aus Tonwerk-AI sind von KI-Modellen erzeugt. Diese Seite sagt, welche Modelle das sind, wie die Dateien gekennzeichnet sind und was du beachten musst, wenn du etwas davon veröffentlichst.</p>
+    <p class="note">Das hier ist eine Einordnung, keine Rechtsberatung. Wer mit KI-Songs Geld verdient oder fremde Stimmen nutzt, sollte sich im Zweifel von einer Anwältin oder einem Anwalt beraten lassen.</p>
+
+    <h2 id="was">Was KI-erzeugt ist</h2>
+    <dl class="tools">
+      <dt>Songs</dt>
+      <dd>YuE2 und ACE-Step komponieren und singen aus Stil, Text und Partitur. Auch Fassungen mit anderer Stimme (Seed-VC), gesungene Stimmen (SoulX-Singer) und Stems sind von Modellen gemacht oder bearbeitet.</dd>
+      <dt>Sprache</dt>
+      <dd>Das Sprachlabor spricht Text mit Sprachmodellen, auf Wunsch mit einer geklonten Stimme, und säubert Aufnahmen.</dd>
+      <dt>Bilder</dt>
+      <dd>Gemalte Cover kommen von Bildmodellen (FLUX, Z-Image, Krea). Fotos, die du selbst wählst, bleiben, was sie sind.</dd>
+      <dt>Texte</dt>
+      <dd>Songtexte, Ausarbeitungen und die Antworten auf der Seite <b>Schreiben</b> schreibt ein Sprachmodell, lokal in LM Studio oder, mit eigenem Schlüssel, Claude von Anthropic. Die App sagt dort, dass die Antworten von einem KI-Modell kommen.</dd>
+    </dl>
+
+    <h2 id="kennzeichnung">Kennzeichnung der Dateien</h2>
+    <p>Die KI-Verordnung der EU (Art. 50) verlangt seit dem 2. August 2026, dass KI-erzeugte Audio-, Bild- und Videodateien maschinenlesbar als solche erkennbar sind. Tonwerk-AI schreibt das in jede Datei, die den Server verlässt:</p>
+    <ul>
+      <li><b>Audio</b> (Exporte als MP3, M4A, FLAC, die Kopien für den Player, Fassungen, Stems, Downloads): ein eigenes Tag „KI-generiert“ mit dem Modell, dazu ein Satz im Kommentar.</li>
+      <li><b>Musikvideos</b>: dieselben Angaben in den Metadaten des Videos.</li>
+      <li><b>Cover</b>: die IPTC-Angabe <code>trainedAlgorithmicMedia</code> in den XMP-Daten, die Fotodienste und Plattformen lesen.</li>
+      <li><b>MIDI und Logic-Projekte</b>: ein Vermerk, mit welchem Modell der Song entstand.</li>
+    </ul>
+    <p>Metadaten gehen verloren, wenn eine Datei neu kodiert, beschnitten oder abgefilmt wird. Ein unhörbares Wasserzeichen kennt Tonwerk-AI noch nicht. Entferne die Kennzeichnung nicht, wenn du Dateien weitergibst.</p>
+
+    <h2 id="veroeffentlichen">Wenn du veröffentlichst</h2>
+    <ul>
+      <li><b>Offenlegen.</b> Wer KI-Songs, KI-Stimmen oder KI-Bilder veröffentlicht, die echt wirken können, muss sagen, dass sie mit KI erzeugt sind (Art. 50 Abs. 4 der KI-Verordnung; rein private Nutzung ist ausgenommen). Streaming-Dienste, Vertriebe und Plattformen wie YouTube verlangen außerdem eigene Angaben beim Hochladen.</li>
+      <li><b>Fremde Stimmen nur mit Einwilligung.</b> Stimmentausch, Sprachlabor und Singen können Stimmen nachbilden. Nutze nur deine eigene Stimme oder die einer Person, die zugestimmt hat; die Stimme gehört zum Persönlichkeitsrecht. Stimmen bekannter Sängerinnen und Sänger nachzubauen ist tabu.</li>
+      <li><b>Urheberrecht.</b> Ein Song, den ein Modell ohne eigenen schöpferischen Beitrag erzeugt hat, ist in Deutschland in der Regel nicht urheberrechtlich geschützt (§ 2 Abs. 2 UrhG verlangt eine menschliche Schöpfung). Eigene Texte, Melodien und Bearbeitungen können es sein. Modelle können bestehenden Werken ähneln oder Textzeilen wiedergeben; prüfe Texte und Melodien, bevor du sie veröffentlichst.</li>
+      <li><b>Lizenzen der Modelle.</b> Was du mit einem Ergebnis tun darfst, hängt vom Modell ab, siehe unten. Manche erlauben nur nicht kommerzielle Nutzung oder verlangen eine Nennung.</li>
+      <li><b>Verantwortung.</b> Die Modelle laufen auf deinem Mac und mit deinen Eingaben. Für das, was du erzeugst und veröffentlichst, bist du verantwortlich, nicht ich.</li>
+    </ul>
+
+    <h2 id="modelle">Modelle und Lizenzen</h2>
+    <p>Tonwerk-AI bringt keine Modelle mit; der Server lädt sie bei der Einrichtung aus ihren Quellen, und es gelten deren Lizenzen. Diese Übersicht ersetzt nicht das Lesen der Lizenz: Lizenzen ändern sich, maßgeblich ist die verlinkte Seite.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Modell</th><th>Wofür</th><th>Lizenz</th><th>Ergebnisse kommerziell</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/multimodal-art-projection/YuE">YuE2</a></td><td>Songs</td><td><a href="https://github.com/multimodal-art-projection/YuE/blob/main/MODEL_LICENSE">CC BY-NC 4.0</a> mit Zusatz</td><td>Einzelpersonen ausdrücklich ja; YuE2 nennen. Eine eigene LoRA ist eine Bearbeitung der Gewichte und darf nicht verkauft werden.</td></tr>
+        <tr><td><a href="https://github.com/ace-step/ACE-Step-1.5">ACE-Step 1.5</a></td><td>Songs</td><td>MIT</td><td>ja</td></tr>
+        <tr><td><a href="https://huggingface.co/Plachta/Seed-VC">Seed-VC</a></td><td>andere Stimme</td><td>GPL-3.0</td><td>die Lizenz regelt die Software, nicht die Ergebnisse; die Stimme braucht Einwilligung</td></tr>
+        <tr><td>SoulX-Singer</td><td>Singen</td><td>Apache 2.0</td><td>ja</td></tr>
+        <tr><td><a href="https://huggingface.co/bosonai/higgs-audio-v3-tts-4b">Higgs Audio v3</a></td><td>Sprachlabor</td><td>Boson Higgs TTS 3 Research and Non-Commercial License</td><td>nur nicht kommerziell; Ausnahme „Creator Use Grant“ für eigene Inhalte wie Podcasts und Videos, wenn Boson AI genannt wird</td></tr>
+        <tr><td>Chatterbox, Qwen3-TTS, Higgs Audio v2, MOSS-TTS, MossFormer2, DeepFilterNet</td><td>Sprachlabor</td><td>je Modell verschieden</td><td>vor dem Veröffentlichen auf der Modellseite prüfen</td></tr>
+        <tr><td>Stem-Modelle (mlx-audio-separator)</td><td>Stems</td><td>je Modell verschieden, teils ohne klare Angabe</td><td>prüfen</td></tr>
+        <tr><td>FLUX.2 Klein 4B, Z-Image Turbo</td><td>Cover</td><td>Apache 2.0</td><td>ja</td></tr>
+        <tr><td>FLUX.2 Klein 9B</td><td>Cover</td><td>FLUX Non-Commercial License</td><td>nein; Inhaltsfilter vorgeschrieben (eingebaut)</td></tr>
+        <tr><td>Krea 2 Turbo</td><td>Cover</td><td>Krea 2 Community License</td><td>bis 1 Mio. US-Dollar Umsatz; Inhaltsfilter (eingebaut) und, wo gesetzlich nötig, KI-Hinweis</td></tr>
+        <tr><td>FLUX 3 Klein</td><td>Cover</td><td>FLUX Community License</td><td>bis 5 Mio. US-Dollar Umsatz; Filter (eingebaut), KI-Hinweis; nicht zum Training anderer Bildmodelle</td></tr>
+        <tr><td>Whisper large-v3 turbo</td><td>Zeitmarken im Text</td><td>MIT</td><td>–</td></tr>
+        <tr><td>Basic Pitch, SheetSage2</td><td>Audio zu MIDI, Transkription</td><td>Basic Pitch Apache 2.0; SheetSage2 siehe Projektseite</td><td>–</td></tr>
+        <tr><td>Sprachmodelle in LM Studio</td><td>Texte</td><td>die des gewählten Modells</td><td>siehe Modellseite</td></tr>
+        <tr><td>Claude (Anthropic)</td><td>Texte, Übersetzung</td><td><a href="https://www.anthropic.com/legal/commercial-terms">Anthropic Commercial Terms</a></td><td>Ergebnisse gehören nach diesen Bedingungen dir</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="software">Tonwerk-AI selbst</h2>
+    <p>Die App und der Server stehen unter der <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial License 1.0.0</a>: kostenlos für jeden nicht kommerziellen Zweck, ohne Gewährleistung, soweit das Gesetz es erlaubt. Für kommerzielle Nutzung der Software frag mich. Die fremden Bibliotheken in der App und ihre Lizenzen stehen in <a href="https://github.com/Marcel-B/Tonwerk-AI/blob/main/NOTICE">NOTICE</a>. Die Lizenz der Software sagt nichts darüber, was du mit erzeugten Songs tun darfst; das regeln die Modelle oben.</p>
+
+    <p class="stand">Stand: 23. Oktober 2026</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutz</a>
+        <a href="ki.html">KI</a>
+        <a href="https://github.com/Marcel-B/Tonwerk-AI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
