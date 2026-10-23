@@ -26,6 +26,14 @@ for page in "$site"/*.html "$site"/ai/*.html; do
   done
 done
 
+# Tonwerk-AI is handed out as a download, so every one of its pages leads to what it says about AI (ai/ki.html).
+for page in "$site"/ai/*.html; do
+  if ! grep -q 'href="ki.html' "$page"; then
+    echo "$(basename "$page") verlinkt ki.html nicht." >&2
+    failed=1
+  fi
+done
+
 # Every plugin of CMakeLists.txt but the test app, Tonwerk Synth (kept only for old projects) and Tonwerk (the iPad app,
 # shown in the iPad download panel) needs its card.
 while read -r product; do
