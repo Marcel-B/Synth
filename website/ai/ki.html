@@ -42,13 +42,13 @@
     </dl>
 
     <h2 id="kennzeichnung">Kennzeichnung der Dateien</h2>
-    <p>Die KI-Verordnung der EU (Art. 50) verlangt seit dem 2. August 2026, dass KI-erzeugte Audio-, Bild- und Videodateien maschinenlesbar als solche erkennbar sind. Tonwerk-AI schreibt das in jede Datei, die den Server verlässt:</p>
+    <p>Die KI-Verordnung der EU (Art. 50) verlangt seit dem 2. August 2026, dass KI-erzeugte Audio-, Bild- und Videodateien maschinenlesbar als solche erkennbar sind. Tonwerk-AI schreibt das in diese Dateien:</p>
     <ul>
-      <li><b>Audio</b> (Exporte als MP3, M4A, FLAC, die Kopien für den Player, Fassungen, Stems, Downloads): ein eigenes Tag „KI-generiert“ mit dem Modell, dazu ein Satz im Kommentar.</li>
-      <li><b>Musikvideos</b>: dieselben Angaben in den Metadaten des Videos.</li>
-      <li><b>Cover</b>: die IPTC-Angabe <code>trainedAlgorithmicMedia</code> in den XMP-Daten, die Fotodienste und Plattformen lesen.</li>
-      <li><b>MIDI und Logic-Projekte</b>: ein Vermerk, mit welchem Modell der Song entstand.</li>
+      <li><b>Audio</b> (Exporte als MP3, M4A, FLAC, die Kopien für den Player, Downloads von Songs und Fassungen, Stems eines Songs, gesprochene und gesungene Aufnahmen, getauschte Stimmen): ein eigenes Feld <code>AI_GENERATED</code> mit dem Modell und das Feld <code>DIGITAL_SOURCE_TYPE</code> mit dem IPTC-Begriff <code>trainedAlgorithmicMedia</code>, dazu ein Satz im Kommentar.</li>
+      <li><b>Musikvideos</b>: dieselben Angaben in den Metadaten des Videos, auch in der kleinen Kopie zum Teilen.</li>
+      <li><b>Gemalte Cover</b>: die IPTC-Angabe <code>trainedAlgorithmicMedia</code> in den XMP-Daten, die Fotodienste und Plattformen lesen.</li>
     </ul>
+    <p>Nicht gekennzeichnet werden deine eigenen Aufnahmen, die Tonwerk-AI nur bearbeitet (gesäuberte Sprache, Stems einer hochgeladenen Datei), deine Fotos sowie MIDI und Partituren, die nur Noten enthalten. Die Aufnahme im Logic-Projekt trägt die Kennzeichnung noch nicht; das folgt.</p>
     <p>Metadaten gehen verloren, wenn eine Datei neu kodiert, beschnitten oder abgefilmt wird. Ein unhörbares Wasserzeichen kennt Tonwerk-AI noch nicht. Entferne die Kennzeichnung nicht, wenn du Dateien weitergibst.</p>
 
     <h2 id="veroeffentlichen">Wenn du veröffentlichst</h2>
