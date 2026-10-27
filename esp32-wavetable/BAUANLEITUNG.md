@@ -128,7 +128,7 @@ Beim **ersten Start** berechnet das Modul seine Tabellen und legt sie im Flash a
 
 Wer selbst bauen will: ESP-IDF 5.3, `idf.py build flash monitor` im Ordner `firmware`, siehe [README, Firmware](README.md#firmware).
 
-Flashen geht mit und ohne Eurorack-Strom; D3 trennt den Regler vom USB.
+Flashen geht mit und ohne Eurorack-Strom; D3 trennt den Regler vom USB. Eine neue Firmware so flashen wie die erste: Die Tabellen bleiben erhalten, aber das Image überschreibt auch den Bereich der Einstellungen, gespeicherte Modi, versteckte Werte und die V/Oct-Kalibrierung gehen also verloren. Darum erst flashen, dann kalibrieren.
 
 ## 9. Zusammenbauen und erster Ton
 
