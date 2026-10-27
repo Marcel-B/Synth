@@ -105,6 +105,8 @@ class Module
 {
 public:
     static constexpr int kHoldMs = 300;
+    /** How far a knob must move while a button is held before the press no longer counts as a tap. */
+    static constexpr float kTurnedBy = 0.03f;
 
     Module()
     {
@@ -158,10 +160,11 @@ public:
             const float before = value;
             pickup[layer][p].update(in.pot[p], value);
             if (layer != normal && std::abs(value - before) > 1.0e-4f)
-            {
                 dirty = true;
+            // Only a real turn swallows the tap: a still pot that is caught at once (resting on its hidden value)
+            // jitters by a few ADC steps every read.
+            if (layer != normal && std::abs(in.pot[p] - potAtPress[p]) > kTurnedBy)
                 turnedWhileHeld = true;
-            }
         }
         if (layer == normal && std::abs(panel[table] - lastTablePot) > 0.03f)
         {
@@ -245,6 +248,7 @@ private:
                 {
                     heldMs = 0;
                     turnedWhileHeld = false;
+                    std::copy(in.pot, in.pot + kPots, potAtPress);
                 }
                 heldMs += ms;
             }
@@ -327,6 +331,7 @@ private:
     Pickup pickup[kLayers][kPots] {};
     Layer activeLayer = normal;
     bool warpWas = false, filterWas = false, turnedWhileHeld = false;
+    float potAtPress[kPots] {};
     int warpHeldMs = 0, filterHeldMs = 0;
     float lastTablePot = -1.0f;
     int tableShownMs = 0;

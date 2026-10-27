@@ -242,6 +242,23 @@ void panel()
     m.update(in, 2, p);
     check(p.a.warp == twm::Warp::off, "a long hold on WARP does not switch the warp mode");
 
+    // A tap still counts when knobs rest where their hidden values are (TUNE and FINE centred) and the ADC jitters
+    // by a few steps, as the ESP32's does on a still pot.
+    for (auto& v : in.pot)
+        v = 0.5f;
+    for (int i = 0; i < 300; ++i)
+        m.update(in, 2, p);
+    in.warpButton = true;
+    for (int i = 0; i < 60; ++i)
+    {
+        for (int k = 0; k < twm::kPots; ++k)
+            in.pot[k] = 0.5f + ((i + k) % 3 - 1) * 0.002f;
+        m.update(in, 2, p);
+    }
+    in.warpButton = false;
+    m.update(in, 2, p);
+    check(p.a.warp == twm::Warp::sync, "a tap on WARP counts while the knobs jitter around their hidden values");
+
     // V/Oct: the nominal calibration against the input stage's formula (hardware/schaltplan.svg).
     const twm::Calibration cal;
     double worst = 0.0;
