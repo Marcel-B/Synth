@@ -120,7 +120,7 @@ jobs:
         run: |
           # Static libraries stay out of the archive (SKIP_INSTALL), or Xcode makes a generic archive instead of an
           # app's; the app itself sets it back. The dSYMs go up with the build so TestFlight's crash reports name
-          # functions. No LTO: with 33 binaries it would take hours.
+          # functions. No LTO: with 34 binaries it would take hours.
           cmake -S . -B build-store -G Xcode $TONWERK_CMAKE_PLATFORM \
             -DTONWERK_VERSION="$TONWERK_VERSION" -DTONWERK_BUILD_NUMBER="$TONWERK_BUILD_NUMBER" -DTONWERK_LTO=OFF \
             -DCMAKE_XCODE_GENERATE_SCHEME=ON \
@@ -149,7 +149,7 @@ jobs:
           ls "$plugins"
           count=$(find "$plugins" -maxdepth 1 -name '*.appex' | wc -l | tr -d ' ')
           echo "$count AUv3s"
-          (( count == 32 )) || { echo "::error::expected 32 AUv3s in the archive, found $count"; exit 1; }
+          (( count == 33 )) || { echo "::error::expected 33 AUv3s in the archive, found $count"; exit 1; }
           [[ "${{ matrix.platform }}" == Mac ]] || exit 0
           for bundle in "$app" "$plugins"/*.appex; do
             codesign -d --entitlements - --xml "$bundle" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null

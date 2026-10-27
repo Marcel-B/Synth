@@ -390,6 +390,20 @@ def lfo(p):
         pts += [(x0, y), (x0 + 0.2, y)]
     p.line(pts, 16)
 
+def rumble(p):
+    # Two kicks, and between them the low rumble swelling back after each one ducked it.
+    for x in (-0.8, 0.2):
+        p.line([(x, -0.85), (x, 0.85)])
+
+    def swell(x0, x1):
+        def f(x):
+            t = (x - x0) / (x1 - x0)
+            return 0.42 * t * t * math.sin(2 * math.pi * 2.5 * t)
+        p.curve(f, x0 + 0.12, x1 - 0.06, steps=200, width=30)
+    swell(-0.8, 0.2)
+    swell(0.2, 1.0)
+
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -425,6 +439,7 @@ ICONS = {
     "TonwerkExpander": (expander, INSTRUMENT),
     "TonwerkArp": (arp, MIDI),
     "TonwerkLFO": (lfo, MIDI),
+    "TonwerkRumble": (rumble, EFFECT),
 }
 
 # The iPad app with every plugin inside: Tonwerk Synth's sign, both engines.
