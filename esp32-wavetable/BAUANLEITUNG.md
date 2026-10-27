@@ -23,7 +23,7 @@ Worauf es ankommt:
 - **ESP32-S3-DevKitC-1 N16R8**: N16R8 heißt 16 MB Flash und 8 MB PSRAM. Ohne die 8 MB PSRAM läuft die Firmware nicht (die Tabellen brauchen 5,7 MB). Klone wie das YD-ESP32-S3 gehen, wenn die Pinbelegung gleich ist.
 - **PCM5102A-Modul „GY-PCM5102“** (lila) mit der 6-poligen Leiste VIN GND LCK DIN BCK SCK.
 - **74HCT125 oder 74AHCT125**, nicht 74HC125 (der erkennt die 3,3 V des ESP32 an 5 V nicht sicher). Ein 74HCT32 passt ohne Änderung in dieselben Löcher.
-- **WS2812D-F5** (5 mm, bedrahtet). Die Platine erwartet die Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. APA106/PL9823 haben dieselbe Pinfolge, aber eine andere Farbreihenfolge (siehe [Fehlersuche](#fehlersuche)).
+- **WS2812D-F5** (5 mm, bedrahtet). Die Platine erwartet die Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite der LED liegt bei **DOUT**, nicht bei DIN (siehe Schritt 5). APA106/PL9823 haben dieselbe Pinfolge, aber eine andere Farbreihenfolge (siehe [Fehlersuche](#fehlersuche)).
 - **Elkos höchstens 11 mm hoch**, Rastermaß 2 mm.
 
 ## 2. Frontplatte drucken
@@ -85,7 +85,7 @@ Auf die Rückseite kommen nur C1 und C2 (100 nF) und die beiden 14-poligen Stift
 
 1. C1, C2 und die Stiftleisten zuerst löten.
 2. Potis, Buchsen und Taster nur einstecken, die gedruckte Front aufsetzen und die Muttern der Potis und Buchsen leicht anziehen. Erst dann löten, so sitzt alles genau in den Löchern.
-3. LEDs: die abgeflachte Seite wie auf dem Bestückungsdruck. So weit hineinstecken, dass sie mit der Front eingesetzt in den 5-mm-Löchern sitzen, dann löten.
+3. LEDs: **nicht nach dem Bestückungsdruck richten.** Der Druck der Platine v0.1 zeigt die abgeflachte Seite am eckigen Pad (Pin 1), bei der WS2812D-F5 liegt sie aber bei DOUT (Pin 4). Von vorn gesehen gehört die flache Seite also nach rechts, weg vom eckigen Pad; die beiden kürzeren Beine (DIN, VDD) kommen ans eckige Pad, die beiden längeren (GND, DOUT) nach rechts. Falsch herum liegen +5 V und GND vertauscht an der LED, und sie brennt beim ersten Einschalten durch (so beim ersten Aufbau geschehen). So weit hineinstecken, dass sie mit der Front eingesetzt in den 5-mm-Löchern sitzen, dann löten.
 
 ## 6. Erste Prüfung ohne Chips
 
