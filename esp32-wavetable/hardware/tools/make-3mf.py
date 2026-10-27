@@ -1,4 +1,5 @@
-"""Writes plate and lettering as one 3MF object with two parts, so the slicer keeps them where they belong."""
+"""Writes plate and lettering (or, with --knoepfe, ten knobs of body and pointer) as 3MF objects of two parts each,
+so the slicer keeps the parts where they belong."""
 import struct, sys, zipfile
 def stl_vertices(path):
     # OpenSCAD writes ASCII STL; the copies in the repo are binary to stay small. Both are read here.
@@ -27,13 +28,23 @@ def mesh(oid, name, path):
     vs = "".join(f'<vertex x="{a}" y="{b}" z="{c}"/>' for a, b, c in v)
     ts = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in t)
     return f'<object id="{oid}" name="{name}" type="model"><mesh><vertices>{vs}</vertices><triangles>{ts}</triangles></mesh></object>'
-plate, text, out = sys.argv[1:4]
-model = ('<?xml version="1.0" encoding="UTF-8"?>'
-         '<model unit="millimeter" xml:lang="de-DE" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
-         '<resources>' + mesh(1, "Platte", plate) + mesh(2, "Schrift", text) +
-         '<object id="3" name="Tonwerk Wavetable Frontplatte" type="model"><components>'
-         '<component objectid="1"/><component objectid="2"/></components></object>'
-         '</resources><build><item objectid="3" transform="1 0 0 0 1 0 0 0 1 70 70 0"/></build></model>')
+HEAD = ('<?xml version="1.0" encoding="UTF-8"?>'
+        '<model unit="millimeter" xml:lang="de-DE" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">')
+if sys.argv[1] == "--knoepfe":
+    # The ten knobs of knopf.scad, body and pointer as one object each, in two rows of five.
+    body, marks, out = sys.argv[2:5]
+    objects = "".join(f'<object id="{3 + i}" name="Knopf {i + 1}" type="model"><components>'
+                      f'<component objectid="1"/><component objectid="2"/></components></object>' for i in range(10))
+    items = "".join(f'<item objectid="{3 + i}" transform="1 0 0 0 1 0 0 0 1 {100 + (i % 5 - 2) * 18} {100 + (i // 5 - 0.5) * 18} 0"/>'
+                    for i in range(10))
+    model = (HEAD + '<resources>' + mesh(1, "Körper", body) + mesh(2, "Zeiger", marks) + objects +
+             '</resources><build>' + items + '</build></model>')
+else:
+    plate, text, out = sys.argv[1:4]
+    model = (HEAD + '<resources>' + mesh(1, "Platte", plate) + mesh(2, "Schrift", text) +
+             '<object id="3" name="Tonwerk Wavetable Frontplatte" type="model"><components>'
+             '<component objectid="1"/><component objectid="2"/></components></object>'
+             '</resources><build><item objectid="3" transform="1 0 0 0 1 0 0 0 1 70 70 0"/></build></model>')
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
     z.writestr("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>')
     z.writestr("_rels/.rels", '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
