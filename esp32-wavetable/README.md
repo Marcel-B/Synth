@@ -2,11 +2,11 @@
 
 Konzept, Schaltplan-Skizze, Firmware-Grundgerüst, Stückliste und Frontplatte für ein 14-TE-Modul, das die Klangerzeugung von **Tonwerk Wavetable** (Plugin in diesem Repo, `wavetable/src/`) auf einem ESP32-S3 spielt.
 
-Stand 2026-10-10. **Nichts davon ist auf echter Hardware aufgebaut oder gehört worden.** Was geprüft ist, steht unter [Was getestet ist](#was-getestet-ist).
+Stand 2026-10-28. **Ein Modul ist gebaut und spielt** (bedrahtete Platinen v0.1, 27.10.2026); CV-Eingänge und V/Oct-Kalibrierung sind auf der Hardware noch nicht geprüft. Was geprüft ist, steht unter [Was getestet ist](#was-getestet-ist).
 
 ![Frontplatte](hardware/frontplatte-vorschau.png)
 
-Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren.
+Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren. Auf der Website: [Bedienung](https://tonwerk.studio/modul/) und [Bauanleitung mit Bildern](https://tonwerk.studio/modul/bauanleitung.html).
 
 ## Die Idee in einem Absatz
 
@@ -59,6 +59,7 @@ Im Eurorack ist die Frontplatte das Gehäuse; das Modul hängt mit vier M3-Schra
   - [hardware/frontplatte-graviert.stl](hardware/frontplatte-graviert.stl): Schrift **0,4 mm vertieft**. Front nach oben drucken, mit Acrylfarbe oder Wachs füllen und die Front sauber wischen.
   - [hardware/frontplatte-einlage-platte.stl](hardware/frontplatte-einlage-platte.stl) + [hardware/frontplatte-einlage-schrift.stl](hardware/frontplatte-einlage-schrift.stl): Schrift **bündig** als eigenes Teil, für Drucker mit mehreren Farben oder Werkzeugwechsler. Front nach unten, am einfachsten [hardware/frontplatte-einlage.3mf](hardware/frontplatte-einlage.3mf) öffnen: ein Objekt mit den Teilen „Platte“ und „Schrift“, schon richtig zueinander, jedes Teil einem Werkzeug zuweisen. Die beiden STLs einzeln nicht im Slicer zentrieren, ihre Umrisse sind verschieden groß (neu bauen: `python3 hardware/tools/make-3mf.py platte.stl schrift.stl ziel.3mf`). Die Schrift ist genau so tief wie die erste Schicht (0,5 mm, danach 0,16 mm); so bekommen Front und Schrift dieselbe Oberfläche vom Druckbett, und die zweite Schicht der Platte deckt die Schrift von hinten ab. Andere Schichthöhen: `first_layer`, `layer` und `inlay_layers` in der .scad.
   - Der erste Druck (0,6 mm tief, Front nach unten, Schrift 2,3–2,5 mm) war schlecht lesbar: Nach unten gedruckte Gravuren überbrückt der Drucker, und die Striche waren zu dünn. Jetzt ist die Schrift 2,6–4 mm groß, fetter und weiter gesperrt.
+- Drehknöpfe zum Drucken, schwarz mit gelbem Zeiger und Ring: [hardware/knopf.3mf](hardware/knopf.3mf) (zehn Stück, Teile „Körper“ und „Zeiger“, Deckel nach unten; der Zeiger ist die erste Schicht) oder einzeln [hardware/knopf-koerper.stl](hardware/knopf-koerper.stl) und [hardware/knopf-zeiger.stl](hardware/knopf-zeiger.stl). 13,4 mm Durchmesser; unten eine Aussparung über Mutter und Scheibe, damit der Knopf auch auf der kurzen Achse hinter der gedruckten Front fest sitzt. Erst [hardware/knopf-probe.stl](hardware/knopf-probe.stl) drucken (Bohrungen 5,9, 6,0 und 6,1 mm, 1–3 Striche) und die strammste passende als `shaft_d` in [hardware/knopf.scad](hardware/knopf.scad) eintragen; dort auch D-Achse, Achslänge und Mutter.
 - [hardware/frontplatte.scad](hardware/frontplatte.scad): die Quelle (OpenSCAD), alle Positionen und Lochmaße oben als Variablen.
 - [hardware/frontplatte-bohrplan.svg](hardware/frontplatte-bohrplan.svg): Umriss und Löcher 1:1, falls die Front lieber aus 2-mm-Alu gebohrt werden soll.
 
@@ -151,6 +152,7 @@ Aufbau, was anders ist:
 - Das PCM5102-Modul steckt auf einer Buchsenleiste 1 × 6, beschriftet VIN GND LCK DIN BCK SCK, und liegt über dem Rahmen auf der Platine. Die Stiftleiste am Modul so einlöten, dass die Beschriftung passt (die Seite des Moduls entscheidet die Reihenfolge). Den Ausgang des Moduls (Lötfahnen der Klinkenbuchse oder die Pads L/G/R) mit drei kurzen Drähten an J13 (L, Masse, R). Die vier Lötbrücken auf der Rückseite des Moduls setzen: 1 (FLT) L, 2 (DEMP) L, 3 (XSMT) H, 4 (FMT) L; manche Module kommen ohne. SCK geht auf der Platine an Masse.
 - Unter DevKit und Modul liegen nur flache Teile (Widerstände, Kerkos, ICs in Fassungen, TO-92); die Elkos, der Regler und der Eurorack-Stecker stehen außerhalb. Erst alles darunter löten, dann die Buchsenleisten.
 - Bautiefe ca. 45 mm (DevKit auf Fassung), etwa 5 mm mehr als die SMD-Variante.
+- **Fehler in v0.1 (beide Bedienplatinen):** Der Bestückungsdruck der LEDs D1 und D2 zeigt die abgeflachte Seite am eckigen Pad (DIN). Bei der WS2812D-F5 liegt sie laut Datenblatt bei DOUT; eine LED nach dem Druck eingesetzt ist verpolt und brennt durch. Von vorn gesehen flache Seite nach rechts, kurze Beine (DIN, VDD) ans eckige Pad; siehe [BAUANLEITUNG.md](BAUANLEITUNG.md), Schritt 5.
 - Zum Löten: `fertigung/*-bestueckliste.csv` (nach Wert, flache Teile zuerst) und `*-bestueckung-hinten.png` (Bestückungsdruck von hinten gesehen). Einkaufsliste mit geschätzten Preisen: [hardware/pcb/einkaufsliste-tht.csv](hardware/pcb/einkaufsliste-tht.csv).
 
 **Geprüft:** Netzlisten Pin für Pin gegen `parts.py`; beide Layouts vollständig verdrahtet, DRC ohne Fehler und ohne offene Verbindungen (Warnungen nur zum Bestückungsdruck und zu Wärmefallen mit einem Steg). Die DevKit-Pinbelegung stammt aus Espressifs Tabelle (DevKitC-1 v1.1), die Firmware-Pins bleiben unverändert. **Nicht geprüft:** kein ERC, nichts gebaut; Reihenabstand des DevKits und Pinfolge des GY-PCM5102 sind nach Händler- und Forenangaben, nicht nachgemessen; Pinbelegung des MCP1700 im TO-92 (1 GND, 2 IN, 3 OUT) vor dem Löten im Datenblatt ansehen. Die Platzierung ist automatisch und eng; der Bestückungsdruck ist an einigen Stellen überlappend.
@@ -161,8 +163,8 @@ Aufbau, was anders ist:
 - **Stimmung:** C1 bis C7 auf 0,001 Cent genau (die V/Oct-Hardware ist nicht getestet).
 - **Bedienlogik:** Pick-up, Halten gegen kurzes Drücken, Modi, Kalibrierungs-Rechnung.
 - **Firmware:** baut mit ESP-IDF 5.3.1 für den ESP32-S3 ohne Warnungen (348 KB). Im Emulator (QEMU) ließ sie sich nicht starten, weil der keinen PSRAM nachbildet.
-- **Auf Hardware:** Die Steckbrett-Test-Firmware ließ sich am 17.10.2026 auf ein ESP32-S3-N16R8-DevKit flashen (Prüfsumme bestätigt); Ton kam noch keiner, das PCM5102-Modul hatte da noch keine Versorgung an VIN. Die bedrahteten Platinen (v0.1) sind da, aber noch nicht bestückt.
-- **Nicht getestet:** alles andere auf echter Hardware: Schaltung, Treiber, Rechenlast, Tabellen-Kopie im Flash. Die Last schätze ich auf 10–25 % eines Kerns für den schwersten Fall (2 × 4 Unisono, FM, Sub, LP24 mit Drive); auf dem Rechner braucht er 1 % Echtzeit.
+- **Auf Hardware:** Die Steckbrett-Test-Firmware ließ sich am 17.10.2026 auf ein ESP32-S3-N16R8-DevKit flashen (Prüfsumme bestätigt); Ton kam noch keiner, das PCM5102-Modul hatte da noch keine Versorgung an VIN. Am 27.10.2026 lief der erste Aufbau der bedrahteten Platinen (v0.1): Versorgung gemessen (+11,8 V, −12,1 V, 4,87 V, Referenz 3,01 V), Modul-Firmware geflasht, es spielt am VOICE-Ausgang und die Regler wirken. Dabei fiel der falsche LED-Bestückungsdruck auf (siehe Bedrahtete Variante).
+- **Nicht getestet:** alles andere auf echter Hardware: CV-Eingänge, V/Oct-Kalibrierung, Rechenlast, die übrigen Modi im Einzelnen. Die Last schätze ich auf 10–25 % eines Kerns für den schwersten Fall (2 × 4 Unisono, FM, Sub, LP24 mit Drive); auf dem Rechner braucht er 1 % Echtzeit.
 
 Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B.
 

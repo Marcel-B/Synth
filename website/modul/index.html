@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Wavetable Modul · Bedienung</title>
+  <meta name="description" content="Tonwerk Wavetable als Eurorack-Modul zum Selberbauen: was es kann, alle Regler, Tasten, Buchsen und LEDs, Kalibrieren und Firmware.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="#bedienung">Bedienung</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="bauanleitung.html#downloads" class="optional">Downloads</a>
+        <a href="../">Plugins</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Wavetable als Eurorack-Modul</h1>
+    <p class="lead-text">Die Klangerzeugung des Plugins <a href="../#instrumente">Tonwerk Wavetable</a> auf einem ESP32-S3, als 14-TE-Modul fürs Eurorack zum Selberbauen. Eine monophone Stimme: zwei Wavetable-Oszillatoren mit Warp, Unisono und Sub, ein Multimode-Filter mit Drive und eine Hüllkurve. Gebaut für Bässe, die knurren.</p>
+
+    <figure class="module-photo">
+      <a href="img/modul-foto.jpg"><img src="img/modul-foto.jpg" alt="Das fertige Modul im Rack: schwarze Front mit gelber Schrift, zehn Regler, zwei Tasten mit LEDs, acht Buchsen" width="800" height="1377"></a>
+      <figcaption>Der erste Aufbau, 27.10.2026, noch mit den mitgelieferten Knöpfen.</figcaption>
+    </figure>
+
+    <div class="download">
+      <a class="button" href="bauanleitung.html">Bauanleitung</a>
+      <a class="button" href="bauanleitung.html#downloads">Platinen, Teile, Firmware</a>
+      <p>Alles zum Nachbauen ist offen: Platinen (KiCad), Frontplatte und Knöpfe zum Drucken, Firmware als fertige Datei. Kosten etwa 60–80 € für die Teile plus die Platinen.</p>
+    </div>
+
+    <h2 id="ueberblick">Überblick</h2>
+    <ul>
+      <li><b>Dieselben zehn Wavetables wie das Plugin</b>, aus denselben Formeln berechnet, je 64 Schritte zum Durchfahren. Warp-Modi Sync, Bend, PWM und FM, ein zweiter Oszillator, Unisono mit bis zu vier Stimmen, ein Sub eine oder zwei Oktaven tiefer.</li>
+      <li><b>Filter</b> wie im Plugin: Tiefpass 12 und 24 dB, Hochpass, Bandpass, Notch, Kamm, mit Drive davor.</li>
+      <li><b>Zwei Ausgänge</b>: <b>OSC</b> ist der reine Oszillator (wie ein VCO, für ein externes Filter), <b>VOICE</b> dieselbe Stimme durch Filter und Hüllkurve.</li>
+      <li><b>Sechs Eingänge</b>: V/OCT, GATE und CV für Tabelle, Position, Warp und Cutoff.</li>
+      <li>Alles mit zehn Reglern und zwei Tasten; was nicht auf die Front passt, liegt in zwei versteckten Ebenen unter den Tasten.</li>
+      <li>14 TE, etwa 45 mm tief. Strom geschätzt +12 V etwa 110 mA, −12 V etwa 10 mA, kein +5 V vom Bus.</li>
+    </ul>
+    <p class="note">Gebaut ist bisher ein Modul (die bedrahteten Platinen v0.1). Geprüft: Versorgung, Flashen, Klang am VOICE-Ausgang, die Regler. Noch nicht auf der Hardware geprüft sind die CV-Eingänge und die V/Oct-Kalibrierung.</p>
+
+    <h2 id="bedienung">Bedienung</h2>
+    <p>Die Front von oben nach unten: neun Regler in drei Reihen, darunter die WARP-Taste mit LED 1 links, der Regler CUT CV in der Mitte, die FILTER-Taste mit LED 2 rechts, dann zwei Reihen Buchsen. Die beiden Ausgänge OSC und VOICE sind unten rechts eingerahmt.</p>
+
+    <h3>Die drei Ebenen</h3>
+    <p>Jeder Regler hat bis zu drei Aufgaben:</p>
+    <ul>
+      <li><b>Normal</b>: nichts gedrückt. Was auf der Front steht.</li>
+      <li><b>WARP-Taste gehalten</b>: Oszillator B, Unisono und Sub.</li>
+      <li><b>FILTER-Taste gehalten</b>: Hüllkurve und Filter-Extras.</li>
+    </ul>
+    <p>Taste halten, Regler drehen, Taste loslassen. Die versteckten Werte und die Modi speichert das Modul 3 Sekunden nach der letzten Änderung; nach dem Ausschalten ist alles wieder da.</p>
+
+    <h3 id="pickup">Pick-up: warum ein Regler manchmal nichts tut</h3>
+    <p>Ein Regler steht nach einem Ebenenwechsel selten dort, wo der Wert der anderen Ebene steht. Damit nichts springt, übernimmt er erst, wenn er den gespeicherten Wert <b>erreicht oder überquert</b>. Bis dahin tut Drehen nichts; einmal über den Wert hinweg, folgt der Wert dem Regler. Das gilt in beiden Richtungen: Wer in einer versteckten Ebene gedreht hat, muss den Regler nach dem Loslassen auch in der normalen Ebene erst wieder an seinen alten Wert heranführen.</p>
+
+    <h3 id="regler">Alle Regler</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Regler</th><th>Normal</th><th>WARP gehalten</th><th>FILTER gehalten</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Stimmung ±2 Oktaven in Halbtönen</td><td>Oszillator B: Transponierung ±24 Halbtöne</td><td>Attack 0,5 ms bis 2 s</td></tr>
+          <tr><td>FINE</td><td>Feinstimmung ±50 Cent, um die Mitte ein kleiner Bereich mit 0</td><td>Oszillator B: Feinstimmung ±50 Cent</td><td>–</td></tr>
+          <tr><td>TABLE</td><td>Tabelle, zehn Stück (Liste unten)</td><td>Oszillator B: Tabelle, ganz links = B aus</td><td>–</td></tr>
+          <tr><td>POSITION</td><td>Position in der Tabelle (der Klang morpht von links nach rechts)</td><td>Oszillator B: Position</td><td>Keytracking des Filters 0–100 %</td></tr>
+          <tr><td>WARP</td><td>Stärke des Warp-Modus</td><td>Unisono 1–4 Stimmen je Oszillator</td><td>–</td></tr>
+          <tr><td>CUTOFF</td><td>Filterfrequenz 20 Hz bis 20 kHz</td><td>Unisono-Verstimmung 0–100 Cent</td><td>Hüllkurve auf Cutoff, 0–6 Oktaven</td></tr>
+          <tr><td>RESO</td><td>Resonanz (beim Kamm: Rückkopplung)</td><td>Sub-Lautstärke, ganz links = aus</td><td>Drive vor dem Filter</td></tr>
+          <tr><td>DECAY</td><td>Decay und Release, 5 ms bis 5 s</td><td>Sub: −1 Okt. Sinus, −2 Okt. Sinus, −1 Okt. Rechteck, −2 Okt. Rechteck</td><td>Sustain 0–100 %</td></tr>
+          <tr><td>POS CV</td><td>Abschwächer für die POS-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+          <tr><td>CUT CV</td><td>Abschwächer für die CUTOFF-Buchse: Mitte 0, rechts 1 V/Oktave, links umgekehrt</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ab Werk (und nach jedem Flashen) ist Oszillator B aus, Unisono eine Stimme mit 20 Cent Verstimmung für später, der Sub aus, Attack 0,5 ms, kein Keytracking, keine Hüllkurve auf dem Cutoff, kein Drive und Sustain 100 %. Der Warp-Modus ist aus, das Filter LP24.</p>
+
+    <h3 id="tasten">Die Tasten</h3>
+    <dl class="tools">
+      <dt>Kurz drücken</dt>
+      <dd>Unter 0,3 Sekunden und ohne an einem Regler zu drehen: <b>WARP</b> schaltet den Warp-Modus weiter, <b>FILTER</b> den Filtermodus. Die Taste wirkt beim Loslassen.</dd>
+      <dt>Halten</dt>
+      <dd>Länger als 0,3 Sekunden, oder kürzer, aber mit Drehen: öffnet die versteckte Ebene, der Modus bleibt. Ein Regler, der beim Drücken nur leicht berührt wird, zählt nicht als Drehen.</dd>
+      <dt>Beide beim Einschalten halten</dt>
+      <dd>Startet die <a href="#kalibrieren">V/Oct-Kalibrierung</a>.</dd>
+    </dl>
+
+    <h3 id="warp">Warp-Modi (WARP kurz drücken, LED 1)</h3>
+    <p>Der Modus gilt für beide Oszillatoren, der WARP-Regler und die WARP-Buchse stellen die Stärke.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 1</th><th>Modus</th><th>Was er tut</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#5a5a5a"></span>grau</td><td>aus</td><td>Die Tabelle klingt, wie sie ist.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Sync</td><td>Liest die Tabelle 1- bis 8-mal pro Periode und beginnt jede Periode neu: der harte Sync-Klang, der beim Drehen „singt“.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Bend</td><td>Biegt die Phase: der Anfang der Periode wird schneller gelesen, das Ende langsamer. Heller, näselnd.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>PWM</td><td>Liest die ganze Tabelle in einem immer kürzeren Teil der Periode (bis 5 %), im Rest bleibt er auf dem Anfangswert stehen: wie Pulsbreite für jede Tabelle.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>FM</td><td>Oszillator B moduliert die Phase von A (und A die von B). B muss dafür nicht hörbar sein: Ist er aus, läuft er still als Modulator mit, und sein TUNE in der WARP-Ebene stellt das Verhältnis. Bei voller Stärke wird es schnell zu Rauschen.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="filter">Filtermodi (FILTER kurz drücken, LED 2)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 2</th><th>Modus</th><th>Was er tut</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>LP12</td><td>Tiefpass 12 dB/Oktave, weich.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blau</td><td>LP24</td><td>Tiefpass 24 dB/Oktave, der klassische Bass. Ab Werk.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>HP12</td><td>Hochpass 12 dB/Oktave.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>BP12</td><td>Bandpass.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Notch</td><td>Kerbfilter, nimmt ein Band heraus.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>Kamm</td><td>Kammfilter auf die Periode des Cutoffs gestimmt, RESO ist die Rückkopplung: metallisch, mit Resonanz fast eine Saite.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#5a5a5a"></span>grau</td><td>aus</td><td>Kein Filter, nur die Hüllkurve.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Drive (FILTER-Ebene, RESO) sättigt weich vor dem Filter, bis etwa 24 dB Verstärkung, im Pegel ausgeglichen. Der Sub kommt erst hinter dem Filter dazu, so bleibt der Bass sauber, während das Filter sich bewegt.</p>
+
+    <h3 id="tabellen">Die zehn Tabellen</h3>
+    <p>Beim Drehen an TABLE zeigt LED 1 für eine Sekunde die Tabelle als Farbe aus dem Farbkreis, danach wieder den Warp-Modus. POSITION fährt jede Tabelle von links nach rechts durch:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Nr.</th><th>LED 1</th><th>Tabelle</th><th>POSITION von links nach rechts</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td class="nowrap"><span class="swatch" style="background:#ff0000"></span>rot</td><td>Basis</td><td>Sinus, Dreieck, Sägezahn, Rechteck, ineinander überblendet</td></tr>
+          <tr><td>2</td><td class="nowrap"><span class="swatch" style="background:#ff9900"></span>orange</td><td>Sync</td><td>Sägezahn mit Sync, seine Frequenz steigt auf das Achtfache</td></tr>
+          <tr><td>3</td><td class="nowrap"><span class="swatch" style="background:#ccff00"></span>gelbgrün</td><td>PWM</td><td>Puls vom Rechteck bis zur dünnen Nadel</td></tr>
+          <tr><td>4</td><td class="nowrap"><span class="swatch" style="background:#33ff00"></span>grün</td><td>Vokal</td><td>Eine gesungene Stimme durch die Vokale a, e, i, o, u</td></tr>
+          <tr><td>5</td><td class="nowrap"><span class="swatch" style="background:#00ff66"></span>türkis</td><td>FM-Growl</td><td>Zwei-Operator-FM, Modulator eine Oktave höher, Index bis 8: das Knurren</td></tr>
+          <tr><td>6</td><td class="nowrap"><span class="swatch" style="background:#00ffff"></span>cyan</td><td>Falter</td><td>Ein Sinus, immer härter in einen Wavefolder</td></tr>
+          <tr><td>7</td><td class="nowrap"><span class="swatch" style="background:#0066ff"></span>blau</td><td>Harmonisch</td><td>Grundton plus ein Band von Obertönen, das acht Oktaven hinaufwandert</td></tr>
+          <tr><td>8</td><td class="nowrap"><span class="swatch" style="background:#3300ff"></span>indigo</td><td>Kamm</td><td>Sägezahn mit Kerben, die sich schließen, am Ende nur die geraden Obertöne</td></tr>
+          <tr><td>9</td><td class="nowrap"><span class="swatch" style="background:#cc00ff"></span>violett</td><td>Bitcrush</td><td>Sägezahn und Sinus in immer weniger Stufen</td></tr>
+          <tr><td>10</td><td class="nowrap"><span class="swatch" style="background:#ff0099"></span>pink</td><td>Rauh</td><td>Sägezahn mit Sinus darunter, immer härter und schief gesättigt</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="leds">Was die LEDs sonst zeigen</h3>
+    <p>Im Spiel leuchten beide mit der Hüllkurve: hell, solange ein Ton klingt, gedimmt (nie ganz dunkel) dazwischen, damit der Modus immer lesbar bleibt.</p>
+    <dl class="tools">
+      <dt>Gelb und cyan, kurz</dt><dd>Das Modul startet.</dd>
+      <dt>Rot und gelb, bis zu einer Minute</dt><dd>Erster Start nach dem Flashen einer neuen Tabellen-Version: das Modul berechnet die Tabellen und legt sie im Flash ab. Kein Ton, nicht ausschalten.</dd>
+      <dt>Beide blinken rot</dt><dd>Zu wenig PSRAM: das DevKit ist kein N16R8.</dd>
+      <dt>Eine blinkt weiß</dt><dd>Kalibrierung, das Modul wartet auf diese Taste.</dd>
+      <dt>Beide blinken dreimal grün oder rot</dt><dd>Kalibrierung gespeichert oder verworfen.</dd>
+    </dl>
+
+    <h2 id="buchsen">Buchsen</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Buchse</th><th>Bereich</th><th>Was sie tut</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 bis +7 V</td><td>Tonhöhe, 1 V pro Oktave, 0 V = C2. Kommt zu TUNE und FINE dazu.</td></tr>
+          <tr><td>GATE</td><td>ab etwa 1,4 V</td><td>Startet die Hüllkurve, fällt es ab, beginnt das Release. <b>Ohne Kabel ist das Gate dauerhaft an</b>: das Modul spielt als Drone.</td></tr>
+          <tr><td>TABLE</td><td>±5 V</td><td>Verschiebt die Tabelle, +5 V fahren von ganz links durch alle zehn.</td></tr>
+          <tr><td>POS</td><td>±5 V</td><td>Verschiebt die Position, über den Abschwächer POS CV.</td></tr>
+          <tr><td>WARP</td><td>±5 V</td><td>Kommt zur Stärke des Warp dazu, +5 V = voll.</td></tr>
+          <tr><td>CUTOFF</td><td>±5 V</td><td>Verschiebt den Cutoff über den Abschwächer CUT CV; rechts 1 V pro Oktave, so folgt das Filter mit dem V/Oct-Signal der Tonhöhe.</td></tr>
+          <tr><td>OSC (Ausgang)</td><td>±5 V</td><td>Oszillator A und B mit Unisono, Warp und Sub, ohne Filter und ohne Hüllkurve: ein VCO, klingt immer.</td></tr>
+          <tr><td>VOICE (Ausgang)</td><td>±5 V</td><td>Dasselbe durch Drive und Filter, der Sub dahinter dazu, dann durch die Hüllkurve als VCA.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Die Ausgänge haben Modulpegel. Für Kopfhörer sind sie viel zu laut, immer über einen Mixer oder ein Ausgangsmodul gehen.</p>
+
+    <h2 id="patches">Erste Patches</h2>
+    <dl class="tools">
+      <dt>Drone</dt>
+      <dd>Nur VOICE an den Mixer. Ohne Gate-Kabel klingt das Modul sofort. TABLE wählen, POSITION und WARP langsam drehen, CUTOFF und RESO dazu.</dd>
+      <dt>Bass vom Sequencer</dt>
+      <dd>Tonhöhe an V/OCT, Gate an GATE, VOICE an den Mixer. DECAY kurz, FILTER-Ebene: Sustain (DECAY) herunter, Hüllkurve auf Cutoff (CUTOFF) auf zwei bis drei Oktaven, CUTOFF in der normalen Ebene tief. Für mehr Druck in der WARP-Ebene den Sub dazu (RESO).</dd>
+      <dt>Wobble</dt>
+      <dd>Ein LFO an die CUTOFF-Buchse, CUT CV nach rechts, LP24 und etwas RESO. Mit einem zweiten LFO an POS und der Tabelle FM-Growl wird es Dubstep.</dd>
+      <dt>Dicker Lead</dt>
+      <dd>WARP-Ebene: Unisono (WARP) auf 3 oder 4, Verstimmung (CUTOFF) auf 20 bis 40 Cent, Oszillator B (TABLE) mit einer zweiten Tabelle, TUNE von B eine Oktave hoch.</dd>
+      <dt>Externes Filter</dt>
+      <dd>OSC statt VOICE nehmen: der rohe Oszillator für ein anderes Filtermodul und einen VCA.</dd>
+    </dl>
+
+    <h2 id="kalibrieren">V/Oct kalibrieren</h2>
+    <p>Damit V/OCT über mehrere Oktaven stimmt, misst das Modul einmal zwei Spannungen. Dafür braucht es eine Quelle, die genau 1,000 V und 3,000 V liefert (ein Labornetzteil und ein Multimeter reichen; ein MIDI-CV-Interface geht auch, wenn man die Noten nachmisst, die genau 1 V und 3 V ergeben).</p>
+    <ol>
+      <li>Ausschalten. Alle Kabel ziehen außer dem für V/OCT: die übrigen Eingänge werden dabei als 0 V gemessen.</li>
+      <li><b>Beide Tasten halten</b> und einschalten. LED 1 blinkt weiß.</li>
+      <li>Genau 1,000 V an V/OCT, <b>WARP</b> drücken. Das Modul misst eine halbe Sekunde, dann blinkt LED 2 weiß.</li>
+      <li>Genau 3,000 V anlegen, <b>FILTER</b> drücken.</li>
+      <li>Dreimal <b>grün</b>: gespeichert, das Modul startet normal. Dreimal <b>rot</b>: die Messung war unplausibel (Kabel, Spannung?), die alten Werte bleiben; von vorn beginnen.</li>
+    </ol>
+    <p>Danach mit einem Stimmgerät über mehrere Oktaven nachprüfen. Ohne Kalibrierung rechnet das Modul mit den Sollwerten der Schaltung; wie gut das stimmt, hängt von den Bauteilen ab.</p>
+
+    <h2 id="firmware">Neue Firmware</h2>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, geschrieben an Adresse 0x0 mit dem Web-Flasher von Espressif im Browser (Chrome oder Edge). Wie, steht in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Das geht im Rack oder lose am USB-Kabel.</p>
+    <p class="note">Flashen löscht die gespeicherten Modi, die versteckten Werte und die Kalibrierung, die Tabellen bleiben. Darum nach einem Update neu kalibrieren.</p>
+
+    <h2 id="probleme">Probleme</h2>
+    <dl class="tools">
+      <dt>Ein Regler tut nichts</dt>
+      <dd>Er hat seinen Wert noch nicht erreicht (<a href="#pickup">Pick-up</a>). Einmal über den ganzen Weg drehen.</dd>
+      <dt>Eine Taste reagiert nicht</dt>
+      <dd>Kurz drücken und loslassen, ohne dabei an einem Regler zu drehen. Länger als 0,3 Sekunden gilt als Halten.</dd>
+      <dt>Kein Ton am VOICE-Ausgang</dt>
+      <dd>Steckt ein Kabel in GATE, aber es kommt kein Gate, bleibt die Hüllkurve zu. Kabel ziehen (Drone) oder ein Gate schicken. Auch Sustain 0 und kurzes DECAY machen aus einer Drone Stille. Klingt OSC, aber VOICE nicht, ist der Cutoff ganz unten oder ein Hochpass ganz oben.</dd>
+      <dt>Rauschen</dt>
+      <dd>FM oder Sync mit voller Stärke klingen so. WARP zurückdrehen oder den Modus wechseln (LED 1 grau = aus).</dd>
+      <dt>Verstimmt über die Oktaven</dt>
+      <dd><a href="#kalibrieren">Kalibrieren</a>, und FINE in der Mitte und TUNE prüfen.</dd>
+      <dt>Was macht das Modul gerade?</dt>
+      <dd>Über USB (115200 Baud, zum Beispiel in der Konsole des Web-Flashers) meldet es Startmeldungen, die Kalibrierung und alle 5 Sekunden die Last des Audio-Kerns.</dd>
+    </dl>
+
+    <p class="stand">Stand 28.10.2026. Quelltext, Platinen und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
