@@ -676,7 +676,9 @@ scripts/release-stats.sh /tmp/downloads.csv      # braucht gh und jq
 
 Besucher und Klone des Repos stehen unter Insights → Traffic, aber nur für die letzten 14 Tage.
 
-## Auf dem iPad (in Arbeit)
+## Auf dem iPad
+
+**Tonwerk** gibt es im App Store: <https://apps.apple.com/de/app/tonwerk/id6824013223>
 
 Auf dem iPad kommt alles in einer App: **Tonwerk**. Sie bringt jedes Plugin als AUv3 mit, das Logic Pro für iPad, GarageBand und AUM laden, und spielt die Instrumente auch allein: oben das Instrument antippen und aus den Kacheln wählen, darunter seine Oberfläche, unten eine große Tastatur über zwei Oktaven mit **+**/**−** für die Oktave und rechts ein Oszilloskop, dazu ein MIDI-Keyboard über USB oder Bluetooth (Knopf **Bluetooth-MIDI**). **Tasten** klappt die Tastatur weg, dann bekommt ein großes Instrument wie Tonwerk Wavetable den ganzen Bildschirm. Die App merkt sich das gewählte Instrument, den Klang und die Oktave jedes Instruments und spielt im Hintergrund weiter. Als Letztes in der Auswahl steht **Tonwerk Scope**: Es zeigt, was am Mikrofon oder am Audio-Interface ankommt (Knopf **Eingang** wählt Gerät und Kanäle), auch als Stimmgerät, und gibt es nicht auf die Lautsprecher, damit nichts rückkoppelt. Die anderen Effekte, Tonwerk Arp und Tonwerk LFO gibt es nur als AUv3 im Host (in Logic Pro für iPad unter Audio-FX → Audio Units → b-velop), denn sie brauchen einen Klang, den sie bearbeiten, oder jemanden, der hört, was sie senden. Es sind dieselben Quellen wie auf dem Mac, nur ein weiteres Build-Ziel. Die App läuft nur auf dem iPad und nur quer, ab iPadOS 15.
 
