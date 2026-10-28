@@ -162,6 +162,11 @@ img { max-width: 100%; display: block; }
 .button.ghost { background: transparent; color: var(--cyan); box-shadow: inset 0 0 0 1px var(--cyan); clip-path: none; }
 .button.ghost:hover { background: rgba(0, 240, 255, 0.1); }
 
+/* Apple's badge as it comes, at least 40 px high and with a quarter of its height free around it. */
+.store-badge { display: inline-block; line-height: 0; }
+.store-badge img { display: block; height: 48px; width: auto; }
+.panel .store-badge { margin-top: 4px; }
+
 /* Sections */
 
 section { padding: 72px 0 24px; }
