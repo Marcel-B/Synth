@@ -146,7 +146,7 @@
     </figure>
     <p>Schwarz mit gelbem Zeiger und Ring, 13,4 mm Durchmesser. Unten hat der Knopf eine Aussparung über Mutter und Scheibe, so sitzt er auch auf der kurzen Achse fest und fast auf der Front.</p>
     <ol>
-      <li>Erst die <b>Passprobe</b> drucken: drei Ringe mit Bohrungen 5,9, 6,0 und 6,1 mm (ein, zwei, drei Striche). Auf eine Achse stecken; die Bohrung, die stramm sitzt, als <code>shaft_d</code> in <code>knopf.scad</code> eintragen. Dort auch: D-Achse statt geriffelter, Länge der Achse, Höhe der Mutter.</li>
+      <li>Die Knöpfe haben eine Bohrung von 6,1 mm: beim ersten Aufbau passte von 5,9, 6,0 und 6,1 mm nur diese, gedruckte Löcher fallen enger aus. Auf einem anderen Drucker vorher die <b>Passprobe</b> drucken: drei Ringe mit Bohrungen 6,0, 6,1 und 6,2 mm (ein, zwei, drei Striche). Auf eine Achse stecken; passt eine andere als die mittlere stramm, ihr Maß als <code>shaft_d</code> in <code>knopf.scad</code> eintragen und neu exportieren. Dort auch: D-Achse statt geriffelter, Länge der Achse, Höhe der Mutter.</li>
       <li>Dann <code>knopf.3mf</code>: zehn Knöpfe, je Teil „Körper“ und „Zeiger“. Gedruckt wird mit dem Deckel nach unten; der Zeiger ist die erste Schicht, so hat er dieselbe glatte Fläche wie der Rest.</li>
       <li>Mit nur einer Düse: die erste Schicht gelb, dann auf Schwarz wechseln. Dann ist der ganze Deckel gelb; wer das nicht will, setzt in der .scad <code>einlage = false</code>.</li>
     </ol>
