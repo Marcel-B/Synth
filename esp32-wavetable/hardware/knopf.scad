@@ -18,7 +18,7 @@
 
 part = "koerper";        // "koerper", "zeiger", "probe" oder "vorschau"
 shaft = "geriffelt";     // "geriffelt" (18 Zähne, geschlitzt) oder "d" (D-Achse mit Abflachung)
-shaft_d = 6.0;           // Bohrung; geriffelte Achsen klemmen am besten 0,05-0,1 mm enger als gemessen
+shaft_d = 6.1;           // Bohrung; beim ersten Aufbau passte von 5,9, 6,0 und 6,1 mm nur 6,1 (gedruckte Löcher fallen enger aus)
 d_flat = 4.5;            // D-Achse: Maß über die Abflachung
 shaft_len = 8.0;         // so weit steht die Achse über die Front hinaus (mit Mutter darauf gemessen)
 nut_h = 2.4;             // Mutter mit Scheibe, Höhe über der Front
