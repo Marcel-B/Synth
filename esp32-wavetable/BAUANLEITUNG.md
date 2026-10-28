@@ -1,8 +1,8 @@
 # Bauanleitung: Tonwerk Wavetable als Eurorack-Modul (bedrahtete Platinen)
 
-Schritt für Schritt vom Bestellen bis zum ersten Ton, für die bedrahtete Variante (`tonwerk-bedien-tht`, `tonwerk-haupt-tht`, v0.1). Was das Modul kann und wie es bedient wird, steht in der [README](README.md).
+Schritt für Schritt vom Bestellen bis zum ersten Ton, für die bedrahtete Variante (`tonwerk-bedien-tht`, `tonwerk-haupt-tht`, v0.1). Was das Modul kann und wie es bedient wird, steht in der [README](README.md). Dieselbe Anleitung mit Bildern und Downloads: [tonwerk.studio/modul/bauanleitung.html](https://tonwerk.studio/modul/bauanleitung.html), die ausführliche Bedienung: [tonwerk.studio/modul](https://tonwerk.studio/modul/).
 
-> **Stand 18.10.2026: Noch niemand hat das Modul fertig gebaut.** Die Platinen v0.1 sind gefertigt, aber noch nicht bestückt, und die Firmware lief bisher nur als Steckbrett-Test. Diese Anleitung beschreibt den geplanten Aufbau; wer jetzt baut, ist der erste und sollte Zeit für Fehlersuche mitbringen. Was geprüft ist: [README, Was getestet ist](README.md#was-getestet-ist).
+> **Stand 28.10.2026: Ein Modul ist gebaut und spielt** (Marcels Aufbau vom 27.10.2026 mit den Platinen v0.1). Dabei fiel auf, dass der Bestückungsdruck der LEDs falsch herum ist (Schritt 5); die Anleitung ist entsprechend korrigiert. Noch nicht auf der Hardware geprüft sind die CV-Eingänge und die V/Oct-Kalibrierung. Was sonst geprüft ist: [README, Was getestet ist](README.md#was-getestet-ist).
 
 ## Was man braucht
 

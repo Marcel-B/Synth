@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bauanleitung · Tonwerk Wavetable Modul</title>
+  <meta name="description" content="Tonwerk Wavetable als Eurorack-Modul selbst bauen: Teile bestellen, Frontplatte und Knöpfe drucken, Platinen löten, messen, Firmware flashen, kalibrieren. Mit allen Dateien.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/bauanleitung.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="./#bedienung">Bedienung</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="#downloads" class="optional">Downloads</a>
+        <a href="../">Plugins</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Bauanleitung</h1>
+    <p class="lead-text">Schritt für Schritt vom Bestellen bis zum ersten Ton: <a href="./">Tonwerk Wavetable als Eurorack-Modul</a> auf den bedrahteten Platinen (v0.1), alles zum Selberlöten, nur das ESP32-DevKit und das DAC-Modul kommen fertig und werden gesteckt.</p>
+
+    <p class="warning"><b>Wichtig für die Platinen v0.1:</b> Der Bestückungsdruck der beiden LEDs ist falsch herum. Nach dem Druck eingesetzt, liegen +5 V und Masse vertauscht an der LED, und sie brennt beim ersten Einschalten durch. Die richtige Richtung steht in <a href="#bedienplatine">Schritt 5</a>.</p>
+
+    <p class="note">Stand 28.10.2026: Ein Modul ist nach dieser Anleitung gebaut und spielt (27.10.2026). Noch nicht auf der Hardware geprüft sind die CV-Eingänge und die V/Oct-Kalibrierung. Wer eins baut: Rückmeldungen auf <a href="https://github.com/Marcel-B/Synth/issues">GitHub</a> helfen, Anleitung und Platinen zu verbessern.</p>
+
+    <h2 id="downloads">Downloads</h2>
+    <div class="download">
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">Firmware (.bin)</a>
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte.stl">Frontplatte (.stl)</a>
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf.3mf">Zehn Knöpfe (.3mf)</a>
+      <p>Alle Dateien liegen im Ordner <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">esp32-wavetable</a> auf GitHub; dort auch die Quellen (KiCad, OpenSCAD, Firmware).</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Was</th><th>Dateien</th></tr></thead>
+        <tbody>
+          <tr><td>Platinen zum Bestellen (Gerber)</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/fertigung/tonwerk-haupt-tht-gerber.zip">Hauptplatine</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/fertigung/tonwerk-bedien-tht-gerber.zip">Bedienplatine</a></td></tr>
+          <tr><td>Schaltpläne</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/tonwerk-haupt-tht-schaltplan.pdf">Hauptplatine (PDF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/tonwerk-bedien-tht-schaltplan.pdf">Bedienplatine (PDF)</a></td></tr>
+          <tr><td>Einkaufsliste</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/einkaufsliste-tht.csv">einkaufsliste-tht.csv</a> (auch <a href="#teile">unten</a> als Tabelle) · Listen für den Upload in Händler-Werkzeuge: <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/hardware/pcb">im Ordner pcb</a></td></tr>
+          <tr><td>Bestücklisten nach Wert</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/fertigung/tonwerk-haupt-tht-bestueckliste.csv">Hauptplatine</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/fertigung/tonwerk-bedien-tht-bestueckliste.csv">Bedienplatine</a></td></tr>
+          <tr><td>Frontplatte</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte.stl">Schrift erhaben</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-graviert.stl">Schrift vertieft</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-bohrplan.svg">Bohrplan 1:1 für Alu</a></td></tr>
+          <tr><td>Knöpfe</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf.3mf">zehn Knöpfe, zwei Farben (3MF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-koerper.stl">Körper</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-zeiger.stl">Zeiger</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-probe.stl">Passprobe</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/knopf.scad">knopf.scad</a></td></tr>
+          <tr><td>Firmware</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> (für Adresse 0x0) · <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/firmware">Quelltext (ESP-IDF 5.3)</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="werkzeug">Was man braucht</h2>
+    <ul>
+      <li>Lötkolben mit feiner Spitze, Lötzinn, Seitenschneider, Multimeter.</li>
+      <li>Ein Eurorack-Gehäuse mit ±12 V, für das erste Einschalten besser ein Labornetzteil mit Strombegrenzung.</li>
+      <li>Einen Rechner mit Chrome oder Edge (zum Flashen im Browser) und ein USB-Kabel, das Daten kann.</li>
+      <li>Einen 3D-Drucker für Frontplatte und Knöpfe (oder 2-mm-Alu und einen Bohrer für die Front).</li>
+      <li>Zum Kalibrieren eine Spannungsquelle für genau 1,000 V und 3,000 V (ein Labornetzteil und das Multimeter reichen).</li>
+    </ul>
+
+    <h2 id="bestellen">1. Bestellen</h2>
+    <p><b>Platinen:</b> Die beiden Gerber-Zips (<a href="#downloads">Downloads</a>) bei einem Platinenfertiger hochladen, etwa JLCPCB: je 5 Stück, 2 Lagen, 1,6 mm, HASL, <b>ohne Bestückung</b>. Die übrigen Einstellungen so lassen, wie der Fertiger sie vorschlägt. Beide Platinen sind 66 × 107,5 mm.</p>
+    <p><b>Teile:</b> die <a href="#teile">Einkaufsliste</a> unten, geschätzt 60–80 € plus Platinen. DevKit, DAC-Modul, Potis, Buchsen und LEDs gibt es am günstigsten bei den großen China-Versendern, die Chips, Widerstände und Kondensatoren bei jedem Elektronikhändler.</p>
+    <p>Worauf es ankommt:</p>
+    <ul>
+      <li><b>ESP32-S3-DevKitC-1 N16R8</b>: N16R8 heißt 16 MB Flash und 8 MB PSRAM. Ohne die 8 MB PSRAM läuft die Firmware nicht, die Tabellen brauchen 5,7 MB. Nachbauten gehen, wenn die Pinbelegung gleich ist.</li>
+      <li><b>PCM5102A-Modul „GY-PCM5102“</b> (lila) mit der 6-poligen Leiste VIN GND LCK DIN BCK SCK.</li>
+      <li><b>74HCT125 oder 74AHCT125</b>, nicht 74HC125: der erkennt die 3,3 V des ESP32 an 5 V nicht sicher. Ein 74HCT32 passt ohne Änderung in dieselben Löcher.</li>
+      <li><b>WS2812D-F5</b> (5 mm, bedrahtet) mit den Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite liegt bei <b>DOUT</b>. APA106 und PL9823 haben dieselbe Pinfolge, aber eine andere Farbreihenfolge (siehe <a href="#fehlersuche">Fehlersuche</a>).</li>
+      <li><b>Elkos höchstens 11 mm hoch</b>, Rastermaß 2 mm.</li>
+      <li><b>Potis</b> 9 mm vertikal, B10K linear. Ihre Achse steht hinter der gedruckten Front nur wenig heraus; dafür sind die <a href="#knoepfe">Knöpfe</a> zum Drucken gemacht.</li>
+    </ul>
+
+    <h3 id="teile">Einkaufsliste</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Anzahl</th><th>Teil</th><th>Typ</th><th>Wo</th><th>ca. €</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Platinen</td><td>tonwerk-bedien-tht + tonwerk-haupt-tht, je 5 Stück, 2 Lagen, 1,6 mm, HASL, unbestückt</td><td>—</td><td>15–30 mit Versand</td></tr>
+          <tr><td>1</td><td>Mikrocontroller-Board</td><td>ESP32-S3-DevKitC-1 N16R8 (16 MB Flash, 8 MB PSRAM), Original oder Klon mit gleicher Pinbelegung</td><td>Haupt U4</td><td>6–15</td></tr>
+          <tr><td>1</td><td>DAC-Modul</td><td>PCM5102A-Modul GY-PCM5102 (lila, 6-polige Leiste VIN GND LCK DIN BCK SCK)</td><td>Haupt U5</td><td>2–4</td></tr>
+          <tr><td>1</td><td>ADC</td><td>MCP3208-CI/P (DIP-16)</td><td>Haupt U9</td><td>4,50</td></tr>
+          <tr><td>2</td><td>Op-Amp</td><td>MCP6004-I/P (DIP-14)</td><td>Haupt U7 U8</td><td>1,40</td></tr>
+          <tr><td>1</td><td>Op-Amp</td><td>TL072 (DIP-8)</td><td>Haupt U6</td><td>0,40</td></tr>
+          <tr><td>1</td><td>Puffer</td><td>74HCT125 oder 74AHCT125 (DIP-14), nicht 74HC125;  gleichwertig ohne Änderung an der Platine: 74HCT32 (DIP-14)</td><td>Haupt U10</td><td>0,40</td></tr>
+          <tr><td>1</td><td>Spannungsregler 3,0 V</td><td>MCP1700-3002E/TO (TO-92)</td><td>Haupt U3</td><td>0,50</td></tr>
+          <tr><td>1</td><td>Transistor</td><td>BC547 (TO-92)</td><td>Haupt Q1</td><td>0,10</td></tr>
+          <tr><td>1</td><td>Schaltregler</td><td>Recom R-78E5.0-0.5 (SIP-3)</td><td>Haupt U1</td><td>3,00</td></tr>
+          <tr><td>3</td><td>Schottky-Diode</td><td>1N5817 (DO-41)</td><td>Haupt D1-D3</td><td>0,20</td></tr>
+          <tr><td>4</td><td>IC-Fassung</td><td>3 × DIP-14, 1 × DIP-16 (dazu 1 × DIP-8, siehe nächste Zeile)</td><td>Haupt</td><td>0,60</td></tr>
+          <tr><td>1</td><td>IC-Fassung</td><td>DIP-8</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>10</td><td>Widerstand 1 %</td><td>100k (Metallschicht 0207, 1/4 W)</td><td>Haupt</td><td>0,80</td></tr>
+          <tr><td>7</td><td>Widerstand 1 %</td><td>1k</td><td>Haupt</td><td>0,60</td></tr>
+          <tr><td>5</td><td>Widerstand 1 %</td><td>10k</td><td>Haupt</td><td>0,40</td></tr>
+          <tr><td>4</td><td>Widerstand 1 %</td><td>30k</td><td>Haupt</td><td>0,30</td></tr>
+          <tr><td>2</td><td>Widerstand 1 %</td><td>6,8k</td><td>Haupt</td><td>0,20</td></tr>
+          <tr><td>1</td><td>Widerstand 1 %</td><td>37,4k</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>1</td><td>Widerstand 1 %</td><td>17,4k</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>1</td><td>Widerstand 1 %</td><td>16k</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>1</td><td>Widerstand 1 %</td><td>330 Ω</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>1</td><td>Widerstand 1 %</td><td>10 Ω</td><td>Haupt</td><td>0,10</td></tr>
+          <tr><td>20</td><td>Keramikkondensator</td><td>100 nF X7R, Rastermaß 2,54 mm (18 Haupt, 2 Bedien)</td><td>beide</td><td>1,20</td></tr>
+          <tr><td>5</td><td>Keramikkondensator</td><td>10 nF, Rastermaß 2,54 mm</td><td>Haupt</td><td>0,30</td></tr>
+          <tr><td>2</td><td>Keramikkondensator</td><td>1 µF X7R, Rastermaß 2,54 mm</td><td>Haupt</td><td>0,30</td></tr>
+          <tr><td>4</td><td>Elko</td><td>10 µF 25 V radial, 5 mm Durchmesser, höchstens 11 mm hoch, Rastermaß 2 mm</td><td>Haupt</td><td>0,40</td></tr>
+          <tr><td>2</td><td>Buchsenleiste</td><td>1 × 22, RM 2,54 mm, 8,5 mm hoch (oder 2 × 1 × 40 kürzen)</td><td>Haupt (DevKit)</td><td>1,50</td></tr>
+          <tr><td>1</td><td>Buchsenleiste</td><td>1 × 6, RM 2,54 mm, 8,5 mm hoch</td><td>Haupt (DAC-Modul)</td><td>0,30</td></tr>
+          <tr><td>2</td><td>Buchsenleiste</td><td>1 × 14, RM 2,54 mm, 8,5 mm hoch</td><td>Haupt J3 J4</td><td>0,80</td></tr>
+          <tr><td>2</td><td>Stiftleiste</td><td>1 × 14, RM 2,54 mm, gerade</td><td>Bedien J3 J4</td><td>0,30</td></tr>
+          <tr><td>1</td><td>Wannenstecker</td><td>2 × 5, RM 2,54 mm, gerade</td><td>Haupt J1</td><td>0,30</td></tr>
+          <tr><td>—</td><td>Schaltdraht</td><td>3 kurze Drähte vom Ausgang des DAC-Moduls (L, Masse, R) zu J13</td><td>Haupt</td><td>—</td></tr>
+          <tr><td>10</td><td>Potentiometer</td><td>Alpha 9 mm vertikal, B10K linear (Footprint Alpha RD901F), Achse passend zu den Knöpfen</td><td>Bedien</td><td>3–6</td></tr>
+          <tr><td>10</td><td>Drehknopf</td><td>die Knöpfe zum Drucken (oben), sonst passend zur Achse, max. 13 mm Durchmesser</td><td>—</td><td>—</td></tr>
+          <tr><td>8</td><td>Klinkenbuchse</td><td>PJ398SM (Thonkiconn oder Nachbau)</td><td>Bedien</td><td>2–4</td></tr>
+          <tr><td>2</td><td>Taster</td><td>6 × 6 mm, 13 mm hoch</td><td>Bedien</td><td>0,50</td></tr>
+          <tr><td>2</td><td>RGB-LED</td><td>WS2812D-F5, 5 mm bedrahtet (Pinbelegung 1 DIN, 2 VDD, 3 GND, 4 DOUT prüfen)</td><td>Bedien</td><td>1–2</td></tr>
+          <tr><td>1</td><td>Eurorack-Kabel</td><td>Flachband 10 auf 16 pol.</td><td>—</td><td>1–2</td></tr>
+          <tr><td>2</td><td>Abstandsbolzen</td><td>M3 × 11 mm Innen/Innen + 4 Schrauben M3 × 5</td><td>—</td><td>1,00</td></tr>
+          <tr><td>4</td><td>Rack-Schrauben</td><td>M3 × 6 mit Nylon-Unterlegscheiben</td><td>—</td><td>0,50</td></tr>
+          <tr><td>1</td><td>Frontplatte</td><td>frontplatte.stl drucken (oben)</td><td>—</td><td>1,00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="frontplatte">2. Frontplatte und Knöpfe drucken</h2>
+    <figure class="side">
+      <a href="img/frontplatte-vorschau.png"><img src="img/frontplatte-vorschau.png" alt="Vorschau der Frontplatte: 14 TE, schwarz mit gelber Schrift" width="900" height="1630"></a>
+    </figure>
+    <p>14 TE (70,8 × 128,5 mm), 2,5 mm dick, mit Langlöchern für die Rack-Schrauben. Drei Varianten, alle liegen schon richtig zum Drucken (PETG oder PLA, 0,2 mm Schichten):</p>
+    <ul>
+      <li><b>Schrift erhaben</b> (<code>frontplatte.stl</code>): Front nach oben drucken, bei 2,5 mm Höhe (nach Schicht 13) das Filament wechseln. Am einfachsten, so ist das Modul oben gedruckt.</li>
+      <li><b>Schrift vertieft</b> (<code>frontplatte-graviert.stl</code>): Front nach oben, die Schrift mit Acrylfarbe oder Wachs füllen und die Front sauber wischen.</li>
+      <li><b>Schrift als Einlage</b> (<code>frontplatte-einlage.3mf</code>): für Drucker mit mehreren Farben oder Werkzeugwechsler, Front nach unten; jedem der beiden Teile „Platte“ und „Schrift“ ein Werkzeug zuweisen. Die Schrift ist so tief wie die erste Schicht (0,5 mm).</li>
+    </ul>
+    <p>Lochmaße: Potis 7,2 mm, Buchsen 6,2 mm, LEDs 5,1 mm, Taster 4,0 mm. Nach dem Druck einmal ein Poti, eine Buchse, eine LED und einen Taster durchstecken: die Front ist beim Löten der Bedienplatine die Lehre.</p>
+
+    <h3 id="knoepfe">Knöpfe</h3>
+    <figure class="side">
+      <a href="img/knopf-vorschau.png"><img src="img/knopf-vorschau.png" alt="Gedruckter Knopf: schwarzer Körper mit Griffrillen, gelber Zeiger und Ring im Deckel" width="700" height="600"></a>
+    </figure>
+    <p>Schwarz mit gelbem Zeiger und Ring, 13,4 mm Durchmesser. Unten hat der Knopf eine Aussparung über Mutter und Scheibe, so sitzt er auch auf der kurzen Achse fest und fast auf der Front.</p>
+    <ol>
+      <li>Erst die <b>Passprobe</b> drucken: drei Ringe mit Bohrungen 5,9, 6,0 und 6,1 mm (ein, zwei, drei Striche). Auf eine Achse stecken; die Bohrung, die stramm sitzt, als <code>shaft_d</code> in <code>knopf.scad</code> eintragen. Dort auch: D-Achse statt geriffelter, Länge der Achse, Höhe der Mutter.</li>
+      <li>Dann <code>knopf.3mf</code>: zehn Knöpfe, je Teil „Körper“ und „Zeiger“. Gedruckt wird mit dem Deckel nach unten; der Zeiger ist die erste Schicht, so hat er dieselbe glatte Fläche wie der Rest.</li>
+      <li>Mit nur einer Düse: die erste Schicht gelb, dann auf Schwarz wechseln. Dann ist der ganze Deckel gelb; wer das nicht will, setzt in der .scad <code>einlage = false</code>.</li>
+    </ol>
+
+    <h2 id="hauptplatine">3. Hauptplatine löten</h2>
+    <p>Alles kommt auf die <b>Rückseite</b> (die Seite mit dem Bestückungsdruck, sie zeigt im Modul nach hinten), nur die beiden 14-poligen Buchsenleisten J3 und J4 auf die Vorderseite. Unter dem DevKit und dem DAC-Modul ist nur Platz für flache Teile, darum von flach nach hoch:</p>
+    <figure>
+      <a href="img/haupt-bestueckung-hinten.png"><img src="img/haupt-bestueckung-hinten.png" alt="Bestückungsdruck der Hauptplatine von hinten" width="752" height="1236" class="narrow"></a>
+      <figcaption>Bestückungsdruck der Hauptplatine, von hinten gesehen. Antippen für groß.</figcaption>
+    </figure>
+    <ol>
+      <li><b>Widerstände.</b> Vor dem Einlöten jeden mit dem Multimeter messen: die Farbringe von 1-%-Widerständen sind leicht zu verwechseln.
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Wert</th><th>Bauteile</th></tr></thead>
+            <tbody>
+              <tr><td>10 Ω</td><td>R3</td></tr>
+              <tr><td>330 Ω</td><td>R48</td></tr>
+              <tr><td>1k</td><td>R11 R14 R22 R25 R28 R31 R34</td></tr>
+              <tr><td>6,8k</td><td>R10 R13</td></tr>
+              <tr><td>10k</td><td>R9 R12 R40 R43 R46</td></tr>
+              <tr><td>16k</td><td>R42</td></tr>
+              <tr><td>17,4k</td><td>R41</td></tr>
+              <tr><td>30k</td><td>R24 R27 R30 R33</td></tr>
+              <tr><td>37,4k</td><td>R21</td></tr>
+              <tr><td>100k</td><td>R7 R8 R20 R23 R26 R29 R32 R44 R45 R47</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <a href="img/haupt-widerstaende.png"><img src="img/haupt-widerstaende.png" alt="Lageplan der Widerstände, nach Wert eingefärbt" width="767" height="1213" class="narrow"></a>
+          <figcaption>Die Widerstände nach Wert eingefärbt, Bestückungsseite, Wannenstecker oben rechts.</figcaption>
+        </figure>
+      </li>
+      <li><b>Dioden</b> 1N5817: D1, D2, D3. Der Ring zeigt zur Kathode, wie auf dem Druck.</li>
+      <li><b>Keramikkondensatoren</b>: 100 nF (C10–C19, C27, C28, C35–C40), 10 nF (C30–C34), 1 µF (C4, C6). Sie haben keine Polung.
+        <figure>
+          <a href="img/haupt-kondensatoren.png"><img src="img/haupt-kondensatoren.png" alt="Lageplan der Kondensatoren, nach Wert eingefärbt" width="1605" height="1084"></a>
+          <figcaption>Die Kondensatoren nach Wert eingefärbt, Platine quer gelegt (Wannenstecker rechts unten). Die Elkos (lila) kommen erst in Schritt 8.</figcaption>
+        </figure>
+      </li>
+      <li><b>IC-Fassungen</b>: DIP-8 (U6), DIP-14 (U7, U8, U10), DIP-16 (U9). Die Kerbe wie auf dem Druck. Die Chips kommen erst in Schritt 7 hinein.</li>
+      <li><b>TO-92</b>: Q1 BC547 (flache Seite wie auf dem Druck) und U3 MCP1700-3002E (3,0-V-Referenz; Pin 1 GND, 2 IN, 3 OUT, vor dem Löten im Datenblatt nachsehen).</li>
+      <li><b>J13</b>: drei Stifte (L, Masse, R) für die Drähte vom DAC-Modul, gerade von der Bestückungsseite.</li>
+      <li><b>Buchsenleisten</b> für die Module: zwei 1 × 22 für das DevKit, eine 1 × 6 für das DAC-Modul, alle 8,5 mm hoch. Vorher am eigenen DevKit den Abstand der beiden Stiftreihen messen: das Original hat 25,4 mm, manche Nachbauten 22,86 mm; für die engere hat J3 eine zweite Lochreihe weiter innen (beschriftet „22,86“). Am besten das DevKit in die Leisten stecken, so einsetzen und dann löten, dann stehen sie gerade.</li>
+      <li><b>Elkos</b> 10 µF: C1, C2, C3, C5. <b>Polung beachten</b>: C1 + an +12 V, C2 + an Masse (er sitzt an −12 V), C3 + an +5 V, C5 + an +3V3A.</li>
+      <li><b>Schaltregler</b> U1 (R-78E5.0-0.5), Beschriftung wie auf dem Druck.</li>
+      <li><b>Wannenstecker</b> J1 (Eurorack-Strom): Pin 1 ist −12 V, dort kommt der rote Streifen des Kabels hin.</li>
+      <li>Zuletzt auf der <b>Vorderseite</b> die Buchsenleisten J3 und J4 (1 × 14, Pin 1 oben). Damit sie zur Bedienplatine passen: die Stiftleisten der Bedienplatine einstecken, beide Platinen mit den Abstandsbolzen (M3 × 11 mm) verschrauben und erst dann löten. Das geht auch nach Schritt 5.</li>
+    </ol>
+
+    <h2 id="dac">4. DAC-Modul vorbereiten</h2>
+    <p>Auf der Rückseite des GY-PCM5102 sind vier Lötbrücken mit je drei Pads. Mit einem Zinnklecks das mittlere Pad mit <b>L</b> (Masse) oder <b>H</b> verbinden:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Brücke</th><th>Funktion</th><th>Stellung</th></tr></thead>
+        <tbody>
+          <tr><td>1 FLT</td><td>Filter</td><td><b>L</b></td></tr>
+          <tr><td>2 DEMP</td><td>De-Emphasis</td><td><b>L</b> (aus)</td></tr>
+          <tr><td>3 XSMT</td><td>Stummschaltung</td><td><b>H</b> (Ton an)</td></tr>
+          <tr><td>4 FMT</td><td>Datenformat</td><td><b>L</b> (I2S)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Manche Module kommen schon so oder ganz ohne Brücken. SCK braucht keinen Draht, die Platine legt ihn an Masse. Die Stiftleiste so einlöten, dass die Beschriftung des Moduls zu der auf der Hauptplatine passt (VIN GND LCK DIN BCK SCK). Dann drei kurze Drähte von den Pads L, G, R neben der Klinke des Moduls (oder deren Lötfahnen) zu J13: L, Masse, R. Am eckigen Pad von J13 liegt L, Masse ist der mittlere Stift.</p>
+    <figure>
+      <a href="img/haupt-j13.png"><img src="img/haupt-j13.png" alt="Verdrahtung vom DAC-Modul zu J13, von oben und von der Seite" width="2024" height="1005"></a>
+      <figcaption>Drei Drähte vom Modul zu J13, links von oben (Bestückungsseite), rechts von der Seite.</figcaption>
+    </figure>
+
+    <h2 id="bedienplatine">5. Bedienplatine löten</h2>
+    <p>Auf die Rückseite kommen nur C1 und C2 (100 nF) und die beiden Stiftleisten J3 und J4 (Pin 1 oben). Alles andere sitzt vorn: zehn Potis (RV1 TUNE … RV10 CUT CV), acht Buchsen (J5 V/OCT … J12 VOICE), zwei Taster, zwei LEDs.</p>
+    <figure>
+      <a href="img/bedien-bestueckung-vorn.png"><img src="img/bedien-bestueckung-vorn.png" alt="Bestückungsdruck der Bedienplatine von vorn" width="702" height="1235" class="narrow"></a>
+      <figcaption>Bedienplatine von vorn. Achtung: die Richtung der LEDs D1 und D2 auf diesem Druck ist falsch, siehe unten.</figcaption>
+    </figure>
+    <ol>
+      <li>C1, C2 und die Stiftleisten zuerst löten.</li>
+      <li>Potis, Buchsen und Taster nur einstecken, die gedruckte Front aufsetzen und die Muttern leicht anziehen. Erst dann löten, so sitzt alles genau in den Löchern.</li>
+      <li><b>LEDs: nicht nach dem Bestückungsdruck richten.</b> Der Druck v0.1 zeigt die abgeflachte Seite am eckigen Pad (Pin 1), bei der WS2812D-F5 liegt sie aber bei DOUT (Pin 4). Richtig ist:
+        <ul>
+          <li>Die beiden <b>kürzeren Beine</b> (DIN, VDD) ans <b>eckige Pad</b> und das daneben.</li>
+          <li>Die beiden <b>längeren</b> (GND, DOUT) auf die andere Seite.</li>
+          <li>Von vorn gesehen ist die <b>flache Seite rechts</b>, weg vom eckigen Pad.</li>
+        </ul>
+        So weit hineinstecken, dass die LEDs mit aufgesetzter Front in den 5-mm-Löchern sitzen, dann löten.
+        <figure>
+          <svg class="led-sketch" viewBox="0 0 520 250" role="img" aria-label="LED von vorn: flache Seite rechts, Beine von links 1 DIN kurz, 2 VDD kurz, 3 GND lang, 4 DOUT lang, Pin 1 am eckigen Pad">
+            <path d="M 225 22 A 70 70 0 1 0 225 138 Z" style="fill:none;stroke:var(--yellow);stroke-width:3"/>
+            <text x="160" y="85" text-anchor="middle" style="fill:var(--text);font:14px var(--sans)">von vorn</text>
+            <text x="234" y="85" style="fill:var(--yellow);font:bold 13px var(--sans)">flach</text>
+            <g style="stroke:var(--text);stroke-width:3">
+              <line x1="115" y1="140" x2="115" y2="190"/><line x1="145" y1="140" x2="145" y2="190"/>
+              <line x1="175" y1="140" x2="175" y2="210"/><line x1="205" y1="140" x2="205" y2="210"/>
+            </g>
+            <rect x="105" y="196" width="20" height="20" style="fill:none;stroke:var(--cyan);stroke-width:2"/>
+            <g style="fill:var(--text);font:bold 13px var(--sans)" text-anchor="middle">
+              <text x="115" y="238">1</text><text x="145" y="238">2</text><text x="175" y="238">3</text><text x="205" y="238">4</text>
+            </g>
+            <g style="fill:var(--text);font:13px var(--sans)">
+              <text x="290" y="60">1 DIN, kurz</text>
+              <text x="290" y="80">2 VDD (+5 V), kurz</text>
+              <text x="290" y="100">3 GND, lang</text>
+              <text x="290" y="120">4 DOUT, lang</text>
+            </g>
+            <g style="fill:var(--muted);font:12px var(--sans)">
+              <text x="290" y="170">Pin 1 ans eckige Pad (blau),</text>
+              <text x="290" y="188">die flache Seite weg davon</text>
+            </g>
+          </svg>
+          <figcaption>Die WS2812D-F5 von vorn, wie sie auf der Platine stehen soll.</figcaption>
+        </figure>
+        Falsch herum liegen +5 V und Masse vertauscht an der LED; beim ersten Aufbau ist so eine durchgebrannt. Reißt beim Auslöten ein Pad ab: Pad 4 (DOUT) von D2 ist nicht angeschlossen, das Bein dort einfach kürzen.</li>
+    </ol>
+    <figure>
+      <a href="img/bedien-messpunkte.png"><img src="img/bedien-messpunkte.png" alt="Bedienplatine von hinten mit Messpunkten +5 V und Masse und der LED vergrößert" width="1234" height="1167"></a>
+      <figcaption>Bedienplatine von hinten (Lötseite): J3 Pin 14 ist +5 V, Pin 1 und 13 sind Masse. Zwischen +5 V und Masse darf es nicht dauerhaft piepen.</figcaption>
+    </figure>
+
+    <h2 id="pruefen">6. Erste Prüfung ohne Chips</h2>
+    <p>Noch nichts in die Fassungen stecken, DevKit und DAC-Modul bleiben draußen.</p>
+    <ol>
+      <li>Sichtprüfung: Lötbrücken, vergessene Lötstellen, Polung der Elkos und Dioden.</li>
+      <li>Multimeter auf Durchgang, ohne Strom: +12 V, −12 V und +5 V dürfen <b>nicht</b> mit Masse verbunden sein (kurzes Piepen beim Laden der Elkos ist normal). Messpunkte im Bild unten.</li>
+      <li>Strom anschließen, am Labornetzteil mit 50 mA Begrenzung je Seite, sonst im Gehäuse (roter Streifen an Pin 1 von J1 und am Bus an −12 V). Die schwarze Spitze an Masse: die sechs mittleren Pins von J1, oder mit gestecktem Kabel der mittlere Stift von J13.
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Wo</th><th>Soll</th><th>Beim ersten Aufbau</th></tr></thead>
+            <tbody>
+              <tr><td>U6 Pin 8</td><td>ca. +11,7 V (+12 V minus Diode)</td><td>+11,8 V</td></tr>
+              <tr><td>U6 Pin 4</td><td>ca. −11,7 V</td><td>−12,1 V</td></tr>
+              <tr><td>C3 + (5 V), auch U10 Pin 14</td><td>ca. +4,7 bis 5 V</td><td>4,87 V</td></tr>
+              <tr><td>U9 Pin 15 (Referenz)</td><td>3,00 V</td><td>3,01 V</td></tr>
+            </tbody>
+          </table>
+        </div>
+        3,3 V gibt es noch nicht, sie kommen erst mit dem DevKit aus dessen Regler.</li>
+      <li>Stimmt etwas nicht oder geht der Strom an die Begrenzung: ausschalten und suchen, bevor Chips hineinkommen.</li>
+    </ol>
+    <figure>
+      <a href="img/haupt-messpunkte.png"><img src="img/haupt-messpunkte.png" alt="Hauptplatine mit Messpunkten: U6 Pin 8 und 4, C3, U9 Pin 15, Masse an J1 und J13" width="1605" height="1094"></a>
+      <figcaption>Messpunkte der Hauptplatine, Bestückungsseite, Wannenstecker rechts unten. Pin 1 von U9 ist oben rechts, Pin 15 der zweite von rechts in der unteren Reihe.</figcaption>
+    </figure>
+
+    <h2 id="chips">7. Chips und Module einsetzen</h2>
+    <p>Strom aus. Dann einsetzen, die Kerbe wie auf dem Druck:</p>
+    <ul>
+      <li>U6 TL072, U7 und U8 MCP6004, U9 MCP3208, U10 74HCT125.</li>
+      <li>Das DAC-Modul auf seine 6-polige Leiste.</li>
+      <li>Das DevKit auf seine Leisten, <b>USB zur Unterkante</b> (zur Seite mit dem Stromanschluss).</li>
+    </ul>
+    <p>Wieder einschalten. Ohne Firmware zeigen die LEDs nichts (die kleine LED auf dem DevKit blinkt vielleicht, das ist dessen Testprogramm vom Hersteller); der Strom auf +12 V sollte unter etwa 150 mA bleiben.</p>
+
+    <h2 id="flashen">8. Firmware flashen</h2>
+    <p>Die Firmware ist eine Datei für Adresse 0x0: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>.</p>
+    <ol>
+      <li>In Chrome oder Edge den <a href="https://espressif.github.io/esptool-js/">Web-Flasher von Espressif</a> öffnen, Baudrate 921600, <b>Connect</b> und das DevKit auswählen. Das DevKit hat zwei USB-Buchsen: die mit „UART“ (oder „COM“) beschriftete nehmen.</li>
+      <li>Bei Flash Address <code>0x0</code> eintragen, die Datei wählen, <b>Program</b>.</li>
+      <li>Unter „Console“ (115200 Baud) sieht man danach, was das Modul tut.</li>
+    </ol>
+    <p>Beim <b>ersten Start</b> berechnet das Modul seine Tabellen und legt sie im Flash ab, bis zu etwa einer Minute; die LEDs leuchten solange rot und gelb, es kommt kein Ton. Jeder weitere Start liest die Tabellen in Bruchteilen einer Sekunde. Blinken beide LEDs rot, fehlt der PSRAM (falsches DevKit).</p>
+    <p>Flashen geht mit und ohne Eurorack-Strom; eine Diode trennt den Regler vom USB. Eine neue Firmware wird genauso geflasht: Die Tabellen bleiben, aber gespeicherte Modi, versteckte Werte und die V/Oct-Kalibrierung gehen verloren. Darum erst flashen, dann kalibrieren.</p>
+    <p>Selbst bauen: ESP-IDF 5.3, <code>idf.py build flash monitor</code> im Ordner <code>firmware</code>; das README auf GitHub beschreibt es.</p>
+
+    <h2 id="zusammenbau">9. Zusammenbauen und erster Ton</h2>
+    <ol>
+      <li>Die Bedienplatine mit den Muttern der Potis und Buchsen an der Front festziehen, die Knöpfe aufsetzen.</li>
+      <li>Die Hauptplatine mit ihren Buchsenleisten auf die Stiftleisten der Bedienplatine stecken und mit den zwei Abstandsbolzen (Löcher H1, H2) verschrauben.</li>
+      <li>Im Gehäuse anschließen (roter Streifen an −12 V) und mit vier M3-Schrauben an die Schienen.</li>
+      <li>Den <b>VOICE</b>-Ausgang an einen Mixer. Ohne Kabel in GATE ist das Gate dauerhaft an, das Modul spielt als Drone und sollte sofort klingen. TUNE, TABLE und CUTOFF drehen, WARP und FILTER kurz drücken: LED 1 und 2 wechseln die Farbe.</li>
+    </ol>
+    <p class="note">Die Ausgänge haben Modulpegel (±5 V), für Kopfhörer viel zu laut. Wie alles bedient wird: <a href="./#bedienung">Bedienung</a>.</p>
+
+    <h2 id="kalibrieren">10. V/Oct kalibrieren</h2>
+    <ol>
+      <li>Ausschalten, nur V/OCT gesteckt, <b>beide Tasten halten</b> und einschalten. LED 1 blinkt weiß.</li>
+      <li>Genau 1,000 V an V/OCT, <b>WARP</b> drücken. LED 2 blinkt weiß.</li>
+      <li>Genau 3,000 V anlegen, <b>FILTER</b> drücken.</li>
+      <li>Dreimal grün: gespeichert. Dreimal rot: die Werte waren unplausibel, die alten bleiben; Spannung und Kabel prüfen und wiederholen.</li>
+    </ol>
+    <p>Danach mit einem Stimmgerät über mehrere Oktaven nachprüfen.</p>
+
+    <h2 id="fehlersuche">Fehlersuche</h2>
+    <dl class="tools">
+      <dt>Kein Ton, LEDs leuchten normal</dt>
+      <dd>Lötbrücken auf dem DAC-Modul (Schritt 4, besonders 3 XSMT auf H), die drei Drähte zu J13, sitzt der TL072 richtig herum? An der Klinke des DAC-Moduls hören (Kopfhörer nur leise und nicht aufsetzen): klingt es dort, liegt der Fehler zwischen J13 und den Ausgangsbuchsen (U6, R9–R14).</dd>
+      <dt>Kein Ton beim ersten Start</dt>
+      <dd>Die Tabellen werden noch berechnet (Schritt 8). Warten, bis die LEDs die Farben der Modi zeigen.</dd>
+      <dt>LEDs dunkel</dt>
+      <dd>U10 ein 74HC125 statt HCT? LEDs richtig herum (Schritt 5)? R48 (330 Ω) gelötet?</dd>
+      <dt>Eine LED ist durchgebrannt</dt>
+      <dd>Sie war falsch herum (Schritt 5). Auslöten und eine neue richtig herum einsetzen.</dd>
+      <dt>LEDs in falschen Farben</dt>
+      <dd>Etwa mit APA106 oder PL9823: Sie erwarten Rot-Grün-Blau statt Grün-Rot-Blau. In <code>firmware/main/hw/Hardware.cpp</code> in <code>showLeds</code> je Rot und Grün tauschen und die Firmware selbst bauen.</dd>
+      <dt>Regler tun nichts oder springen</dt>
+      <dd>Ein Regler übernimmt erst, wenn er den gespeicherten Wert erreicht (<a href="./#pickup">Pick-up</a>). Sonst die Leisten J3 und J4 und die 100-nF-Kondensatoren C10–C19 prüfen.</dd>
+      <dt>CV-Eingänge tun nichts</dt>
+      <dd>MCP3208 (U9) und MCP6004 (U7, U8) richtig herum? 3,0 V an U9 Pin 15?</dd>
+      <dt>Konsole</dt>
+      <dd>Über USB (115200 Baud) meldet das Modul alle 5 Sekunden die Last des Audio-Kerns, Fehler beim Start stehen dort auch.</dd>
+    </dl>
+
+    <p class="stand">Stand 28.10.2026. Dieselbe Anleitung liegt als <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/BAUANLEITUNG.md">BAUANLEITUNG.md</a> im Repository. Platinen, Frontplatte, Knöpfe und Firmware stehen unter der <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a>: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="./">Bedienung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

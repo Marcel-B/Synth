@@ -2,11 +2,11 @@
 
 Konzept, Schaltplan-Skizze, Firmware-Grundgerüst, Stückliste und Frontplatte für ein 14-TE-Modul, das die Klangerzeugung von **Tonwerk Wavetable** (Plugin in diesem Repo, `wavetable/src/`) auf einem ESP32-S3 spielt.
 
-Stand 2026-10-10. **Nichts davon ist auf echter Hardware aufgebaut oder gehört worden.** Was geprüft ist, steht unter [Was getestet ist](#was-getestet-ist).
+Stand 2026-10-28. **Ein Modul ist gebaut und spielt** (bedrahtete Platinen v0.1, 27.10.2026); CV-Eingänge und V/Oct-Kalibrierung sind auf der Hardware noch nicht geprüft. Was geprüft ist, steht unter [Was getestet ist](#was-getestet-ist).
 
 ![Frontplatte](hardware/frontplatte-vorschau.png)
 
-Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren.
+Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren. Auf der Website: [Bedienung](https://tonwerk.studio/modul/) und [Bauanleitung mit Bildern](https://tonwerk.studio/modul/bauanleitung.html).
 
 ## Die Idee in einem Absatz
 
