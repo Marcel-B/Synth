@@ -26,6 +26,7 @@
   <main class="wrap page">
     <h1>Bauanleitung</h1>
     <p class="lead-text">Schritt für Schritt vom Bestellen bis zum ersten Ton: <a href="./">Tonwerk Wavetable als Eurorack-Modul</a> auf den bedrahteten Platinen (v0.1), alles zum Selberlöten, nur das ESP32-DevKit und das DAC-Modul kommen fertig und werden gesteckt.</p>
+    <p>Wer nicht so viel löten will: Die Hauptplatine gibt es auch als <a href="#smd">bestückte SMD-Variante</a>, die der Platinenfertiger fertig gelötet liefert.</p>
 
     <p class="warning"><b>Wichtig für die Platinen v0.1:</b> Der Bestückungsdruck der beiden LEDs ist falsch herum. Nach dem Druck eingesetzt, liegen +5 V und Masse vertauscht an der LED, und sie brennt beim ersten Einschalten durch. Die richtige Richtung steht in <a href="#bedienplatine">Schritt 5</a>.</p>
 
@@ -46,6 +47,7 @@
           <tr><td>Schaltpläne</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/tonwerk-haupt-tht-schaltplan.pdf">Hauptplatine (PDF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/tonwerk-bedien-tht-schaltplan.pdf">Bedienplatine (PDF)</a></td></tr>
           <tr><td>Einkaufsliste</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/einkaufsliste-tht.csv">einkaufsliste-tht.csv</a> (auch <a href="#teile">unten</a> als Tabelle) · Listen für den Upload in Händler-Werkzeuge: <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/hardware/pcb">im Ordner pcb</a></td></tr>
           <tr><td>Bestücklisten nach Wert</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/fertigung/tonwerk-haupt-tht-bestueckliste.csv">Hauptplatine</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/fertigung/tonwerk-bedien-tht-bestueckliste.csv">Bedienplatine</a></td></tr>
+          <tr><td>Bestückte Variante (SMD)</td><td>Hauptplatine: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-gerber.zip">Gerber</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-bom-jlcpcb.csv">Stückliste (BOM)</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-cpl-jlcpcb.csv">Bestückungsplan (CPL)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/tonwerk-haupt-schaltplan.pdf">Schaltplan</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-handbestueckung.csv">von Hand</a><br>Bedienplatine: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-gerber.zip">Gerber</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-bom-jlcpcb.csv">BOM</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-cpl-jlcpcb.csv">CPL</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/tonwerk-bedien-schaltplan.pdf">Schaltplan</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-handbestueckung.csv">von Hand</a></td></tr>
           <tr><td>Frontplatte</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte.stl">Schrift erhaben</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-graviert.stl">Schrift vertieft</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-bohrplan.svg">Bohrplan 1:1 für Alu</a></td></tr>
           <tr><td>Knöpfe</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf.3mf">zehn Knöpfe, zwei Farben (3MF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-koerper.stl">Körper</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-zeiger.stl">Zeiger</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-probe.stl">Passprobe</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/knopf.scad">knopf.scad</a></td></tr>
           <tr><td>Firmware</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> (für Adresse 0x0) · <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/firmware">Quelltext (ESP-IDF 5.3)</a></td></tr>
@@ -326,6 +328,36 @@
       <li>Dreimal grün: gespeichert. Dreimal rot: die Werte waren unplausibel, die alten bleiben; Spannung und Kabel prüfen und wiederholen.</li>
     </ol>
     <p>Danach mit einem Stimmgerät über mehrere Oktaven nachprüfen.</p>
+
+    <h2 id="smd">Bestückte Variante (SMD)</h2>
+    <p class="warning"><b>Noch nie gebaut:</b> Die SMD-Platinen sind entworfen und geprüft (Netzliste gegen die Teileliste, Design-Regeln ohne Fehler), aber noch nie bestellt, bestückt oder eingeschaltet. Wer sie bestellt, ist der Erste. Gebaut und gehört ist bisher nur die bedrahtete Variante oben.</p>
+    <figure class="side">
+      <a href="img/smd-haupt-hinten.png"><img src="img/smd-haupt-hinten.png" alt="Layout der SMD-Hauptplatine von hinten mit ESP32-Modul, USB-C-Buchse und den kleinen Bauteilen" width="683" height="1125"></a>
+      <figcaption>SMD-Hauptplatine von hinten.</figcaption>
+    </figure>
+    <p>Dieselbe Schaltung, aber der Platinenfertiger lötet die Hauptplatine fertig: das ESP32-S3-Modul (WROOM-1 N16R8) direkt auf der Platine statt des DevKits, der DAC als Chip statt des Moduls, alle Widerstände, Kondensatoren und Chips in SMD auf der Rückseite, dazu eine eigene USB-C-Buchse zum Flashen und Reset- und Boot-Taster. Gleiche Maße, gleiche Frontplatte, gleiche Firmware; jede Bedienplatine passt auf jede Hauptplatine. Das Modul wird etwa 40 mm tief, 5 mm weniger als die bedrahtete Variante.</p>
+
+    <h3>Bestellen</h3>
+    <ol>
+      <li><b>Hauptplatine</b> (<code>tonwerk-haupt</code>) beim Fertiger mit Bestückung bestellen, die Dateien sind für JLCPCB vorbereitet: Gerber-Zip hochladen, Bestückung einschalten, Seite <b>Bottom</b> (die Teile sitzen hinten), dann Stückliste (BOM) und Bestückungsplan (CPL) hochladen.</li>
+      <li>Vor dem Bezahlen die Vorschau der Bestückung ansehen: Bei Gehäusen wie SOT-223, SOT-23-5 und den SOICs auf der Unterseite stimmt die Drehung oft um 90° oder 180° nicht; dann im Vorschaufenster drehen. Pin 1 jedes Chips mit dem Punkt im Druck vergleichen.</li>
+      <li>Teile, die gerade nicht lieferbar sind, im Werkzeug des Fertigers nach Wert durch gleichwertige ersetzen.</li>
+      <li><b>Bedienplatine:</b> Auf ihr ist nur C1/C2 SMD, alles andere bedrahtet und von Hand. Einfacher ist, sie unbestückt zu bestellen, entweder <code>tonwerk-bedien</code> (C1, C2 als 0805 von Hand) oder gleich die bedrahtete <code>tonwerk-bedien-tht</code> von oben.</li>
+    </ol>
+    <p class="note">Die Bestückung kostet deutlich mehr als die nackten Platinen; ein Angebot im Oktober 2026 lag bei etwa 180 €. Dafür entfällt fast das ganze Löten der Hauptplatine und die Suche nach den Teilen.</p>
+
+    <h3>Was noch von Hand gelötet wird</h3>
+    <ul>
+      <li>Hauptplatine: J1 (Eurorack-Stecker, Pin 1 = −12 V, roter Streifen), U1 (R-78E5.0-0.5), vorn die Buchsenleisten J3 und J4 (1 × 14, Pin 1 oben, wie in <a href="#hauptplatine">Schritt 3</a>, Punkt 11), auf Wunsch die Taster SW1 (Reset) und SW2 (Boot).</li>
+      <li>Die ganze Bedienplatine wie in <a href="#bedienplatine">Schritt 5</a>, <b>mit derselben Warnung zu den LEDs</b>: Auch auf der SMD-Bedienplatine v0.1 ist der Bestückungsdruck der LEDs falsch herum.</li>
+    </ul>
+
+    <h3>Prüfen, flashen, kalibrieren</h3>
+    <ol>
+      <li>Vor dem ersten Einschalten mit dem Multimeter prüfen, dass +12 V, −12 V, +5 V und +3,3 V nicht an Masse liegen. Dann mit Strombegrenzung einschalten und messen: U6 Pin 8 etwa +11,7 V, Pin 4 etwa −11,7 V, die Referenz U3 3,00 V, dazu 3,3 V am Regler U2.</li>
+      <li>Flashen über die <b>USB-C-Buchse der Hauptplatine</b>, mit derselben Datei an Adresse 0x0 wie in <a href="#flashen">Schritt 8</a>. Findet der Web-Flasher nichts: Boot-Taster halten (dafür SW1 und SW2 einlöten), Reset kurz drücken, Boot loslassen, dann noch einmal <b>Connect</b>. Die Meldungen des Moduls kommen über dieselbe Buchse.</li>
+      <li>Weiter mit <a href="#zusammenbau">Schritt 9</a> und <a href="#kalibrieren">Schritt 10</a>.</li>
+    </ol>
 
     <h2 id="fehlersuche">Fehlersuche</h2>
     <dl class="tools">
