@@ -150,6 +150,12 @@ Damit V/OCT über die Oktaven stimmt, einmal kalibrieren (die README beschreibt 
 
 Danach mit einem Stimmgerät über mehrere Oktaven nachprüfen.
 
+## Bestückte Variante (SMD)
+
+**Noch nie bestellt oder gebaut.** Die Hauptplatine `tonwerk-haupt` lässt sich bei JLCPCB fertig bestücken: [Gerber](hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-gerber.zip), Stückliste und Bestückungsplan (`-bom-jlcpcb.csv`, `-cpl-jlcpcb.csv`) im selben Ordner, Bestückung auf der Seite **Bottom**. ESP32-S3-WROOM-1 N16R8 und PCM5102A sitzen direkt auf der Platine, dazu USB-C, Reset und Boot. Vor dem Bezahlen in der Vorschau die Drehungen prüfen (SOT-223, SOT-23-5 und die SOICs auf der Unterseite liegen oft 90° oder 180° daneben) und nicht lieferbare Teile nach Wert ersetzen. Ein Angebot im Oktober 2026 lag bei etwa 180 € für die Bestückung.
+
+Von Hand bleiben J1, U1, vorn J3 und J4 (wie Schritt 3, Punkt 11) und auf Wunsch die Taster SW1/SW2 ([Liste](hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-handbestueckung.csv)), dazu die Bedienplatine: `tonwerk-bedien` (C1, C2 in 0805) oder gleich `tonwerk-bedien-tht`, beide unbestückt bestellen und wie Schritt 5 löten, **mit derselben LED-Warnung**. Vor dem Einschalten +12 V, −12 V, +5 V und +3,3 V gegen Masse prüfen, dann messen wie Schritt 6 (Referenz an U3, 3,3 V an U2). Geflasht wird über die USB-C-Buchse der Hauptplatine mit derselben Datei; findet der Web-Flasher nichts, Boot halten, Reset drücken, Boot loslassen. Weiter mit Schritt 9 und 10.
+
 ## Fehlersuche
 
 - **Kein Ton, LEDs leuchten normal:** Lötbrücken auf dem DAC-Modul (Schritt 4, besonders 3 XSMT auf H), die drei Drähte zu J13, sitzt der TL072 richtig herum? An der Klinkenbuchse des DAC-Moduls hören (Kopfhörer nur leise und nicht aufsetzen, dort kommen 2 Veff): Klingt es dort, liegt der Fehler zwischen J13 und den Ausgangsbuchsen (U6, R9–R14).
