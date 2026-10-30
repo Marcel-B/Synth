@@ -70,7 +70,7 @@
   document.querySelectorAll('.shot').forEach((button) => {
     button.addEventListener('click', () => {
       image.src = button.dataset.full;
-      image.alt = 'Oberfläche von ' + button.dataset.title;
+      image.alt = (document.documentElement.lang === 'en' ? 'Interface of ' : 'Oberfläche von ') + button.dataset.title;
       title.textContent = button.dataset.title;
       dialog.showModal();
     });

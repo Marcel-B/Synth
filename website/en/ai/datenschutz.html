@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · Tonwerk-AI</title>
+  <meta name="description" content="Privacy policy of the Tonwerk-AI app for iPhone, iPad and Mac.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/ai/datenschutz.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/ai/datenschutz.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/ai/datenschutz.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Tonwerk-AI navigation">
+        <a href="./#funktionen">Features</a>
+        <a href="einrichtung.html">Setup</a>
+        <a href="ki.html">AI</a>
+        <a href="datenschutz.html" class="optional">Privacy</a>
+        <a href="../">Plugins</a>
+        <a href="../../ai/datenschutz.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Privacy</h1>
+    <p>This policy applies to the app <b>Tonwerk-AI</b> for iPhone, iPad and Mac (bundle ID <code>de.bvelop.tonwerk.ai</code>) and to the server it works with. For this website, the <a href="../datenschutz.html">privacy policy of tonwerk.studio</a> applies. A translation for convenience; the <a href="../../ai/datenschutz.html" hreflang="de">German version</a> is the binding one.</p>
+
+    <h2>In short</h2>
+    <p>Tonwerk-AI collects no data for me. There is no account, no advertising, no tracking and no analytics; the app contains no advertising, tracking or analytics libraries. The app talks only to the server whose address you enter yourself, and that runs on your own Mac; the Mac app also asks GitHub for updates (see below). I receive nothing from it.</p>
+
+    <h2>Controller</h2>
+    <p>Marcel Benders, address in the <a href="../../impressum.html" hreflang="de">imprint (German)</a>, email <a href="mailto:marcel@tonwerk.studio">marcel@tonwerk.studio</a>.</p>
+
+    <h2>What the app processes</h2>
+    <p>Everything you create or choose in the app goes to your server and is stored there: style, lyrics, scores, ratings, notes, playlists, photos for covers or lyrics drafts, recordings and files you upload. The app loads songs, covers and the queue’s state from there. The connection runs over HTTPS, on the road through Tailscale’s encrypted network.</p>
+    <p>On the device itself the app remembers only its settings: the server’s address and the forms last filled in (in the app settings of iOS or macOS). Files you export or share end up wherever you save or send them. In <b>demo mode</b> the app talks to no one; the sample songs are in the app, changes only in memory.</p>
+
+    <h3>Permissions</h3>
+    <dl class="tools">
+      <dt>Local Network</dt>
+      <dd>to reach your server when it runs on the same network or on the same Mac.</dd>
+      <dt>Microphone</dt>
+      <dd>only in the speech lab and on the Singing page, when you record a voice. The recording goes to your server, which stores it as a reference for the speech or singing models.</dd>
+      <dt>Bluetooth</dt>
+      <dd>to play tracks of the Logic page on Bluetooth MIDI instruments. Only MIDI notes are sent.</dd>
+      <dt>Photos and files</dt>
+      <dd>through the system’s picker: the app sees only the photo or file you choose and sends it to your server.</dd>
+    </dl>
+
+    <h2 id="server">Your server</h2>
+    <p>You run the server yourself, on your Mac; you are responsible for the data there, not I. It computes with local models, and the songs do not leave the Mac. Only if you set it up does it connect to these services:</p>
+    <dl class="tools">
+      <dt>Anthropic (Claude)</dt>
+      <dd>If an API key of your own from Anthropic is on the server, the following goes to Anthropic PBC (USA): with <b>Draft lyrics</b> using a Claude model, the keywords, the style, a chosen photo and the lyrics; with the <b>Sketch</b>, the song idea and your wishes; with <b>Paint a cover</b>, the description, to translate it into English. <a href="https://www.anthropic.com/legal/privacy">Anthropic’s privacy policy</a> applies; according to <a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training">its own statement</a>, Anthropic does not use input through the API for training by default. Without a key nothing goes there; the local language models in LM Studio (also for the sketch and the <b>Write</b> page) stay on the Mac.</dd>
+      <dt>Nextcloud</dt>
+      <dd>the nightly backup of the database and songs, into the Nextcloud whose address you enter.</dd>
+      <dt>Downloads</dt>
+      <dd>During setup and on first use the server downloads programs and models from their sources (such as GitHub, Homebrew, Hugging Face); these providers see your Mac’s address.</dd>
+      <dt>Web push</dt>
+      <dd>only for the web interface in the browser: if you switch on notifications there, the messages go through your browser’s push service (Apple, Google or Mozilla). The app uses no push notifications.</dd>
+      <dt>Tailscale</dt>
+      <dd>connects your devices; for this Tailscale Inc. (Canada/USA) sees which devices are in your tailnet, not the content of the connection. <a href="https://tailscale.com/privacy-policy">Tailscale’s privacy policy</a> applies.</dd>
+    </dl>
+
+    <h2 id="download">Download and updates (Mac)</h2>
+    <p>You download the Mac app from <a href="https://github.com/Marcel-B/Tonwerk-AI/releases">GitHub Releases</a>, also through the link on this website. GitHub Inc. (USA) processes your IP address and your browser’s details; GitHub is certified under the EU-US Data Privacy Framework, and <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub’s privacy statement</a> applies. I see only how often a file was downloaded, not by whom.</p>
+    <p>The Mac app looks for updates with <a href="https://sparkle-project.org">Sparkle</a>: when you allow it or choose <b>Check for updates now</b> in the settings, it loads the list of versions (<code>appcast.xml</code>) from GitHub, by itself at most once a day, and with an update the new DMG. GitHub sees your IP address and the app’s version; Sparkle sends no further data about your Mac. The automatic check can be switched off in the settings. The legal basis is Art. 6(1)(f) GDPR; the legitimate interest is a secure, up-to-date app.</p>
+
+    <h2>Apple and TestFlight (iPhone and iPad)</h2>
+    <p>For iPhone and iPad the app is distributed through Apple’s <b>TestFlight</b>; <a href="https://www.apple.com/legal/privacy/">Apple’s privacy policy</a> applies. Apple gives me the name and email address you were invited with, plus device, system version, installs and crash reports, as well as feedback and screenshots you send in TestFlight yourself. I use this only to improve the app and to answer you, and delete it when the test ends or you ask for it. The legal basis is Art. 6(1)(f) GDPR; the legitimate interest is an app without bugs. If you agreed in your device’s settings to share analytics with app developers, Apple gives me anonymised crash and usage statistics; you can switch that off there at any time.</p>
+
+    <h2>Contact by email</h2>
+    <p>If you write to me, I use your address and message only to answer (Art. 6(1)(b) and (f) GDPR) and delete them once the matter is settled.</p>
+
+    <h2>Your rights</h2>
+    <p>You have the right to access, rectification, erasure and restriction of the processing of your data, to data portability, to object and to lodge a complaint with a data protection supervisory authority, such as the State Commissioner for Data Protection and Freedom of Information of North Rhine-Westphalia. You can view and delete the data on your server there yourself; deleting the app removes its settings from the device.</p>
+
+    <p class="stand">As of 23 October 2026</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Legal">
+        <a href="../../impressum.html" hreflang="de">Imprint (German)</a>
+        <a href="datenschutz.html">Privacy</a>
+        <a href="ki.html">AI</a>
+        <a href="https://github.com/Marcel-B/Tonwerk-AI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

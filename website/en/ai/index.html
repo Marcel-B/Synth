@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk-AI · Tonwerk Studio</title>
+  <meta name="description" content="Tonwerk-AI for iPhone, iPad and Mac: make songs with YuE2 and ACE-Step on your own Mac, listen to them, edit them and open them as a Logic project. No account, no cloud required.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/ai/">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/ai/">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/ai/">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Tonwerk-AI navigation">
+        <a href="#funktionen">Features</a>
+        <a href="einrichtung.html">Setup</a>
+        <a href="ki.html">AI</a>
+        <a href="datenschutz.html" class="optional">Privacy</a>
+        <a href="#hilfe" class="optional">Help</a>
+        <a href="../">Plugins</a>
+        <a href="../../ai/" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <div class="app-title">
+      <img src="../../icons/TonwerkAI.png" alt="" width="64" height="64">
+      <h1>Tonwerk-AI</h1>
+    </div>
+    <p class="lead-text">Make songs on your own Mac and control it from your iPhone, iPad or Mac. Tonwerk-AI is an app for a server you run yourself: it computes with the music models <a href="https://github.com/multimodal-art-projection/YuE">YuE2</a> and <a href="https://github.com/ace-step/ACE-Step-1.5">ACE-Step</a> on a Mac with Apple Silicon, the app shows the library, the queue and the tools and plays the songs. There is no account and no service of mine in between.</p>
+    <div class="download" id="download">
+      <a class="button" href="https://github.com/Marcel-B/Tonwerk-AI/releases/latest/download/Tonwerk-AI.dmg">Download for Mac</a>
+      <a class="button ghost" href="https://github.com/Marcel-B/Tonwerk-AI/releases">All versions</a>
+      <p>For macOS 14 and newer, Apple Silicon and Intel, signed and notarized by Apple; the app announces new versions itself. For iPhone and iPad, Tonwerk-AI is in testing on TestFlight, by invitation. The app needs a <a href="einrichtung.html">server</a> of its own on a Mac with Apple Silicon; without one, the <a href="einrichtung.html#demo">demo mode</a> shows a sample library.</p>
+    </div>
+    <p class="note">What Tonwerk-AI makes is AI-generated and labelled as such; what that means when you publish it is under <a href="ki.html">AI and responsibility</a>. The plugins for Logic and other DAWs (Tonwerk without “AI”) are on the <a href="../">home page</a>.</p>
+    <div class="columns compact">
+      <div class="panel">
+        <h3>Your Mac computes</h3>
+        <p>The models run on your Mac mini or MacBook, one after the other, so the memory suffices. Songs, lyrics and recordings stay there.</p>
+      </div>
+      <div class="panel">
+        <h3>The app controls</h3>
+        <p>iPhone, iPad and Mac connect to the server through <a href="https://tailscale.com">Tailscale</a>, on the road too. Whoever is not in your tailnet cannot reach it.</p>
+      </div>
+      <div class="panel">
+        <h3>Logic in view</h3>
+        <p>Every song comes with a score. The app turns it into MIDI and a Logic project and plays tracks on MIDI devices or the Tonwerk synths.</p>
+      </div>
+    </div>
+
+    <p><a class="button" href="einrichtung.html">To the setup</a></p>
+
+    <h2 id="funktionen">Features</h2>
+    <p>On the left (on the iPhone in the menu) the app has the pages <b>Create</b>, <b>Library</b>, <b>To listen to</b>, the <b>Queue</b> and the playlists, below them the tools. The app follows the system’s language, German or English. Which tools can compute depends on what is set up on the server (see <a href="einrichtung.html#optionen">options</a>); if something is missing, the page says what.</p>
+
+    <h3>Create</h3>
+    <ul>
+      <li><b>Style</b> from building blocks (genre, voice, instruments, mood, tempo, language) or written freely; “Proven” offers the building blocks of your best-rated songs.</li>
+      <li><b>Lyrics</b> with sections such as <code>[Verse]</code>, <code>[Chorus]</code> or <code>[Bridge]</code>. YuE2 sings lyrics but does not write them: <b>Draft lyrics</b> lets a language model write German or English lyrics from keywords or a photo, locally in LM Studio or, with a key of your own, with Claude. A short instruction (“make the chorus catchier”) revises a draft.</li>
+      <li><b>Score</b> in ABC format: your own melodies, taken over or transcribed, transposable into any of the 24 keys, also from major to minor.</li>
+      <li><b>Quality</b> draft or full, length up to 10 minutes, 1 to 10 songs at once, seed and the model’s advanced parameters (sampling, steps, a sound LoRA of your own).</li>
+      <li><b>Templates</b> save style and parameters under a name; <b>Take into the form</b> on a song fills in everything it was made with.</li>
+    </ul>
+
+    <h3>Library and player</h3>
+    <ul>
+      <li>All songs with search in title, style or lyrics, rating with 1 to 5 stars, sorting by date, stars, duration and tempo. <b>To listen to</b> gathers songs left unrated for over a week.</li>
+      <li>Tempo, key and how clearly the lyrics are sung, heard once by the server. Notes, titles of your own and covers of your own per song (a photo, a file or painted on the Mac, with FLUX.2 Klein, Z-Image Turbo, Krea 2 Turbo or FLUX 3 Klein).</li>
+      <li>The player runs in the background, with lock screen, Control Center and AirPods. Full screen with a large cover, an analyzer in the cover’s colour and the lyrics, their sung line following along.</li>
+      <li>Playlists that are the same on every device, because they live on the server.</li>
+      <li><b>Share / export</b> as a small AAC for messengers, MP3, M4A or FLAC, with title, lyrics and cover, brought to −14 LUFS.</li>
+      <li><b>Music video</b> from the cover, an analyzer, particles or a plasma ball and the lyrics following along, for YouTube (16:9) or Shorts and Reels (9:16), if you like cut to the beats from your own photos and clips.</li>
+    </ul>
+
+    <h3>Queue</h3>
+    <p>What computes and what waits, live: every song with its steps (score, tokens, synthesis, audio) and their duration, plus versions, stems, speech takes, pictures and videos. Tiles at the top show which model holds the memory right now. Finished songs can be taken over as a playlist; the worker’s log is below.</p>
+
+    <h3>Tools</h3>
+    <dl class="tools">
+      <dt>Logic</dt>
+      <dd>A song or a MIDI file or <code>score.abc</code> of your own becomes a preview with piano roll, tracks and mixer. Each track plays on a MIDI device (Bluetooth too) or a Tonwerk synth. Export as MIDI, MusicXML or a Logic project with audio, if you like with vocals from the stems, backing vocals, and bass and drums from the stems.</dd>
+      <dt>Instruments</dt>
+      <dd>Edit the sounds of the Tonwerk synths (Analog and FM) and play them on a test keyboard; the library of your MIDI devices.</dd>
+      <dt>Voices</dt>
+      <dd>Split songs into stems (vocals dry and with reverb, instrumental, bass, drums), have a song sung again with a reference voice (Seed-VC), have a vocal track of your own sung by another voice.</dd>
+      <dt>Transcription</dt>
+      <dd>A recording to a melody score with SheetSage2, or to MIDI as sung with Basic Pitch.</dd>
+      <dt>Speech lab</dt>
+      <dd>Have text spoken by local speech models, also with a voice recorded on the microphone; clean noise out of speech recordings.</dd>
+      <dt>Singing</dt>
+      <dd>Notes and words become a sung voice with SoulX-Singer: draw the melody in a note editor with one syllable per note or take it from a MIDI file or a song, save it as MIDI. It is sung with SoulX-Singer’s sample voices or one of your own that you sing into the microphone or upload as a WAV. The pronunciation is English.</dd>
+      <dt>ACE-Step</dt>
+      <dd>The second song model with parameters of its own, also for covers and for computing single passages of a song again.</dd>
+      <dt>Sketch</dt>
+      <dd>A written song idea (structure, chords, lyrics, melody) becomes a song plan with Claude: score and lyrics for YuE2, settings for ACE-Step and a MIDI draft with accompaniment.</dd>
+      <dt>Backing vocals</dt>
+      <dd>Parallel voices, a drone and choir parts for a melody, as MIDI.</dd>
+      <dt>Insights</dt>
+      <dd>What the rated songs were made with, against their stars: which building blocks, models and settings prove themselves.</dd>
+      <dt>Log, storage, templates</dt>
+      <dd>The server’s log with a report to copy, where the disk space goes with a cleanup, and the saved templates.</dd>
+    </dl>
+
+    <h3>Models and licences</h3>
+    <p>Tonwerk-AI brings no models; the server downloads them from their sources during setup, and their licences apply. YuE2’s weights are under CC BY-NC 4.0, but individuals are expressly allowed to sell and market songs made with them. Other models allow only non-commercial use or require attribution. Which model allows what is in the overview under <a href="ki.html#modelle">AI and responsibility</a>.</p>
+    <h2 id="hilfe">Help and contact</h2>
+    <p>Questions, bugs or wishes about Tonwerk-AI to <a href="mailto:marcel@tonwerk.studio">marcel@tonwerk.studio</a> or as an <a href="https://github.com/Marcel-B/Tonwerk-AI/issues">issue on GitHub</a>. With a bug, the report from <b>Tools → Log</b> helps: it names the version, the server’s state and the latest warnings, but no settings, keys or addresses.</p>
+    <p>Frequent questions are in the <a href="einrichtung.html#probleme">setup under problems</a>.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Legal">
+        <a href="../../impressum.html" hreflang="de">Imprint (German)</a>
+        <a href="datenschutz.html">Privacy</a>
+        <a href="ki.html">AI</a>
+        <a href="https://github.com/Marcel-B/Tonwerk-AI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

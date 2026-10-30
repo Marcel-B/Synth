@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI and responsibility · Tonwerk-AI</title>
+  <meta name="description" content="What Tonwerk-AI makes with AI, how the files are labelled, which licences the models have and what to watch out for when publishing.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/ai/ki.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/ai/ki.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/ai/ki.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Tonwerk-AI navigation">
+        <a href="./#funktionen">Features</a>
+        <a href="einrichtung.html">Setup</a>
+        <a href="ki.html">AI</a>
+        <a href="datenschutz.html" class="optional">Privacy</a>
+        <a href="../">Plugins</a>
+        <a href="../../ai/ki.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>AI and responsibility</h1>
+    <p class="lead-text">Songs, voices, speech, covers and lyrics from Tonwerk-AI are made by AI models. This page says which models those are, how the files are labelled and what you have to watch out for when you publish any of it.</p>
+    <p class="note">This is an orientation, not legal advice. Anyone who earns money with AI songs or uses other people’s voices should, when in doubt, ask a lawyer. A translation for convenience; the <a href="../../ai/ki.html" hreflang="de">German version</a> is the binding one.</p>
+
+    <h2 id="was">What is AI-generated</h2>
+    <dl class="tools">
+      <dt>Songs</dt>
+      <dd>YuE2 and ACE-Step compose and sing from style, lyrics and score. Versions with another voice (Seed-VC), sung voices (SoulX-Singer) and stems are made or processed by models too.</dd>
+      <dt>Speech</dt>
+      <dd>The speech lab speaks text with speech models, if you like with a cloned voice, and cleans recordings.</dd>
+      <dt>Pictures</dt>
+      <dd>Painted covers come from image models (FLUX, Z-Image, Krea). Photos you choose yourself remain what they are.</dd>
+      <dt>Text</dt>
+      <dd>Lyrics, sketches and the answers on the <b>Write</b> page are written by a language model, locally in LM Studio or, with a key of your own, Claude by Anthropic. The app says there that the answers come from an AI model.</dd>
+    </dl>
+
+    <h2 id="kennzeichnung">Labelling of the files</h2>
+    <p>Since 2 August 2026 the EU’s AI Act (Art. 50) requires AI-generated audio, image and video files to be recognisable as such in a machine-readable way. Tonwerk-AI writes this into these files:</p>
+    <ul>
+      <li><b>Audio</b> (exports as MP3, M4A, FLAC, the copies for the player, downloads of songs and versions, a song’s stems, spoken and sung takes, swapped voices): a field of its own <code>AI_GENERATED</code> with the model and the field <code>DIGITAL_SOURCE_TYPE</code> with the IPTC term <code>trainedAlgorithmicMedia</code>, plus a sentence in the comment.</li>
+      <li><b>Music videos</b>: the same in the video’s metadata, also in the small copy for sharing.</li>
+      <li><b>Painted covers</b>: the IPTC term <code>trainedAlgorithmicMedia</code> in the XMP data that photo services and platforms read.</li>
+    </ul>
+    <p>Not labelled are your own recordings that Tonwerk-AI only processes (cleaned speech, stems of an uploaded file), your photos, and MIDI and scores, which hold only notes. The recording in the Logic project does not carry the label yet; that will follow.</p>
+    <p>Metadata get lost when a file is encoded again, cut or filmed off a screen. Tonwerk-AI has no inaudible watermark yet. Do not remove the label when you pass files on.</p>
+
+    <h2 id="veroeffentlichen">When you publish</h2>
+    <ul>
+      <li><b>Disclose.</b> Anyone who publishes AI songs, AI voices or AI pictures that may seem real must say that they were made with AI (Art. 50(4) of the AI Act; purely private use is exempt). Streaming services, distributors and platforms such as YouTube also ask for their own details when uploading.</li>
+      <li><b>Other people’s voices only with consent.</b> Voice swap, the speech lab and singing can imitate voices. Use only your own voice or that of a person who has agreed; a voice belongs to a person’s personality rights. Imitating the voices of well-known singers is off limits.</li>
+      <li><b>Copyright.</b> A song a model made without a creative contribution of your own is, in Germany, usually not protected by copyright (§ 2(2) UrhG requires a human creation). Your own lyrics, melodies and arrangements can be. Models may resemble existing works or reproduce lines of lyrics; check lyrics and melodies before you publish them.</li>
+      <li><b>Licences of the models.</b> What you may do with a result depends on the model, see below. Some allow only non-commercial use or require attribution.</li>
+      <li><b>Responsibility.</b> The models run on your Mac and with your input. You are responsible for what you make and publish, not I.</li>
+    </ul>
+
+    <h2 id="modelle">Models and licences</h2>
+    <p>Tonwerk-AI brings no models; the server downloads them from their sources during setup, and their licences apply. This overview does not replace reading the licence: licences change, and the linked page is what counts.</p>
+    <div class="table-scroll">
+    <table>
+      <thead><tr><th>Model</th><th>Used for</th><th>Licence</th><th>Commercial use of results</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/multimodal-art-projection/YuE">YuE2</a></td><td>Songs</td><td><a href="https://github.com/multimodal-art-projection/YuE/blob/main/MODEL_LICENSE">CC BY-NC 4.0</a> with an addendum</td><td>Expressly yes for individuals; credit YuE2. A LoRA of your own is an adaptation of the weights and must not be sold.</td></tr>
+        <tr><td><a href="https://github.com/ace-step/ACE-Step-1.5">ACE-Step 1.5</a></td><td>Songs</td><td>MIT</td><td>yes</td></tr>
+        <tr><td><a href="https://huggingface.co/Plachta/Seed-VC">Seed-VC</a></td><td>other voice</td><td>GPL-3.0</td><td>the licence covers the software, not the results; the voice needs consent</td></tr>
+        <tr><td>SoulX-Singer</td><td>Singing</td><td>Apache 2.0</td><td>yes</td></tr>
+        <tr><td><a href="https://huggingface.co/bosonai/higgs-audio-v3-tts-4b">Higgs Audio v3</a></td><td>Speech lab</td><td>Boson Higgs TTS 3 Research and Non-Commercial License</td><td>non-commercial only; the exception “Creator Use Grant” for your own content such as podcasts and videos if Boson AI is credited</td></tr>
+        <tr><td>Chatterbox, Qwen3-TTS, Higgs Audio v2, MOSS-TTS, MossFormer2, DeepFilterNet</td><td>Speech lab</td><td>different per model</td><td>check on the model page before publishing</td></tr>
+        <tr><td>Stem models (mlx-audio-separator)</td><td>Stems</td><td>different per model, some without clear terms</td><td>check</td></tr>
+        <tr><td>FLUX.2 Klein 4B, Z-Image Turbo</td><td>Covers</td><td>Apache 2.0</td><td>yes</td></tr>
+        <tr><td>FLUX.2 Klein 9B</td><td>Covers</td><td>FLUX Non-Commercial License</td><td>no; content filter required (built in)</td></tr>
+        <tr><td>Krea 2 Turbo</td><td>Covers</td><td>Krea 2 Community License</td><td>up to 1 million US dollars revenue; content filter (built in) and, where required by law, an AI notice</td></tr>
+        <tr><td>FLUX 3 Klein</td><td>Covers</td><td>FLUX Community License</td><td>up to 5 million US dollars revenue; filter (built in), AI notice; not for training other image models</td></tr>
+        <tr><td>Whisper large-v3 turbo</td><td>Timing of the lyrics</td><td>MIT</td><td>–</td></tr>
+        <tr><td>Basic Pitch, SheetSage2</td><td>Audio to MIDI, transcription</td><td>Basic Pitch Apache 2.0; SheetSage2 see its project page</td><td>–</td></tr>
+        <tr><td>Language models in LM Studio</td><td>Text</td><td>those of the chosen model</td><td>see the model page</td></tr>
+        <tr><td>Claude (Anthropic)</td><td>Text, translation</td><td><a href="https://www.anthropic.com/legal/commercial-terms">Anthropic Commercial Terms</a></td><td>results belong to you under these terms</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2 id="software">Tonwerk-AI itself</h2>
+    <p>The app and the server are under the <a href="https://polyformproject.org/licenses/noncommercial/1.0.0">PolyForm Noncommercial License 1.0.0</a>: free for any non-commercial purpose, without warranty as far as the law allows. For commercial use of the software, ask me. The third-party libraries in the app and their licences are in <a href="https://github.com/Marcel-B/Tonwerk-AI/blob/main/NOTICE">NOTICE</a>. The software’s licence says nothing about what you may do with songs you made; the models above govern that.</p>
+
+    <p class="stand">As of 23 October 2026</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Legal">
+        <a href="../../impressum.html" hreflang="de">Imprint (German)</a>
+        <a href="datenschutz.html">Privacy</a>
+        <a href="ki.html">AI</a>
+        <a href="https://github.com/Marcel-B/Tonwerk-AI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

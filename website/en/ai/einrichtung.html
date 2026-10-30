@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setup · Tonwerk-AI</title>
+  <meta name="description" content="Setting up Tonwerk-AI: install the server on a Mac with Apple Silicon, make it reachable through Tailscale and connect the app.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/ai/einrichtung.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/ai/einrichtung.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/ai/einrichtung.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>-AI</span></a>
+      <nav aria-label="Tonwerk-AI navigation">
+        <a href="./#funktionen">Features</a>
+        <a href="einrichtung.html">Setup</a>
+        <a href="ki.html">AI</a>
+        <a href="datenschutz.html" class="optional">Privacy</a>
+        <a href="./#hilfe" class="optional">Help</a>
+        <a href="../">Plugins</a>
+        <a href="../../ai/einrichtung.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Setup</h1>
+    <p>Tonwerk-AI has two parts: the <b>server</b> on a Mac, which has the models compute and stores the songs, and the <b>app</b> on iPhone, iPad or Mac, which operates it. The server is set up once and updates itself after that. If you want to look first, take the <a href="#demo">demo mode</a>.</p>
+
+    <h2 id="voraussetzungen">What you need</h2>
+    <ul>
+      <li>A Mac with Apple Silicon (M1 or newer) and macOS 14 or newer, with at least 16 GB of memory (24 GB and more is comfortable) and about 20 GB of free space for YuE2, more for further models. It is best left running, a Mac mini for example.</li>
+      <li>For the app an iPhone or iPad with iOS 17 or newer, or a Mac with macOS 14.</li>
+      <li><a href="https://tailscale.com">Tailscale</a> (free for personal use) on the server and on every device with the app, signed in to the same tailnet.</li>
+    </ul>
+
+    <h2 id="server">1. Install the server</h2>
+    <p>On the Mac that is to compute, in Terminal:</p>
+    <pre>xcode-select --install
+git clone https://github.com/Marcel-B/Tonwerk-AI.git ~/repos/Tonwerk-AI
+~/repos/Tonwerk-AI/deploy/setup-mac.sh</pre>
+    <p>The first line installs Apple’s Command Line Tools (git, compiler) if they are missing. The script then checks the Mac and installs what is missing: Homebrew, uv, ffmpeg, Node.js and the .NET 10 SDK. After that it fetches YuE2 as a checkout of YuE Studio in the tested version, builds the bridge to the Neural Engine, downloads the models (about 7 GB) and starts the server as a service that runs while the user is signed in. At the end it computes once as a test.</p>
+    <p>The script may run as often as you like; it skips what is already there. If the YuE Studio app is already installed, the server shares its models and song folder (<code>~/Music/YuE Studio</code>), and both see the same library.</p>
+
+    <h3 id="optionen">Options</h3>
+    <p>Further tools come with options, on the first run or later:</p>
+    <dl class="tools">
+      <dt><code>--transcription</code></dt><dd>SheetSage2 for transcription (about 2 GB)</dd>
+      <dt><code>--voices</code></dt><dd>stem separation and Seed-VC for other voices</dd>
+      <dt><code>--speech</code></dt><dd>the speech lab with mlx-audio</dd>
+      <dt><code>--images</code></dt><dd>image models for painted covers: FLUX.2 Klein, Z-Image Turbo, Krea 2 Turbo and FLUX 3 Klein (the last two only on a Mac with 32 GB)</dd>
+      <dt><code>--midi</code></dt><dd>Basic Pitch for audio to MIDI</dd>
+      <dt><code>--whisper</code></dt><dd>Whisper for the lyrics following along</dd>
+      <dt><code>--montage</code></dt><dd>music videos from your own photos and clips</dd>
+      <dt><code>--ace</code></dt><dd>ACE-Step as the second song model</dd>
+      <dt><code>--singing</code></dt><dd>SoulX-Singer for the Singing page (about 3 GB)</dd>
+      <dt><code>--all</code></dt><dd>everything above</dd>
+    </dl>
+    <p>To add an option later without losing the earlier ones:</p>
+    <pre>~/repos/Tonwerk-AI/deploy/setup-mac.sh $(cat "$HOME/Library/Application Support/YuE UI/setup-options") --images</pre>
+    <p>Models download on first use; until then the page in the app shows that it is loading.</p>
+
+    <h3 id="updates">Updates</h3>
+    <p>The script switches on automatic updates: every five minutes the Mac looks for new versions, waits until nothing computes, backs up the database and settings to <code>~/Backups/YueUI</code> and installs the new version. Waiting jobs survive the restart. <code>deploy/update.sh status</code> shows the state, <code>deploy/update.sh off</code> switches it off.</p>
+
+    <h2 id="tailscale">2. Make the server reachable</h2>
+    <p>The server listens only on the Mac itself (<code>127.0.0.1:5090</code>) and has no login of its own. It becomes reachable through Tailscale, only for the devices of your tailnet and with an HTTPS certificate:</p>
+    <pre>tailscale serve --bg --https=8443 5090</pre>
+    <p>After that it is called <code>https://&lt;name-of-the-mac&gt;.&lt;tailnet&gt;.ts.net:8443</code>; <code>tailscale serve status</code> shows the exact name. In a browser this address with <code>/ui/</code> after it opens the web interface; the app needs the same address. Never put the server on the open internet with <code>tailscale funnel</code>: anyone could then make and delete songs.</p>
+
+    <h2 id="app">3. Install the app</h2>
+    <ul>
+      <li><b>Mac:</b> download <a href="https://github.com/Marcel-B/Tonwerk-AI/releases/latest/download/Tonwerk-AI.dmg">Tonwerk-AI.dmg</a> (all versions on <a href="https://github.com/Marcel-B/Tonwerk-AI/releases">GitHub Releases</a>), open it and drag Tonwerk-AI into the <b>Applications</b> folder. The app is signed with a Developer ID and notarized by Apple; macOS opens it without asking. It announces new versions itself: menu <b>Tonwerk-AI → Check for updates …</b>, automatically too if set in the settings; <b>Install</b> replaces the app and restarts it. If you like, you can still build it yourself from the source: open <code>apple/Tonwerk.xcodeproj</code> in Xcode, target <b>My Mac</b>; built that way, it announces no updates.</li>
+      <li><b>iPhone and iPad:</b> during testing Tonwerk-AI comes through <a href="https://testflight.apple.com">TestFlight</a>. With the invitation, install the TestFlight app and get Tonwerk-AI there.</li>
+    </ul>
+
+    <h2 id="verbinden">4. Connect the app</h2>
+    <ol>
+      <li>Switch on Tailscale on the device.</li>
+      <li>Open Tonwerk-AI. On first start the app asks for the server’s address: the one from step 2, such as <code>mac-mini.tailnet.ts.net:8443</code>. It adds <code>https://</code> itself; the web interface’s address with <code>/ui/…</code> works too.</li>
+      <li><b>Connect</b>. The app loads the library, playlists and queue and stays up to date live through an event stream.</li>
+    </ol>
+    <p>On the server Mac itself <code>http://127.0.0.1:5090</code> works too, without Tailscale. You choose another server in the app’s settings under <b>Use another server</b>. The address is the only thing the app remembers about the server.</p>
+    <p>On first use the app asks for the permissions a page needs: <b>Local Network</b> for a server on the home network, <b>Microphone</b> for voices in the speech lab and when singing, <b>Bluetooth</b> for MIDI instruments over Bluetooth. Without them, the rest still works.</p>
+    <p>The app speaks German or English, following the system’s language (on iPhone and iPad also per app in the Settings app).</p>
+
+    <h2 id="demo">Try without a server</h2>
+    <p>On the start screen, <b>Try without a server</b> leads into a built-in sample library with three short songs synthesized for it, playlists, stars, notes and a score. It lives in the app, nothing goes onto the network, and changes last only until the app quits. What needs the models (new songs, voices, most tools) says there that it needs your own server. You get back in the settings with <b>Connect your own server</b>.</p>
+
+    <h2 id="extras">What the server can use in addition</h2>
+    <dl class="tools">
+      <dt>LM Studio</dt>
+      <dd>For <b>Draft lyrics</b> the Mac needs <a href="https://lmstudio.ai">LM Studio</a> with a language model, by default <code>google/gemma-4-26b-a4b-qat</code> (about 15 GB; with 16 GB of memory better <code>google/gemma-4-e4b</code>). LM Studio need not be open; the server starts it and loads the model itself and unloads it after every draft.</dd>
+      <dt>Claude</dt>
+      <dd>The <b>Sketch</b> page needs, and lyrics and the translation of cover descriptions can use, an API key of your own from Anthropic (<a href="https://console.anthropic.com">console.anthropic.com</a>). It goes into <code>~/.config/tonwerk/anthropic.key</code> (one line, <code>chmod 600</code>). What then goes to Anthropic is in the <a href="datenschutz.html#server">privacy policy</a>; Anthropic bills you for the costs.</dd>
+      <dt>Nextcloud</dt>
+      <dd>A nightly backup of the database and songs into your own Nextcloud (or any WebDAV storage): WebDAV address, user and app password in <code>~/.config/tonwerk/nextcloud.env</code> as <code>NEXTCLOUD_WEBDAV_URL</code>, <code>NEXTCLOUD_USERNAME</code> and <code>NEXTCLOUD_APP_PASSWORD</code>.</dd>
+      <dt>External disk</dt>
+      <dd><code>deploy/move-to-volume.sh</code> shows how large which parts (models, songs, stems, …) are; <code>deploy/move-to-volume.sh /Volumes/&lt;disk&gt; yue2 songs</code> moves them to an external SSD and leaves a link behind, <code>--back</code> brings a part back. For the service to read the disk, its <code>dotnet</code> needs <b>Full Disk Access</b> in System Settings.</dd>
+    </dl>
+
+    <h2 id="probleme">Problems</h2>
+    <dl class="tools">
+      <dt>No connection</dt>
+      <dd>Is Tailscale switched on on the device and in the same tailnet? Does <code>tailscale serve status</code> on the Mac list port 8443? Does the address open the web interface in the device’s browser? Is the Mac awake with a user signed in (the service runs in their session)?</dd>
+      <dt>A tool says something is missing</dt>
+      <dd>Then the matching <a href="#optionen">option</a> is not set up yet. Run <code>setup-mac.sh</code> again with the saved options plus the new one.</dd>
+      <dt>A job waits long</dt>
+      <dd>The Mac computes one large model at a time; the queue shows at the top which one holds the memory and what each job waits for. If the YuE Studio app is open, a second model runs there that needs memory: better close it.</dd>
+      <dt>Something goes wrong</dt>
+      <dd><b>Tools → Log</b> shows the server’s messages and copies a report without settings, keys and addresses that you can <a href="./#hilfe">send</a> me.</dd>
+    </dl>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk-AI</span>
+      <nav aria-label="Legal">
+        <a href="../../impressum.html" hreflang="de">Imprint (German)</a>
+        <a href="datenschutz.html">Privacy</a>
+        <a href="ki.html">AI</a>
+        <a href="https://github.com/Marcel-B/Tonwerk-AI">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
