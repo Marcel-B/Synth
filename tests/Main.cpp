@@ -1,3 +1,5 @@
+#include "Language.h"
+
 #include <juce_core/juce_core.h>
 #include <cstdio>
 #include <juce_events/juce_events.h>
@@ -6,6 +8,9 @@ int main()
 {
     // The processor starts a timer and the editor's code needs a message manager, even if no window opens.
     juce::ScopedJuceInitialiser_GUI juce;
+    // The tests read the German texts unless TONWERK_LANGUAGE says otherwise (English for a look at the editors).
+    if (juce::SystemStats::getEnvironmentVariable("TONWERK_LANGUAGE", {}).isEmpty())
+        tonwerkui::forceLanguage(tonwerkui::Language::german);
     juce::UnitTestRunner runner;
     runner.setAssertOnFailure(false);
     // TONWERK_TEST_CATEGORY=Presets runs one category, e.g. while tuning sounds.

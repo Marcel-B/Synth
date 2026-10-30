@@ -226,7 +226,7 @@ void RumbleProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     cutoffNow.store(engine.cutoff(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* RumbleProcessor::createEditor() { return tonwerkui::forHost(new RumbleEditor(*this)); }
+juce::AudioProcessorEditor* RumbleProcessor::createEditor() { return tonwerkui::forHost<RumbleEditor>(*this); }
 
 void RumbleProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

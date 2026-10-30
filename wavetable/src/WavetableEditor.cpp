@@ -18,7 +18,8 @@ constexpr int kKeyboard = 56;
 void fill(juce::ComboBox& box, juce::AudioProcessorValueTreeState& state, const juce::String& parameterId)
 {
     if (auto* choice = dynamic_cast<juce::AudioParameterChoice*>(state.getParameter(parameterId)))
-        box.addItemList(choice->choices, 1);
+        for (int i = 0; i < choice->choices.size(); ++i)
+            box.addItem(retranslate(choice->choices[i]), i + 1);
     else
         jassertfalse;
 }
@@ -164,7 +165,7 @@ ModRow::ModRow(juce::AudioProcessorValueTreeState& state, int slot)
     amountAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, base + "Amount", amount);
 
     bipolar.setButtonText(utf8("±"));
-    bipolar.setTooltip(utf8("Bipolar: die Quelle schwingt um die Mitte statt nur nach oben"));
+    bipolar.setTooltip(tr("Bipolar: die Quelle schwingt um die Mitte statt nur nach oben"));
     addAndMakeVisible(bipolar);
     bipolarAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, base + "Bipolar", bipolar);
 }
@@ -249,11 +250,11 @@ WavetableEditor::WavetableEditor(WavetableProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

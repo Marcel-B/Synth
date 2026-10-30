@@ -315,7 +315,7 @@ void BassProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* BassProcessor::createEditor() { return tonwerkui::forHost(new BassEditor(*this)); }
+juce::AudioProcessorEditor* BassProcessor::createEditor() { return tonwerkui::forHost<BassEditor>(*this); }
 
 int BassProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

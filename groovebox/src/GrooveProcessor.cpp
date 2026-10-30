@@ -607,7 +607,7 @@ void GrooveProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* GrooveProcessor::createEditor() { return tonwerkui::forHost(new GrooveEditor(*this)); }
+juce::AudioProcessorEditor* GrooveProcessor::createEditor() { return tonwerkui::forHost<GrooveEditor>(*this); }
 
 int GrooveProcessor::getNumPrograms() { return (int) factoryKits().size(); }
 

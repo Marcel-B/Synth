@@ -438,7 +438,7 @@ void RigProcessor::setStateInformation(const void* data, int sizeInBytes)
     });
 }
 
-juce::AudioProcessorEditor* RigProcessor::createEditor() { return tonwerkui::forHost(new RigEditor(*this)); }
+juce::AudioProcessorEditor* RigProcessor::createEditor() { return tonwerkui::forHost<RigEditor>(*this); }
 } // namespace tonwerkrig
 
 #ifndef TONWERK_RIG_NO_ENTRY

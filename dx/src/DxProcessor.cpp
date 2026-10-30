@@ -310,7 +310,7 @@ void DxProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor(readPatch())));
 }
 
-juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost(new DxEditor(*this)); }
+juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost<DxEditor>(*this); }
 
 int DxProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

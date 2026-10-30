@@ -206,7 +206,7 @@ void GlueProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     level.store(loudest, std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* GlueProcessor::createEditor() { return tonwerkui::forHost(new GlueEditor(*this)); }
+juce::AudioProcessorEditor* GlueProcessor::createEditor() { return tonwerkui::forHost<GlueEditor>(*this); }
 
 void GlueProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

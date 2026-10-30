@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "LfoEditor.h"
 #include "LfoEngine.h"
 #include "LfoPresets.h"
@@ -233,7 +234,7 @@ public:
             LfoProcessor p;
             run(p, 4 * kBlock);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<LfoEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<LfoEditor>(created.get());
             expect(editor != nullptr);
             for (auto* child : editor->getChildren())
                 expect(editor->getLocalBounds().contains(child->getBounds()));

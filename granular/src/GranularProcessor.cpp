@@ -487,7 +487,7 @@ std::shared_ptr<const GrainSource> GranularProcessor::shownSource() const
     return std::shared_ptr<const GrainSource>(std::shared_ptr<const GrainSource>(), &SourceBank::instance().source(index));
 }
 
-juce::AudioProcessorEditor* GranularProcessor::createEditor() { return tonwerkui::forHost(new GranularEditor(*this)); }
+juce::AudioProcessorEditor* GranularProcessor::createEditor() { return tonwerkui::forHost<GranularEditor>(*this); }
 
 int GranularProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

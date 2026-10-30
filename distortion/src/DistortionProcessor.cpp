@@ -193,7 +193,7 @@ void DistortionProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
 juce::AudioProcessorEditor* DistortionProcessor::createEditor()
 {
-    return tonwerkui::forHost(new DistortionEditor(*this));
+    return tonwerkui::forHost<DistortionEditor>(*this);
 }
 
 void DistortionProcessor::getStateInformation(juce::MemoryBlock& destData)

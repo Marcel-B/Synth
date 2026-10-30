@@ -202,7 +202,7 @@ void ChorusProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     phase.store(engine.phaseNow(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ChorusProcessor::createEditor() { return tonwerkui::forHost(new ChorusEditor(*this)); }
+juce::AudioProcessorEditor* ChorusProcessor::createEditor() { return tonwerkui::forHost<ChorusEditor>(*this); }
 
 void ChorusProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

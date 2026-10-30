@@ -417,7 +417,7 @@ void PhysicalProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PhysicalProcessor::createEditor() { return tonwerkui::forHost(new PhysicalEditor(*this)); }
+juce::AudioProcessorEditor* PhysicalProcessor::createEditor() { return tonwerkui::forHost<PhysicalEditor>(*this); }
 
 int PhysicalProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

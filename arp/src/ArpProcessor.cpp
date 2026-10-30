@@ -216,7 +216,7 @@ void ArpProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuff
     keyCount = held;
 }
 
-juce::AudioProcessorEditor* ArpProcessor::createEditor() { return tonwerkui::forHost(new ArpEditor(*this)); }
+juce::AudioProcessorEditor* ArpProcessor::createEditor() { return tonwerkui::forHost<ArpEditor>(*this); }
 
 void ArpProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

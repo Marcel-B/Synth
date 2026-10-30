@@ -196,7 +196,7 @@ void StutterProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     repeatNow.store(engine.repeatNumber(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* StutterProcessor::createEditor() { return tonwerkui::forHost(new StutterEditor(*this)); }
+juce::AudioProcessorEditor* StutterProcessor::createEditor() { return tonwerkui::forHost<StutterEditor>(*this); }
 
 void StutterProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

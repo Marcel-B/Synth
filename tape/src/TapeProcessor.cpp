@@ -128,7 +128,7 @@ void TapeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     samplesRun += buffer.getNumSamples();
 }
 
-juce::AudioProcessorEditor* TapeProcessor::createEditor() { return tonwerkui::forHost(new TapeEditor(*this)); }
+juce::AudioProcessorEditor* TapeProcessor::createEditor() { return tonwerkui::forHost<TapeEditor>(*this); }
 
 void TapeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

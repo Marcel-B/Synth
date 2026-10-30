@@ -669,7 +669,7 @@ public:
             ExpanderProcessor p;
             p.setCurrentProgram(7);
             std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
-            expect(dynamic_cast<ExpanderEditor*>(editor.get()) != nullptr);
+            expect(tonwerkui::innerEditor<ExpanderEditor>(editor.get()) != nullptr);
             render(p, phrase(), 0.4);
             expectGreaterThan(editor->getWidth(), 700);
             const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});

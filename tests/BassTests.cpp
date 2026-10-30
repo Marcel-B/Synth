@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "BassEditor.h"
 #include "BassEngine.h"
 #include "BassPresets.h"
@@ -369,7 +370,7 @@ public:
             BassProcessor p;
             p.setCurrentProgram(1);
             std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
-            expect(dynamic_cast<BassEditor*>(editor.get()) != nullptr);
+            expect(tonwerkui::innerEditor<BassEditor>(editor.get()) != nullptr);
             render(p, acidLine(36), 0.4);
             expectGreaterThan(editor->getWidth(), 700);
             const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});

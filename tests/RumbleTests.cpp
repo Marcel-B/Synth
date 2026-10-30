@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "RumbleEditor.h"
@@ -438,7 +439,7 @@ public:
             RumbleProcessor p;
             p.setCurrentProgram(1);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<RumbleEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<RumbleEditor>(created.get());
             expect(editor != nullptr);
             render(p, kickLoop(6));
             editor->view.refresh();

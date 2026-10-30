@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "MultibandEditor.h"
 #include "MultibandEngine.h"
@@ -405,7 +406,7 @@ public:
             p.setCurrentProgram(5);
             expectEquals(p.getProgramName(5), juce::String("Volldruck"));
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<MultibandEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<MultibandEditor>(created.get());
             expect(editor != nullptr);
             const auto source = mixLoop();
             p.setPlayConfigDetails(2, 2, kRate, kBlock);

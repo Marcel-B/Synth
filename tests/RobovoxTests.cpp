@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "RobovoxEditor.h"
 #include "RobovoxEngine.h"
 #include "RobovoxProcessor.h"
@@ -336,7 +337,7 @@ public:
             expect(editor != nullptr && editor->getWidth() > 0);
             for (auto* child : editor->getChildren())
                 expect(editor->getLocalBounds().contains(child->getBounds()), child->getName());
-            if (auto* robovox = dynamic_cast<RobovoxEditor*>(editor.get()))
+            if (auto* robovox = tonwerkui::innerEditor<RobovoxEditor>(editor.get()))
             {
                 robovox->pitch.view.refresh();
                 expectEquals(robovox->pitch.view.carrierText(), juce::String("A1"));

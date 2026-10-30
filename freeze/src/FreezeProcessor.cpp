@@ -213,7 +213,7 @@ void FreezeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     freezes = engine.freezesTaken();
 }
 
-juce::AudioProcessorEditor* FreezeProcessor::createEditor() { return tonwerkui::forHost(new FreezeEditor(*this)); }
+juce::AudioProcessorEditor* FreezeProcessor::createEditor() { return tonwerkui::forHost<FreezeEditor>(*this); }
 
 void FreezeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

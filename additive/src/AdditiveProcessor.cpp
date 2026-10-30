@@ -448,7 +448,7 @@ void AdditiveProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* AdditiveProcessor::createEditor() { return tonwerkui::forHost(new AdditiveEditor(*this)); }
+juce::AudioProcessorEditor* AdditiveProcessor::createEditor() { return tonwerkui::forHost<AdditiveEditor>(*this); }
 
 int AdditiveProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

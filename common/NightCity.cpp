@@ -1,5 +1,6 @@
 #include "NightCity.h"
 
+#include "Language.h"
 #include "MidiLearn.h"
 #include "Platform.h"
 
@@ -32,7 +33,7 @@ void paintPanel(juce::Graphics& g, juce::Rectangle<int> area, const juce::String
     g.fillRect(box.getX() + 1.0f, box.getY() + 5.0f, 3.0f, 12.0f);
     g.setFont(mono(12.0f));
     // juce::String upper-cases ASCII only, so titles with umlauts come in capitals already.
-    g.drawText(title.toUpperCase(), area.withHeight(kTitle).reduced(10, 0), juce::Justification::centredLeft);
+    g.drawText(tr(title).toUpperCase(), area.withHeight(kTitle).reduced(10, 0), juce::Justification::centredLeft);
 }
 
 juce::Path paintScreen(juce::Graphics& g, juce::Rectangle<float> area)
@@ -196,7 +197,7 @@ private:
 
 Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& parameterId, const juce::String& text,
                  int slotCount)
-    : state(s), id(parameterId), label(text)
+    : state(s), id(parameterId), label(tr(text))
 {
     name.setText(label, juce::dontSendNotification);
     name.setJustificationType(juce::Justification::centred);
@@ -208,14 +209,16 @@ Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& para
     jassert(parameter != nullptr);
     if (dynamic_cast<juce::AudioParameterBool*>(parameter) != nullptr)
     {
-        toggle = std::make_unique<juce::ToggleButton>(utf8("an"));
+        toggle = std::make_unique<juce::ToggleButton>(tr("an"));
         addAndMakeVisible(*toggle);
         toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
     }
     else if (auto* choice = dynamic_cast<juce::AudioParameterChoice*>(parameter))
     {
         menu = std::make_unique<juce::ComboBox>();
-        menu->addItemList(choice->choices, 1);
+        // The parameter keeps the language it was made in; the menu speaks the current one.
+        for (int i = 0; i < choice->choices.size(); ++i)
+            menu->addItem(retranslate(choice->choices[i]), i + 1);
         addAndMakeVisible(*menu);
         menuAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state, parameterId, *menu);
     }
@@ -254,7 +257,7 @@ void Control::showMapping()
         return;
     if (learn->learning() == id)
     {
-        name.setText(utf8("CC lernen …"), juce::dontSendNotification);
+        name.setText(tr("CC lernen …"), juce::dontSendNotification);
         name.setColour(juce::Label::textColourId, colours::yellow);
     }
     else if (const int controller = learn->controllerFor(id); controller >= 0)
@@ -278,9 +281,9 @@ void Control::showMidiMenu()
     const int controller = learn->controllerFor(id);
     juce::PopupMenu popup;
     popup.addSectionHeader(controller >= 0 ? "MIDI: CC " + juce::String(controller) : juce::String("MIDI"));
-    popup.addItem(1, learning ? juce::String("Lernen abbrechen") : utf8("MIDI lernen (nächster Controller)"));
+    popup.addItem(1, learning ? tr("Lernen abbrechen") : tr("MIDI lernen (nächster Controller)"));
     if (controller >= 0)
-        popup.addItem(2, "CC " + juce::String(controller) + " entfernen");
+        popup.addItem(2, "CC " + juce::String(controller) + " " + tr("entfernen"));
     juce::Component::SafePointer<Control> safe(this);
     popup.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(slider.get()), [safe, learning](int chosen) {
         if (safe == nullptr)
@@ -309,7 +312,7 @@ void Control::resized()
 
 Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle, std::vector<Row> rows,
                  const juce::String& powerId, Display displayRoom)
-    : title(sectionTitle), display(displayRoom), items(std::move(rows))
+    : title(tr(sectionTitle)), display(displayRoom), items(std::move(rows))
 {
     juce::StringArray switchIds;
     for (const auto& row : items)

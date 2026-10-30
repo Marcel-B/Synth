@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "NeuroEditor.h"
 #include "NeuroEngine.h"
 #include "NeuroPresets.h"
@@ -448,7 +449,7 @@ public:
             NeuroProcessor p;
             p.setCurrentProgram(6);
             std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
-            expect(dynamic_cast<NeuroEditor*>(editor.get()) != nullptr);
+            expect(tonwerkui::innerEditor<NeuroEditor>(editor.get()) != nullptr);
             render(p, riff(36), 0.4);
             expectGreaterThan(editor->getWidth(), 700);
             const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});

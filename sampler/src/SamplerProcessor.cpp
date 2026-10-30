@@ -437,7 +437,7 @@ std::shared_ptr<const Sample> SamplerProcessor::shownSample() const
     return std::shared_ptr<const Sample>(std::shared_ptr<const Sample>(), &SampleBank::instance().sample(index));
 }
 
-juce::AudioProcessorEditor* SamplerProcessor::createEditor() { return tonwerkui::forHost(new SamplerEditor(*this)); }
+juce::AudioProcessorEditor* SamplerProcessor::createEditor() { return tonwerkui::forHost<SamplerEditor>(*this); }
 
 int SamplerProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

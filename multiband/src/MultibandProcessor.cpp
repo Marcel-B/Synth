@@ -181,7 +181,7 @@ void MultibandProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mi
 
 juce::AudioProcessorEditor* MultibandProcessor::createEditor()
 {
-    return tonwerkui::forHost(new MultibandEditor(*this));
+    return tonwerkui::forHost<MultibandEditor>(*this);
 }
 
 void MultibandProcessor::getStateInformation(juce::MemoryBlock& destData)

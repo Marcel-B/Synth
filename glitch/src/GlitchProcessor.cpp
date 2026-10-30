@@ -141,7 +141,7 @@ void ChromeGlitchProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
 juce::AudioProcessorEditor* ChromeGlitchProcessor::createEditor()
 {
-    return tonwerkui::forHost(new ChromeGlitchEditor(*this));
+    return tonwerkui::forHost<ChromeGlitchEditor>(*this);
 }
 
 void ChromeGlitchProcessor::getStateInformation(juce::MemoryBlock& destData)

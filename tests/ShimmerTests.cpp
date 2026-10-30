@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "ShimmerEditor.h"
@@ -413,7 +414,7 @@ public:
             ShimmerProcessor p;
             p.setCurrentProgram(1);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<ShimmerEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<ShimmerEditor>(created.get());
             expect(editor != nullptr);
             render(p, padAndPlucks());
             editor->tail.view.refresh();

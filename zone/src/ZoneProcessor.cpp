@@ -233,7 +233,7 @@ void ZoneProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     level.store(std::max(level.load(std::memory_order_relaxed), engine.levelNow()), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return tonwerkui::forHost(new ZoneEditor(*this)); }
+juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return tonwerkui::forHost<ZoneEditor>(*this); }
 
 void ZoneProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

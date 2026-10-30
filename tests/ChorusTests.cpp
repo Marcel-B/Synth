@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "ChorusEditor.h"
 #include "ChorusEngine.h"
 #include "ChorusPresets.h"
@@ -487,7 +488,7 @@ public:
             ChorusProcessor p;
             p.setCurrentProgram(1);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<ChorusEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<ChorusEditor>(created.get());
             expect(editor != nullptr);
             render(p, padAndPlucks());
             editor->sweep.view.refresh();

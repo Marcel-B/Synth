@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "ScopeEditor.h"
 #include "ScopeEngine.h"
 #include "ScopePresets.h"
@@ -274,7 +275,7 @@ public:
             p.setCurrentProgram((int) factoryPresets().size() - 1);
             expect(p.readSettings().mode == Mode::tuner);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<ScopeEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<ScopeEditor>(created.get());
             p.setPlayConfigDetails(2, 2, kRate, kBlock);
             p.prepareToPlay(kRate, kBlock);
             // A guitar's A string twelve cents flat, Logic's A1.
@@ -331,7 +332,7 @@ public:
                 ScopeProcessor p;
                 p.setCurrentProgram(program);
                 std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-                auto* editor = dynamic_cast<ScopeEditor*>(created.get());
+                auto* editor = tonwerkui::innerEditor<ScopeEditor>(created.get());
                 expect(editor != nullptr);
                 PlayHead head;
                 p.setPlayHead(&head);

@@ -113,7 +113,7 @@ if(TONWERK_MAC_STORE)
 endif()
 
 # The Night City look the plugins share: colours, panels, knobs, the oscilloscope (common/).
-set(TONWERK_UI_SOURCES common/NightCity.cpp common/MidiLearn.cpp)
+set(TONWERK_UI_SOURCES common/NightCity.cpp common/MidiLearn.cpp common/Language.cpp common/English.cpp)
 
 set(TONWERK_SOURCES
     src/dsp/Defaults.cpp
@@ -186,7 +186,7 @@ set(CHROME_GLITCH_SOURCES
     glitch/src/GlitchProcessor.cpp
     common/EffectPresets.cpp)
 
-target_sources(ChromeGlitch PRIVATE ${CHROME_GLITCH_SOURCES})
+target_sources(ChromeGlitch PRIVATE ${CHROME_GLITCH_SOURCES} common/Language.cpp common/English.cpp)
 target_include_directories(ChromeGlitch PRIVATE common)
 target_compile_definitions(ChromeGlitch PUBLIC ${TONWERK_DEFINITIONS})
 target_link_libraries(ChromeGlitch
@@ -1434,7 +1434,8 @@ if(TONWERK_TESTS AND NOT TONWERK_STORE)
         ${TONWERK_RIG_SOURCES}
         tests/RigTests.cpp
         tests/PresetTests.cpp
-        tests/EffectPresetTests.cpp)
+        tests/EffectPresetTests.cpp
+        tests/LanguageTests.cpp)
     target_include_directories(TonwerkSynthTests PRIVATE ${TONWERK_ALL_INCLUDES})
     target_compile_definitions(TonwerkSynthTests PRIVATE
         ${TONWERK_DEFINITIONS}

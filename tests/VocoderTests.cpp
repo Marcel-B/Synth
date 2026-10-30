@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "VocoderEditor.h"
@@ -463,7 +464,7 @@ public:
         {
             VocoderProcessor p;
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<VocoderEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<VocoderEditor>(created.get());
             expect(editor != nullptr);
             // Rendered without releasing, so the notes are still held for the display.
             p.setPlayConfigDetails(2, 2, kRate, kBlock);

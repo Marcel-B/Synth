@@ -400,7 +400,7 @@ void ExpanderProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* ExpanderProcessor::createEditor() { return tonwerkui::forHost(new ExpanderEditor(*this)); }
+juce::AudioProcessorEditor* ExpanderProcessor::createEditor() { return tonwerkui::forHost<ExpanderEditor>(*this); }
 
 int ExpanderProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

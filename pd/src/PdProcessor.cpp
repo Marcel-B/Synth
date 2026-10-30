@@ -418,7 +418,7 @@ void PdProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PdProcessor::createEditor() { return tonwerkui::forHost(new PdEditor(*this)); }
+juce::AudioProcessorEditor* PdProcessor::createEditor() { return tonwerkui::forHost<PdEditor>(*this); }
 
 int PdProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

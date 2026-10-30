@@ -13,64 +13,62 @@ using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
 
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
-juce::StringArray utf8Array(std::initializer_list<const char*> items)
-{
-    juce::StringArray result;
-    for (const auto* item : items)
-        result.add(utf8(item));
-    return result;
-}
+using tonwerkui::Localised;
+using tonwerkui::tr;
+
+/** A unit's text after a value, with its space; empty without one. */
+juce::String suffixFor(const char* unit) { return *unit == 0 ? juce::String() : " " + tr(unit); }
 
 /** A number shown whole with its unit; `centre` skews the knob so that value sits halfway. */
-void number(Layout& layout, const juce::String& id, const char* name, float min, float max, float initial,
+void number(Layout& layout, const juce::String& id, const Localised& name, float min, float max, float initial,
             const char* unit, float centre = 0.0f)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const auto suffix = suffixFor(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, name, range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
 /** Shares and amounts in whole percent, -100 to 100 when `bipolar`. */
-void percent(Layout& layout, const juce::String& id, const char* name, float initial, bool bipolar = false)
+void percent(Layout& layout, const juce::String& id, const Localised& name, float initial, bool bipolar = false)
 {
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(bipolar ? -1.0f : 0.0f, 1.0f), initial,
+        juce::ParameterID { id, 1 }, name, juce::NormalisableRange<float>(bipolar ? -1.0f : 0.0f, 1.0f), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
 /** Times in whole milliseconds, skewed so the short ones that shape a bass get most of the turn. */
-void milliseconds(Layout& layout, const juce::String& id, const char* name, float max, float initial)
+void milliseconds(Layout& layout, const juce::String& id, const Localised& name, float max, float initial)
 {
     number(layout, id, name, 0.0f, max, initial, "ms", max / 20.0f);
 }
 
-void integer(Layout& layout, const juce::String& id, const char* name, int min, int max, int initial,
+void integer(Layout& layout, const juce::String& id, const Localised& name, int min, int max, int initial,
              const char* unit = "")
 {
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const auto suffix = suffixFor(unit);
     auto toText = [suffix](int value, int) { return juce::String(value) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getIntValue(); };
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { id, 1 }, utf8(name), min, max, initial,
+        juce::ParameterID { id, 1 }, name, min, max, initial,
         juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
-void choice(Layout& layout, const juce::String& id, const char* name, const juce::StringArray& items, int initial)
+void choice(Layout& layout, const juce::String& id, const Localised& name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, name, items, initial));
 }
 
-void toggle(Layout& layout, const juce::String& id, const char* name, bool initial)
+void toggle(Layout& layout, const juce::String& id, const Localised& name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial));
 }
 
 juce::StringArray divisionNames()
@@ -83,29 +81,24 @@ juce::StringArray divisionNames()
 
 void oscillator(Layout& layout, const juce::String& p, const char* label, bool on)
 {
-    const juce::String name(label);
-    auto n = [&name](const char* what) { return (name + " " + utf8(what)).toStdString(); };
-    // juce::String keeps the text; the helpers take UTF-8.
-    const auto onName = n("an"), table = n("Wavetable"), position = n("Position"), warpMode = n("Warp-Modus"),
-               warp = n("Warp"), octave = n("Oktave"), semi = n("Halbton"), fine = n("Fein"), unison = n("Unison"),
-               detune = n("Detune"), blend = n("Blend"), width = n("Breite"), level = n("Pegel");
-    toggle(layout, p + "On", onName.c_str(), on);
+    const auto n = [label](const char* what) { return tr(label) + " " + tr(what); };
+    toggle(layout, p + "On", n("an"), on);
     juce::StringArray tables;
     for (const auto& t : WavetableBank::names())
-        tables.add(utf8(t.c_str()));
-    choice(layout, p + "Table", table.c_str(), tables, 0);
-    percent(layout, p + "Position", position.c_str(), 0.0f);
-    choice(layout, p + "WarpMode", warpMode.c_str(),
-           utf8Array({ "Aus", "Sync", "Bend", "PWM", p == "a" ? "FM von B" : "FM von A" }), 0);
-    percent(layout, p + "Warp", warp.c_str(), 0.0f);
-    integer(layout, p + "Octave", octave.c_str(), -3, 3, 0, "Okt");
-    integer(layout, p + "Semi", semi.c_str(), -12, 12, 0, "HT");
-    number(layout, p + "Fine", fine.c_str(), -100.0f, 100.0f, 0.0f, "ct");
-    integer(layout, p + "Unison", unison.c_str(), 1, kMaxUnison, 1);
-    number(layout, p + "Detune", detune.c_str(), 0.0f, 100.0f, 20.0f, "ct", 25.0f);
-    percent(layout, p + "Blend", blend.c_str(), 0.75f);
-    percent(layout, p + "Width", width.c_str(), 0.8f);
-    percent(layout, p + "Level", level.c_str(), 0.75f);
+        tables.add(tr(t.c_str()));
+    choice(layout, p + "Table", n("Wavetable"), tables, 0);
+    percent(layout, p + "Position", n("Position"), 0.0f);
+    choice(layout, p + "WarpMode", n("Warp-Modus"),
+           tr({ "Aus", "Sync", "Bend", "PWM", p == "a" ? "FM von B" : "FM von A" }), 0);
+    percent(layout, p + "Warp", n("Warp"), 0.0f);
+    integer(layout, p + "Octave", n("Oktave"), -3, 3, 0, "Okt");
+    integer(layout, p + "Semi", n("Halbton"), -12, 12, 0, "HT");
+    number(layout, p + "Fine", n("Fein"), -100.0f, 100.0f, 0.0f, "ct");
+    integer(layout, p + "Unison", n("Unison"), 1, kMaxUnison, 1);
+    number(layout, p + "Detune", n("Detune"), 0.0f, 100.0f, 20.0f, "ct", 25.0f);
+    percent(layout, p + "Blend", n("Blend"), 0.75f);
+    percent(layout, p + "Width", n("Breite"), 0.8f);
+    percent(layout, p + "Level", n("Pegel"), 0.75f);
 }
 
 juce::String id(const char* prefix, int index, const char* suffix)
@@ -121,7 +114,7 @@ Layout WavetableProcessor::createParameterLayout()
     oscillator(layout, "b", "Osz B", false);
 
     toggle(layout, "subOn", "Sub an", false);
-    choice(layout, "subShape", "Sub Form", utf8Array({ "Sinus", "Dreieck", "Säge", "Rechteck" }), 0);
+    choice(layout, "subShape", "Sub Form", tr({ "Sinus", "Dreieck", "Säge", "Rechteck" }), 0);
     integer(layout, "subOctave", "Sub Oktave", -3, 0, -1, "Okt");
     percent(layout, "subLevel", "Sub Pegel", 0.6f);
     toggle(layout, "subDirect", "Sub am Filter vorbei", true);
@@ -129,7 +122,7 @@ Layout WavetableProcessor::createParameterLayout()
 
     toggle(layout, "filterOn", "Filter an", true);
     choice(layout, "filterMode", "Filtertyp",
-           utf8Array({ "Tiefpass 12", "Tiefpass 24", "Hochpass 12", "Bandpass", "Kerbfilter", "Kamm" }), 1);
+           tr({ "Tiefpass 12", "Tiefpass 24", "Hochpass 12", "Bandpass", "Kerbfilter", "Kamm" }), 1);
     number(layout, "cutoff", "Cutoff", 20.0f, 20000.0f, 20000.0f, "Hz", 1000.0f);
     percent(layout, "resonance", "Resonanz", 0.1f);
     percent(layout, "filterDrive", "Filter-Drive", 0.0f);
@@ -139,19 +132,19 @@ Layout WavetableProcessor::createParameterLayout()
     const float decays[] = { 400.0f, 300.0f, 300.0f };
     for (int i = 1; i <= kEnvelopes; ++i)
     {
-        const auto name = [i](const char* what) { return ("Hüllkurve " + std::to_string(i) + " " + what); };
-        milliseconds(layout, id("env", i, "Attack"), name("Attack").c_str(), 10000.0f, 2.0f);
-        milliseconds(layout, id("env", i, "Decay"), name("Decay").c_str(), 10000.0f, decays[i - 1]);
-        percent(layout, id("env", i, "Sustain"), name("Sustain").c_str(), sustains[i - 1]);
-        milliseconds(layout, id("env", i, "Release"), name("Release").c_str(), 10000.0f, 200.0f);
+        const auto name = [i](const char* what) { return tr("Hüllkurve") + " " + juce::String(i) + " " + tr(what); };
+        milliseconds(layout, id("env", i, "Attack"), name("Attack"), 10000.0f, 2.0f);
+        milliseconds(layout, id("env", i, "Decay"), name("Decay"), 10000.0f, decays[i - 1]);
+        percent(layout, id("env", i, "Sustain"), name("Sustain"), sustains[i - 1]);
+        milliseconds(layout, id("env", i, "Release"), name("Release"), 10000.0f, 200.0f);
     }
 
     for (int i = 1; i <= kLfos; ++i)
     {
-        const auto name = [i](const char* what) { return ("LFO " + std::to_string(i) + " " + what); };
-        choice(layout, id("lfo", i, "Shape"), name("Form").c_str(),
-               utf8Array({ "Sinus", "Dreieck", "Säge ab", "Säge auf", "Rechteck", "Zufall" }), 0);
-        toggle(layout, id("lfo", i, "Sync"), name("Tempo-Sync").c_str(), true);
+        const auto name = [i](const char* what) { return "LFO " + juce::String(i) + " " + tr(what); };
+        choice(layout, id("lfo", i, "Shape"), name("Form"),
+               tr({ "Sinus", "Dreieck", "Säge ab", "Säge auf", "Rechteck", "Zufall" }), 0);
+        toggle(layout, id("lfo", i, "Sync"), name("Tempo-Sync"), true);
         // Below 10 Hz a tenth of a hertz matters, so the rate is the one value shown with a decimal.
         {
             juce::NormalisableRange<float> range(0.1f, 30.0f);
@@ -161,35 +154,35 @@ Layout WavetableProcessor::createParameterLayout()
             };
             auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
             layout.add(std::make_unique<juce::AudioParameterFloat>(
-                juce::ParameterID { id("lfo", i, "Rate"), 1 }, utf8(name("Rate").c_str()), range, 2.0f,
+                juce::ParameterID { id("lfo", i, "Rate"), 1 }, name("Rate"), range, 2.0f,
                 Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
         }
-        choice(layout, id("lfo", i, "Division"), name("Raster").c_str(), divisionNames(), kEighth);
-        toggle(layout, id("lfo", i, "Retrigger"), name("Neustart").c_str(), true);
+        choice(layout, id("lfo", i, "Division"), name("Raster"), divisionNames(), kEighth);
+        toggle(layout, id("lfo", i, "Retrigger"), name("Neustart"), true);
     }
 
-    const auto sources = utf8Array({ "Aus", "LFO 1", "LFO 2", "Hüllkurve 1", "Hüllkurve 2", "Hüllkurve 3", "Anschlag",
+    const auto sources = tr({ "Aus", "LFO 1", "LFO 2", "Hüllkurve 1", "Hüllkurve 2", "Hüllkurve 3", "Anschlag",
                                      "Modrad", "Aftertouch", "Tonhöhe", "Makro 1", "Makro 2", "Makro 3", "Makro 4" });
-    const auto targets = utf8Array({ "Aus", "A Position", "A Warp", "A Tonhöhe", "A Pegel", "A Detune", "B Position",
+    const auto targets = tr({ "Aus", "A Position", "A Warp", "A Tonhöhe", "A Pegel", "A Detune", "B Position",
                                      "B Warp", "B Tonhöhe", "B Pegel", "B Detune", "Sub Pegel", "Rauschen", "Cutoff",
                                      "Resonanz", "Filter-Drive", "Lautstärke" });
     for (int i = 1; i <= kModSlots; ++i)
     {
-        const auto name = [i](const char* what) { return ("Mod " + std::to_string(i) + " " + what); };
-        choice(layout, id("mod", i, "Source"), name("Quelle").c_str(), sources, 0);
-        choice(layout, id("mod", i, "Target"), name("Ziel").c_str(), targets, 0);
-        percent(layout, id("mod", i, "Amount"), name("Menge").c_str(), 0.0f, true);
-        toggle(layout, id("mod", i, "Bipolar"), name("Bipolar").c_str(), false);
+        const auto name = [i](const char* what) { return "Mod " + juce::String(i) + " " + tr(what); };
+        choice(layout, id("mod", i, "Source"), name("Quelle"), sources, 0);
+        choice(layout, id("mod", i, "Target"), name("Ziel"), targets, 0);
+        percent(layout, id("mod", i, "Amount"), name("Menge"), 0.0f, true);
+        toggle(layout, id("mod", i, "Bipolar"), name("Bipolar"), false);
     }
     for (int i = 1; i <= kMacros; ++i)
-        percent(layout, id("macro", i, ""), ("Makro " + std::to_string(i)).c_str(), 0.0f);
+        percent(layout, id("macro", i, ""), tr("Makro") + " " + juce::String(i), 0.0f);
 
-    choice(layout, "voiceMode", "Stimmen-Modus", utf8Array({ "Poly", "Mono", "Legato" }), 0);
+    choice(layout, "voiceMode", "Stimmen-Modus", tr({ "Poly", "Mono", "Legato" }), 0);
     milliseconds(layout, "glide", "Glide", 2000.0f, 0.0f);
     integer(layout, "bendRange", "Pitchbend-Bereich", 0, 24, 2, "HT");
 
     toggle(layout, "distOn", "Verzerrung an", false);
-    choice(layout, "distMode", "Verzerrung Modus", utf8Array({ "Weich", "Hart", "Falten", "Röhre" }), 0);
+    choice(layout, "distMode", "Verzerrung Modus", tr({ "Weich", "Hart", "Falten", "Röhre" }), 0);
     percent(layout, "distDrive", "Verzerrung Drive", 0.5f);
     percent(layout, "distMix", "Verzerrung Mix", 1.0f);
     number(layout, "master", "Master", -36.0f, 6.0f, -6.0f, "dB");
@@ -444,7 +437,7 @@ void WavetableProcessor::applyDistortion(juce::AudioBuffer<float>& buffer, const
 
 juce::AudioProcessorEditor* WavetableProcessor::createEditor()
 {
-    return tonwerkui::forHost(new WavetableEditor(*this));
+    return tonwerkui::forHost<WavetableEditor>(*this);
 }
 
 int WavetableProcessor::getNumPrograms() { return (int) factoryPresets().size(); }

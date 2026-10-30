@@ -354,7 +354,7 @@ void NeuroProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* NeuroProcessor::createEditor() { return tonwerkui::forHost(new NeuroEditor(*this)); }
+juce::AudioProcessorEditor* NeuroProcessor::createEditor() { return tonwerkui::forHost<NeuroEditor>(*this); }
 
 int NeuroProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

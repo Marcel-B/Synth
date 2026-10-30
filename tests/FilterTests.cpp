@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "FilterEditor.h"
 #include "FilterEngine.h"
 #include "FilterPresets.h"
@@ -496,7 +497,7 @@ public:
             FilterProcessor p;
             p.setCurrentProgram(3);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<FilterEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<FilterEditor>(created.get());
             expect(editor != nullptr);
             render(p, bassAndChord());
             editor->filter.view.refresh();
