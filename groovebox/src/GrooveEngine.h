@@ -1215,9 +1215,12 @@ public:
     }
 
     /**
-     * Adds `count` samples of every track: dry and panned into `left` and `right`, mono into the two sends.
+     * Adds `count` samples of every track: dry and panned into `left` and `right`, mono into the two sends. With
+     * `trackOut` (left and right of each track, `2 * kTracks` pointers), a track whose pair is set goes there instead
+     * of into `left` and `right` (the separate outputs); its sends still feed the shared delay and hall.
      */
-    void render(float* left, float* right, float* delaySend, float* reverbSend, int count, const Settings& s)
+    void render(float* left, float* right, float* delaySend, float* reverbSend, int count, const Settings& s,
+                float* const* trackOut = nullptr)
     {
         for (int done = 0; done < count;)
         {
@@ -1236,12 +1239,19 @@ public:
                 const float angle = (std::clamp(ts.pan, -1.0f, 1.0f) + 1.0f) * 0.25f * 3.14159265f;
                 const float toLeft = level * std::cos(angle) * 1.41421356f;
                 const float toRight = level * std::sin(angle) * 1.41421356f;
+                float* outLeft = left;
+                float* outRight = right;
+                if (trackOut != nullptr && trackOut[2 * t] != nullptr)
+                {
+                    outLeft = trackOut[2 * t];
+                    outRight = trackOut[2 * t + 1];
+                }
                 float peak = 0.0f;
                 for (int i = 0; i < chunk; ++i)
                 {
                     const float x = scratch[(std::size_t) i];
-                    left[done + i] += x * toLeft;
-                    right[done + i] += x * toRight;
+                    outLeft[done + i] += x * toLeft;
+                    outRight[done + i] += x * toRight;
                     delaySend[done + i] += x * level * ts.delaySend;
                     reverbSend[done + i] += x * level * ts.reverbSend;
                     peak = std::max(peak, std::abs(x * level));

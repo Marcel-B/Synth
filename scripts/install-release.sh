@@ -42,13 +42,14 @@ SCOPE="Tonwerk Scope"
 EXPANDER="Tonwerk Expander"
 LFO="Tonwerk LFO"
 RUMBLE="Tonwerk Rumble"
+RIG="Tonwerk Rig"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
 VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
 
 xattr -dr com.apple.quarantine . 2>/dev/null || true
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE"; do
+for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE" "$RIG"; do
   rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
   cp -R "$PRODUCT.component" "$COMPONENTS/"
   cp -R "$PRODUCT.vst3" "$VST3/"
@@ -83,7 +84,8 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwMb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwZn Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwSc Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
-  && auval -v aufx TwRb Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
+  && auval -v aufx TwRb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwRg Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "Installiert und von auval geprüft."
 else
   echo "Installiert, aber auval ist fehlgeschlagen. Das Protokoll steht in /tmp/tonwerk-auval.log"
@@ -93,6 +95,7 @@ echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop 
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE oder $SCOPE."
 echo "$RUMBLE auf der Kick-Spur: Audio-FX > Audio Units > b-velop > $RUMBLE."
+echo "$RIG, ein Instrument mit Effekten dahinter als ein Klang: Instrument > AU-Instrumente > b-velop > $RIG."
 echo "$WOBBLE auf jeder Spur, am liebsten dem Bass: Audio-FX > Audio Units > b-velop > $WOBBLE."
 echo "$FREEZE auf jeder Spur, für endlose Flächen: Audio-FX > Audio Units > b-velop > $FREEZE."
 echo "$ARP vor einem Synth: Software-Instrument-Spur, MIDI-FX > Audio Units > b-velop > $ARP."

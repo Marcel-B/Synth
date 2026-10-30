@@ -404,6 +404,15 @@ def rumble(p):
     swell(0.2, 1.0)
 
 
+def rig(p):
+    # The chain: the instrument as a filled box, two effects behind it, wired one after the other.
+    p.box(-1.0, -0.3, -0.5, 0.3, fill=True, radius=0.06)
+    for x in (-0.25, 0.5):
+        p.box(x, -0.3, x + 0.5, 0.3, fill=False, width=20, radius=0.06)
+    for x0, x1 in ((-0.5, -0.25), (0.25, 0.5)):
+        p.line([(x0, 0.0), (x1, 0.0)], width=20)
+
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -440,6 +449,7 @@ ICONS = {
     "TonwerkArp": (arp, MIDI),
     "TonwerkLFO": (lfo, MIDI),
     "TonwerkRumble": (rumble, EFFECT),
+    "TonwerkRig": (rig, INSTRUMENT),
 }
 
 # The iPad app with every plugin inside: Tonwerk Synth's sign, both engines.

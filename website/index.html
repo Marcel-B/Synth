@@ -7,7 +7,7 @@
   <meta name="description" content="Tonwerk: Synthesizer, Effekte, einen Arpeggiator und ein LFO für Logic Pro und jede DAW mit VST3. Eigener Code, Quelltext auf GitHub, kostenlos für macOS, Linux und Windows, auf dem iPad als App im App Store.">
   <meta name="theme-color" content="#0a0b10">
   <meta property="og:title" content="Tonwerk Studio">
-  <meta property="og:description" content="13 Instrumente, 17 Effekte und zwei MIDI-Effekte für Logic Pro und VST3. Kostenlos, Quelltext auf GitHub.">
+  <meta property="og:description" content="14 Instrumente, 17 Effekte und zwei MIDI-Effekte für Logic Pro und VST3. Kostenlos, Quelltext auf GitHub.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://tonwerk.studio/">
   <meta property="og:image" content="https://tonwerk.studio/img/wavetable.png">
@@ -39,7 +39,7 @@
         <h1 class="title">TONWERK</h1>
         <p class="lead">Instrumente und Effekte aus eigenem Code: vom analogen Synth über FM, Wavetable und Granular bis zum Acid-Bass und zur Drum-Machine, dazu Effekte für Vocals, Dubstep und den Mix. Kostenlos, als Audio Unit und VST3, der Quelltext auf GitHub.</p>
         <ul class="stats">
-          <li><b>13</b>Instrumente</li>
+          <li><b>14</b>Instrumente</li>
           <li><b>17</b>Effekte</li>
           <li><b>2</b>MIDI-Effekte</li>
           <li><b>AU</b>VST3 · App</li>
@@ -54,7 +54,7 @@
 
     <section id="instrumente">
       <div class="wrap">
-        <div class="heading"><h2>Instrumente</h2><span class="count">13 Plugins</span></div>
+        <div class="heading"><h2>Instrumente</h2><span class="count">14 Plugins</span></div>
         <p class="intro">Software-Instrumente für eine Instrumentenspur. Jedes bringt eigene Werksklänge mit, keine Kopien aus Werks-ROMs oder fremden Preset-Bänken, alle in der Lautstärke aufeinander abgestimmt. In Logic unter <b>Instrument → AU-Instrumente → b-velop</b>.</p>
         <div class="grid">
         <article class="card" id="analog">
@@ -289,9 +289,29 @@
             <li>13 Regler pro Spur, Swing und Accents</li>
             <li>Würfeln: Zufall im Pattern, für alle Spuren oder pro Spur</li>
             <li>Delay und Hall mit Sends pro Spur, per Klick abschaltbar</li>
+            <li>Einzelausgänge pro Spur (Multi-Output)</li>
             <li>Keine Samples: jeder Regler wirkt stufenlos</li>
             </ul>
             <div class="tags"><span>Drums</span><span>Sequencer</span></div>
+          </div>
+        </article>
+        <article class="card" id="rig">
+          <button class="shot" type="button" data-full="img/rig.png" data-title="Tonwerk Rig" aria-label="Bildschirmfoto von Tonwerk Rig vergrößern">
+            <img src="img/rig.png" alt="Oberfläche von Tonwerk Rig" width="1114" height="894" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="icons/TonwerkRig.png" alt="" width="64" height="64">
+            <h3>Tonwerk Rig</h3>
+            <p class="code">aumu TwRg Bvlp</p>
+            <p class="tagline">Ein Instrument mit bis zu sechs Effekten dahinter, gespeichert als ein Klang.</p>
+            <ul>
+            <li>Jedes Tonwerk-Instrument, dahinter Delay, Shimmer, Tape, Rumble und alle anderen Effekte</li>
+            <li>Mit der Groovebox ein Effekt auch nur auf einem Instrument, etwa Rumble auf der Bassdrum</li>
+            <li>Die Oberflächen der Plugins selbst, mit ihren Presets</li>
+            <li>Latenz ausgeglichen, auch zwischen den Spuren der Groovebox</li>
+            <li>In der iPad-App spielbar: so kommen die Effekte auch dorthin</li>
+            </ul>
+            <div class="tags"><span>Kette</span><span>iPad</span></div>
           </div>
         </article>
         </div>
@@ -688,7 +708,7 @@ cd Tonwerk-Synth-*-Linux-x64
           </div>
           <div class="panel">
             <h3>iPad</h3>
-            <p>Eine App, Tonwerk, mit jedem Plugin als AUv3 für Logic Pro für iPad, GarageBand und AUM. Allein spielt sie die Instrumente mit großer Tastatur und MIDI-Keyboard und zeigt im Scope, was am Mikrofon ankommt. Die Oberflächen passen sich dem Bildschirm an, ein langer Druck auf einen Regler öffnet das MIDI-Lernen.</p>
+            <p>Eine App, Tonwerk, mit jedem Plugin als AUv3 für Logic Pro für iPad, GarageBand und AUM. Allein spielt sie die Instrumente mit großer Tastatur und MIDI-Keyboard, mit Tonwerk Rig auch mit Effekten dahinter, und zeigt im Scope, was am Mikrofon ankommt. Die Oberflächen passen sich dem Bildschirm an, ein langer Druck auf einen Regler öffnet das MIDI-Lernen.</p>
             <p>Ab iPadOS 15, im App Store.</p>
             <p><a class="store-badge" href="https://apps.apple.com/de/app/tonwerk/id6824013223"><img src="icons/app-store.svg" alt="Laden im App Store" width="144" height="48"></a></p>
           </div>

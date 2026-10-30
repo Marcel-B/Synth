@@ -247,8 +247,10 @@ void TonwerkSynthProcessor::setStateInformation(const void* data, int sizeInByte
     #define TONWERK_EDITION combined
 #endif
 
-// Each of the three plugins is this file built with its own edition (CMakeLists.txt).
+// Each of the three plugins is this file built with its own edition (CMakeLists.txt); Tonwerk Rig makes its own.
+#ifndef TONWERK_SYNTH_NO_ENTRY
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new tonwerk::TonwerkSynthProcessor(tonwerk::Edition::TONWERK_EDITION);
 }
+#endif

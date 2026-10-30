@@ -1163,6 +1163,12 @@ target_link_libraries(TonwerkRumble
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
+set(TONWERK_RIG_SOURCES
+    rig/src/RigCatalogue.cpp
+    rig/src/RigEditor.cpp
+    rig/src/RigPresets.cpp
+    rig/src/RigProcessor.cpp)
+
 # Tonwerk, the iPad's and the Mac App Store's app (app/): every plugin's AUv3 inside one app, which also plays the instruments and effects on its
 # own from the same sources the tests compile. It builds on the desktop too (-DTONWERK_APP=ON) to try it there.
 if(TONWERK_STORE)
@@ -1202,10 +1208,11 @@ set(TONWERK_ALL_SOURCES
     ${TONWERK_ZONE_SOURCES}
     ${TONWERK_SCOPE_SOURCES}
     ${TONWERK_EXPANDER_SOURCES}
-    ${TONWERK_RUMBLE_SOURCES})
+    ${TONWERK_RUMBLE_SOURCES}
+    ${TONWERK_RIG_SOURCES})
 set(TONWERK_ALL_INCLUDES src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src
     groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src
-    chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src rumble/src)
+    chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src rumble/src rig/src)
 # Each plugin defines the factory a host calls; the app and the tests make their processors themselves.
 set(TONWERK_NO_ENTRIES
     CHROME_GLITCH_NO_ENTRY=1
@@ -1237,7 +1244,38 @@ set(TONWERK_NO_ENTRIES
     TONWERK_SCOPE_NO_ENTRY=1
     TONWERK_EXPANDER_NO_ENTRY=1
     TONWERK_LFO_NO_ENTRY=1
-    TONWERK_RUMBLE_NO_ENTRY=1)
+    TONWERK_RUMBLE_NO_ENTRY=1
+    TONWERK_RIG_NO_ENTRY=1)
+
+# Tonwerk Rig: one instrument with effects behind it, saved as one sound (rig/). It holds the other plugins' processors,
+# so it compiles all of them, without their entry points but its own.
+juce_add_plugin(TonwerkRig
+    PRODUCT_NAME "Tonwerk Rig"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkRig.png"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkrig
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwRg
+    FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Synth
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+target_sources(TonwerkRig PRIVATE ${TONWERK_ALL_SOURCES})
+target_include_directories(TonwerkRig PRIVATE ${TONWERK_ALL_INCLUDES})
+set(tonwerk_rig_no_entries ${TONWERK_NO_ENTRIES})
+list(REMOVE_ITEM tonwerk_rig_no_entries TONWERK_RIG_NO_ENTRY=1)
+list(APPEND tonwerk_rig_no_entries TONWERK_SYNTH_NO_ENTRY=1)
+target_compile_definitions(TonwerkRig PUBLIC ${TONWERK_DEFINITIONS} ${tonwerk_rig_no_entries})
+target_link_libraries(TonwerkRig
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
 if(TONWERK_APP)
     if(TONWERK_MAC_STORE)
@@ -1277,7 +1315,7 @@ if(TONWERK_APP)
             TonwerkFreeze_AUv3 TonwerkArp_AUv3 TonwerkSampler_AUv3 TonwerkBass_AUv3 TonwerkVocoder_AUv3
             TonwerkDelay_AUv3 TonwerkChorus_AUv3 TonwerkGlue_AUv3 TonwerkShimmer_AUv3 TonwerkFilter_AUv3
             TonwerkNeuro_AUv3 TonwerkStutter_AUv3 TonwerkMultiband_AUv3 TonwerkZone_AUv3 TonwerkScope_AUv3
-            TonwerkExpander_AUv3 TonwerkLFO_AUv3 TonwerkRumble_AUv3)
+            TonwerkExpander_AUv3 TonwerkLFO_AUv3 TonwerkRumble_AUv3 TonwerkRig_AUv3)
         add_dependencies(Tonwerk ${tonwerk_extensions})
         # App Store Connect wants a privacy manifest in the app and in each extension.
         set(tonwerk_privacy "${CMAKE_CURRENT_SOURCE_DIR}/app/PrivacyInfo.xcprivacy")
@@ -1393,6 +1431,8 @@ if(TONWERK_TESTS AND NOT TONWERK_STORE)
         tests/MidiLearnTests.cpp
         ${TONWERK_RUMBLE_SOURCES}
         tests/RumbleTests.cpp
+        ${TONWERK_RIG_SOURCES}
+        tests/RigTests.cpp
         tests/PresetTests.cpp
         tests/EffectPresetTests.cpp)
     target_include_directories(TonwerkSynthTests PRIVATE ${TONWERK_ALL_INCLUDES})

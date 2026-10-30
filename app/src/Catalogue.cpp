@@ -10,6 +10,7 @@
 #include "PdProcessor.h"
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
+#include "RigProcessor.h"
 #include "SamplerProcessor.h"
 #include "ScopeProcessor.h"
 #include "WavetableProcessor.h"
@@ -46,6 +47,7 @@ const std::vector<Entry>& catalogue()
         entry<tonwerkneuro::NeuroProcessor>("Tonwerk Neuro"),
         entry<tonwerkexpander::ExpanderProcessor>("Tonwerk Expander"),
         entry<tonwerkgroove::GrooveProcessor>("Tonwerk Groovebox"),
+        entry<tonwerkrig::RigProcessor>("Tonwerk Rig"),
         { "Tonwerk Scope", [] { return std::make_unique<tonwerkscope::ScopeProcessor>(); }, true },
     };
     return entries;
