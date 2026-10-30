@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "TapeEditor.h"
@@ -486,7 +487,7 @@ public:
             TapeProcessor processor;
             set(processor, { { "wow", 1.0f } });
             std::unique_ptr<juce::AudioProcessorEditor> created(processor.createEditor());
-            auto* editor = dynamic_cast<TapeEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<TapeEditor>(created.get());
             expect(editor != nullptr);
             editor->transport.cassette.refresh();
             expect(! editor->transport.cassette.running());

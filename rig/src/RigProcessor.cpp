@@ -1,5 +1,7 @@
 #include "RigProcessor.h"
 
+#include "Language.h"
+
 #include "GrooveProcessor.h"
 #include "Platform.h"
 #include "RigCatalogue.h"
@@ -64,8 +66,8 @@ bool RigProcessor::hasTracks() const { return instrumentId == kTracksInstrument;
 juce::String RigProcessor::sourceName(int source)
 {
     if (source < 1 || source > kTrackSources)
-        return juce::String::fromUTF8("Alles");
-    return juce::String::fromUTF8(tonwerkgroove::kTrackNames[(std::size_t) (source - 1)]);
+        return tonwerkui::tr("Alles");
+    return tonwerkui::tr(tonwerkgroove::kTrackNames[(std::size_t) (source - 1)]);
 }
 
 void RigProcessor::prepare(juce::AudioProcessor& processor)
@@ -438,7 +440,7 @@ void RigProcessor::setStateInformation(const void* data, int sizeInBytes)
     });
 }
 
-juce::AudioProcessorEditor* RigProcessor::createEditor() { return tonwerkui::forHost(new RigEditor(*this)); }
+juce::AudioProcessorEditor* RigProcessor::createEditor() { return tonwerkui::forHost<RigEditor>(*this); }
 } // namespace tonwerkrig
 
 #ifndef TONWERK_RIG_NO_ENTRY

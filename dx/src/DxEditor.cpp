@@ -27,13 +27,13 @@ juce::String roleOf(const Algorithm& algorithm, int op)
 {
     juce::String role;
     if (algorithm.isCarrier(op))
-        role = utf8("TRÄGER");
+        role = tr("TRÄGER");
     juce::String targets;
     for (int to = 0; to < kOperators; ++to)
         if (algorithm.modulates(op, to))
             targets += (targets.isEmpty() ? "" : " ") + juce::String(to + 1);
     if (targets.isNotEmpty())
-        role += (role.isEmpty() ? juce::String() : juce::String(" ")) + utf8("MOD → ") + targets;
+        role += (role.isEmpty() ? juce::String() : juce::String(" ")) + tr("MOD →") + " " + targets;
     if (op == algorithm.feedback)
         role += " + FB";
     return role;
@@ -319,7 +319,7 @@ void DxAlgorithmView::paint(juce::Graphics& g)
 DxAlgorithmSection::DxAlgorithmSection(juce::AudioProcessorValueTreeState& state)
     : Section(state, "Algorithmus",
               { { { "algorithm", "Algorithmus", 2 }, { "feedback", "Feedback" } },
-                { { "transpose", "Transpon." }, { "volume", utf8("Lautstärke") } } },
+                { { "transpose", "Transpon." }, { "volume", tr("Lautstärke") } } },
               {}, { kAlgorithmDisplay, 0 }),
       view(state)
 {
@@ -341,7 +341,7 @@ DxEditor::DxEditor(DxProcessor& owner)
     setLookAndFeel(&lookAndFeel);
     auto& state = processor.state;
 
-    presets.setTextWhenNothingSelected("Klang");
+    presets.setTextWhenNothingSelected(tr("Klang"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choose(presets.getSelectedId() - 1);
@@ -351,7 +351,7 @@ DxEditor::DxEditor(DxProcessor& owner)
     next.onClick = [this] { step(1); };
     previous.setConnectedEdges(juce::Button::ConnectedOnRight);
     next.setConnectedEdges(juce::Button::ConnectedOnLeft);
-    sysexButton.setButtonText("SysEx laden");
+    sysexButton.setButtonText(tr("SysEx laden"));
     sysexButton.onClick = [this] { importSysex(); };
     for (auto* button : { &previous, &next, &sysexButton })
         addAndMakeVisible(*button);
@@ -363,11 +363,11 @@ DxEditor::DxEditor(DxProcessor& owner)
     algorithmSection = std::make_unique<DxAlgorithmSection>(state);
     lfoSection = std::make_unique<Section>(state, "LFO",
                                            std::vector<Section::Row> { { { "lfoWave", "Welle", 2 },
-                                                                         { "lfoSpeed", "Tempo" },
-                                                                         { "lfoDelay", utf8("Verzög.") } },
-                                                                       { { "lfoPitch", utf8("Tonhöhe") },
+                                                                         { "lfoSpeed", "Rate" },
+                                                                         { "lfoDelay", tr("Verzög.") } },
+                                                                       { { "lfoPitch", tr("Tonhöhe") },
                                                                          { "lfoPitchSens", "Empfindl." },
-                                                                         { "lfoAmp", utf8("Lautst.") } } });
+                                                                         { "lfoAmp", tr("Lautst.") } } });
     fxSection = std::make_unique<Section>(state, "Effekte",
                                           std::vector<Section::Row> { { { "fxDelayMix", "Delay" },
                                                                         { "fxDelaySync", "Sync" },
@@ -376,7 +376,7 @@ DxEditor::DxEditor(DxProcessor& owner)
                                                                       { { "fxDelayFeedback", "Feedback" },
                                                                         { "fxDelayTone", "Ton" },
                                                                         { "fxReverbMix", "Hall" },
-                                                                        { "fxReverbDecay", utf8("Länge") } } });
+                                                                        { "fxReverbDecay", tr("Länge") } } });
     for (auto* section : std::initializer_list<Section*> { algorithmSection.get(), lfoSection.get(), fxSection.get() })
         addAndMakeVisible(*section);
 
@@ -391,7 +391,7 @@ DxEditor::DxEditor(DxProcessor& owner)
         addAndMakeVisible(*operators[(std::size_t) op]);
 
         details[(std::size_t) op] = std::make_unique<OperatorSection>(
-            state, "Operator " + name + utf8(" · Details"), op,
+            state, "Operator " + name + " " + tr("· Details"), op,
             std::vector<Section::Row> { { { opId(op, "R1"), "Rate 1" },
                                           { opId(op, "R2"), "Rate 2" },
                                           { opId(op, "R3"), "Rate 3" },
@@ -415,7 +415,7 @@ DxEditor::DxEditor(DxProcessor& owner)
     keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, yellow.withAlpha(0.7f));
     keyboard.setColour(juce::MidiKeyboardComponent::shadowColourId, juce::Colours::transparentBlack);
     keyboard.setAvailableRange(24, 108);
-    scope.setCaption("OSZILLOSKOP");
+    scope.setCaption(tr("OSZILLOSKOP"));
     addAndMakeVisible(keyboard);
     addAndMakeVisible(scope);
 
@@ -522,7 +522,7 @@ void DxEditor::refreshPresets()
         const auto& sound = factory[(std::size_t) i];
         const int category = categoryIndex(sound.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(sound.category));
+            presets.addSectionHeading(tr(sound.category));
         group = category;
         menuPatches.push_back(sound);
         presets.addItem(utf8(sound.name.c_str()), (int) menuPatches.size());
@@ -568,7 +568,7 @@ void DxEditor::setMessage(const juce::String& text, bool error)
 
 void DxEditor::importSysex()
 {
-    chooser = std::make_unique<juce::FileChooser>("SysEx laden", juce::File(), "*.syx;*.SYX");
+    chooser = std::make_unique<juce::FileChooser>(tr("SysEx laden"), juce::File(), "*.syx;*.SYX");
     juce::Component::SafePointer<DxEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {
@@ -580,7 +580,7 @@ void DxEditor::importSysex()
                              const int count = DxProcessor::importSysex(file);
                              if (count == 0)
                              {
-                                 safe->setMessage(utf8("Keine passenden Klänge in der Datei (erwartet: Bank mit 32 Klängen "
+                                 safe->setMessage(tr("Keine passenden Klänge in der Datei (erwartet: Bank mit 32 Klängen "
                                                        "oder ein einzelner Klang)."),
                                                   true);
                                  return;
@@ -601,8 +601,8 @@ void DxEditor::importSysex()
                              }
                              if (first >= 0)
                                  safe->choose(first);
-                             safe->setMessage(utf8("Bank „") + bank + utf8("“: ") + juce::String(count)
-                                              + utf8(count == 1 ? " Klang geladen." : " Klänge geladen."));
+                             safe->setMessage(tr("Bank „") + bank + juce::String::fromUTF8("“: ") + juce::String(count)
+                                              + " " + (count == 1 ? tr("Klang geladen.") : tr("Klänge geladen.")));
                          });
 }
 } // namespace tonwerkdx

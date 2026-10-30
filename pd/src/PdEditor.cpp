@@ -70,14 +70,14 @@ void PhaseView::paint(juce::Graphics& g)
         if (! line.on)
             continue;
         if (caption.isNotEmpty())
-            caption << utf8("  |  ");
-        caption << "L" << (int) k + 1 << " " << utf8(kWaveNames[(std::size_t) line.first]);
+            caption << "  |  ";
+        caption << "L" << (int) k + 1 << " " << tr(kWaveNames[(std::size_t) line.first]);
         if (line.alternate)
-            caption << "/" << utf8(kWaveNames[(std::size_t) line.second]);
+            caption << "/" << tr(kWaveNames[(std::size_t) line.second]);
         caption << " DCW " << juce::roundToInt(line.bend * 100.0f) << "%";
     }
     if (playing)
-        caption << utf8(" · ") << juce::roundToInt(frequency) << " HZ";
+        caption << juce::String::fromUTF8(" · ") << juce::roundToInt(frequency) << " HZ";
     g.setFont(mono(10.0f));
     g.setColour(cyan.withAlpha(0.8f));
     g.drawText(caption, inner.toNearestInt(), juce::Justification::topLeft);
@@ -129,7 +129,7 @@ void PhaseView::paint(juce::Graphics& g)
 LinesSection::LinesSection(PdProcessor& processor)
     : Section(processor.state, "Linien",
               { { { "lines", "Linien" }, { "modulation", "Modulation" }, { "detuneSemi", "Halbton 2" },
-                  { "detuneFine", "Fein 2" }, { "pitchEnvAmount", utf8("Tonhöhe") }, { "pitchEnvTime", "Tonh. Zeit" },
+                  { "detuneFine", "Fein 2" }, { "pitchEnvAmount", tr("Tonhöhe") }, { "pitchEnvTime", "Tonh. Zeit" },
                   { "width", "Breite" } } },
               {}, { 0, kDisplay }),
       view(processor)
@@ -169,7 +169,7 @@ PdEditor::PdEditor(PdProcessor& p)
       line2(p.state, "Linie 2", { waveRow("line2"), envelopeRow("line2") }),
       lfo1(p.state, "LFO 1",
            { { { "lfo1Shape", "Form" }, { "lfo1Sync", "Sync" }, { "lfo1Rate", "Rate", 0, "lfo1Sync", false },
-               { "lfo1Division", "Raster", 0, "lfo1Sync", true }, { "lfo1Fade", utf8("Verzög.") },
+               { "lfo1Division", "Raster", 0, "lfo1Sync", true }, { "lfo1Fade", tr("Verzög.") },
                { "lfo1Target", "Ziel" }, { "lfo1Amount", "Menge" } } }),
       lfo2(p.state, "LFO 2",
            { { { "lfo2Shape", "Form" }, { "lfo2Sync", "Sync" }, { "lfo2Rate", "Rate", 0, "lfo2Sync", false },
@@ -189,7 +189,7 @@ PdEditor::PdEditor(PdProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -202,11 +202,11 @@ PdEditor::PdEditor(PdProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

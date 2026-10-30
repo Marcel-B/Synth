@@ -46,7 +46,7 @@ void WaveView::paint(juce::Graphics& g)
     if (sample == nullptr || sample->empty())
     {
         g.setColour(cyan.withAlpha(0.8f));
-        g.drawText(utf8("KEINE DATEI · HIERHER ZIEHEN ODER LADEN"), inner.toNearestInt(), juce::Justification::centred);
+        g.drawText(tr("KEINE DATEI · HIERHER ZIEHEN ODER LADEN"), inner.toNearestInt(), juce::Justification::centred);
         return;
     }
     const auto stage = inner.withTrimmedTop(14.0f);
@@ -112,13 +112,13 @@ void WaveView::paint(juce::Graphics& g)
             g.drawVerticalLine(juce::roundToInt(xAt(head)), stage.getY(), stage.getBottom());
         }
 
-    juce::String caption = juce::String::fromUTF8(sample->name.c_str()).toUpperCase();
-    caption << utf8(" · ") << juce::String(length / sample->sampleRate, 2) << " S";
-    caption << utf8(" · ") << (sample->channels > 1 ? "STEREO" : "MONO");
+    juce::String caption = tr(sample->name.c_str()).toUpperCase();
+    caption << juce::String::fromUTF8(" · ") << juce::String(length / sample->sampleRate, 2) << " S";
+    caption << juce::String::fromUTF8(" · ") << (sample->channels > 1 ? "STEREO" : "MONO");
     if (settings.mode == Mode::slices)
-        caption << utf8(" · ") << slices.count << " SLICES AB " << noteName(kFirstSliceKey);
+        caption << juce::String::fromUTF8(" · ") << slices.count << " " << tr("SLICES AB") << " " << noteName(kFirstSliceKey);
     else
-        caption << utf8(" · GRUNDTON ") << noteName(settings.root);
+        caption << " " + tr("· GRUNDTON") + " " << noteName(settings.root);
     g.setFont(mono(10.0f));
     g.setColour(cyan.withAlpha(0.85f));
     g.drawText(caption, inner.toNearestInt(), juce::Justification::topLeft);
@@ -127,14 +127,14 @@ void WaveView::paint(juce::Graphics& g)
 SampleSection::SampleSection(SamplerProcessor& processor)
     : Section(processor.state, "Sample",
               { { { "source", "Quelle" }, { "mode", "Modus" }, { "root", "Grundton" }, { "tune", "Transp." },
-                  { "fine", "Fein" }, { "start", "Start" }, { "end", "Ende" }, { "reverse", utf8("Rückwärts") },
+                  { "fine", "Fein" }, { "start", "Start" }, { "end", "Ende" }, { "reverse", tr("Rückwärts") },
                   { "playback", "Wiedergabe" } } },
               {}, { 0, kDisplay }),
       view(processor),
       synth(processor)
 {
     addAndMakeVisible(view);
-    load.setTooltip(utf8("Eigene Audiodatei laden (oder auf die Anzeige ziehen)"));
+    load.setTooltip(tr("Eigene Audiodatei laden (oder auf die Anzeige ziehen)"));
     load.onClick = [this] { choose(); };
     addAndMakeVisible(load);
     view.update();
@@ -150,7 +150,7 @@ void SampleSection::resized()
 
 void SampleSection::choose()
 {
-    chooser = std::make_unique<juce::FileChooser>(utf8("Audiodatei als Sample"), synth.userFile(), kAudioFiles);
+    chooser = std::make_unique<juce::FileChooser>(tr("Audiodatei als Sample"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
                              const auto file = tonwerkui::keepChosen(c, tonwerkui::keptFilesFolder("Tonwerk Sampler"));
@@ -186,7 +186,7 @@ SamplerEditor::SamplerEditor(SamplerProcessor& p)
                 { "lofi", "Lo-Fi" }, { "master", "Master" } } }),
       filter(p.state, "Filter",
              { { { "filter", "Typ" }, { "cutoff", "Cutoff" }, { "resonance", "Resonanz" },
-                 { "envAmount", utf8("Hüllkurve") }, { "keytrack", "Keytrack" }, { "filterEnvAttack", "A" },
+                 { "envAmount", tr("Hüllkurve") }, { "keytrack", "Keytrack" }, { "filterEnvAttack", "A" },
                  { "filterEnvDecay", "D" }, { "filterEnvSustain", "S" }, { "filterEnvRelease", "R" } } }),
       amp(p.state, "Amp",
           { { { "ampAttack", "Attack" }, { "ampDecay", "Decay" }, { "ampSustain", "Sustain" },
@@ -202,7 +202,7 @@ SamplerEditor::SamplerEditor(SamplerProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -215,11 +215,11 @@ SamplerEditor::SamplerEditor(SamplerProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

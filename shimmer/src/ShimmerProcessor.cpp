@@ -1,4 +1,5 @@
 #include "ShimmerProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "ShimmerEditor.h"
@@ -20,11 +21,11 @@ void number(Layout& layout, const char* id, const char* name, float min, float m
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
@@ -34,18 +35,18 @@ void percent(Layout& layout, const char* id, const char* name, float initial, fl
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(min, max), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(min, max), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
 void choice(Layout& layout, const char* id, const char* name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const char* id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 /** Seconds with a decimal below 10 s, where a tenth matters. */
 void seconds(Layout& layout, const char* id, const char* name, float min, float max, float initial)
@@ -57,7 +58,7 @@ void seconds(Layout& layout, const char* id, const char* name, float min, float 
     };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 } // namespace
@@ -165,7 +166,7 @@ void ShimmerProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     tailLevel.store(engine.levelNow(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ShimmerProcessor::createEditor() { return tonwerkui::forHost(new ShimmerEditor(*this)); }
+juce::AudioProcessorEditor* ShimmerProcessor::createEditor() { return tonwerkui::forHost<ShimmerEditor>(*this); }
 
 void ShimmerProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

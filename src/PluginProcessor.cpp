@@ -198,7 +198,7 @@ void TonwerkSynthProcessor::timerCallback()
 
 juce::AudioProcessorEditor* TonwerkSynthProcessor::createEditor()
 {
-    return tonwerkui::forHost(new TonwerkSynthEditor(*this));
+    return tonwerkui::forHost<TonwerkSynthEditor>(*this);
 }
 
 int TonwerkSynthProcessor::getNumPrograms() { return PresetLibrary::factoryPresets(edition).size(); }

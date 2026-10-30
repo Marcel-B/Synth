@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "WobbleEditor.h"
@@ -476,7 +477,7 @@ public:
             expect(editor != nullptr && editor->getWidth() > 0);
             for (auto* child : editor->getChildren())
                 expect(editor->getLocalBounds().contains(child->getBounds()), child->getName());
-            if (auto* wobble = dynamic_cast<WobbleEditor*>(editor.get()))
+            if (auto* wobble = tonwerkui::innerEditor<WobbleEditor>(editor.get()))
             {
                 // The menu's shapes draw into the processor.
                 wobble->volume.view.applyMenu((int) Shape::square + 1);
@@ -490,7 +491,7 @@ public:
                 // Some sound first, so the playheads are somewhere.
                 set(processor, "volumeOn", 1);
                 render(processor, sine(110.0, 0.3));
-                if (auto* wobble = dynamic_cast<WobbleEditor*>(editor.get()))
+                if (auto* wobble = tonwerkui::innerEditor<WobbleEditor>(editor.get()))
                 {
                     wobble->filter.view.refresh();
                     wobble->volume.view.refresh();

@@ -9,6 +9,8 @@ namespace tonwerkdx
 {
 namespace
 {
+using tonwerkui::Localised;
+using tonwerkui::tr;
 using Kind = DxParameter::Kind;
 
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
@@ -36,48 +38,48 @@ std::vector<DxParameter> build()
     juce::StringArray algorithmNames;
     for (int i = 1; i <= kAlgorithms; ++i)
         algorithmNames.add(juce::String(i));
-    list.push_back({ "algorithm", "Algorithmus", Kind::choice, 0.0f, 31.0f, algorithmNames, {},
+    list.push_back({ "algorithm", tr("Algorithmus"), Kind::choice, 0.0f, 31.0f, algorithmNames, {},
                      [](const DxPatch& p) { return (float) p.algorithm; },
                      [](DxPatch& p, float v) { p.algorithm = juce::roundToInt(v); } });
     integer("feedback", "Feedback", 0, 7, [](DxPatch& p) -> int& { return p.feedback; });
-    integer("transpose", "Transponieren", -24, 24, [](DxPatch& p) -> int& { return p.transpose; }, whole("HT"));
-    number("volume", utf8("Lautstärke"), 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.volume; }, percent);
+    integer("transpose", tr("Transponieren"), -24, 24, [](DxPatch& p) -> int& { return p.transpose; }, whole(tr("HT")));
+    number("volume", tr("Lautstärke"), 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.volume; }, percent);
 
-    list.push_back({ "lfoWave", "LFO Welle", Kind::choice, 0.0f, 5.0f,
-                     { "Dreieck", utf8("Sägezahn ab"), utf8("Sägezahn auf"), "Rechteck", "Sinus", "S&H" }, {},
+    list.push_back({ "lfoWave", tr("LFO Welle"), Kind::choice, 0.0f, 5.0f,
+                     { tr("Dreieck"), tr("Sägezahn ab"), tr("Sägezahn auf"), tr("Rechteck"), tr("Sinus"), "S&H" }, {},
                      [](const DxPatch& p) { return (float) (int) p.lfoWave; },
                      [](DxPatch& p, float v) { p.lfoWave = (LfoWave) juce::roundToInt(v); } });
-    integer("lfoSpeed", "LFO Tempo", 0, 99, [](DxPatch& p) -> int& { return p.lfoSpeed; }, [](float v) {
+    integer("lfoSpeed", tr("LFO Tempo"), 0, 99, [](DxPatch& p) -> int& { return p.lfoSpeed; }, [](float v) {
         const double hz = lfoHz(juce::roundToInt(v));
         return (hz < 9.95 ? juce::String(hz, 1) : juce::String(juce::roundToInt(hz))) + " Hz";
     });
-    integer("lfoDelay", utf8("LFO Verzögerung"), 0, 99, [](DxPatch& p) -> int& { return p.lfoDelay; });
-    integer("lfoPitch", utf8("LFO Tonhöhe"), 0, 99, [](DxPatch& p) -> int& { return p.lfoPitchDepth; });
-    integer("lfoAmp", utf8("LFO Lautstärke"), 0, 99, [](DxPatch& p) -> int& { return p.lfoAmpDepth; });
-    integer("lfoPitchSens", utf8("LFO Tonhöhe Empf."), 0, 7, [](DxPatch& p) -> int& { return p.lfoPitchSens; });
+    integer("lfoDelay", tr("LFO Verzögerung"), 0, 99, [](DxPatch& p) -> int& { return p.lfoDelay; });
+    integer("lfoPitch", tr("LFO Tonhöhe"), 0, 99, [](DxPatch& p) -> int& { return p.lfoPitchDepth; });
+    integer("lfoAmp", tr("LFO Lautstärke"), 0, 99, [](DxPatch& p) -> int& { return p.lfoAmpDepth; });
+    integer("lfoPitchSens", tr("LFO Tonhöhe Empf."), 0, 7, [](DxPatch& p) -> int& { return p.lfoPitchSens; });
 
     for (int i = 0; i < kOperators; ++i)
     {
         const auto prefix = "op" + juce::String(i + 1);
-        const auto name = "Op " + juce::String(i + 1) + " ";
+        const auto name = tr("Op") + " " + juce::String(i + 1) + " ";
         auto op = [i](DxPatch& p) -> OperatorPatch& { return p.ops[(std::size_t) i]; };
-        list.push_back({ prefix + "On", name + "an", Kind::toggle, 0.0f, 1.0f, {}, {},
+        list.push_back({ prefix + "On", name + tr("an"), Kind::toggle, 0.0f, 1.0f, {}, {},
                          [op](const DxPatch& p) { return op(const_cast<DxPatch&>(p)).on ? 1.0f : 0.0f; },
                          [op](DxPatch& p, float v) { op(p).on = v > 0.5f; } });
-        integer(prefix + "Coarse", name + "Grob", 0, 31, [op](DxPatch& p) -> int& { return op(p).coarse; },
+        integer(prefix + "Coarse", name + tr("Grob"), 0, 31, [op](DxPatch& p) -> int& { return op(p).coarse; },
                 [](float v) { return v < 0.5f ? juce::String("0.5") : juce::String(juce::roundToInt(v)); });
-        integer(prefix + "Fine", name + "Fein", 0, 99, [op](DxPatch& p) -> int& { return op(p).fine; }, whole("%"));
-        integer(prefix + "Detune", name + "Verstimmung", -7, 7, [op](DxPatch& p) -> int& { return op(p).detune; });
-        integer(prefix + "Level", name + "Pegel", 0, 99, [op](DxPatch& p) -> int& { return op(p).level; });
-        integer(prefix + "Velocity", name + "Anschlag", 0, 7, [op](DxPatch& p) -> int& { return op(p).velocity; });
-        integer(prefix + "RateScale", name + "Tastatur-Rate", 0, 7, [op](DxPatch& p) -> int& { return op(p).rateScaling; });
-        integer(prefix + "Ams", name + "LFO-Pegel", 0, 3, [op](DxPatch& p) -> int& { return op(p).ampModSens; });
+        integer(prefix + "Fine", name + tr("Fein"), 0, 99, [op](DxPatch& p) -> int& { return op(p).fine; }, whole("%"));
+        integer(prefix + "Detune", name + tr("Verstimmung"), -7, 7, [op](DxPatch& p) -> int& { return op(p).detune; });
+        integer(prefix + "Level", name + tr("Pegel"), 0, 99, [op](DxPatch& p) -> int& { return op(p).level; });
+        integer(prefix + "Velocity", name + tr("Anschlag"), 0, 7, [op](DxPatch& p) -> int& { return op(p).velocity; });
+        integer(prefix + "RateScale", name + tr("Tastatur-Rate"), 0, 7, [op](DxPatch& p) -> int& { return op(p).rateScaling; });
+        integer(prefix + "Ams", name + tr("LFO-Pegel"), 0, 3, [op](DxPatch& p) -> int& { return op(p).ampModSens; });
         for (int s = 0; s < 4; ++s)
         {
             const auto stage = juce::String(s + 1);
-            integer(prefix + "R" + stage, name + "Rate " + stage, 0, 99,
+            integer(prefix + "R" + stage, name + tr("Rate") + " " + stage, 0, 99,
                     [op, s](DxPatch& p) -> int& { return op(p).rates[(std::size_t) s]; });
-            integer(prefix + "L" + stage, name + "Pegel " + stage, 0, 99,
+            integer(prefix + "L" + stage, name + tr("Pegel") + " " + stage, 0, 99,
                     [op, s](DxPatch& p) -> int& { return op(p).levels[(std::size_t) s]; });
         }
     }
@@ -89,16 +91,16 @@ std::vector<DxParameter> build()
     list.push_back({ "fxDelaySync", "Delay Sync", Kind::toggle, 0.0f, 1.0f, {}, {},
                      [](const DxPatch& p) { return p.fx.delaySync ? 1.0f : 0.0f; },
                      [](DxPatch& p, float v) { p.fx.delaySync = v > 0.5f; } });
-    number("fxDelayTime", "Delay Zeit", 0.02f, 1.5f, [](DxPatch& p) -> float& { return p.fx.delayTime; },
+    number("fxDelayTime", tr("Delay Zeit"), 0.02f, 1.5f, [](DxPatch& p) -> float& { return p.fx.delayTime; },
            [](float v) { return juce::String(juce::roundToInt(v * 1000.0f)) + " ms"; });
-    list.push_back({ "fxDelayDivision", "Delay Teilung", Kind::choice, 0.0f, (float) divisions.size() - 1, divisions, {},
+    list.push_back({ "fxDelayDivision", tr("Delay Teilung"), Kind::choice, 0.0f, (float) divisions.size() - 1, divisions, {},
                      [](const DxPatch& p) { return (float) p.fx.delayDivision; },
                      [](DxPatch& p, float v) { p.fx.delayDivision = juce::roundToInt(v); } });
     number("fxDelayFeedback", "Delay Feedback", 0.0f, 0.9f, [](DxPatch& p) -> float& { return p.fx.delayFeedback; }, percent);
-    number("fxDelayTone", "Delay Ton", 500.0f, 12000.0f, [](DxPatch& p) -> float& { return p.fx.delayTone; },
+    number("fxDelayTone", tr("Delay Ton"), 500.0f, 12000.0f, [](DxPatch& p) -> float& { return p.fx.delayTone; },
            [](float v) { return juce::String(juce::roundToInt(v)) + " Hz"; });
-    number("fxReverbMix", "Hall Mix", 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.fx.reverbMix; }, percent);
-    number("fxReverbDecay", utf8("Hall Länge"), 0.3f, 8.0f, [](DxPatch& p) -> float& { return p.fx.reverbDecay; },
+    number("fxReverbMix", tr("Hall Mix"), 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.fx.reverbMix; }, percent);
+    number("fxReverbDecay", tr("Hall Länge"), 0.3f, 8.0f, [](DxPatch& p) -> float& { return p.fx.reverbDecay; },
            [](float v) { return juce::String(juce::roundToInt(v * 1000.0f)) + " ms"; });
     return list;
 }
@@ -154,7 +156,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DxProcessor::createParameter
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     const DxPatch defaults;
-    for (const auto& d : parameters())
+    // Built anew rather than from the shared list, so the names are in the language spoken now.
+    for (const auto& d : build())
     {
         const juce::ParameterID id { d.id, 1 };
         const float value = d.get(defaults);
@@ -310,7 +313,7 @@ void DxProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor(readPatch())));
 }
 
-juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost(new DxEditor(*this)); }
+juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost<DxEditor>(*this); }
 
 int DxProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

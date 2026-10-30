@@ -34,18 +34,18 @@ void PitchView::paint(juce::Graphics& g)
     auto text = getLocalBounds().reduced(8, 6);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText(utf8("TRÄGER"), text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tr("TRÄGER"), text.removeFromTop(14), juce::Justification::centredLeft);
     g.setFont(mono(34.0f));
     g.setColour(colours::yellow);
     g.drawText(noteName(carrier), text.removeFromTop(40), juce::Justification::centredLeft);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText("STIMME", text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tr("STIMME"), text.removeFromTop(14), juce::Justification::centredLeft);
     g.setFont(mono(15.0f));
     if (sung < 0.0f)
     {
         g.setColour(colours::red);
-        g.drawText("STILLE", text.removeFromTop(20), juce::Justification::centredLeft);
+        g.drawText(tr("STILLE"), text.removeFromTop(20), juce::Justification::centredLeft);
         return;
     }
     // The sung note and how far off it the voice is: the quantiser hides that, the display shows it.
@@ -85,8 +85,8 @@ RobovoxEditor::RobovoxEditor(RobovoxProcessor& p)
       output(p.state, "Ausgang", { { { "mix", "Mix" } }, { { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("ROBOTER", "STIMME");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend(tr("ROBOTER"), tr("STIMME"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &scope, &pitch, &carrier, &voice, &output })
         addAndMakeVisible(*c);
     setSize(kWidth, 2 * kMargin + kHeader + kScope + kGap + pitch.preferredHeight());

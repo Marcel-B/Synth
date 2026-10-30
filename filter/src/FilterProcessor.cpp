@@ -1,4 +1,5 @@
 #include "FilterProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "FilterEditor.h"
@@ -11,7 +12,6 @@ namespace
 using Attributes = juce::AudioParameterFloatAttributes;
 using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
 
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
 void add(Layout& layout, const char* id, const char* name, juce::NormalisableRange<float> range, float initial,
          std::function<juce::String(float)> show)
@@ -19,7 +19,7 @@ void add(Layout& layout, const char* id, const char* name, juce::NormalisableRan
     auto toText = [show](float value, int) { return show(value); };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
@@ -30,7 +30,7 @@ void number(Layout& layout, const char* id, const char* name, float min, float m
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     add(layout, id, name, range, initial, [suffix](float value) { return juce::String(juce::roundToInt(value)) + suffix; });
 }
 
@@ -38,7 +38,7 @@ void number(Layout& layout, const char* id, const char* name, float min, float m
 void percent(Layout& layout, const char* id, const char* name, float initial, float min = 0.0f)
 {
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(min, 1.0f), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(min, 1.0f), initial,
         Attributes()
             .withStringFromValueFunction([](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; })
             .withValueFromStringFunction([](const juce::String& text) { return text.getFloatValue() / 100.0f; })));
@@ -46,12 +46,12 @@ void percent(Layout& layout, const char* id, const char* name, float initial, fl
 
 void choice(Layout& layout, const char* id, const char* name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const char* id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 
 template <std::size_t n>
@@ -59,7 +59,7 @@ juce::StringArray names(const std::array<const char*, n>& list)
 {
     juce::StringArray out;
     for (const auto* name : list)
-        out.add(utf8(name));
+        out.add(tonwerkui::tr(name));
     return out;
 }
 } // namespace
@@ -193,7 +193,7 @@ void FilterProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     envelopeNow.store(engine.envelope(), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* FilterProcessor::createEditor() { return tonwerkui::forHost(new FilterEditor(*this)); }
+juce::AudioProcessorEditor* FilterProcessor::createEditor() { return tonwerkui::forHost<FilterEditor>(*this); }
 
 void FilterProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

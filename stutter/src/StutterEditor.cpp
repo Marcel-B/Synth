@@ -39,13 +39,13 @@ void PatternView::paint(juce::Graphics& g)
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
     const auto dot = utf8(" · ");
-    juce::String caption = juce::String(utf8(kIntervals[(std::size_t) shown.interval].name)).toUpperCase() + dot
-                           + "CHANCE " + juce::String(juce::roundToInt(shown.chance * 100.0f)) + " %" + dot + "RASTER "
+    juce::String caption = tr(kIntervals[(std::size_t) shown.interval].name).toUpperCase() + dot
+                           + tr("CHANCE") + " " + juce::String(juce::roundToInt(shown.chance * 100.0f)) + " %" + dot + tr("RASTER") + " "
                            + utf8(kGrids[(std::size_t) shown.grid].name);
     if (repeat > 0)
-        caption << dot << "WIEDERHOLUNG " << repeat;
+        caption << dot << tr("WIEDERHOLUNG") << " " << repeat;
     else if (repeat == 0)
-        caption << dot << "AUFNAHME";
+        caption << dot << tr("AUFNAHME");
     g.drawText(caption, inner.removeFromTop(14.0f).toNearestInt(), juce::Justification::centredLeft);
     inner.removeFromTop(6.0f);
 
@@ -113,8 +113,8 @@ StutterEditor::StutterEditor(StutterProcessor& p)
       output(p.state, "Ausgang", { { { "mode", "Modus", 2 }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("STUTTER", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("STUTTER", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &pattern, &scope, &grid, &sound, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin

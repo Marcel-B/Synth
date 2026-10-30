@@ -1,4 +1,5 @@
 #include "DistortionProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "DistortionEditor.h"
@@ -16,7 +17,7 @@ std::unique_ptr<juce::AudioParameterFloat> decibels(const char* id, const char* 
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value)) + " dB"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), juce::NormalisableRange<float>(min, max), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(min, max), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
@@ -26,7 +27,7 @@ std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* n
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, version }, juce::String::fromUTF8(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
+        juce::ParameterID { id, version }, tonwerkui::tr(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
@@ -41,7 +42,7 @@ std::unique_ptr<juce::AudioParameterFloat> hertz(const char* id, const char* nam
         return text.getFloatValue() * (text.containsIgnoreCase("k") ? 1000.0f : 1.0f);
     };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, version }, juce::String::fromUTF8(name), range, initial,
+        juce::ParameterID { id, version }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 } // namespace
@@ -55,9 +56,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout DistortionProcessor::createP
     layout.add(decibels("level", "Level", -30.0f, 12.0f, 0.0f));
     // Version 2: the modes came after the pedal. The order is `Mode`'s, saved in projects: append only.
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID { "mode", 2 }, "Modus",
-        juce::StringArray { "Pedal", juce::String::fromUTF8("Röhre"), "Clipper", "Falter", "Gleichrichter",
-                            "Bitcrusher" },
+        juce::ParameterID { "mode", 2 }, tonwerkui::tr("Modus"),
+        tonwerkui::tr({ "Pedal", "Röhre", "Clipper", "Falter", "Gleichrichter", "Bitcrusher" }),
         0));
     // Also version 2 (0.5.0 is the first release with the modes): the crusher's rate and the dry/wet mix.
     layout.add(hertz("crushRate", "Samplerate", 500.0f, 48000.0f, 48000.0f, 2));
@@ -193,7 +193,7 @@ void DistortionProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
 juce::AudioProcessorEditor* DistortionProcessor::createEditor()
 {
-    return tonwerkui::forHost(new DistortionEditor(*this));
+    return tonwerkui::forHost<DistortionEditor>(*this);
 }
 
 void DistortionProcessor::getStateInformation(juce::MemoryBlock& destData)

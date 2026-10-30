@@ -61,16 +61,16 @@ void ResponseView::paint(juce::Graphics& g)
     auto inner = area.reduced(10.0f, 6.0f);
     g.setFont(mono(10.0f));
     g.setColour(cyan.withAlpha(0.8f));
-    juce::String name = "TIEFPASS";
+    juce::String name = tonwerkui::tr("TIEFPASS");
     if (shown.bandpass)
-        name = "BANDPASS";
+        name = tonwerkui::tr("BANDPASS");
     else if (shown.mode > 0.995f)
-        name = "HOCHPASS";
+        name = tonwerkui::tr("HOCHPASS");
     else if (std::abs(shown.mode - 0.5f) < 0.005f)
         name = "NOTCH";
     else if (shown.mode > 0.005f)
-        name = shown.mode < 0.5f ? "TIEFPASS / NOTCH" : "NOTCH / HOCHPASS";
-    g.drawText(name + utf8(" · 12 DB · ") + juce::String(juce::roundToInt(cutoffNow)) + " HZ",
+        name = shown.mode < 0.5f ? tonwerkui::tr("TIEFPASS") + " / NOTCH" : "NOTCH / " + tonwerkui::tr("HOCHPASS");
+    g.drawText(name + juce::String::fromUTF8(" · 12 DB · ") + juce::String(juce::roundToInt(cutoffNow)) + " HZ",
                inner.removeFromTop(14.0f).toNearestInt(), juce::Justification::centredLeft);
     inner.removeFromTop(2.0f);
 
@@ -143,10 +143,10 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
                { "osc2Fine", "Fein" }, { "osc2Width", "Breite" }, { "osc2Level", "Pegel" }, { "sync", "Sync" },
                { "envPitch", "Env" } } }),
       filter(p),
-      filterEnvelope(p.state, utf8("FILTER-HÜLLKURVE"),
+      filterEnvelope(p.state, tr("FILTER-HÜLLKURVE"),
                      { { { "filterAttack", "Attack" }, { "filterDecay", "Decay" }, { "filterSustain", "Sustain" },
                          { "filterRelease", "Release" } } }),
-      ampEnvelope(p.state, utf8("AMP-HÜLLKURVE"),
+      ampEnvelope(p.state, tr("AMP-HÜLLKURVE"),
                   { { { "ampAttack", "Attack" }, { "ampDecay", "Decay" }, { "ampSustain", "Sustain" },
                       { "ampRelease", "Release" } } }),
       lfo(p.state, "LFO",
@@ -164,7 +164,7 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -177,11 +177,11 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);
@@ -193,11 +193,11 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
         if (juce::isPositiveAndBelow(to, (int) menu.size()))
             choosePreset(menu[(std::size_t) to]);
     };
-    hardwareSheet.setTooltip(juce::String::fromUTF8("Speichert die Reglerstellungen dieses Klangs fürs Hardware-Modul als Bild"));
+    hardwareSheet.setTooltip(tr("Speichert die Reglerstellungen dieses Klangs fürs Hardware-Modul als Bild"));
     hardwareSheet.onClick = [this] { exportHardwareSheet(); };
     previous.onClick = [step] { step(-1); };
     next.onClick = [step] { step(1); };
-    scope.setCaption("OSZILLOSKOP");
+    scope.setCaption(tr("OSZILLOSKOP"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &hardwareSheet, &scope, &osc1, &osc2, &filter,
                                                             &filterEnvelope, &ampEnvelope, &lfo, &voices, &effects,
                                                             &keyboard })
@@ -244,7 +244,7 @@ void ExpanderEditor::exportHardwareSheet()
     const auto name = synth.presetName().isNotEmpty() ? synth.presetName() : juce::String("Klang");
     const auto start = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
                            .getChildFile(juce::File::createLegalFileName(name + " Hardware") + ".png");
-    chooser = std::make_unique<juce::FileChooser>("Hardware-Blatt speichern", start, "*.png");
+    chooser = std::make_unique<juce::FileChooser>(tr("Hardware-Blatt speichern"), start, "*.png");
     juce::Component::SafePointer<ExpanderEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                              | juce::FileBrowserComponent::warnAboutOverwriting,
@@ -267,8 +267,8 @@ void ExpanderEditor::exportHardwareSheet()
                                  juce::AlertWindow::showAsync(
                                      juce::MessageBoxOptions()
                                          .withIconType(juce::MessageBoxIconType::WarningIcon)
-                                         .withTitle("Hardware-Blatt")
-                                         .withMessage(shown + juce::String::fromUTF8(" ließ sich nicht schreiben."))
+                                         .withTitle(tr("Hardware-Blatt"))
+                                         .withMessage(shown + " " + tr("ließ sich nicht schreiben."))
                                          .withButton("OK")
                                          .withAssociatedComponent(safe.getComponent()),
                                      nullptr);
@@ -308,12 +308,12 @@ void ExpanderEditor::resized()
 
 void ExpanderEditor::timerCallback()
 {
-    juce::String caption = "OSZILLOSKOP";
+    juce::String caption = tr("OSZILLOSKOP");
     if (const int note = synth.shownNote.load(); note >= 0)
     {
-        caption << utf8("  ·  ") << ExpanderProcessor::noteName(note);
+        caption << juce::String::fromUTF8("  ·  ") << ExpanderProcessor::noteName(note);
         const int count = synth.shownVoices.load();
-        caption << utf8("  ·  ") << count << (count == 1 ? " STIMME" : " STIMMEN");
+        caption << juce::String::fromUTF8("  ·  ") << count << " " << (count == 1 ? tr("STIMME") : tr("STIMMEN"));
     }
     if (caption != shownCaption)
     {

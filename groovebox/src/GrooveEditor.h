@@ -42,7 +42,7 @@ private:
     void pastePattern();
 
     GrooveProcessor& synth;
-    juce::TextButton copy { "Kopieren" }, paste { utf8Text("Einfügen") }, clear { "Leeren" };
+    juce::TextButton copy { tonwerkui::tr("Kopieren") }, paste { tonwerkui::tr("Einfügen") }, clear { tonwerkui::tr("Leeren") };
     std::optional<Pattern> clipboard;
     int playing = -1;
     std::uint64_t shown = 0;

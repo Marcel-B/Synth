@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "Loudness.h"
 #include "PresetCategories.h"
 #include "ZoneEditor.h"
@@ -534,7 +535,7 @@ public:
             p.setCurrentProgram(4);
             expectEquals(p.getProgramName(4), juce::String::fromUTF8("Härte zähmen"));
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<ZoneEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<ZoneEditor>(created.get());
             expect(editor != nullptr);
             const auto source = mixLoop();
             p.setPlayConfigDetails(2, 2, kRate, kBlock);

@@ -11,25 +11,19 @@ namespace
 {
 using Attributes = juce::AudioParameterFloatAttributes;
 using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
+using tonwerkui::Localised;
+using tonwerkui::tr;
 
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
-juce::StringArray utf8Array(std::initializer_list<const char*> items)
-{
-    juce::StringArray result;
-    for (const auto* item : items)
-        result.add(utf8(item));
-    return result;
-}
-
 /** A number shown whole with its unit; `centre` skews the knob so that value sits halfway. */
-void number(Layout& layout, const juce::String& id, const juce::String& name, float min, float max, float initial,
+void number(Layout& layout, const juce::String& id, const Localised& name, float min, float max, float initial,
             const char* unit, float centre = 0.0f)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tr(unit).isEmpty() ? juce::String() : " " + tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -38,7 +32,7 @@ void number(Layout& layout, const juce::String& id, const juce::String& name, fl
 }
 
 /** Shares in whole percent; the value runs from `min` to `max` (1 is 100 %). */
-void percent(Layout& layout, const juce::String& id, const juce::String& name, float initial, float min = 0.0f,
+void percent(Layout& layout, const juce::String& id, const Localised& name, float initial, float min = 0.0f,
              float max = 1.0f)
 {
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
@@ -49,15 +43,15 @@ void percent(Layout& layout, const juce::String& id, const juce::String& name, f
 }
 
 /** Times in whole milliseconds, skewed so the short ones get most of the turn. */
-void milliseconds(Layout& layout, const juce::String& id, const juce::String& name, float max, float initial)
+void milliseconds(Layout& layout, const juce::String& id, const Localised& name, float max, float initial)
 {
     number(layout, id, name, 0.0f, max, initial, "ms", max / 20.0f);
 }
 
-void integer(Layout& layout, const juce::String& id, const juce::String& name, int min, int max, int initial,
+void integer(Layout& layout, const juce::String& id, const Localised& name, int min, int max, int initial,
              const char* unit = "")
 {
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tr(unit).isEmpty() ? juce::String() : " " + tr(unit);
     auto toText = [suffix](int value, int) { return juce::String(value) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getIntValue(); };
     layout.add(std::make_unique<juce::AudioParameterInt>(
@@ -65,29 +59,29 @@ void integer(Layout& layout, const juce::String& id, const juce::String& name, i
         juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
-void choice(Layout& layout, const juce::String& id, const juce::String& name, const juce::StringArray& items, int initial)
+void choice(Layout& layout, const juce::String& id, const Localised& name, const juce::StringArray& items, int initial)
 {
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, name, items, initial));
 }
 
-void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial)
+void toggle(Layout& layout, const juce::String& id, const Localised& name, bool initial)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial));
 }
 
 juce::StringArray targets()
 {
-    return utf8Array({ "Aus", "Tonhöhe", "DCW", "DCW 1", "DCW 2", "Tonhöhe 2", "Lautstärke", "Balance" });
+    return tr({ "Aus", "Tonhöhe", "DCW", "DCW 1", "DCW 2", "Tonhöhe 2", "Lautstärke", "Balance" });
 }
 
 juce::StringArray waveNames()
 {
-    return utf8Array({ "Säge", "Rechteck", "Puls", "Doppelsinus", "Säge-Puls", "Resonanz Säge", "Resonanz Dreieck",
+    return tr({ "Säge", "Rechteck", "Puls", "Doppelsinus", "Säge-Puls", "Resonanz Säge", "Resonanz Dreieck",
                        "Resonanz Trapez" });
 }
 
 /** Rates below 10 Hz with a tenth, since there a tenth of a hertz matters; the one value shown with a decimal. */
-void hertz(Layout& layout, const juce::String& id, const juce::String& name, float min, float max, float initial)
+void hertz(Layout& layout, const juce::String& id, const Localised& name, float min, float max, float initial)
 {
     juce::NormalisableRange<float> range(min, max);
     range.setSkewForCentre(1.0f);
@@ -101,18 +95,18 @@ void hertz(Layout& layout, const juce::String& id, const juce::String& name, flo
 }
 
 
-void routing(Layout& layout, const juce::String& prefix, const juce::String& name, int target, float amount)
+void routing(Layout& layout, const juce::String& prefix, const Localised& name, int target, float amount)
 {
-    choice(layout, prefix + "Target", name + " " + utf8("Ziel"), targets(), target);
-    percent(layout, prefix + "Amount", name + " " + utf8("Menge"), amount, -1.0f, 1.0f);
+    choice(layout, prefix + "Target", name + " " + tr("Ziel"), targets(), target);
+    percent(layout, prefix + "Amount", name + " " + tr("Menge"), amount, -1.0f, 1.0f);
 }
 
-void envelope(Layout& layout, const juce::String& prefix, const juce::String& name, const EnvSettings& e)
+void envelope(Layout& layout, const juce::String& prefix, const Localised& name, const EnvSettings& e)
 {
-    milliseconds(layout, prefix + "Attack", name + " Attack", 10000.0f, e.attack * 1000.0f);
-    milliseconds(layout, prefix + "Decay", name + " Decay", 10000.0f, e.decay * 1000.0f);
-    percent(layout, prefix + "Sustain", name + " Sustain", e.sustain);
-    milliseconds(layout, prefix + "Release", name + " Release", 10000.0f, e.release * 1000.0f);
+    milliseconds(layout, prefix + "Attack", name + " " + tr("Attack"), 10000.0f, e.attack * 1000.0f);
+    milliseconds(layout, prefix + "Decay", name + " " + tr("Decay"), 10000.0f, e.decay * 1000.0f);
+    percent(layout, prefix + "Sustain", name + " " + tr("Sustain"), e.sustain);
+    milliseconds(layout, prefix + "Release", name + " " + tr("Release"), 10000.0f, e.release * 1000.0f);
 }
 
 bool isFx(const juce::String& id) { return id.startsWith("fx"); }
@@ -132,51 +126,51 @@ Layout PdProcessor::createParameterLayout()
 {
     const Settings d;
     Layout layout;
-    choice(layout, "lines", "Linien", utf8Array({ "1", "2", "1 + 1'", "1 + 2'" }), (int) d.lines);
-    choice(layout, "modulation", "Modulation", utf8Array({ "Aus", "Ring", "Rauschen" }), (int) d.modulation);
+    choice(layout, "lines", "Linien", tr({ "1", "2", "1 + 1'", "1 + 2'" }), (int) d.lines);
+    choice(layout, "modulation", "Modulation", tr({ "Aus", "Ring", "Rauschen" }), (int) d.modulation);
     for (int n = 1; n <= kLines; ++n)
     {
         const auto& line = d.line[(std::size_t) n - 1];
         const juce::String prefix = "line" + juce::String(n);
-        const juce::String name = "Linie " + juce::String(n);
-        choice(layout, prefix + "Wave", name + " Welle", waveNames(), (int) line.first);
+        const juce::String name = tr("Linie") + " " + juce::String(n);
+        choice(layout, prefix + "Wave", name + " " + tr("Welle"), waveNames(), (int) line.first);
         auto second = waveNames();
-        second.insert(0, "Aus");
-        choice(layout, prefix + "Wave2", name + " Welle 2", second, line.alternate ? (int) line.second + 1 : 0);
-        percent(layout, prefix + "Depth", name + " DCW", line.depth);
-        percent(layout, prefix + "KeyFollow", name + " DCW Keytracking", line.keyFollow);
-        percent(layout, prefix + "Level", name + " Pegel", line.level);
-        integer(layout, prefix + "Octave", name + " Oktave", -3, 3, line.octave, "Okt");
-        envelope(layout, prefix + "Dcw", name + " DCW", line.dcw);
-        envelope(layout, prefix + "Amp", name + " DCA", line.amp);
+        second.insert(0, tr("Aus"));
+        choice(layout, prefix + "Wave2", name + " " + tr("Welle 2"), second, line.alternate ? (int) line.second + 1 : 0);
+        percent(layout, prefix + "Depth", name + " " + tr("DCW"), line.depth);
+        percent(layout, prefix + "KeyFollow", name + " " + tr("DCW Keytracking"), line.keyFollow);
+        percent(layout, prefix + "Level", name + " " + tr("Pegel"), line.level);
+        integer(layout, prefix + "Octave", name + " " + tr("Oktave"), -3, 3, line.octave, "Okt");
+        envelope(layout, prefix + "Dcw", name + " " + tr("DCW"), line.dcw);
+        envelope(layout, prefix + "Amp", name + " " + tr("DCA"), line.amp);
     }
     // The CZ's detune: line 2 against line 1.
     integer(layout, "detuneSemi", "Verstimmung Halbton", -24, 24, d.line[1].semitones, "HT");
     number(layout, "detuneFine", "Verstimmung Fein", -100.0f, 100.0f, d.line[1].fine, "ct");
-    number(layout, "pitchEnvAmount", utf8("Tonhöhen-Hüllkurve"), -24.0f, 24.0f, d.pitchEnvAmount, "HT");
-    milliseconds(layout, "pitchEnvTime", utf8("Tonhöhen-Hüllkurve Zeit"), 5000.0f, d.pitchEnvTime * 1000.0f);
+    number(layout, "pitchEnvAmount", tr("Tonhöhen-Hüllkurve"), -24.0f, 24.0f, d.pitchEnvAmount, "HT");
+    milliseconds(layout, "pitchEnvTime", tr("Tonhöhen-Hüllkurve Zeit"), 5000.0f, d.pitchEnvTime * 1000.0f);
 
     for (int i = 1; i <= kLfos; ++i)
     {
         const auto& lfo = d.lfo[(std::size_t) i - 1];
         const juce::String prefix = "lfo" + juce::String(i);
-        const juce::String name = "LFO " + juce::String(i);
-        choice(layout, prefix + "Shape", name + " Form",
-               utf8Array({ "Sinus", "Dreieck", "Säge ab", "Säge auf", "Rechteck", "Zufall" }), (int) lfo.shape);
-        toggle(layout, prefix + "Sync", name + " Tempo-Sync", lfo.sync);
-        hertz(layout, prefix + "Rate", name + " Rate", 0.05f, 20.0f, lfo.rate);
+        const juce::String name = tr("LFO") + " " + juce::String(i);
+        choice(layout, prefix + "Shape", name + " " + tr("Form"),
+               tr({ "Sinus", "Dreieck", "Säge ab", "Säge auf", "Rechteck", "Zufall" }), (int) lfo.shape);
+        toggle(layout, prefix + "Sync", name + " " + tr("Tempo-Sync"), lfo.sync);
+        hertz(layout, prefix + "Rate", name + " " + tr("Rate"), 0.05f, 20.0f, lfo.rate);
         juce::StringArray divisions;
         for (const auto& division : tonwerkwave::kDivisions)
             divisions.add(division.name);
-        choice(layout, prefix + "Division", name + " Raster", divisions, lfo.division);
+        choice(layout, prefix + "Division", name + " " + tr("Raster"), divisions, lfo.division);
         routing(layout, prefix, name, (int) lfo.route.target, lfo.route.amount);
     }
-    milliseconds(layout, "lfo1Fade", utf8("LFO 1 Verzögerung"), 5000.0f, d.lfo[0].fade * 1000.0f);
+    milliseconds(layout, "lfo1Fade", tr("LFO 1 Verzögerung"), 5000.0f, d.lfo[0].fade * 1000.0f);
     routing(layout, "wheel", "Modrad", (int) d.wheel.target, d.wheel.amount);
     routing(layout, "velocity", "Anschlag", (int) d.velocity.target, d.velocity.amount);
     percent(layout, "dynamics", "Dynamik", d.dynamics);
 
-    choice(layout, "voiceMode", "Stimmen-Modus", utf8Array({ "Poly", "Mono", "Legato" }), (int) d.voiceMode);
+    choice(layout, "voiceMode", "Stimmen-Modus", tr({ "Poly", "Mono", "Legato" }), (int) d.voiceMode);
     milliseconds(layout, "glide", "Glide", 2000.0f, d.glide * 1000.0f);
     integer(layout, "bendRange", "Pitchbend-Bereich", 0, 24, d.bendRange, "HT");
     percent(layout, "width", "Breite", d.width);
@@ -197,7 +191,7 @@ Layout PdProcessor::createParameterLayout()
     percent(layout, "fxDelayFeedback", "Delay Feedback", fxDefaults.delay.feedback, 0.0f, 0.9f);
     number(layout, "fxDelayTone", "Delay Ton", 500.0f, 12000.0f, fxDefaults.delay.tone, "Hz", 3000.0f);
     percent(layout, "fxReverbMix", "Hall Mix", 0.15f);
-    number(layout, "fxReverbDecay", utf8("Hall Länge"), 300.0f, 8000.0f, 2500.0f, "ms", 2000.0f);
+    number(layout, "fxReverbDecay", tr("Hall Länge"), 300.0f, 8000.0f, 2500.0f, "ms", 2000.0f);
     return layout;
 }
 
@@ -418,7 +412,7 @@ void PdProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PdProcessor::createEditor() { return tonwerkui::forHost(new PdEditor(*this)); }
+juce::AudioProcessorEditor* PdProcessor::createEditor() { return tonwerkui::forHost<PdEditor>(*this); }
 
 int PdProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "SamplerEditor.h"
 #include "SamplerEngine.h"
 #include "SamplerPresets.h"
@@ -409,7 +410,7 @@ public:
             SamplerProcessor p;
             p.setCurrentProgram(19);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<SamplerEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<SamplerEditor>(created.get());
             expect(editor != nullptr);
             render(p, { { 0.0, 0.5, kFirstSliceKey } }, 0.2);
             editor->sample.update();

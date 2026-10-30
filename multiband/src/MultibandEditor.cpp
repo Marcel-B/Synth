@@ -47,14 +47,14 @@ juce::String BandView::caption() const
     {
         if (b > 0)
             text << utf8(" · ");
-        text << juce::String(kBandNames[b]).toUpperCase() << " ";
+        text << tr(kBandNames[b]).toUpperCase() << " ";
         if (! shown.bands[b].on)
-            text << "AUS";
+            text << tr("AUS");
         else
             text << signedDb(changes[b]);
     }
     if (shown.depth < 0.995f)
-        text << utf8(" · TIEFE ") << juce::roundToInt(shown.depth * 100.0f) << " %";
+        text << utf8(" · ") << tr("TIEFE") << " " << juce::roundToInt(shown.depth * 100.0f) << " %";
     return text;
 }
 
@@ -167,8 +167,8 @@ MultibandEditor::MultibandEditor(MultibandProcessor& p)
       scope(p.scopeOut, &p.scopeIn)
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("MULTIBAND", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("MULTIBAND", tr("EINGANG"));
     for (std::size_t b = 0; b < kBands; ++b)
     {
         const juce::String id = kBandIds[b];

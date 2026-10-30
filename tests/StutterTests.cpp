@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "PresetCategories.h"
 #include "StutterEditor.h"
 #include "StutterEngine.h"
@@ -514,9 +515,9 @@ public:
             StutterProcessor p;
             p.setCurrentProgram(11);
             std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
-            expect(dynamic_cast<StutterEditor*>(editor.get()) != nullptr);
+            expect(tonwerkui::innerEditor<StutterEditor>(editor.get()) != nullptr);
             render(p, drums(3.6));
-            if (auto* stutter = dynamic_cast<StutterEditor*>(editor.get()))
+            if (auto* stutter = tonwerkui::innerEditor<StutterEditor>(editor.get()))
                 stutter->pattern.view.refresh();
             expectGreaterThan(editor->getWidth(), 600);
             const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});

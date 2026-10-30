@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "FreezeEditor.h"
 #include "FreezeEngine.h"
 #include "FreezePresets.h"
@@ -573,7 +574,7 @@ public:
             expect(editor != nullptr && editor->getWidth() > 0);
             for (auto* child : editor->getChildren())
                 expect(editor->getLocalBounds().contains(child->getBounds()), child->getName());
-            if (auto* freeze = dynamic_cast<FreezeEditor*>(editor.get()))
+            if (auto* freeze = tonwerkui::innerEditor<FreezeEditor>(editor.get()))
             {
                 freeze->spectrum.refresh();
                 // A click lets go of the freeze, a second takes it again.
@@ -593,7 +594,7 @@ public:
                 addPluck(pad, 5.5, 0.5, 76, 0.4f, random);
                 render(shown, pad, pad, { { 1.5, "freeze", 1.0f } });
                 editor.reset(shown.createEditor());
-                if (auto* freeze = dynamic_cast<FreezeEditor*>(editor.get()))
+                if (auto* freeze = tonwerkui::innerEditor<FreezeEditor>(editor.get()))
                     freeze->spectrum.refresh();
                 const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 1.0f);
                 juce::FileOutputStream file { juce::File(dir).getChildFile("Tonwerk Freeze.png") };

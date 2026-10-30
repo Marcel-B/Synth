@@ -1,4 +1,5 @@
 #include "RobovoxProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "RobovoxEditor.h"
@@ -10,16 +11,15 @@ namespace
 {
 using Attributes = juce::AudioParameterFloatAttributes;
 
-const juce::StringArray kNoteNames { "C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H" };
 
 std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* name, juce::NormalisableRange<float> range,
                                                   float initial, const char* unit, float shown = 1.0f)
 {
-    const juce::String suffix = juce::String(" ") + juce::String::fromUTF8(unit);
+    const juce::String suffix = juce::String(" ") + tonwerkui::tr(unit);
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
@@ -30,39 +30,32 @@ std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* n
 
 std::unique_ptr<juce::AudioParameterChoice> menu(const char* id, const char* name, juce::StringArray items, int initial)
 {
-    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), items,
+    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items),
                                                         initial);
 }
 
-juce::StringArray utf8Items(std::initializer_list<const char*> items)
-{
-    juce::StringArray out;
-    for (const auto* item : items)
-        out.add(juce::String::fromUTF8(item));
-    return out;
-}
 } // namespace
 
 juce::String noteName(int midi)
 {
     if (midi < 0)
         return "-";
-    return kNoteNames[midi % 12] + juce::String(midi / 12 - 2);
+    return tonwerkui::noteNames()[midi % 12] + juce::String(midi / 12 - 2);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout RobovoxProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(menu("mode", "Tonhöhe aus", utf8Items({ "Stimme", "MIDI" }), 0));
-    layout.add(menu("key", "Tonart", kNoteNames, 2));
-    layout.add(menu("scale", "Skala", utf8Items({ "Chromatisch", "Dur", "Moll", "Pentatonik" }), 2));
+    layout.add(menu("mode", "Tonhöhe aus", tonwerkui::tr({ "Stimme", "MIDI" }), 0));
+    layout.add(menu("key", "Tonart", tonwerkui::noteNames(), 2));
+    layout.add(menu("scale", "Skala", tonwerkui::tr({ "Chromatisch", "Dur", "Moll", "Pentatonik" }), 2));
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { "octave", 1 }, "Oktave", -4, 1, -2,
+        juce::ParameterID { "octave", 1 }, tonwerkui::tr("Oktave"), -4, 1, -2,
         juce::AudioParameterIntAttributes()
-            .withStringFromValueFunction([](int value, int) { return juce::String(value) + " Okt"; })
+            .withStringFromValueFunction([](int value, int) { return juce::String(value) + " " + tonwerkui::tr("Okt"); })
             .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
     layout.add(number("glide", "Gleiten", juce::NormalisableRange<float>(0.0f, 500.0f, 0.0f, 0.4f), 0.0f, "ms"));
-    layout.add(menu("wave", "Welle", utf8Items({ "Sägezahn", "Rechteck", "Puls" }), 0));
+    layout.add(menu("wave", "Welle", tonwerkui::tr({ "Sägezahn", "Rechteck", "Puls" }), 0));
     layout.add(number("formant", "Formant", { -12.0f, 12.0f }, 0.0f, "HT"));
     layout.add(number("bandwidth", "Bandbreite", juce::NormalisableRange<float>(80.0f, 800.0f, 0.0f, 0.5f), 250.0f, "Hz"));
     layout.add(percent("sibilance", "Zischlaute", 0.6f));
@@ -176,7 +169,7 @@ void RobovoxProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
     sungPitch = (float) engine.sungPitch();
 }
 
-juce::AudioProcessorEditor* RobovoxProcessor::createEditor() { return tonwerkui::forHost(new RobovoxEditor(*this)); }
+juce::AudioProcessorEditor* RobovoxProcessor::createEditor() { return tonwerkui::forHost<RobovoxEditor>(*this); }
 
 void RobovoxProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "PatchJson.h"
 #include "PluginEditor.h"
 #include "PluginProcessor.h"
@@ -196,7 +197,7 @@ public:
                     if (auto* scope = dynamic_cast<ScopeView*>(child))
                         scope->refresh();
                 const auto engine = edition == Edition::fm ? Engine::fm : Engine::analog;
-                auto* synthEditor = dynamic_cast<TonwerkSynthEditor*>(editor.get());
+                auto* synthEditor = tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get());
                 expect(synthEditor != nullptr);
                 expectEquals(editor->getWidth(), TonwerkSynthEditor::kWidth);
                 expectEquals(editor->getHeight(), synthEditor->heightFor(engine));
@@ -209,7 +210,7 @@ public:
             }
             TonwerkSynthProcessor combined;
             std::unique_ptr<juce::AudioProcessorEditor> editor(combined.createEditor());
-            auto* synthEditor = dynamic_cast<TonwerkSynthEditor*>(editor.get());
+            auto* synthEditor = tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get());
             expectEquals(editor->getHeight(), synthEditor->heightFor(Engine::analog));
             snapshot(*editor, "Tonwerk Synth Analog");
             // On the message thread the editor hears of the change at once.

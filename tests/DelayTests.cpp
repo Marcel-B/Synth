@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "DelayEditor.h"
 #include "DelayEngine.h"
 #include "DelayPresets.h"
@@ -408,7 +409,7 @@ public:
             DelayProcessor p;
             p.setCurrentProgram(1);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<DelayEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<DelayEditor>(created.get());
             expect(editor != nullptr);
             render(p, stabs());
             editor->echo.view.refresh();

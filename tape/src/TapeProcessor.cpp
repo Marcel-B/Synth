@@ -1,4 +1,5 @@
 #include "TapeProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "TapeEditor.h"
@@ -16,11 +17,11 @@ constexpr std::uint32_t kSeed = 1979;
 std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* name, juce::NormalisableRange<float> range,
                                                   float initial, const char* unit, float shown = 1.0f)
 {
-    const juce::String suffix = juce::String(" ") + juce::String::fromUTF8(unit);
+    const juce::String suffix = juce::String(" ") + tonwerkui::tr(unit);
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
@@ -37,14 +38,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout TapeProcessor::createParamet
     layout.add(percent("drive", "Sättigung", 0.4f));
     juce::StringArray types;
     for (const auto* type : { "Spulenband", "Chrom", "Ferro", "Diktiergerät" })
-        types.add(juce::String::fromUTF8(type));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "type", 1 }, "Band", types, 2));
+        types.add(tonwerkui::tr(type));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "type", 1 }, tonwerkui::tr("Band|Tape"), types, 2));
     // Skewed so the dark half (where lo-fi lives) gets most of the turn.
     layout.add(number("tone", "Höhen", juce::NormalisableRange<float>(2000.0f, 20000.0f, 0.0f, 0.5f), 12000.0f, "Hz"));
     layout.add(percent("wow", "Leiern", 0.2f));
     layout.add(percent("flutter", "Flattern", 0.2f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { "noise", 1 }, "Rauschen", juce::NormalisableRange<float>(kNoiseOff, -30.0f), -66.0f,
+        juce::ParameterID { "noise", 1 }, tonwerkui::tr("Rauschen"), juce::NormalisableRange<float>(kNoiseOff, -30.0f), -66.0f,
         Attributes()
             .withStringFromValueFunction([](float value, int) {
                 return value <= kNoiseOff ? juce::String("Aus") : juce::String(juce::roundToInt(value)) + " dB";
@@ -128,7 +129,7 @@ void TapeProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     samplesRun += buffer.getNumSamples();
 }
 
-juce::AudioProcessorEditor* TapeProcessor::createEditor() { return tonwerkui::forHost(new TapeEditor(*this)); }
+juce::AudioProcessorEditor* TapeProcessor::createEditor() { return tonwerkui::forHost<TapeEditor>(*this); }
 
 void TapeProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

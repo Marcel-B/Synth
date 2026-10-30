@@ -74,7 +74,7 @@ void ChainButton::paintButton(juce::Graphics& g, bool highlighted, bool down)
     if (! enabled)
     {
         g.setFont(mono(9.0f));
-        g.drawText("AUS", area.reduced(5.0f, 3.0f), juce::Justification::topRight);
+        g.drawText(tr("AUS"), area.reduced(5.0f, 3.0f), juce::Justification::topRight);
     }
 }
 
@@ -86,7 +86,7 @@ RigEditor::RigEditor(RigProcessor& p) : AudioProcessorEditor(p), rig(p)
     const auto& rigs = factoryRigs();
     for (const auto* category : kRigCategories)
     {
-        presets.addSectionHeading(utf8(category));
+        presets.addSectionHeading(tr(category));
         for (int i = 0; i < (int) rigs.size(); ++i)
             if (juce::String::fromUTF8(rigs[(std::size_t) i].category) == utf8(category))
                 presets.addItem(utf8(rigs[(std::size_t) i].name), i + 1);
@@ -108,7 +108,7 @@ RigEditor::RigEditor(RigProcessor& p) : AudioProcessorEditor(p), rig(p)
         addAndMakeVisible(slotButtons[(std::size_t) i]);
     }
 
-    emptyHint.setText(utf8("Leerer Platz. Tippe noch einmal darauf, um einen Effekt zu wählen."),
+    emptyHint.setText(tr("Leerer Platz. Tippe noch einmal darauf, um einen Effekt zu wählen."),
                       juce::dontSendNotification);
     emptyHint.setJustificationType(juce::Justification::centred);
     emptyHint.setColour(juce::Label::textColourId, colours::muted);
@@ -304,12 +304,12 @@ void RigEditor::showSlotMenu(int slot)
             juce::PopupMenu sources;
             for (int s = 0; s <= kTrackSources; ++s)
                 sources.addItem(kSource + s, RigProcessor::sourceName(s), true, rig.sourceOf(slot) == s);
-            menu.addSubMenu("Quelle", sources);
+            menu.addSubMenu(tr("Quelle"), sources);
         }
-        menu.addItem(kOn, "Eingeschaltet", true, rig.isOn(slot));
-        menu.addItem(kEarlier, "Nach links", slot > 0);
-        menu.addItem(kLater, "Nach rechts", slot + 1 < kSlots);
-        menu.addItem(kClear, "Entfernen");
+        menu.addItem(kOn, tr("Eingeschaltet"), true, rig.isOn(slot));
+        menu.addItem(kEarlier, tr("Nach links"), slot > 0);
+        menu.addItem(kLater, tr("Nach rechts"), slot + 1 < kSlots);
+        menu.addItem(kClear, tr("Entfernen"));
     }
     juce::Component::SafePointer<RigEditor> safe(this);
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&slotButtons[(std::size_t) slot]),

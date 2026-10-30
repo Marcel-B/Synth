@@ -25,7 +25,7 @@ enum MenuAction
 
 CurveView::CurveView(WobbleProcessor& p, Lane which) : processor(p), lane(which), curve(p.curve(which))
 {
-    form.setTooltip(utf8("Grundform wählen, umkehren oder spiegeln"));
+    form.setTooltip(tr("Grundform wählen, umkehren oder spiegeln"));
     form.onClick = [this] { showMenu(); };
     addAndMakeVisible(form);
     setRepaintsOnMouseActivity(false);
@@ -155,10 +155,10 @@ void CurveView::paint(juce::Graphics& g)
 
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText(lane == Lane::filter ? "FILTER-KURVE" : "VOLUME-KURVE", getLocalBounds().reduced(10, 4).removeFromTop(14),
+    g.drawText(lane == Lane::filter ? tr("FILTER-KURVE") : tr("VOLUME-KURVE"), getLocalBounds().reduced(10, 4).removeFromTop(14),
                juce::Justification::centredLeft);
     g.setFont(juce::FontOptions(10.0f));
-    g.drawText(utf8("Klick: Punkt · Doppelklick: löschen · Kreis ziehen: biegen · Shift: frei"),
+    g.drawText(tr("Klick: Punkt · Doppelklick: löschen · Kreis ziehen: biegen · Shift: frei"),
                getLocalBounds().reduced(10, 4).removeFromBottom(14), juce::Justification::centredLeft);
     g.restoreState();
 }
@@ -294,14 +294,14 @@ void CurveView::mouseMove(const juce::MouseEvent& e)
 void CurveView::showMenu()
 {
     juce::PopupMenu menu;
-    menu.addSectionHeader("Grundform");
+    menu.addSectionHeader(tr("Grundform"));
     for (std::size_t i = 0; i < kShapeNames.size(); ++i)
-        menu.addItem((int) i + 1, utf8(kShapeNames[i]));
+        menu.addItem((int) i + 1, tr(kShapeNames[i]));
     menu.addSeparator();
-    menu.addItem(invert, "Umkehren (oben/unten)");
-    menu.addItem(reverse, utf8("Spiegeln (rückwärts)"));
-    menu.addItem(twice, "Verdoppeln (zweimal pro Zyklus)", curve.points.size() * 2 <= Curve::kMaxPoints);
-    menu.addItem(copyOther, lane == Lane::filter ? utf8("Volume-Kurve übernehmen") : utf8("Filter-Kurve übernehmen"));
+    menu.addItem(invert, tr("Umkehren (oben/unten)"));
+    menu.addItem(reverse, tr("Spiegeln (rückwärts)"));
+    menu.addItem(twice, tr("Verdoppeln (zweimal pro Zyklus)"), curve.points.size() * 2 <= Curve::kMaxPoints);
+    menu.addItem(copyOther, lane == Lane::filter ? tr("Volume-Kurve übernehmen") : tr("Filter-Kurve übernehmen"));
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&form),
                        [safe = juce::Component::SafePointer<CurveView>(this)](int id) {
                            if (safe != nullptr && id > 0)

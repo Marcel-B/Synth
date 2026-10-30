@@ -11,25 +11,19 @@ namespace
 {
 using Attributes = juce::AudioParameterFloatAttributes;
 using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
+using tonwerkui::Localised;
+using tonwerkui::tr;
 
 juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
-juce::StringArray utf8Array(std::initializer_list<const char*> items)
-{
-    juce::StringArray result;
-    for (const auto* item : items)
-        result.add(utf8(item));
-    return result;
-}
-
 /** A number shown whole with its unit; `centre` skews the knob so that value sits halfway. */
-void number(Layout& layout, const juce::String& id, const juce::String& name, float min, float max, float initial,
+void number(Layout& layout, const juce::String& id, const Localised& name, float min, float max, float initial,
             const char* unit, float centre = 0.0f, int version = 1)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tr(unit).isEmpty() ? juce::String() : " " + tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
@@ -38,18 +32,18 @@ void number(Layout& layout, const juce::String& id, const juce::String& name, fl
 }
 
 /** Like `number`, but the top of the range leaves the sound untouched and reads "Aus". */
-void numberOrOff(Layout& layout, const juce::String& id, const juce::String& name, float min, float max, float initial,
+void numberOrOff(Layout& layout, const juce::String& id, const Localised& name, float min, float max, float initial,
                  const char* unit, float centre, int version)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tr(unit);
     auto toText = [suffix, max](float value, int) {
-        return value >= max - 0.5f ? juce::String("Aus") : juce::String(juce::roundToInt(value)) + suffix;
+        return value >= max - 0.5f ? tr("Aus") : juce::String(juce::roundToInt(value)) + suffix;
     };
     auto fromText = [max](const juce::String& text) {
-        return text.trim().equalsIgnoreCase("Aus") ? max : text.getFloatValue();
+        return text.trim().equalsIgnoreCase(tr("Aus")) ? max : text.getFloatValue();
     };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { id, version }, name, range, initial,
@@ -57,7 +51,7 @@ void numberOrOff(Layout& layout, const juce::String& id, const juce::String& nam
 }
 
 /** Shares in whole percent; the value runs from `min` to `max` (1 is 100 %). */
-void percent(Layout& layout, const juce::String& id, const juce::String& name, float initial, float min = 0.0f,
+void percent(Layout& layout, const juce::String& id, const Localised& name, float initial, float min = 0.0f,
              float max = 1.0f, int version = 1)
 {
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
@@ -67,18 +61,18 @@ void percent(Layout& layout, const juce::String& id, const juce::String& name, f
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
-void choice(Layout& layout, const juce::String& id, const juce::String& name, const juce::StringArray& items, int initial,
+void choice(Layout& layout, const juce::String& id, const Localised& name, const juce::StringArray& items, int initial,
             int version = 1)
 {
     layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, version }, name, items, initial));
 }
 
-void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial, int version = 1)
+void toggle(Layout& layout, const juce::String& id, const Localised& name, bool initial, int version = 1)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(
         juce::ParameterID { id, version }, name, initial,
         juce::AudioParameterBoolAttributes().withStringFromValueFunction(
-            [](bool on, int) { return on ? juce::String("An") : juce::String("Aus"); })));
+            [](bool on, int) { return on ? tr("An") : tr("Aus"); })));
 }
 
 /** How long each instrument may ring, in ms: a closed hat is a tick, a cymbal washes for seconds. */
@@ -133,27 +127,27 @@ Layout GrooveProcessor::createParameterLayout()
     for (int t = 0; t < kTracks; ++t)
     {
         const auto& track = d.track[(std::size_t) t];
-        const juce::String name = utf8(kTrackNames[(std::size_t) t]) + " ";
+        const juce::String name = tr(kTrackNames[(std::size_t) t]) + " ";
         const auto [shortest, longest] = decayRange((Instrument) t);
-        number(layout, id(t, "Tune"), name + "Stimmung", -24.0f, 24.0f, track.tune, "HT");
-        number(layout, id(t, "Decay"), name + "Abklingen", shortest, longest, track.decay * 1000.0f, "ms",
+        number(layout, id(t, "Tune"), name + tr("Stimmung"), -24.0f, 24.0f, track.tune, "HT");
+        number(layout, id(t, "Decay"), name + tr("Abklingen"), shortest, longest, track.decay * 1000.0f, "ms",
                std::sqrt(shortest * longest));
-        percent(layout, id(t, "Tone"), name + utf8(kSoundKnobs[(std::size_t) t].first), track.tone);
-        percent(layout, id(t, "Character"), name + utf8(kSoundKnobs[(std::size_t) t].second), track.character);
-        number(layout, id(t, "Level"), name + "Pegel", -36.0f, 6.0f, track.levelDb, "dB");
-        percent(layout, id(t, "Pan"), name + "Panorama", track.pan, -1.0f, 1.0f);
-        percent(layout, id(t, "Delay"), name + "Delay", track.delaySend);
-        percent(layout, id(t, "Reverb"), name + "Hall", track.reverbSend);
-        toggle(layout, id(t, "Mute"), name + "Stumm", track.mute);
+        percent(layout, id(t, "Tone"), name + tr(kSoundKnobs[(std::size_t) t].first), track.tone);
+        percent(layout, id(t, "Character"), name + tr(kSoundKnobs[(std::size_t) t].second), track.character);
+        number(layout, id(t, "Level"), name + tr("Pegel"), -36.0f, 6.0f, track.levelDb, "dB");
+        percent(layout, id(t, "Pan"), name + tr("Panorama"), track.pan, -1.0f, 1.0f);
+        percent(layout, id(t, "Delay"), name + tr("Delay"), track.delaySend);
+        percent(layout, id(t, "Reverb"), name + tr("Hall"), track.reverbSend);
+        toggle(layout, id(t, "Mute"), name + tr("Stumm"), track.mute);
     }
 
-    choice(layout, "seqMode", "Sequencer", utf8Array({ "Aus", "Mit Host", "Frei" }), (int) d.seqMode);
+    choice(layout, "seqMode", "Sequencer", tr({ "Aus", "Mit Host", "Frei" }), (int) d.seqMode);
     choice(layout, "pattern", "Pattern", { "A", "B", "C", "D", "E", "F", "G", "H" }, d.pattern);
     {
-        auto toText = [](int value, int) { return juce::String(value) + " Schritte"; };
+        auto toText = [](int value, int) { return juce::String(value) + " " + tr("Schritte"); };
         auto fromText = [](const juce::String& text) { return text.getIntValue(); };
         layout.add(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID { "length", 1 }, utf8("Länge"), 1, kSteps, d.length,
+            juce::ParameterID { "length", 1 }, tr("Länge"), 1, kSteps, d.length,
             juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
     }
     choice(layout, "rate", "Raster", { "1/16", "1/8", "1/16 T", "1/32" }, (int) d.rate);
@@ -174,27 +168,27 @@ Layout GrooveProcessor::createParameterLayout()
     percent(layout, "fxDelayFeedback", "Delay Feedback", fxDefaults.delay.feedback, 0.0f, 0.9f);
     number(layout, "fxDelayTone", "Delay Ton", 500.0f, 12000.0f, fxDefaults.delay.tone, "Hz", 3000.0f);
     percent(layout, "fxReverbMix", "Hall Mix", 0.5f);
-    number(layout, "fxReverbDecay", utf8("Hall Länge"), 300.0f, 8000.0f, 1500.0f, "ms", 2000.0f);
+    number(layout, "fxReverbDecay", tr("Hall Länge"), 300.0f, 8000.0f, 1500.0f, "ms", 2000.0f);
 
     // Version 2: the shaping every track has besides its two sound knobs, appended so projects keep their ids.
     for (int t = 0; t < kTracks; ++t)
     {
         const auto& track = d.track[(std::size_t) t];
-        const juce::String name = utf8(kTrackNames[(std::size_t) t]) + " ";
-        number(layout, id(t, "Attack"), name + "Attack", 0.0f, 100.0f, track.attack * 1000.0f, "ms", 10.0f, 2);
-        number(layout, id(t, "Hold"), name + "Halten", 0.0f, 2000.0f, track.hold * 1000.0f, "ms", 200.0f, 2);
-        number(layout, id(t, "PitchMod"), name + "Pitch-Mod", -24.0f, 48.0f, track.pitchMod, "HT", 0.0f, 2);
-        number(layout, id(t, "ModDecay"), name + "Mod-Zeit", 5.0f, 2000.0f, track.modDecay * 1000.0f, "ms", 100.0f, 2);
-        choice(layout, id(t, "Filter"), name + "Filter", utf8Array({ "Aus", "Tiefpass", "Hochpass", "Bandpass" }),
+        const juce::String name = tr(kTrackNames[(std::size_t) t]) + " ";
+        number(layout, id(t, "Attack"), name + tr("Attack"), 0.0f, 100.0f, track.attack * 1000.0f, "ms", 10.0f, 2);
+        number(layout, id(t, "Hold"), name + tr("Halten"), 0.0f, 2000.0f, track.hold * 1000.0f, "ms", 200.0f, 2);
+        number(layout, id(t, "PitchMod"), name + tr("Pitch-Mod"), -24.0f, 48.0f, track.pitchMod, "HT", 0.0f, 2);
+        number(layout, id(t, "ModDecay"), name + tr("Mod-Zeit"), 5.0f, 2000.0f, track.modDecay * 1000.0f, "ms", 100.0f, 2);
+        choice(layout, id(t, "Filter"), name + tr("Filter"), tr({ "Aus", "Tiefpass", "Hochpass", "Bandpass" }),
                (int) track.filter, 2);
-        number(layout, id(t, "Cutoff"), name + "Cutoff", 20.0f, 20000.0f, track.cutoff, "Hz", 1000.0f, 2);
-        percent(layout, id(t, "Resonance"), name + "Resonanz", track.resonance, 0.0f, 1.0f, 2);
-        percent(layout, id(t, "FilterMod"), name + "Filter-Mod", track.filterMod, -1.0f, 1.0f, 2);
-        percent(layout, id(t, "Drive"), name + "Zerrung", track.drive, 0.0f, 1.0f, 2);
-        numberOrOff(layout, id(t, "Bits"), name + "Bitcrush", 2.0f, 16.0f, track.bits, "Bit", 0.0f, 2);
-        numberOrOff(layout, id(t, "Crush"), name + "Downsample", 500.0f, 48000.0f, track.crush, "Hz", 6000.0f, 2);
-        percent(layout, id(t, "Velocity"), name + "Dynamik", track.velocity, 0.0f, 1.0f, 2);
-        percent(layout, id(t, "Random"), name + "Zufall", track.random, 0.0f, 1.0f, 2);
+        number(layout, id(t, "Cutoff"), name + tr("Cutoff"), 20.0f, 20000.0f, track.cutoff, "Hz", 1000.0f, 2);
+        percent(layout, id(t, "Resonance"), name + tr("Resonanz"), track.resonance, 0.0f, 1.0f, 2);
+        percent(layout, id(t, "FilterMod"), name + tr("Filter-Mod"), track.filterMod, -1.0f, 1.0f, 2);
+        percent(layout, id(t, "Drive"), name + tr("Zerrung"), track.drive, 0.0f, 1.0f, 2);
+        numberOrOff(layout, id(t, "Bits"), name + tr("Bitcrush"), 2.0f, 16.0f, track.bits, "Bit", 0.0f, 2);
+        numberOrOff(layout, id(t, "Crush"), name + tr("Downsample"), 500.0f, 48000.0f, track.crush, "Hz", 6000.0f, 2);
+        percent(layout, id(t, "Velocity"), name + tr("Dynamik"), track.velocity, 0.0f, 1.0f, 2);
+        percent(layout, id(t, "Random"), name + tr("Zufall"), track.random, 0.0f, 1.0f, 2);
     }
 
     // Version 3: the drum machine each track is built like.
@@ -202,15 +196,15 @@ Layout GrooveProcessor::createParameterLayout()
     for (const auto* machine : kMachineNames)
         machines.add(utf8(machine));
     for (int t = 0; t < kTracks; ++t)
-        choice(layout, id(t, "Machine"), utf8(kTrackNames[(std::size_t) t]) + " Maschine", machines,
+        choice(layout, id(t, "Machine"), tr(kTrackNames[(std::size_t) t]) + " " + tr("Maschine"), machines,
                (int) d.track[(std::size_t) t].machine, 3);
 
     // Version 4: delay and hall off with one click, the power switch on the effects panel.
     toggle(layout, "fxOn", "Effekte", true, 4);
     // The dice on the pattern, for all tracks and for each.
-    percent(layout, "roll", utf8("Würfeln"), d.roll, 0.0f, 1.0f, 4);
+    percent(layout, "roll", tr("Würfeln"), d.roll, 0.0f, 1.0f, 4);
     for (int t = 0; t < kTracks; ++t)
-        percent(layout, id(t, "Roll"), utf8(kTrackNames[(std::size_t) t]) + utf8(" Würfeln"), d.track[(std::size_t) t].roll,
+        percent(layout, id(t, "Roll"), tr(kTrackNames[(std::size_t) t]) + " " + tr("Würfeln"), d.track[(std::size_t) t].roll,
                 0.0f, 1.0f, 4);
     return layout;
 }
@@ -607,7 +601,7 @@ void GrooveProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* GrooveProcessor::createEditor() { return tonwerkui::forHost(new GrooveEditor(*this)); }
+juce::AudioProcessorEditor* GrooveProcessor::createEditor() { return tonwerkui::forHost<GrooveEditor>(*this); }
 
 int GrooveProcessor::getNumPrograms() { return (int) factoryKits().size(); }
 

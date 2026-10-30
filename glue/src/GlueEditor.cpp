@@ -47,9 +47,9 @@ juce::String MeterView::caption() const
     else
         text << juce::String(kReleases[(std::size_t) std::max(0, shown.release)], 1) << " S";
     if (shown.source == Source::sidechain)
-        text << dot << (keyConnected ? "SIDECHAIN" : "SIDECHAIN FEHLT");
+        text << dot << (keyConnected ? juce::String("SIDECHAIN") : tr("SIDECHAIN FEHLT"));
     if (shown.pump)
-        text << dot << "PUMPEN " << kDivisions[(std::size_t) std::clamp(shown.pumpDivision, 0, (int) kDivisions.size() - 1)].name;
+        text << dot << tr("PUMPEN") << " " << kDivisions[(std::size_t) std::clamp(shown.pumpDivision, 0, (int) kDivisions.size() - 1)].name;
     return text;
 }
 
@@ -165,8 +165,8 @@ GlueEditor::GlueEditor(GlueProcessor& p)
       output(p.state, "Ausgang", { { { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("GLUE", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("GLUE", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &meter, &scope, &key, &pump, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin

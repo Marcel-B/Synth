@@ -71,10 +71,10 @@ void ResponseView::paint(juce::Graphics& g)
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
     const auto dot = utf8(" · ");
-    juce::String caption = juce::String(utf8(kTypeNames[(std::size_t) shown.type])).toUpperCase() + dot
+    juce::String caption = tr(kTypeNames[(std::size_t) shown.type]).toUpperCase() + dot
                            + juce::String(juce::roundToInt(cutoffNow)) + " HZ";
     if (std::abs(shown.envelopeAmount) > 0.005f)
-        caption << dot << utf8("HÜLLKURVE ") << juce::roundToInt(envelope * 100.0f) << " %";
+        caption << dot << tr("HÜLLKURVE") << " " << juce::roundToInt(envelope * 100.0f) << " %";
     g.drawText(caption, inner.removeFromTop(14.0f).toNearestInt(),
                juce::Justification::centredLeft);
     inner.removeFromTop(2.0f);
@@ -155,8 +155,8 @@ FilterEditor::FilterEditor(FilterProcessor& p)
       output(p.state, "Ausgang", { { { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("FILTER", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("FILTER", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &filter, &scope, &envelope, &lfo, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin

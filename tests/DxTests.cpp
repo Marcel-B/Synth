@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "DxEditor.h"
 #include "DxPresets.h"
 #include "DxProcessor.h"
@@ -526,7 +527,7 @@ public:
                 }
             }
             std::unique_ptr<juce::AudioProcessorEditor> base(processor.createEditor());
-            auto* editor = dynamic_cast<DxEditor*>(base.get());
+            auto* editor = tonwerkui::innerEditor<DxEditor>(base.get());
             expect(editor != nullptr);
             logMessage("Editor: " + juce::String(editor->getWidth()) + " x " + juce::String(editor->getHeight()));
             expectLessOrEqual(editor->getHeight(), 800);

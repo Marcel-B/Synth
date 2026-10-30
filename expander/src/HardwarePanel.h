@@ -86,29 +86,35 @@ inline std::string whole(float value, const char* unit, bool sign = false)
     return text;
 }
 
-inline std::string tenths(float value, const char* unit, bool sign = false)
+inline std::string tenths(float value, const char* unit, bool sign = false, bool english = false)
 {
     char text[32];
     std::snprintf(text, sizeof(text), sign ? "%+.1f %s" : "%.1f %s", value, unit);
     std::string s = text;
-    std::replace(s.begin(), s.end(), '.', ',');
+    if (! english)
+        std::replace(s.begin(), s.end(), '.', ',');
     return s;
 }
 
 inline std::string percentOf(float share) { return whole(share * 100.0f, "%"); }
 
-inline Panel panelFor(const Settings& s)
+/** The sheet in German or, with `english`, in English (plain C++, so the texts are chosen here, not by `tr`). */
+inline Panel panelFor(const Settings& s, bool english = false)
 {
     Panel p;
+    auto t = [english](const char* german, const char* inEnglish) { return std::string(english ? inEnglish : german); };
+    const char* octaves = english ? "oct" : "Okt";
+    const char* semitones = english ? "st" : "HT";
+    const auto off = t("aus", "off");
     auto note = [&p](std::string text) {
         if (std::find(p.notes.begin(), p.notes.end(), text) == p.notes.end())
             p.notes.push_back(std::move(text));
     };
 
     // Oscillators: the frequencies by ear, VCO 2 as an interval to VCO 1.
-    p.tuning[0] = s.osc1.octave == 0 ? "Grundton" : "Grundton, " + whole((float) s.osc1.octave, "Okt", true);
+    p.tuning[0] = s.osc1.octave == 0 ? t("Grundton", "root") : t("Grundton, ", "root, ") + whole((float) s.osc1.octave, octaves, true);
     const int interval = 12 * (s.osc2.octave - s.osc1.octave) + s.osc2.semitones;
-    p.tuning[1] = interval == 0 ? "wie VCO 1" : whole((float) interval, "HT", true);
+    p.tuning[1] = interval == 0 ? t("wie VCO 1", "as VCO 1") : whole((float) interval, semitones, true);
     if (std::abs(s.osc2.fine) >= 0.5f)
         p.tuning[1] += ", " + whole(s.osc2.fine, "ct", true);
     p.sync = s.sync;
@@ -118,13 +124,15 @@ inline Panel panelFor(const Settings& s)
         p.pulseWidth[(size_t) n] = { std::clamp((osc[n]->width - 0.1f) / 0.8f, 0.0f, 1.0f), percentOf(osc[n]->width) };
         const float level = osc[n]->level;
         if (osc[n]->wave == Wave::pulse)
-            p.mixer[(size_t) n] = { 0.5f + level / 2.0f, "Puls " + percentOf(level) };
+            p.mixer[(size_t) n] = { 0.5f + level / 2.0f, t("Puls ", "Pulse ") + percentOf(level) };
         else
-            p.mixer[(size_t) n] = { 0.5f - level / 2.0f, "Säge " + percentOf(level) };
+            p.mixer[(size_t) n] = { 0.5f - level / 2.0f, t("Säge ", "Saw ") + percentOf(level) };
         if (osc[n]->wave == Wave::both)
-            note("VCO " + std::to_string(n + 1) + " spielt Säge und Puls zugleich; der Mixer nimmt eins: Säge.");
+            note("VCO " + std::to_string(n + 1)
+                 + t(" spielt Säge und Puls zugleich; der Mixer nimmt eins: Säge.",
+                     " plays saw and pulse at once; the mixer takes one: saw."));
     }
-    p.ext = { 0.5f, "aus" };
+    p.ext = { 0.5f, off };
 
     // VCO modulation: one knob and one source per VCO. The filter envelope's sweep goes to VCO 2, the LFO's
     // vibrato or pulse width modulation to whichever VCO is still free.
@@ -135,12 +143,14 @@ inline Panel panelFor(const Settings& s)
         if (n == 1 && std::abs(s.envPitch) > 0.0f)
         {
             knob = { 0.5f - std::min(std::abs(s.envPitch) / (12.0f * kVcoOctaves), 1.0f) / 2.0f,
-                     "FREQ " + whole(s.envPitch, "HT", true) };
+                     "FREQ " + whole(s.envPitch, semitones, true) };
             from = VcoSource::env;
             if (s.envPitch < 0.0f)
-                note("Die Hüllkurve zieht VCO 2 nach unten; am Modul geht sie nur nach oben.");
+                note(t("Die Hüllkurve zieht VCO 2 nach unten; am Modul geht sie nur nach oben.",
+                       "The envelope pulls VCO 2 down; on the module it only goes up."));
             if (s.lfoPitch > 0.0f || s.lfoPwm > 0.0f)
-                note("VCO 2 nimmt die Hüllkurve, das LFO nur VCO 1 (ein Modulationsregler je VCO).");
+                note(t("VCO 2 nimmt die Hüllkurve, das LFO nur VCO 1 (ein Modulationsregler je VCO).",
+                       "VCO 2 takes the envelope, the LFO only VCO 1 (one modulation knob per VCO)."));
         }
         else if (s.lfoPitch > 0.0f)
         {
@@ -148,7 +158,8 @@ inline Panel panelFor(const Settings& s)
                      "FREQ ±" + whole(s.lfoPitch, "ct") };
             from = VcoSource::lfo;
             if (s.lfoPwm > 0.0f)
-                note("Vibrato und PWM zugleich geht nicht (ein Modulationsregler je VCO): Vibrato.");
+                note(t("Vibrato und PWM zugleich geht nicht (ein Modulationsregler je VCO): Vibrato.",
+                       "Vibrato and PWM at once is not possible (one modulation knob per VCO): vibrato."));
         }
         else if (s.lfoPwm > 0.0f)
         {
@@ -156,10 +167,11 @@ inline Panel panelFor(const Settings& s)
             from = VcoSource::lfo;
         }
         else
-            knob = { 0.5f, "aus" };
+            knob = { 0.5f, off };
     }
     if (s.lfoPitch > 0.0f && s.lfoDelay > 0.0f)
-        note("Das Vibrato setzt im Plugin nach " + whole(s.lfoDelay * 1000.0f, "ms") + " ein; das Modul hat keine Verzögerung.");
+        note(t("Das Vibrato setzt im Plugin nach ", "In the plugin the vibrato sets in after ") + whole(s.lfoDelay * 1000.0f, "ms")
+             + t(" ein; das Modul hat keine Verzögerung.", "; the module has no delay."));
 
     // Filter.
     p.cutoff = { logPosition(s.cutoff, kCutoffLow, kCutoffHigh), whole(s.cutoff, "Hz") };
@@ -174,32 +186,35 @@ inline Panel panelFor(const Settings& s)
     else if (std::abs(s.mode - 0.5f) < 0.005f)
         p.notch = { 0.5f, "Notch" };
     else
-        p.notch = { s.mode, percentOf(s.mode) + " zu HP" };
+        p.notch = { s.mode, percentOf(s.mode) + t(" zu HP", " to HP") };
     if (std::abs(s.envCutoff) > 0.0f)
     {
         p.vcfModulation = { 0.5f + std::clamp(s.envCutoff * 6.0f / kVcfOctaves, -1.0f, 1.0f) / 2.0f,
-                            tenths(s.envCutoff * 6.0f, "Okt", true) };
+                            tenths(s.envCutoff * 6.0f, octaves, true, english) };
         p.vcfSource = VcfSource::env;
         if (s.lfoCutoff > 0.0f)
-            note("Hüllkurve und LFO bewegen das Filter; das Modul nimmt eine Quelle: die Hüllkurve.");
+            note(t("Hüllkurve und LFO bewegen das Filter; das Modul nimmt eine Quelle: die Hüllkurve.",
+                   "Envelope and LFO move the filter; the module takes one source: the envelope."));
     }
     else if (s.lfoCutoff > 0.0f)
     {
         p.vcfModulation = { 0.5f + std::min(s.lfoCutoff * 3.0f / kVcfOctaves, 1.0f) / 2.0f,
-                            "±" + tenths(s.lfoCutoff * 3.0f, "Okt") };
+                            "±" + tenths(s.lfoCutoff * 3.0f, octaves, false, english) };
         p.vcfSource = VcfSource::lfo;
     }
     else
-        p.vcfModulation = { 0.5f, "aus" };
+        p.vcfModulation = { 0.5f, off };
     if (std::abs(s.keytrack - 0.5f) > 0.01f)
-        note("Keytracking " + percentOf(s.keytrack) + ": am Modul über die VCF-CV-Buchse, sonst fest.");
+        note(t("Keytracking ", "Key tracking ") + percentOf(s.keytrack)
+             + t(": am Modul über die VCF-CV-Buchse, sonst fest.", ": on the module through the VCF CV jack, else fixed."));
 
     // LFO, a triangle on the hardware.
-    p.lfoRate = { logPosition(s.lfoRate, kLfoLow, kLfoHigh), tenths(s.lfoRate, "Hz") };
+    p.lfoRate = { logPosition(s.lfoRate, kLfoLow, kLfoHigh), tenths(s.lfoRate, "Hz", false, english) };
     if (s.lfoSync)
-        note("Das LFO läuft im Plugin im Songtempo; das Modul frei.");
+        note(t("Das LFO läuft im Plugin im Songtempo; das Modul frei.", "The plugin's LFO follows the song tempo; the module's runs free."));
     if ((s.lfoPitch > 0.0f || s.lfoPwm > 0.0f || s.lfoCutoff > 0.0f) && s.lfoShape != LfoShape::triangle)
-        note("Das LFO des Moduls ist ein Dreieck, das Plugin spielt eine andere Form.");
+        note(t("Das LFO des Moduls ist ein Dreieck, das Plugin spielt eine andere Form.",
+               "The module's LFO is a triangle, the plugin plays another shape."));
 
     // Envelopes: attack, decay, sustain; the hardware's release runs at the decay's pace.
     auto envelope = [&](std::array<Knob, 3>& knobs, const EnvSettings& e, const char* name) {
@@ -207,9 +222,11 @@ inline Panel panelFor(const Settings& s)
         knobs[1] = { logPosition(e.decay * 1000.0f, kDecayLow, kDecayHigh), whole(e.decay * 1000.0f, "ms") };
         knobs[2] = { e.sustain, percentOf(e.sustain) };
         if (e.sustain > 0.05f && std::abs(std::log(e.release / std::max(e.decay, 0.001f))) > std::log(2.0f))
-            note(std::string(name) + "-Release " + whole(e.release * 1000.0f, "ms") + ", Decay "
-                 + whole(e.decay * 1000.0f, "ms") + ": am Modul klingt der Ton mit dem Decay aus (fürs Ausklingen DECAY auf "
-                 + clockOf(logPosition(e.release * 1000.0f, kDecayLow, kDecayHigh)) + " Uhr).");
+            note(std::string(name) + t("-Release ", " release ") + whole(e.release * 1000.0f, "ms") + ", Decay "
+                 + whole(e.decay * 1000.0f, "ms")
+                 + t(": am Modul klingt der Ton mit dem Decay aus (fürs Ausklingen DECAY auf ",
+                     ": on the module the note fades with the decay (for the fade set DECAY to ")
+                 + clockOf(logPosition(e.release * 1000.0f, kDecayLow, kDecayHigh)) + t(" Uhr).", " o'clock)."));
     };
     envelope(p.ampEnvelope, s.ampEnv, "Amp");
     envelope(p.filterEnvelope, s.filterEnv, "Filter");
@@ -224,18 +241,20 @@ inline Panel panelFor(const Settings& s)
             break;
         case VoiceMode::unison:
             p.assign = Assign::uni;
-            note("Unison: Modul 2 um " + whole(s.unisonDetune / 2.0f, "ct") + " gegen Modul 1 verstimmen.");
+            note(t("Unison: Modul 2 um ", "Unison: detune module 2 by ") + whole(s.unisonDetune / 2.0f, "ct")
+                 + t(" gegen Modul 1 verstimmen.", " against module 1."));
             break;
     }
     const float spread = p.secondSilent ? 0.0f : s.spread / 2.0f;
     p.pan = { Knob { 0.5f - spread, percentOf(s.spread) }, Knob { 0.5f + spread, "" } };
     p.portamentoOn = s.glide > 0.0f;
     p.portamento = p.portamentoOn ? Knob { logPosition(s.glide * 1000.0f, kGlideLow, kGlideHigh), whole(s.glide * 1000.0f, "ms") }
-                                  : Knob { 0.0f, "aus" };
+                                  : Knob { 0.0f, off };
     if (s.voiceMode != VoiceMode::mono)
-        note("Das Plugin spielt bis zu acht Stimmen, die Module zwei.");
+        note(t("Das Plugin spielt bis zu acht Stimmen, die Module zwei.", "The plugin plays up to eight voices, the modules two."));
     if (s.velocity > 0.55f)
-        note("Anschlag " + percentOf(s.velocity) + " geht am Modul nur über eine Velocity-CV.");
+        note(t("Anschlag ", "Velocity ") + percentOf(s.velocity)
+             + t(" geht am Modul nur über eine Velocity-CV.", " reaches the module only through a velocity CV."));
     return p;
 }
 } // namespace tonwerkexpander::hardware

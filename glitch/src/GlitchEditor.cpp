@@ -1,5 +1,6 @@
 #include "GlitchEditor.h"
 #include "Platform.h"
+#include "Language.h"
 
 #include "GlitchPresets.h"
 #include "PresetCategories.h"
@@ -22,7 +23,8 @@ constexpr int kSlot = 92;
 constexpr int kRowHeight = 128;
 constexpr int kGap = 10;
 
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
+using tonwerkui::retranslate;
+using tonwerkui::tr;
 
 juce::Font mono(float size)
 {
@@ -116,14 +118,15 @@ Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& 
     jassert(parameter != nullptr);
     if (dynamic_cast<juce::AudioParameterBool*>(parameter) != nullptr)
     {
-        toggle = std::make_unique<juce::ToggleButton>(utf8("an"));
+        toggle = std::make_unique<juce::ToggleButton>(tr("an"));
         addAndMakeVisible(*toggle);
         toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
     }
     else if (auto* choice = dynamic_cast<juce::AudioParameterChoice*>(parameter))
     {
         menu = std::make_unique<juce::ComboBox>();
-        menu->addItemList(choice->choices, 1);
+        for (int i = 0; i < choice->choices.size(); ++i)
+            menu->addItem(retranslate(choice->choices[i]), i + 1);
         addAndMakeVisible(*menu);
         menuAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state, parameterId, *menu);
     }
@@ -154,11 +157,11 @@ void Control::resized()
 
 Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle,
                  std::initializer_list<std::pair<const char*, const char*>> items)
-    : title(sectionTitle)
+    : title(tr(sectionTitle))
 {
     for (const auto& [id, label] : items)
     {
-        controls.push_back(std::make_unique<Control>(state, id, utf8(label)));
+        controls.push_back(std::make_unique<Control>(state, id, tr(label)));
         addAndMakeVisible(*controls.back());
     }
 }
@@ -183,14 +186,14 @@ ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
               tonwerkui::menuOrder((int) factoryPresets().size(),
                                    [](int i) { return factoryPresets()[(std::size_t) i].category; },
                                    tonwerkui::kGlitchCategories)),
-      main(p.state, utf8("Gesamt"), { { "amount", "Stärke" }, { "freeze", "Einfrieren" }, { "mix", "Mix" } }),
-      stutter(p.state, utf8("Stottern"),
+      main(p.state, "Gesamt", { { "amount", "Stärke" }, { "freeze", "Einfrieren" }, { "mix", "Mix" } }),
+      stutter(p.state, "Stottern",
               { { "stutterChance", "Chance" }, { "stutterLength", "Länge" }, { "repeats", "Wiederh." },
                 { "accelerate", "Beschleun." } }),
-      dropout(p.state, utf8("Aussetzer"), { { "dropoutChance", "Chance" }, { "dropoutLength", "Länge" } }),
-      damage(p.state, utf8("Defekt"),
+      dropout(p.state, "Aussetzer", { { "dropoutChance", "Chance" }, { "dropoutLength", "Länge" } }),
+      damage(p.state, "Defekt",
              { { "crush", "Bitcrusher" }, { "pitchChance", "Pitch-Chance" }, { "pitchRange", "Pitch-Bereich" } }),
-      timing(p.state, utf8("Timing"), { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
+      timing(p.state, "Timing", { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
 {
     setLookAndFeel(&lookAndFeel);
     addAndMakeVisible(presets);

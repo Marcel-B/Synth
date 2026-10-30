@@ -2,16 +2,18 @@
 
 #include "dsp/Ranges.h"
 
+#include "Language.h"
+
 namespace tonwerk
 {
 namespace
 {
 using Type = ParameterDescriptor::Type;
 
-/** Names with umlauts; juce::String takes a plain `const char*` as ASCII only. */
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
+using tonwerkui::tr;
 
-const juce::StringArray kWaveNames { "Sinus", "Dreieck", utf8("Sägezahn"), "Rechteck/Puls" };
+/** In the current language, since Logic reads the names when it loads the plugin. */
+juce::StringArray waveNames() { return tr({ "Sinus", "Dreieck", "Sägezahn", "Rechteck/Puls" }); }
 
 /** A field of the patch, reached through a function so nested fields need no member-pointer chains. */
 template <typename T>
@@ -62,15 +64,15 @@ public:
 
     void oscillator(const juce::String& prefix, const juce::String& name, Field<Oscillator> osc)
     {
-        choice<Wave>(prefix + ".wave", name + " Welle", kWaveNames, [osc](Patch& p) -> Wave& { return osc(p).wave; });
-        integer(prefix + ".octave", name + " Oktave", ranges::octave, [osc](Patch& p) -> int& { return osc(p).octave; });
-        number(prefix + ".detune", name + " Verstimmung", ranges::detune, [osc](Patch& p) -> float& { return osc(p).detune; }, 0.0f, "ct");
-        number(prefix + ".level", name + " Pegel", ranges::level, [osc](Patch& p) -> float& { return osc(p).level; });
-        number(prefix + ".width", name + " Pulsbreite", ranges::width, [osc](Patch& p) -> float& { return osc(p).width; });
+        choice<Wave>(prefix + ".wave", name + " " + tr("Welle"), waveNames(), [osc](Patch& p) -> Wave& { return osc(p).wave; });
+        integer(prefix + ".octave", name + " " + tr("Oktave"), ranges::octave, [osc](Patch& p) -> int& { return osc(p).octave; });
+        number(prefix + ".detune", name + " " + tr("Verstimmung"), ranges::detune, [osc](Patch& p) -> float& { return osc(p).detune; }, 0.0f, "ct");
+        number(prefix + ".level", name + " " + tr("Pegel"), ranges::level, [osc](Patch& p) -> float& { return osc(p).level; });
+        number(prefix + ".width", name + " " + tr("Pulsbreite"), ranges::width, [osc](Patch& p) -> float& { return osc(p).width; });
         number(prefix + ".pwm", name + " PWM LFO", ranges::pwm, [osc](Patch& p) -> float& { return osc(p).pwm; });
-        toggle(prefix + ".pwmLfo", name + " PWM LFO an", [osc](Patch& p) -> bool& { return osc(p).pwmLfo; });
-        number(prefix + ".pwmAmpEnv", name + utf8(" PWM Lautst.-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmAmpEnv; });
-        number(prefix + ".pwmFilterEnv", name + utf8(" PWM Filter-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmFilterEnv; });
+        toggle(prefix + ".pwmLfo", name + " PWM LFO " + tr("an"), [osc](Patch& p) -> bool& { return osc(p).pwmLfo; });
+        number(prefix + ".pwmAmpEnv", name + " PWM " + tr("Lautst.-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmAmpEnv; });
+        number(prefix + ".pwmFilterEnv", name + " PWM " + tr("Filter-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmFilterEnv; });
     }
 };
 
@@ -80,30 +82,30 @@ std::vector<ParameterDescriptor> build()
     b.choice<Engine>("engine", "Engine", { "Analog", "FM" }, [](Patch& p) -> Engine& { return p.engine; });
 
     // Analog.
-    b.oscillator("osc1", "Osz 1", [](Patch& p) -> Oscillator& { return p.analog.osc1; });
-    b.oscillator("osc2", "Osz 2", [](Patch& p) -> Oscillator& { return p.analog.osc2; });
-    b.number("noise", "Rauschen", ranges::level, [](Patch& p) -> float& { return p.analog.noise; });
-    b.choice<FilterType>("filter.type", "Filtertyp", { "Tiefpass", "Hochpass", "Bandpass" },
+    b.oscillator("osc1", tr("Osz") + " 1", [](Patch& p) -> Oscillator& { return p.analog.osc1; });
+    b.oscillator("osc2", tr("Osz") + " 2", [](Patch& p) -> Oscillator& { return p.analog.osc2; });
+    b.number("noise", tr("Rauschen"), ranges::level, [](Patch& p) -> float& { return p.analog.noise; });
+    b.choice<FilterType>("filter.type", tr("Filtertyp"), tr({ "Tiefpass", "Hochpass", "Bandpass" }),
                          [](Patch& p) -> FilterType& { return p.analog.filter.type; });
     b.number("filter.cutoff", "Cutoff", ranges::cutoff, [](Patch& p) -> float& { return p.analog.filter.cutoff; }, 1000.0f, "Hz");
-    b.number("filter.resonance", "Resonanz", ranges::resonance, [](Patch& p) -> float& { return p.analog.filter.resonance; });
-    b.number("filter.envAmount", utf8("Filter-Hüllk. Menge"), ranges::envAmount, [](Patch& p) -> float& { return p.analog.filter.envAmount; }, 0.0f, "Okt");
-    b.number("filter.keyTrack", "Keytracking", ranges::keyTrack, [](Patch& p) -> float& { return p.analog.filter.keyTrack; });
-    b.envelope("filterEnv", utf8("Filter-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.filterEnv; });
-    b.envelope("ampEnv", utf8("Lautst.-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.ampEnv; });
-    b.choice<Wave>("lfo.wave", "LFO Welle", kWaveNames, [](Patch& p) -> Wave& { return p.analog.lfo.wave; });
-    b.number("lfo.rate", "LFO Tempo", ranges::rate, [](Patch& p) -> float& { return p.analog.lfo.rate; }, 3.0f, "Hz");
-    b.choice<AnalogLfoTarget>("lfo.target", "LFO Ziel", { utf8("Tonhöhe"), "Filter", utf8("Lautstärke") },
+    b.number("filter.resonance", tr("Resonanz"), ranges::resonance, [](Patch& p) -> float& { return p.analog.filter.resonance; });
+    b.number("filter.envAmount", tr("Filter-Hüllk.") + " " + tr("Menge"), ranges::envAmount, [](Patch& p) -> float& { return p.analog.filter.envAmount; }, 0.0f, "Okt");
+    b.number("filter.keyTrack", tr("Keytracking"), ranges::keyTrack, [](Patch& p) -> float& { return p.analog.filter.keyTrack; });
+    b.envelope("filterEnv", tr("Filter-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.filterEnv; });
+    b.envelope("ampEnv", tr("Lautst.-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.ampEnv; });
+    b.choice<Wave>("lfo.wave", tr("LFO Welle"), waveNames(), [](Patch& p) -> Wave& { return p.analog.lfo.wave; });
+    b.number("lfo.rate", tr("LFO Tempo"), ranges::rate, [](Patch& p) -> float& { return p.analog.lfo.rate; }, 3.0f, "Hz");
+    b.choice<AnalogLfoTarget>("lfo.target", tr("LFO Ziel"), tr({ "Tonhöhe", "Filter", "Lautstärke" }),
                               [](Patch& p) -> AnalogLfoTarget& { return p.analog.lfo.target; });
-    b.number("lfo.depth", "LFO Tiefe", ranges::depth, [](Patch& p) -> float& { return p.analog.lfo.depth; });
-    b.number("volume", utf8("Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.analog.volume; });
+    b.number("lfo.depth", "LFO " + tr("Tiefe"), ranges::depth, [](Patch& p) -> float& { return p.analog.lfo.depth; });
+    b.number("volume", tr("Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.analog.volume; });
 
     // FM.
     juce::StringArray algorithms;
     for (size_t i = 0; i < kAlgorithms.size(); ++i)
         algorithms.add(juce::String((int) i + 1) + ": " + juce::String::fromUTF8(kAlgorithms[i].label));
     // A choice holds 0 to 7; the patch counts 1 to 8.
-    b.list.push_back({ "fm.algorithm", "FM Algorithmus", Type::choice, 0.0f, 7.0f, 0.0f, algorithms, {},
+    b.list.push_back({ "fm.algorithm", "FM " + tr("Algorithmus"), Type::choice, 0.0f, 7.0f, 0.0f, algorithms, {},
                        [](const Patch& p) { return (float) (p.fm.algorithm - 1); },
                        [](Patch& p, float v) { p.fm.algorithm = juce::roundToInt(v) + 1; } });
     b.number("fm.feedback", "FM Feedback", ranges::feedback, [](Patch& p) -> float& { return p.fm.feedback; });
@@ -113,25 +115,25 @@ std::vector<ParameterDescriptor> build()
         const auto name = "Op " + juce::String(i + 1);
         const Field<Operator> op = [i](Patch& p) -> Operator& { return p.fm.ops[(size_t) i]; };
         b.number(prefix + ".ratio", name + " Ratio", ranges::ratio, [op](Patch& p) -> float& { return op(p).ratio; });
-        b.number(prefix + ".detune", name + " Verstimmung", ranges::detune, [op](Patch& p) -> float& { return op(p).detune; }, 0.0f, "ct");
-        b.number(prefix + ".level", name + " Pegel", ranges::level, [op](Patch& p) -> float& { return op(p).level; });
-        b.number(prefix + ".velocity", name + " Anschlag", ranges::velocity, [op](Patch& p) -> float& { return op(p).velocity; });
+        b.number(prefix + ".detune", name + " " + tr("Verstimmung"), ranges::detune, [op](Patch& p) -> float& { return op(p).detune; }, 0.0f, "ct");
+        b.number(prefix + ".level", name + " " + tr("Pegel"), ranges::level, [op](Patch& p) -> float& { return op(p).level; });
+        b.number(prefix + ".velocity", name + " " + tr("Anschlag"), ranges::velocity, [op](Patch& p) -> float& { return op(p).velocity; });
         b.envelope(prefix + ".env", name, [op](Patch& p) -> Envelope& { return op(p).env; });
     }
-    b.choice<Wave>("fm.lfo.wave", "FM LFO Welle", kWaveNames, [](Patch& p) -> Wave& { return p.fm.lfo.wave; });
-    b.number("fm.lfo.rate", "FM LFO Tempo", ranges::rate, [](Patch& p) -> float& { return p.fm.lfo.rate; }, 3.0f, "Hz");
-    b.choice<FmLfoTarget>("fm.lfo.target", "FM LFO Ziel", { utf8("Tonhöhe"), "Index", utf8("Lautstärke") },
+    b.choice<Wave>("fm.lfo.wave", "FM " + tr("LFO Welle"), waveNames(), [](Patch& p) -> Wave& { return p.fm.lfo.wave; });
+    b.number("fm.lfo.rate", "FM " + tr("LFO Tempo"), ranges::rate, [](Patch& p) -> float& { return p.fm.lfo.rate; }, 3.0f, "Hz");
+    b.choice<FmLfoTarget>("fm.lfo.target", "FM " + tr("LFO Ziel"), tr({ "Tonhöhe", "Index", "Lautstärke" }),
                           [](Patch& p) -> FmLfoTarget& { return p.fm.lfo.target; });
-    b.number("fm.lfo.depth", "FM LFO Tiefe", ranges::depth, [](Patch& p) -> float& { return p.fm.lfo.depth; });
-    b.number("fm.volume", utf8("FM Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.fm.volume; });
+    b.number("fm.lfo.depth", "FM LFO " + tr("Tiefe"), ranges::depth, [](Patch& p) -> float& { return p.fm.lfo.depth; });
+    b.number("fm.volume", "FM " + tr("Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.fm.volume; });
 
     // Effects.
     b.number("fx.delay.mix", "Delay Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.delay.mix; });
-    b.number("fx.delay.time", "Delay Zeit", ranges::delayTime, [](Patch& p) -> float& { return p.fx.delay.time; }, 0.35f, "s");
+    b.number("fx.delay.time", "Delay " + tr("Zeit"), ranges::delayTime, [](Patch& p) -> float& { return p.fx.delay.time; }, 0.35f, "s");
     b.number("fx.delay.feedback", "Delay Feedback", ranges::delayFeedback, [](Patch& p) -> float& { return p.fx.delay.feedback; });
-    b.number("fx.delay.tone", "Delay Ton", ranges::tone, [](Patch& p) -> float& { return p.fx.delay.tone; }, 3000.0f, "Hz");
-    b.number("fx.reverb.mix", "Hall Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.reverb.mix; });
-    b.number("fx.reverb.decay", utf8("Hall Länge"), ranges::reverbDecay, [](Patch& p) -> float& { return p.fx.reverb.decay; }, 2.0f, "s");
+    b.number("fx.delay.tone", "Delay " + tr("Ton"), ranges::tone, [](Patch& p) -> float& { return p.fx.delay.tone; }, 3000.0f, "Hz");
+    b.number("fx.reverb.mix", tr("Hall") + " Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.reverb.mix; });
+    b.number("fx.reverb.decay", tr("Hall") + " " + tr("Länge"), ranges::reverbDecay, [](Patch& p) -> float& { return p.fx.reverb.decay; }, 2.0f, "s");
 
     // Added after the first release: appended, so the parameters before them keep their places in saved projects.
     const auto first = b.list.size();
@@ -139,24 +141,24 @@ std::vector<ParameterDescriptor> build()
     for (const auto& division : kDivisions)
         divisions.add(division.label);
     b.toggle("lfo.sync", "LFO Sync", [](Patch& p) -> bool& { return p.analog.lfo.sync; });
-    b.choice<int>("lfo.division", "LFO Teilung", divisions, [](Patch& p) -> int& { return p.analog.lfo.division; });
+    b.choice<int>("lfo.division", "LFO " + tr("Teilung"), divisions, [](Patch& p) -> int& { return p.analog.lfo.division; });
     b.toggle("fm.lfo.sync", "FM LFO Sync", [](Patch& p) -> bool& { return p.fm.lfo.sync; });
-    b.choice<int>("fm.lfo.division", "FM LFO Teilung", divisions, [](Patch& p) -> int& { return p.fm.lfo.division; });
+    b.choice<int>("fm.lfo.division", "FM LFO " + tr("Teilung"), divisions, [](Patch& p) -> int& { return p.fm.lfo.division; });
     b.toggle("fx.delay.sync", "Delay Sync", [](Patch& p) -> bool& { return p.fx.delay.sync; });
-    b.choice<int>("fx.delay.division", "Delay Teilung", divisions, [](Patch& p) -> int& { return p.fx.delay.division; });
+    b.choice<int>("fx.delay.division", "Delay " + tr("Teilung"), divisions, [](Patch& p) -> int& { return p.fx.delay.division; });
     for (auto i = first; i < b.list.size(); ++i)
         b.list[i].version = 2;
 
     // Added in 0.3.0.
     const auto third = b.list.size();
-    b.number("fold.amount", "Wavefolder Menge", ranges::level, [](Patch& p) -> float& { return p.analog.fold.amount; });
-    b.number("fold.symmetry", "Wavefolder Symmetrie", ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.symmetry; });
-    b.number("fold.env", utf8("Wavefolder Filter-Hüllk."), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.env; });
-    b.number("sh.rate", "S&H Tempo", ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
+    b.number("fold.amount", "Wavefolder " + tr("Menge"), ranges::level, [](Patch& p) -> float& { return p.analog.fold.amount; });
+    b.number("fold.symmetry", "Wavefolder " + tr("Symmetrie"), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.symmetry; });
+    b.number("fold.env", "Wavefolder " + tr("Filter-Hüllk."), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.env; });
+    b.number("sh.rate", tr("S&H Tempo"), ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
     b.toggle("sh.sync", "S&H Sync", [](Patch& p) -> bool& { return p.analog.sampleHold.sync; });
-    b.choice<int>("sh.division", "S&H Teilung", divisions, [](Patch& p) -> int& { return p.analog.sampleHold.division; });
+    b.choice<int>("sh.division", "S&H " + tr("Teilung"), divisions, [](Patch& p) -> int& { return p.analog.sampleHold.division; });
     b.number("sh.filter", "S&H Filter", ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.filter; });
-    b.number("sh.pitch", utf8("S&H Tonhöhe"), ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
+    b.number("sh.pitch", "S&H " + tr("Tonhöhe"), ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
     for (auto i = third; i < b.list.size(); ++i)
         b.list[i].version = 3;
 
@@ -194,7 +196,7 @@ Text textFor(const ParameterDescriptor& d)
         return { [](float v, int) { return (v < 9.95f ? juce::String(v, 1) : juce::String(juce::roundToInt(v))) + " Hz"; },
                  plain };
     if (d.unit == "Okt")
-        return { [](float v, int) { return whole(v * 12.0f, "HT"); },
+        return { [](float v, int) { return whole(v * 12.0f, tr("HT")); },
                  [](const juce::String& text) { return text.getFloatValue() / 12.0f; } };
     if (d.unit.isNotEmpty())
         return { [unit = d.unit](float v, int) { return whole(v, unit); }, plain };
@@ -235,7 +237,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Editio
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     const Patch defaults;
-    for (const auto& d : descriptors())
+    // Built anew so names and menus speak the current language; the order is descriptors()'.
+    for (const auto& d : build())
     {
         if (! hasPart(edition, d.part))
             continue;
@@ -262,7 +265,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Editio
                 layout.add(std::make_unique<juce::AudioParameterInt>(
                     id, d.name, (int) d.min, (int) d.max, (int) value,
                     juce::AudioParameterIntAttributes()
-                        .withStringFromValueFunction([](int v, int) { return juce::String(v) + " Okt"; })
+                        .withStringFromValueFunction([](int v, int) { return juce::String(v) + " " + tr("Okt"); })
                         .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
                 break;
             case Type::choice:

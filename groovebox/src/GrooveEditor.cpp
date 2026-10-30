@@ -127,7 +127,7 @@ void StepGrid::paint(juce::Graphics& g)
         }
         g.setColour(t == selected ? yellow : text);
         g.setFont(mono(11.0f));
-        g.drawText(juce::String::fromUTF8(kTrackNames[(std::size_t) t]).toUpperCase(), name.withTrimmedLeft(10),
+        g.drawText(tr(kTrackNames[(std::size_t) t]).toUpperCase(), name.withTrimmedLeft(10),
                    juce::Justification::centredLeft);
 
         const bool silent = muteOf(synth, t)->getValue() >= 0.5f;
@@ -212,7 +212,7 @@ void StepGrid::mouseDrag(const juce::MouseEvent& event)
 
 MachinePanel::MachinePanel(GrooveProcessor& processor) : synth(processor)
 {
-    allName.setText("Alle", juce::dontSendNotification);
+    allName.setText(tr("Alle"), juce::dontSendNotification);
     allName.setJustificationType(juce::Justification::centred);
     allName.setFont(juce::FontOptions(12.0f));
     allName.setColour(juce::Label::textColourId, yellow);
@@ -227,7 +227,7 @@ MachinePanel::MachinePanel(GrooveProcessor& processor) : synth(processor)
     for (int t = 0; t < kTracks; ++t)
     {
         menus.push_back(std::make_unique<Control>(synth.state, juce::String(kTrackIds[(std::size_t) t]) + "Machine",
-                                                  utf8(kTrackNames[(std::size_t) t]), 2));
+                                                  tr(kTrackNames[(std::size_t) t]), 2));
         addAndMakeVisible(*menus.back());
     }
     update();
@@ -263,7 +263,7 @@ void MachinePanel::update()
     if (common >= 0)
         all.setSelectedId(common + 1, juce::dontSendNotification);
     else
-        all.setText("Gemischt", juce::dontSendNotification);
+        all.setText(tr("Gemischt"), juce::dontSendNotification);
 }
 
 void MachinePanel::paint(juce::Graphics& g) { paintPanel(g, getLocalBounds(), "Maschinen"); }
@@ -287,12 +287,12 @@ std::unique_ptr<Section> trackSection(GrooveProcessor& p, int t)
 {
     const juce::String prefix = kTrackIds[(std::size_t) t];
     return std::make_unique<Section>(
-        p.state, juce::String::fromUTF8(kTrackNames[(std::size_t) t]),
+        p.state, tr(kTrackNames[(std::size_t) t]),
         std::vector<Section::Row> { { { prefix + "Tune", "Stimmung" },
                                       { prefix + "Decay", "Abklingen" },
-                                      { prefix + "Tone", juce::String::fromUTF8(kSoundKnobs[(std::size_t) t].first) },
+                                      { prefix + "Tone", tr(kSoundKnobs[(std::size_t) t].first) },
                                       { prefix + "Character",
-                                        juce::String::fromUTF8(kSoundKnobs[(std::size_t) t].second) },
+                                        tr(kSoundKnobs[(std::size_t) t].second) },
                                       { prefix + "Level", "Pegel" },
                                       { prefix + "Pan", "Panorama" },
                                       { prefix + "Delay", "Delay" },
@@ -311,7 +311,7 @@ std::unique_ptr<Section> trackSection(GrooveProcessor& p, int t)
                                       { prefix + "Crush", "Rate" },
                                       { prefix + "Velocity", "Dynamik" },
                                       { prefix + "Random", "Zufall" },
-                                      { prefix + "Roll", utf8("Würfeln") } } });
+                                      { prefix + "Roll", tr("Würfeln") } } });
 }
 } // namespace
 
@@ -321,11 +321,11 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
       sequencer(p.state, "Sequencer",
                 { { { "seqMode", "Lauf" },
                     { "pattern", "Pattern" },
-                    { "length", utf8("Länge") },
+                    { "length", tr("Länge") },
                     { "rate", "Raster" },
                     { "swing", "Swing" },
                     { "accent", "Akzent" },
-                    { "roll", utf8("Würfeln") } } }),
+                    { "roll", tr("Würfeln") } } }),
       master(p.state, "Summe", { { { "drive", "Drive" }, { "master", "Master" } } }),
       grid(p),
       machines(p),
@@ -337,7 +337,7 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } },
+                  { "fxReverbDecay", tr("Länge") } } },
               "fxOn")
 {
     setLookAndFeel(&lookAndFeel);
@@ -354,11 +354,11 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
         const auto& kit = factory[(std::size_t) i];
         const int category = categoryIndex(kit.category, kGrooveCategories);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(kit.category));
+            presets.addSectionHeading(tr(kit.category));
         group = category;
         presets.addItem(utf8(kit.name), i + 1);
     }
-    presets.setTextWhenNothingSelected("Kit");
+    presets.setTextWhenNothingSelected(tr("Kit"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

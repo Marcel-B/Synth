@@ -41,7 +41,7 @@ void BandView::paint(juce::Graphics& g)
     auto inner = area.reduced(10.0f, 6.0f);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    g.drawText(juce::String(bands) + utf8(" BÄNDER  ·  ") + (notes.isEmpty() ? juce::String("KEINE NOTE") : notes),
+    g.drawText(juce::String(bands) + " " + tr("BÄNDER") + utf8("  ·  ") + (notes.isEmpty() ? tr("KEINE NOTE") : notes),
                inner.removeFromTop(14.0f).toNearestInt(), juce::Justification::centredLeft);
     auto labels = inner.removeFromBottom(12.0f);
     const float step = inner.getWidth() / (float) bands;
@@ -111,8 +111,8 @@ VocoderEditor::VocoderEditor(VocoderProcessor& p)
       output(p.state, "Ausgang", { { { "width", "Breite" }, { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("VOCODER", "STIMME");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("VOCODER", tr("STIMME"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &bank, &scope, &carrier, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin + std::max(bank.preferredWidth() + 200,

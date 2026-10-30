@@ -1,4 +1,5 @@
 #include "ZoneProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "ZoneEditor.h"
@@ -18,7 +19,7 @@ void add(Layout& layout, const char* id, const char* name, juce::NormalisableRan
 {
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(std::move(toText)).withValueFromStringFunction(fromText)));
 }
 
@@ -29,7 +30,7 @@ void number(Layout& layout, const char* id, const char* name, float min, float m
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     add(layout, id, name, range, initial, [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; });
 }
 
@@ -39,18 +40,18 @@ void percent(Layout& layout, const char* id, const char* name, float initial)
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
 void choice(Layout& layout, const char* id, const char* name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const char* id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 } // namespace
 
@@ -79,7 +80,7 @@ Layout ZoneProcessor::createParameterLayout()
     // The LFO on the frequency, appended so projects from before keep their values (depth 0: it does nothing).
     juce::StringArray shapes;
     for (const auto* name : kShapeNames)
-        shapes.add(utf8(name));
+        shapes.add(tonwerkui::tr(name));
     choice(layout, "lfoShape", "LFO-Form", shapes, (int) d.lfoShape);
     toggle(layout, "lfoSync", "LFO-Sync", d.lfoSync);
     juce::NormalisableRange<float> rates(0.05f, 20.0f);
@@ -233,7 +234,7 @@ void ZoneProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     level.store(std::max(level.load(std::memory_order_relaxed), engine.levelNow()), std::memory_order_relaxed);
 }
 
-juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return tonwerkui::forHost(new ZoneEditor(*this)); }
+juce::AudioProcessorEditor* ZoneProcessor::createEditor() { return tonwerkui::forHost<ZoneEditor>(*this); }
 
 void ZoneProcessor::getStateInformation(juce::MemoryBlock& destData)
 {

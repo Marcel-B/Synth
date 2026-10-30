@@ -1,3 +1,4 @@
+#include "Platform.h"
 #include "GlueEditor.h"
 #include "GlueEngine.h"
 #include "GluePresets.h"
@@ -461,7 +462,7 @@ public:
             GlueProcessor p;
             p.setCurrentProgram(3);
             std::unique_ptr<juce::AudioProcessorEditor> created(p.createEditor());
-            auto* editor = dynamic_cast<GlueEditor*>(created.get());
+            auto* editor = tonwerkui::innerEditor<GlueEditor>(created.get());
             expect(editor != nullptr);
             const auto source = mixLoop();
             // Feed the meter as the timer would while a song plays.

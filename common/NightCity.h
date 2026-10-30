@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Language.h"
 #include "ScopeBuffer.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -114,12 +115,12 @@ public:
     {
         Item(const juce::String& parameterId, const char* name, int width = 0, const juce::String& switchId = {},
              bool shownWhenOn = false)
-            : Item(parameterId, utf8(name), width, switchId, shownWhenOn)
+            : Item(parameterId, tr(name), width, switchId, shownWhenOn)
         {
         }
         Item(const juce::String& parameterId, const juce::String& name, int width = 0,
              const juce::String& switchId = {}, bool shownWhenOn = false)
-            : id(parameterId), label(name), slots(width), when(switchId), whenOn(shownWhenOn)
+            : id(parameterId), label(tr(name)), slots(width), when(switchId), whenOn(shownWhenOn)
         {
         }
 

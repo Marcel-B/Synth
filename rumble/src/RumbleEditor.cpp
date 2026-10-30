@@ -51,7 +51,7 @@ void RumbleView::paint(juce::Graphics& g)
     g.setColour(colours::red.withAlpha(0.85f));
     g.drawText("DUCKING", caption.withTrimmedLeft(104.0f), juce::Justification::centredLeft);
     g.setColour(colours::muted);
-    g.drawText("TIEFPASS " + juce::String(juce::roundToInt(cutoff)) + " HZ", caption, juce::Justification::centredRight);
+    g.drawText(tr("TIEFPASS") + " " + juce::String(juce::roundToInt(cutoff)) + " HZ", caption, juce::Justification::centredRight);
     inner.removeFromTop(2.0f);
 
     const int n = RumbleProcessor::kColumns;
