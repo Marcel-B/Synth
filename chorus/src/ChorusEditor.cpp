@@ -1,4 +1,5 @@
 #include "ChorusEditor.h"
+#include "Language.h"
 
 #include "ChorusPresets.h"
 #include "PresetCategories.h"
@@ -64,7 +65,7 @@ void SweepView::refresh()
 juce::String SweepView::caption() const
 {
     juce::String text = kModeNames[(int) shown.mode];
-    const auto dot = utf8(" · ");
+    const auto dot = tonwerkui::tr(" · ");
     // The swept range over a cycle, from the curves themselves.
     double low = 1.0e9, high = 0.0;
     for (int v = 0; v < voicesShown(shown); ++v)
@@ -77,13 +78,13 @@ juce::String SweepView::caption() const
     switch (shown.mode)
     {
         case Mode::chorus:
-            text << dot << std::clamp(shown.voices, 1, 4) << (shown.voices == 1 ? " STIMME" : " STIMMEN");
+            text << dot << std::clamp(shown.voices, 1, 4) << (shown.voices == 1 ? tonwerkui::tr(" STIMME") : tonwerkui::tr(" STIMMEN"));
             break;
         case Mode::ensemble:
-            text << dot << "3 LEITUNGEN";
+            text << dot << tonwerkui::tr("3 LEITUNGEN");
             break;
         case Mode::phaser:
-            text << dot << kStages[(std::size_t) std::clamp(shown.stages, 0, 3)] << " STUFEN";
+            text << dot << kStages[(std::size_t) std::clamp(shown.stages, 0, 3)] << tonwerkui::tr(" STUFEN");
             break;
         case Mode::flanger:
             break;
@@ -176,7 +177,7 @@ ChorusEditor::ChorusEditor(ChorusProcessor& p)
     : AudioProcessorEditor(p),
       sweep(p),
       line(p.state, "Leitung",
-           { { { "delay", utf8("Verzögerung") }, { "voices", "Stimmen" }, { "feedback", "Feedback" } } }),
+           { { { "delay", tonwerkui::tr("Verzögerung") }, { "voices", "Stimmen" }, { "feedback", "Feedback" } } }),
       phaser(p.state, "Phaser", { { { "frequency", "Frequenz" }, { "stages", "Stufen" }, { "feedback", "Feedback" } } }),
       presets(p, p.programs, factoryPresets(),
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },

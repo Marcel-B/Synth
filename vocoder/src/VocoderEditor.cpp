@@ -1,4 +1,5 @@
 #include "VocoderEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "VocoderPresets.h"
@@ -41,7 +42,7 @@ void BandView::paint(juce::Graphics& g)
     auto inner = area.reduced(10.0f, 6.0f);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    g.drawText(juce::String(bands) + utf8(" BÄNDER  ·  ") + (notes.isEmpty() ? juce::String("KEINE NOTE") : notes),
+    g.drawText(juce::String(bands) + tonwerkui::tr(" BÄNDER  ·  ") + (notes.isEmpty() ? juce::String(tonwerkui::tr("KEINE NOTE")) : notes),
                inner.removeFromTop(14.0f).toNearestInt(), juce::Justification::centredLeft);
     auto labels = inner.removeFromBottom(12.0f);
     const float step = inner.getWidth() / (float) bands;
@@ -73,10 +74,10 @@ void BandView::paint(juce::Graphics& g)
 }
 
 BankSection::BankSection(VocoderProcessor& p)
-    : Section(p.state, utf8("Filterbank"),
-              { { { "bands", utf8("Bänder") },
+    : Section(p.state, tonwerkui::tr("Filterbank"),
+              { { { "bands", tonwerkui::tr("Bänder") },
                   { "formant", "Formant" },
-                  { "sharpness", utf8("Schärfe") },
+                  { "sharpness", tonwerkui::tr("Schärfe") },
                   { "attack", "Attack" },
                   { "release", "Release" },
                   { "sibilance", "Zischlaute" },
@@ -100,7 +101,7 @@ VocoderEditor::VocoderEditor(VocoderProcessor& p)
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
                         kVocoderCategories)),
       scope(p.scopeOut, &p.scopeIn),
-      carrier(p.state, utf8("Träger"),
+      carrier(p.state, tonwerkui::tr("Träger"),
               { { { "wave", "Welle" },
                   { "detune", "Verstimmung" },
                   { "octave", "Oktave" },

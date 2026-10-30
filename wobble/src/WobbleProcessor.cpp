@@ -1,4 +1,5 @@
 #include "WobbleProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "WobbleEditor.h"
@@ -13,16 +14,14 @@ using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
 
 const std::array<juce::Identifier, 2> kCurveProperties { juce::Identifier("filterCurve"), juce::Identifier("volumeCurve") };
 
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
-
 void number(Layout& layout, const char* id, const char* name, juce::NormalisableRange<float> range, float initial,
             std::function<juce::String(float)> toText)
 {
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes()
-            .withStringFromValueFunction([toText](float value, int) { return toText(value); })
+            .withStringFromValueFunction(tonwerkui::translated([toText](float value, int) { return toText(value); }))
             .withValueFromStringFunction(fromText)));
 }
 
@@ -31,9 +30,10 @@ void percent(Layout& layout, const char* id, const char* name, float initial)
 {
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
         Attributes()
-            .withStringFromValueFunction([](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; })
+            .withStringFromValueFunction(
+                tonwerkui::translated([](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; }))
             .withValueFromStringFunction(fromText)));
 }
 
@@ -44,18 +44,19 @@ void whole(Layout& layout, const char* id, const char* name, float min, float ma
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     number(layout, id, name, range, initial, [suffix](float value) { return juce::String(juce::roundToInt(value)) + suffix; });
 }
 
 void toggle(Layout& layout, const char* id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 
 void choice(Layout& layout, const char* id, const char* name, const juce::StringArray& entries, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), entries, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name),
+                                                            tonwerkui::tr(entries), initial));
 }
 
 juce::StringArray divisionNames()

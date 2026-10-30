@@ -1,4 +1,5 @@
 #include "RumbleEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "RumblePresets.h"
@@ -51,7 +52,8 @@ void RumbleView::paint(juce::Graphics& g)
     g.setColour(colours::red.withAlpha(0.85f));
     g.drawText("DUCKING", caption.withTrimmedLeft(104.0f), juce::Justification::centredLeft);
     g.setColour(colours::muted);
-    g.drawText("TIEFPASS " + juce::String(juce::roundToInt(cutoff)) + " HZ", caption, juce::Justification::centredRight);
+    g.drawText(tonwerkui::tr("TIEFPASS ") + juce::String(juce::roundToInt(cutoff)) + " HZ", caption,
+               juce::Justification::centredRight);
     inner.removeFromTop(2.0f);
 
     const int n = RumbleProcessor::kColumns;
@@ -114,7 +116,7 @@ RumbleEditor::RumbleEditor(RumbleProcessor& p)
            { { { "tone", "Vorfilter" },
                { "space", "Modus", 2 },
                { "decay", "Hallzeit" },
-               { "size", utf8("Größe") },
+               { "size", tonwerkui::tr("Größe") },
                { "predelay", "Predelay" },
                { "echoDivision", "Echo" },
                { "feedback", "Feedback" } } }),

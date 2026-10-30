@@ -1,4 +1,5 @@
 #include "ArpEditor.h"
+#include "Language.h"
 
 #include "ArpPresets.h"
 #include "PresetCategories.h"
@@ -51,12 +52,12 @@ void NotesView::paint(juce::Graphics& g)
     g.drawText(noteName(note), text.removeFromTop(40), juce::Justification::centredLeft);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText("TASTEN", text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tonwerkui::tr("TASTEN"), text.removeFromTop(14), juce::Justification::centredLeft);
     if (keys.empty())
     {
         g.setFont(mono(15.0f));
         g.setColour(colours::red);
-        g.drawText("KEINE", text.removeFromTop(20), juce::Justification::centredLeft);
+        g.drawText(tonwerkui::tr("KEINE"), text.removeFromTop(20), juce::Justification::centredLeft);
         return;
     }
     juce::StringArray names;
@@ -168,7 +169,7 @@ void StepGrid::paint(juce::Graphics& g)
         { { Lane::on, "AN" }, { Lane::note, "TONH\xc3\x96HE" }, { Lane::velocity, "ANSCHLAG" }, { Lane::tie, "BINDEN" } }
     };
     for (const auto& [lane, name] : names)
-        g.drawText(utf8(name), laneArea(lane).withWidth(kLabels - 6), juce::Justification::centredLeft);
+        g.drawText(tonwerkui::tr(name), laneArea(lane).withWidth(kLabels - 6), juce::Justification::centredLeft);
 
     for (int s = 0; s < kSteps; ++s)
     {
@@ -324,7 +325,9 @@ ArpEditor::ArpEditor(ArpProcessor& p)
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
                         kArpCategories)),
       notes(p),
-      timing(p.state, "Takt", { { { "division", "Notenwert" }, { "swing", "Swing" } }, { { "gate", utf8("Notenlänge") }, { "length", utf8("Länge") } } }),
+      timing(p.state, "Takt",
+             { { { "division", "Notenwert" }, { "swing", "Swing" } },
+               { { "gate", tonwerkui::tr("Notenlänge") }, { "length", tonwerkui::tr("Länge") } } }),
       velocity(p.state, "Anschlag", { { { "velocitySource", "Quelle" } }, { { "fixedVelocity", "Fest" }, { "transpose", "Transp." } } }),
       grid(p)
 {

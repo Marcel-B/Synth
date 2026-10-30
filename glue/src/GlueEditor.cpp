@@ -1,4 +1,5 @@
 #include "GlueEditor.h"
+#include "Language.h"
 
 #include "GluePresets.h"
 #include "PresetCategories.h"
@@ -35,7 +36,7 @@ void MeterView::refresh()
 
 juce::String MeterView::caption() const
 {
-    const auto dot = utf8(" · ");
+    const auto dot = tonwerkui::tr(" · ");
     const float ratio = kRatios[(std::size_t) std::clamp(shown.ratio, 0, (int) kRatios.size() - 1)];
     const float attack = kAttacks[(std::size_t) std::clamp(shown.attack, 0, (int) kAttacks.size() - 1)] * 1000.0f;
     juce::String text = "GR " + juce::String(reductions[(std::size_t) newest], 1) + " DB" + dot
@@ -47,9 +48,9 @@ juce::String MeterView::caption() const
     else
         text << juce::String(kReleases[(std::size_t) std::max(0, shown.release)], 1) << " S";
     if (shown.source == Source::sidechain)
-        text << dot << (keyConnected ? "SIDECHAIN" : "SIDECHAIN FEHLT");
+        text << dot << (keyConnected ? "SIDECHAIN" : tonwerkui::tr("SIDECHAIN FEHLT"));
     if (shown.pump)
-        text << dot << "PUMPEN " << kDivisions[(std::size_t) std::clamp(shown.pumpDivision, 0, (int) kDivisions.size() - 1)].name;
+        text << dot << tonwerkui::tr("PUMPEN ") << kDivisions[(std::size_t) std::clamp(shown.pumpDivision, 0, (int) kDivisions.size() - 1)].name;
     return text;
 }
 
@@ -159,7 +160,7 @@ GlueEditor::GlueEditor(GlueProcessor& p)
       scope(p.scopeOut, &p.scopeIn),
       key(p.state, "Sidechain", { { { "source", "Quelle" }, { "scHighpass", "Hochpass" } } }),
       pump(p.state, "Pumpen",
-           { { { "pumpDivision", "Notenwert" }, { "pumpDepth", "Tiefe" }, { "pumpLength", utf8("Länge") },
+           { { { "pumpDivision", "Notenwert" }, { "pumpDepth", "Tiefe" }, { "pumpLength", tonwerkui::tr("Länge") },
                { "pumpCurve", "Kurve" } } },
            "pump"),
       output(p.state, "Ausgang", { { { "mix", "Mix" }, { "output", "Pegel" } } })

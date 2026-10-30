@@ -1,4 +1,5 @@
 #include "RobovoxEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "RobovoxPresets.h"
@@ -34,18 +35,18 @@ void PitchView::paint(juce::Graphics& g)
     auto text = getLocalBounds().reduced(8, 6);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText(utf8("TRÄGER"), text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tonwerkui::tr("TRÄGER"), text.removeFromTop(14), juce::Justification::centredLeft);
     g.setFont(mono(34.0f));
     g.setColour(colours::yellow);
     g.drawText(noteName(carrier), text.removeFromTop(40), juce::Justification::centredLeft);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText("STIMME", text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tonwerkui::tr("STIMME"), text.removeFromTop(14), juce::Justification::centredLeft);
     g.setFont(mono(15.0f));
     if (sung < 0.0f)
     {
         g.setColour(colours::red);
-        g.drawText("STILLE", text.removeFromTop(20), juce::Justification::centredLeft);
+        g.drawText(tonwerkui::tr("STILLE"), text.removeFromTop(20), juce::Justification::centredLeft);
         return;
     }
     // The sung note and how far off it the voice is: the quantiser hides that, the display shows it.
@@ -57,7 +58,7 @@ void PitchView::paint(juce::Graphics& g)
 }
 
 PitchSection::PitchSection(RobovoxProcessor& p)
-    : Section(p.state, utf8("Tonhöhe"),
+    : Section(p.state, tonwerkui::tr("Tonhöhe"),
               { { { "mode", "Quelle" }, { "key", "Tonart" } },
                 { { "scale", "Skala" }, { "octave", "Oktave" }, { "glide", "Gleiten" } } },
               {}, { kPitchDisplay, 0 }),
@@ -80,7 +81,7 @@ RobovoxEditor::RobovoxEditor(RobovoxProcessor& p)
                         kRobovoxCategories)),
       // The voice is read as far behind as the vocoder delays the robot, so the two traces line up.
       scope(p.scopeOut, &p.scopeIn, [&p] { return p.getLatencySamples(); }),
-      carrier(p.state, utf8("Träger"), { { { "wave", "Welle" } }, { { "bass", "Fundament" } } }),
+      carrier(p.state, tonwerkui::tr("Träger"), { { { "wave", "Welle" } }, { { "bass", "Fundament" } } }),
       voice(p.state, "Stimme", { { { "formant", "Formant" }, { "bandwidth", "Bandbreite" } }, { { "sibilance", "Zischlaute" } } }),
       output(p.state, "Ausgang", { { { "mix", "Mix" } }, { { "output", "Pegel" } } })
 {

@@ -1,4 +1,5 @@
 #include "LfoEditor.h"
+#include "Language.h"
 
 #include "LfoPresets.h"
 #include "PresetCategories.h"
@@ -24,17 +25,17 @@ void WaveView::refresh()
 
 juce::String WaveView::caption() const
 {
-    const auto dot = utf8(" · ");
+    const auto dot = tonwerkui::tr(" · ");
     juce::String text = "CC " + juce::String(shown.controller);
     if (sendsFine(shown))
         text << dot << "14 BIT";
-    text << dot << "KANAL " << shown.channel << dot;
+    text << dot << tonwerkui::tr("KANAL ") << shown.channel << dot;
     if (shown.sync)
         text << tonwerkwobble::kDivisions[(std::size_t) std::clamp(shown.division, 0, (int) tonwerkwobble::kDivisions.size() - 1)].name;
     else
         text << juce::String(shown.rate, shown.rate < 9.95f ? 1 : 0) << " HZ";
     if (shown.start == Start::note)
-        text << dot << "START MIT NOTE";
+        text << dot << tonwerkui::tr("START MIT NOTE");
     text << dot << juce::roundToInt(value * 127.0f);
     return text;
 }
@@ -53,7 +54,7 @@ void WaveView::paint(juce::Graphics& g)
     auto hint = inner.removeFromBottom(12.0f);
     g.setColour(colours::muted);
     g.setFont(mono(9.0f));
-    g.drawText(utf8("IM INSTRUMENT: RECHTSKLICK AUF EINEN REGLER › MIDI LERNEN"), hint.toNearestInt(),
+    g.drawText(tonwerkui::tr("IM INSTRUMENT: RECHTSKLICK AUF EINEN REGLER › MIDI LERNEN"), hint.toNearestInt(),
                juce::Justification::centredLeft);
     inner.removeFromBottom(4.0f);
 

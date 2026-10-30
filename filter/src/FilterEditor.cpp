@@ -1,4 +1,5 @@
 #include "FilterEditor.h"
+#include "Language.h"
 
 #include "FilterPresets.h"
 #include "PresetCategories.h"
@@ -70,11 +71,11 @@ void ResponseView::paint(juce::Graphics& g)
     auto inner = area.reduced(10.0f, 6.0f);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    const auto dot = utf8(" · ");
-    juce::String caption = juce::String(utf8(kTypeNames[(std::size_t) shown.type])).toUpperCase() + dot
+    const auto dot = tonwerkui::tr(" · ");
+    juce::String caption = juce::String(tonwerkui::tr(kTypeNames[(std::size_t) shown.type])).toUpperCase() + dot
                            + juce::String(juce::roundToInt(cutoffNow)) + " HZ";
     if (std::abs(shown.envelopeAmount) > 0.005f)
-        caption << dot << utf8("HÜLLKURVE ") << juce::roundToInt(envelope * 100.0f) << " %";
+        caption << dot << tonwerkui::tr("HÜLLKURVE ") << juce::roundToInt(envelope * 100.0f) << " %";
     g.drawText(caption, inner.removeFromTop(14.0f).toNearestInt(),
                juce::Justification::centredLeft);
     inner.removeFromTop(2.0f);
@@ -143,7 +144,7 @@ FilterEditor::FilterEditor(FilterProcessor& p)
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
                         kFilterCategories)),
       scope(p.scopeOut, &p.scopeIn),
-      envelope(p.state, utf8("HÜLLKURVE"),
+      envelope(p.state, tonwerkui::tr("HÜLLKURVE"),
                { { { "envAmount", "Menge" }, { "sensitivity", "Pegel" }, { "attack", "Attack" }, { "release", "Release" } } }),
       lfo(p.state, "LFO",
           { { { "lfoShape", "Form", 2 },

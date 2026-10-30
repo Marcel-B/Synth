@@ -1,4 +1,5 @@
 #include "StutterEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "StutterPresets.h"
@@ -38,14 +39,14 @@ void PatternView::paint(juce::Graphics& g)
 
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    const auto dot = utf8(" · ");
-    juce::String caption = juce::String(utf8(kIntervals[(std::size_t) shown.interval].name)).toUpperCase() + dot
-                           + "CHANCE " + juce::String(juce::roundToInt(shown.chance * 100.0f)) + " %" + dot + "RASTER "
-                           + utf8(kGrids[(std::size_t) shown.grid].name);
+    const auto dot = tonwerkui::tr(" · ");
+    juce::String caption = juce::String(tonwerkui::tr(kIntervals[(std::size_t) shown.interval].name)).toUpperCase() + dot
+                           + "CHANCE " + juce::String(juce::roundToInt(shown.chance * 100.0f)) + " %" + dot + tonwerkui::tr("RASTER ")
+                           + tonwerkui::tr(kGrids[(std::size_t) shown.grid].name);
     if (repeat > 0)
-        caption << dot << "WIEDERHOLUNG " << repeat;
+        caption << dot << tonwerkui::tr("WIEDERHOLUNG ") << repeat;
     else if (repeat == 0)
-        caption << dot << "AUFNAHME";
+        caption << dot << tonwerkui::tr("AUFNAHME");
     g.drawText(caption, inner.removeFromTop(14.0f).toNearestInt(), juce::Justification::centredLeft);
     inner.removeFromTop(6.0f);
 
@@ -85,7 +86,7 @@ void PatternView::paint(juce::Graphics& g)
 
 PatternSection::PatternSection(StutterProcessor& p)
     : Section(p.state, "Muster",
-              { { { "interval", "Intervall", 2 }, { "offset", "Versatz" }, { "gate", utf8("Länge") },
+              { { { "interval", "Intervall", 2 }, { "offset", "Versatz" }, { "gate", tonwerkui::tr("Länge") },
                   { "chance", "Chance" }, { "hold", "Halten" } } },
               {}, { 0, kDisplay }),
       view(p)
@@ -108,7 +109,8 @@ StutterEditor::StutterEditor(StutterProcessor& p)
       scope(p.scopeOut, &p.scopeIn),
       grid(p.state, "Raster", { { { "grid", "Raster", 2 }, { "variation", "Variation" }, { "seed", "Variante" } } }),
       sound(p.state, "Klang",
-            { { { "decay", "Ausklang" }, { "pitch", utf8("Tonhöhe") }, { "reverse", utf8("Rückwärts") },
+            { { { "decay", "Ausklang" }, { "pitch", tonwerkui::tr("Tonhöhe") },
+                { "reverse", tonwerkui::tr("Rückwärts") },
                 { "filter", "Filter" } } }),
       output(p.state, "Ausgang", { { { "mode", "Modus", 2 }, { "output", "Pegel" } } })
 {

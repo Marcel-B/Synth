@@ -1,4 +1,5 @@
 #include "SamplerProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "SamplerEditor.h"
@@ -20,7 +21,7 @@ juce::StringArray utf8Array(std::initializer_list<const char*> items)
 {
     juce::StringArray result;
     for (const auto* item : items)
-        result.add(utf8(item));
+        result.add(tonwerkui::tr(item));
     return result;
 }
 
@@ -31,12 +32,12 @@ void number(Layout& layout, const juce::String& id, const juce::String& name, fl
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tonwerkui::tr(unit).isEmpty() ? juce::String() : " " + tonwerkui::tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, name, range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Shares in whole percent; the value runs from `min` to `max` (1 is 100 %). */
@@ -46,8 +47,8 @@ void percent(Layout& layout, const juce::String& id, const juce::String& name, f
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, name, juce::NormalisableRange<float>(min, max), initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(min, max), initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Times in whole milliseconds, skewed so the short ones get most of the turn. */
@@ -59,22 +60,24 @@ void milliseconds(Layout& layout, const juce::String& id, const juce::String& na
 void integer(Layout& layout, const juce::String& id, const juce::String& name, int min, int max, int initial,
              const char* unit = "")
 {
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tonwerkui::tr(unit).isEmpty() ? juce::String() : " " + tonwerkui::tr(unit);
     auto toText = [suffix](int value, int) { return juce::String(value) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getIntValue(); };
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { id, 1 }, name, min, max, initial,
-        juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), min, max, initial,
+        juce::AudioParameterIntAttributes()
+            .withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 void choice(Layout& layout, const juce::String& id, const juce::String& name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, name, items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name),
+                                                            tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 
 /** Rates below 10 Hz with a tenth, since there a tenth of a hertz matters; the one value shown with a decimal. */
@@ -87,8 +90,8 @@ void hertz(Layout& layout, const juce::String& id, const juce::String& name, flo
     };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, name, range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 void envelope(Layout& layout, const juce::String& prefix, const juce::String& name, const EnvSettings& e)
@@ -124,13 +127,13 @@ Layout SamplerProcessor::createParameterLayout()
     Layout layout;
     juce::StringArray sources;
     for (const auto& name : SampleBank::names())
-        sources.add(utf8(name.c_str()));
+        sources.add(tonwerkui::tr(name.c_str()));
     choice(layout, "source", "Quelle", sources, d.source);
     choice(layout, "mode", "Modus", utf8Array({ "Klassisch", "Slices" }), (int) d.mode);
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { "root", 1 }, "Grundton", 0, 127, d.root,
+        juce::ParameterID { "root", 1 }, tonwerkui::tr("Grundton"), 0, 127, d.root,
         juce::AudioParameterIntAttributes()
-            .withStringFromValueFunction([](int value, int) { return noteName(value); })
+            .withStringFromValueFunction(tonwerkui::translated([](int value, int) { return noteName(value); }))
             .withValueFromStringFunction([](const juce::String& text) {
                 for (int n = 0; n < 128; ++n)
                     if (noteName(n).equalsIgnoreCase(text.trim()))
@@ -141,7 +144,7 @@ Layout SamplerProcessor::createParameterLayout()
     number(layout, "fine", "Fein", -100.0f, 100.0f, d.fine, "ct");
     percent(layout, "start", "Start", d.start);
     percent(layout, "end", "Ende", d.end);
-    toggle(layout, "reverse", utf8("Rückwärts"), d.reverse);
+    toggle(layout, "reverse", tonwerkui::tr("Rückwärts"), d.reverse);
     choice(layout, "playback", "Wiedergabe", utf8Array({ "Gate", "One-Shot" }), (int) d.playback);
     choice(layout, "loop", "Loop", utf8Array({ "Aus", "Vorwärts", "Pingpong" }), (int) d.loop);
     percent(layout, "loopStart", "Loop-Start", d.loopStart);
@@ -156,7 +159,7 @@ Layout SamplerProcessor::createParameterLayout()
            (int) d.filter);
     number(layout, "cutoff", "Cutoff", 20.0f, 20000.0f, d.cutoff, "Hz", 1000.0f);
     percent(layout, "resonance", "Resonanz", d.resonance);
-    percent(layout, "envAmount", utf8("Hüllkurve"), d.envAmount, -1.0f, 1.0f);
+    percent(layout, "envAmount", tonwerkui::tr("Hüllkurve"), d.envAmount, -1.0f, 1.0f);
     percent(layout, "keytrack", "Keytracking", d.keytrack);
     envelope(layout, "filterEnv", "Filter", d.filterEnv);
     choice(layout, "lfoShape", "LFO Form", utf8Array({ "Sinus", "Dreieck", "Säge ab", "Säge auf", "Rechteck", "Zufall" }),
@@ -188,7 +191,7 @@ Layout SamplerProcessor::createParameterLayout()
     percent(layout, "fxDelayFeedback", "Delay Feedback", fxDefaults.delay.feedback, 0.0f, 0.9f);
     number(layout, "fxDelayTone", "Delay Ton", 500.0f, 12000.0f, fxDefaults.delay.tone, "Hz", 3000.0f);
     percent(layout, "fxReverbMix", "Hall Mix", 0.1f);
-    number(layout, "fxReverbDecay", utf8("Hall Länge"), 300.0f, 8000.0f, 2000.0f, "ms", 2000.0f);
+    number(layout, "fxReverbDecay", tonwerkui::tr("Hall Länge"), 300.0f, 8000.0f, 2000.0f, "ms", 2000.0f);
     return layout;
 }
 

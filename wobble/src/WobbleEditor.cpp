@@ -1,4 +1,5 @@
 #include "WobbleEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "WobblePresets.h"
@@ -25,7 +26,7 @@ enum MenuAction
 
 CurveView::CurveView(WobbleProcessor& p, Lane which) : processor(p), lane(which), curve(p.curve(which))
 {
-    form.setTooltip(utf8("Grundform wählen, umkehren oder spiegeln"));
+    form.setTooltip(tonwerkui::tr("Grundform wählen, umkehren oder spiegeln"));
     form.onClick = [this] { showMenu(); };
     addAndMakeVisible(form);
     setRepaintsOnMouseActivity(false);
@@ -155,10 +156,11 @@ void CurveView::paint(juce::Graphics& g)
 
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText(lane == Lane::filter ? "FILTER-KURVE" : "VOLUME-KURVE", getLocalBounds().reduced(10, 4).removeFromTop(14),
+    g.drawText(lane == Lane::filter ? tonwerkui::tr("FILTER-KURVE") : tonwerkui::tr("VOLUME-KURVE"),
+               getLocalBounds().reduced(10, 4).removeFromTop(14),
                juce::Justification::centredLeft);
     g.setFont(juce::FontOptions(10.0f));
-    g.drawText(utf8("Klick: Punkt · Doppelklick: löschen · Kreis ziehen: biegen · Shift: frei"),
+    g.drawText(tonwerkui::tr("Klick: Punkt · Doppelklick: löschen · Kreis ziehen: biegen · Shift: frei"),
                getLocalBounds().reduced(10, 4).removeFromBottom(14), juce::Justification::centredLeft);
     g.restoreState();
 }
@@ -294,14 +296,15 @@ void CurveView::mouseMove(const juce::MouseEvent& e)
 void CurveView::showMenu()
 {
     juce::PopupMenu menu;
-    menu.addSectionHeader("Grundform");
+    menu.addSectionHeader(tonwerkui::tr("Grundform"));
     for (std::size_t i = 0; i < kShapeNames.size(); ++i)
-        menu.addItem((int) i + 1, utf8(kShapeNames[i]));
+        menu.addItem((int) i + 1, tonwerkui::tr(kShapeNames[i]));
     menu.addSeparator();
     menu.addItem(invert, "Umkehren (oben/unten)");
-    menu.addItem(reverse, utf8("Spiegeln (rückwärts)"));
+    menu.addItem(reverse, tonwerkui::tr("Spiegeln (rückwärts)"));
     menu.addItem(twice, "Verdoppeln (zweimal pro Zyklus)", curve.points.size() * 2 <= Curve::kMaxPoints);
-    menu.addItem(copyOther, lane == Lane::filter ? utf8("Volume-Kurve übernehmen") : utf8("Filter-Kurve übernehmen"));
+    menu.addItem(copyOther,
+                 lane == Lane::filter ? tonwerkui::tr("Volume-Kurve übernehmen") : tonwerkui::tr("Filter-Kurve übernehmen"));
     menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&form),
                        [safe = juce::Component::SafePointer<CurveView>(this)](int id) {
                            if (safe != nullptr && id > 0)
@@ -369,7 +372,7 @@ WobbleEditor::WobbleEditor(WobbleProcessor& p)
       presets(p, p.programs, factoryPresets(),
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
                         kWobbleCategories)),
-      output(p.state, "Ausgang", { { { "smooth", utf8("Glätten") }, { "spread", "Stereo" } },
+      output(p.state, "Ausgang", { { { "smooth", tonwerkui::tr("Glätten") }, { "spread", "Stereo" } },
                                    { { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);

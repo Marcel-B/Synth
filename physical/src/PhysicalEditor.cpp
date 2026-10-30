@@ -1,4 +1,5 @@
 #include "PhysicalEditor.h"
+#include "Language.h"
 
 #include "PhysicalPresets.h"
 #include "PresetCategories.h"
@@ -51,10 +52,10 @@ void ModelView::paint(juce::Graphics& g)
     const bool playing = resonator >= 0;
     const auto kind = (Resonator) (playing ? resonator : knobResonator);
 
-    juce::String caption = utf8(kResonatorNames[(std::size_t) kind]) + utf8(" · ")
-                           + kExciterNames[(std::size_t) knobExciter];
+    juce::String caption = tonwerkui::tr(kResonatorNames[(std::size_t) kind]) + tonwerkui::tr(" · ")
+                           + tonwerkui::tr(kExciterNames[(std::size_t) knobExciter]);
     if (playing)
-        caption << utf8(" · ") << juce::roundToInt(frequency) << " HZ";
+        caption << tonwerkui::tr(" · ") << juce::roundToInt(frequency) << " HZ";
     g.setFont(mono(10.0f));
     g.setColour(cyan.withAlpha(0.8f));
     g.drawText(caption, inner.toNearestInt(), juce::Justification::topLeft);
@@ -143,7 +144,7 @@ void ModelView::paint(juce::Graphics& g)
 
 ResonatorSection::ResonatorSection(PhysicalProcessor& processor)
     : Section(processor.state, "Resonator",
-              { { { "resonator", "Typ" }, { "decay", "Abklingen" }, { "damping", utf8("Dämpfung") },
+              { { { "resonator", "Typ" }, { "decay", "Abklingen" }, { "damping", tonwerkui::tr("Dämpfung") },
                   { "inharmonicity", "Inharmonie" }, { "release", "Loslassen" } } },
               {}, { 0, kDisplay }),
       view(processor)
@@ -163,17 +164,18 @@ PhysicalEditor::PhysicalEditor(PhysicalProcessor& p)
       synth(p),
       resonator(p),
       exciter(p.state, "Erreger",
-              { { { "exciter", "Typ" }, { "hardness", utf8("Härte") }, { "pressure", "Druck" },
+              { { { "exciter", "Typ" }, { "hardness", tonwerkui::tr("Härte") }, { "pressure", "Druck" },
                   { "noise", "Rauschen" }, { "position", "Position" } },
                 { { "env1Attack", "Attack" }, { "env1Decay", "Decay" }, { "env1Sustain", "Sustain" },
                   { "env1Release", "Release" }, { "dynamics", "Dynamik" } } }),
       body(p.state, "Korpus", { { { "body", "Typ" }, { "bodyMix", "Mix" } } }),
-      tone(p.state, utf8("Tonhöhe"), { { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } }),
+      tone(p.state, tonwerkui::tr("Tonhöhe"),
+           { { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } }),
       filter(p.state, "Filter",
              { { { "filterMode", "Typ" }, { "cutoff", "Cutoff" }, { "resonance", "Resonanz" },
                  { "keytrack", "Keytrack" } } },
              "filterOn"),
-      env2(p.state, utf8("HÜLLKURVE 2"),
+      env2(p.state, tonwerkui::tr("HÜLLKURVE 2"),
            { { { "env2Attack", "Attack" }, { "env2Decay", "Decay" }, { "env2Sustain", "Sustain" },
                { "env2Release", "Release" }, { "env2Target", "Ziel" }, { "env2Amount", "Menge" } } }),
       lfo1(p.state, "LFO 1",
@@ -196,7 +198,7 @@ PhysicalEditor::PhysicalEditor(PhysicalProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tonwerkui::tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -209,11 +211,11 @@ PhysicalEditor::PhysicalEditor(PhysicalProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tonwerkui::tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tonwerkui::tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

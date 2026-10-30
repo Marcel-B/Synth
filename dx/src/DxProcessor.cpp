@@ -1,4 +1,5 @@
 #include "DxProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "DxEditor.h"
@@ -41,20 +42,22 @@ std::vector<DxParameter> build()
                      [](DxPatch& p, float v) { p.algorithm = juce::roundToInt(v); } });
     integer("feedback", "Feedback", 0, 7, [](DxPatch& p) -> int& { return p.feedback; });
     integer("transpose", "Transponieren", -24, 24, [](DxPatch& p) -> int& { return p.transpose; }, whole("HT"));
-    number("volume", utf8("Lautstärke"), 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.volume; }, percent);
+    number("volume", tonwerkui::tr("Lautstärke"), 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.volume; }, percent);
 
     list.push_back({ "lfoWave", "LFO Welle", Kind::choice, 0.0f, 5.0f,
-                     { "Dreieck", utf8("Sägezahn ab"), utf8("Sägezahn auf"), "Rechteck", "Sinus", "S&H" }, {},
+                     { "Dreieck", tonwerkui::tr("Sägezahn ab"), tonwerkui::tr("Sägezahn auf"), "Rechteck", "Sinus",
+                       "S&H" }, {},
                      [](const DxPatch& p) { return (float) (int) p.lfoWave; },
                      [](DxPatch& p, float v) { p.lfoWave = (LfoWave) juce::roundToInt(v); } });
     integer("lfoSpeed", "LFO Tempo", 0, 99, [](DxPatch& p) -> int& { return p.lfoSpeed; }, [](float v) {
         const double hz = lfoHz(juce::roundToInt(v));
         return (hz < 9.95 ? juce::String(hz, 1) : juce::String(juce::roundToInt(hz))) + " Hz";
     });
-    integer("lfoDelay", utf8("LFO Verzögerung"), 0, 99, [](DxPatch& p) -> int& { return p.lfoDelay; });
-    integer("lfoPitch", utf8("LFO Tonhöhe"), 0, 99, [](DxPatch& p) -> int& { return p.lfoPitchDepth; });
-    integer("lfoAmp", utf8("LFO Lautstärke"), 0, 99, [](DxPatch& p) -> int& { return p.lfoAmpDepth; });
-    integer("lfoPitchSens", utf8("LFO Tonhöhe Empf."), 0, 7, [](DxPatch& p) -> int& { return p.lfoPitchSens; });
+    integer("lfoDelay", tonwerkui::tr("LFO Verzögerung"), 0, 99, [](DxPatch& p) -> int& { return p.lfoDelay; });
+    integer("lfoPitch", tonwerkui::tr("LFO Tonhöhe"), 0, 99, [](DxPatch& p) -> int& { return p.lfoPitchDepth; });
+    integer("lfoAmp", tonwerkui::tr("LFO Lautstärke"), 0, 99, [](DxPatch& p) -> int& { return p.lfoAmpDepth; });
+    integer("lfoPitchSens", tonwerkui::tr("LFO Tonhöhe Empf."), 0, 7,
+            [](DxPatch& p) -> int& { return p.lfoPitchSens; });
 
     for (int i = 0; i < kOperators; ++i)
     {
@@ -98,7 +101,8 @@ std::vector<DxParameter> build()
     number("fxDelayTone", "Delay Ton", 500.0f, 12000.0f, [](DxPatch& p) -> float& { return p.fx.delayTone; },
            [](float v) { return juce::String(juce::roundToInt(v)) + " Hz"; });
     number("fxReverbMix", "Hall Mix", 0.0f, 1.0f, [](DxPatch& p) -> float& { return p.fx.reverbMix; }, percent);
-    number("fxReverbDecay", utf8("Hall Länge"), 0.3f, 8.0f, [](DxPatch& p) -> float& { return p.fx.reverbDecay; },
+    number("fxReverbDecay", tonwerkui::tr("Hall Länge"), 0.3f, 8.0f,
+           [](DxPatch& p) -> float& { return p.fx.reverbDecay; },
            [](float v) { return juce::String(juce::roundToInt(v * 1000.0f)) + " ms"; });
     return list;
 }
@@ -164,9 +168,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout DxProcessor::createParameter
             {
                 auto text = d.text;
                 layout.add(std::make_unique<juce::AudioParameterInt>(
-                    id, d.name, (int) d.min, (int) d.max, (int) value,
+                    id, tonwerkui::tr(d.name), (int) d.min, (int) d.max, (int) value,
                     juce::AudioParameterIntAttributes()
-                        .withStringFromValueFunction([text](int v, int) { return text((float) v); })
+                        .withStringFromValueFunction(
+                            tonwerkui::translated([text](int v, int) { return text((float) v); }))
                         .withValueFromStringFunction([](const juce::String& t) { return t.getIntValue(); })));
                 break;
             }
@@ -184,19 +189,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout DxProcessor::createParameter
                 const bool milliseconds = d.id == "fxDelayTime" || d.id == "fxReverbDecay";
                 auto text = d.text;
                 layout.add(std::make_unique<juce::AudioParameterFloat>(
-                    id, d.name, range, value,
+                    id, tonwerkui::tr(d.name), range, value,
                     juce::AudioParameterFloatAttributes()
-                        .withStringFromValueFunction([text](float v, int) { return text(v); })
+                        .withStringFromValueFunction(tonwerkui::translated([text](float v, int) { return text(v); }))
                         .withValueFromStringFunction([percent, milliseconds](const juce::String& t) {
                             return t.getFloatValue() / (percent ? 100.0f : milliseconds ? 1000.0f : 1.0f);
                         })));
                 break;
             }
             case Kind::choice:
-                layout.add(std::make_unique<juce::AudioParameterChoice>(id, d.name, d.choices, (int) value));
+                layout.add(std::make_unique<juce::AudioParameterChoice>(id, tonwerkui::tr(d.name),
+                                                                        tonwerkui::tr(d.choices), (int) value));
                 break;
             case Kind::toggle:
-                layout.add(std::make_unique<juce::AudioParameterBool>(id, d.name, value > 0.5f));
+                layout.add(std::make_unique<juce::AudioParameterBool>(id, tonwerkui::tr(d.name), value > 0.5f));
                 break;
         }
     }

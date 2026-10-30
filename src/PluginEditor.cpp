@@ -289,16 +289,16 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
         fmButton.onClick = [this] { engineAttachment->setValueAsCompleteGesture(1.0f); };
     }
 
-    presets.setTextWhenNothingSelected("Klang");
+    presets.setTextWhenNothingSelected(tonwerkui::tr("Klang"));
     presets.onChange = [this] { presetChosen(); };
     addAndMakeVisible(presets);
-    tonwerkButton.setButtonText("Aus Tonwerk laden");
+    tonwerkButton.setButtonText(tonwerkui::tr("Aus Tonwerk laden"));
     tonwerkButton.onClick = [this] { fetchFromTonwerk(); };
-    importButton.setButtonText("Datei laden");
+    importButton.setButtonText(tonwerkui::tr("Datei laden"));
     importButton.onClick = [this] { importFile(); };
-    exportButton.setButtonText("Speichern");
+    exportButton.setButtonText(tonwerkui::tr("Speichern"));
     exportButton.onClick = [this] { exportFile(); };
-    deleteButton.setButtonText(utf8("Löschen"));
+    deleteButton.setButtonText(tonwerkui::tr("Löschen"));
     deleteButton.onClick = [this] { deletePreset(); };
     for (auto* button : { &tonwerkButton, &importButton, &exportButton, &deleteButton })
         addAndMakeVisible(*button);
@@ -353,7 +353,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                   std::vector<Section::Row> { { { "fold.amount", "Menge" },
                                                                 { "fold.symmetry", "Symmetrie" },
                                                                 { "fold.env", utf8("Hüllkurve") } } });
-        auto& mix = add<Section>(analogSections, "Mischung",
+        auto& mix = add<Section>(analogSections, tonwerkui::tr("Mischung"),
                                  std::vector<Section::Row> { { { "noise", "Rauschen" }, { "volume", utf8("Lautstärke") } } });
         auto& lfo = add<Section>(analogSections, "LFO",
                                  std::vector<Section::Row> { { { "lfo.wave", "Welle", 2 },
@@ -362,7 +362,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                                { "lfo.division", "Notenwert", 2, "lfo.sync", true },
                                                                { "lfo.target", "Ziel", 2 },
                                                                { "lfo.depth", "Tiefe" } } });
-        auto& fx = add<Section>(analogSections, "Effekte",
+        auto& fx = add<Section>(analogSections, tonwerkui::tr("Effekte"),
                                 std::vector<Section::Row> { { { "fx.delay.mix", "Delay" },
                                                               { "fx.delay.sync", "Sync" },
                                                               { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
@@ -384,7 +384,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                                { "fm.lfo.rate", "Tempo", 1, "fm.lfo.sync", false },
                                                                { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
                                                                { "fm.lfo.depth", "Tiefe" } } });
-        auto& fx = add<Section>(fmSections, "Effekte",
+        auto& fx = add<Section>(fmSections, tonwerkui::tr("Effekte"),
                                 std::vector<Section::Row> { { { "fx.delay.mix", "Delay" },
                                                               { "fx.delay.sync", "Sync" },
                                                               { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
@@ -531,7 +531,7 @@ void TonwerkSynthEditor::timerCallback()
     {
         juce::String role;
         if (isCarrier(algorithm, op))
-            role = utf8("TRÄGER");
+            role = tonwerkui::tr("TRÄGER");
         for (int m = 0; m < algorithm.modCount; ++m)
             if (algorithm.mods[(std::size_t) m][0] == op)
                 role += (role.isEmpty() ? juce::String(utf8("MOD → ")) : juce::String(" ")) + juce::String(algorithm.mods[(std::size_t) m][1] + 1);
@@ -572,8 +572,8 @@ void TonwerkSynthEditor::refreshPresets()
         menuPresets.add(preset);
         presets.addItem(preset.name, menuPresets.size());
     }
-    addGroup("Aus Tonwerk", tonwerk);
-    addGroup("Aus Dateien", files);
+    addGroup(tonwerkui::tr("Aus Tonwerk"), tonwerk);
+    addGroup(tonwerkui::tr("Aus Dateien"), files);
 
     const auto current = processor.presetName();
     for (int i = 0; i < menuPresets.size(); ++i)
@@ -609,21 +609,21 @@ juce::String TonwerkSynthEditor::otherPlugin() const
 
 void TonwerkSynthEditor::fetchFromTonwerk()
 {
-    auto* window = new juce::AlertWindow("Aus Tonwerk laden",
-                                         utf8("Die Adresse von Tonwerk, wie sie im Browser steht. Alle gespeicherten "
-                                              "Klänge werden übernommen; gleichnamige werden ersetzt."),
+    auto* window = new juce::AlertWindow(tonwerkui::tr("Aus Tonwerk laden"),
+                                         tonwerkui::tr("Die Adresse von Tonwerk, wie sie im Browser steht. Alle gespeicherten ")
+                                              + tonwerkui::tr("Klänge werden übernommen; gleichnamige werden ersetzt."),
                                          juce::MessageBoxIconType::NoIcon,
                                          this);
-    window->addTextEditor("url", processor.library.tonwerkUrl(), "Adresse");
-    window->addButton("Laden", 1, juce::KeyPress(juce::KeyPress::returnKey));
-    window->addButton("Abbrechen", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+    window->addTextEditor("url", processor.library.tonwerkUrl(), tonwerkui::tr("Adresse"));
+    window->addButton(tonwerkui::tr("Laden"), 1, juce::KeyPress(juce::KeyPress::returnKey));
+    window->addButton(tonwerkui::tr("Abbrechen"), 0, juce::KeyPress(juce::KeyPress::escapeKey));
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     window->enterModalState(true, juce::ModalCallbackFunction::create([safe, window](int result) {
         if (result != 1 || safe == nullptr)
             return;
         const auto url = window->getTextEditorContents("url").trim();
         safe->processor.library.setTonwerkUrl(url);
-        safe->setMessage(utf8("Lade Klänge aus Tonwerk …"));
+        safe->setMessage(tonwerkui::tr("Lade Klänge aus Tonwerk …"));
         juce::Thread::launch([safe, url] {
             juce::Array<NamedPatch> sounds;
             const auto fetched = PresetLibrary::fetchFromTonwerk(url, sounds);
@@ -641,11 +641,11 @@ void TonwerkSynthEditor::fetchFromTonwerk()
                 int count = 0;
                 for (const auto& sound : sounds)
                     count += safe->processor.plays(sound.patch) ? 1 : 0;
-                auto text = count == 0 ? utf8("In Tonwerk sind noch keine passenden Klänge gespeichert.")
-                                       : juce::String(count) + utf8(count == 1 ? " Klang aus Tonwerk übernommen."
-                                                                               : " Klänge aus Tonwerk übernommen.");
+                auto text = count == 0 ? tonwerkui::tr("In Tonwerk sind noch keine passenden Klänge gespeichert.")
+                                       : juce::String(count) + (count == 1 ? tonwerkui::tr(" Klang aus Tonwerk übernommen.")
+                                                                               : tonwerkui::tr(" Klänge aus Tonwerk übernommen."));
                 if (count < sounds.size())
-                    text += utf8(" Die übrigen stehen in ") + safe->otherPlugin() + ".";
+                    text += tonwerkui::tr(" Die übrigen stehen in ") + safe->otherPlugin() + ".";
                 safe->setMessage(text);
             });
         });
@@ -655,7 +655,7 @@ void TonwerkSynthEditor::fetchFromTonwerk()
 
 void TonwerkSynthEditor::importFile()
 {
-    chooser = std::make_unique<juce::FileChooser>("Klang laden", juce::File(), "*.json");
+    chooser = std::make_unique<juce::FileChooser>(tonwerkui::tr("Klang laden"), juce::File(), "*.json");
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {
@@ -667,7 +667,7 @@ void TonwerkSynthEditor::importFile()
                                      .getFileNameWithoutExtension());
                              if (sounds.isEmpty())
                              {
-                                 safe->setMessage(utf8("In der Datei steht kein Klang."), true);
+                                 safe->setMessage(tonwerkui::tr("In der Datei steht kein Klang."), true);
                                  return;
                              }
                              safe->processor.library.add(sounds, "file");
@@ -678,25 +678,25 @@ void TonwerkSynthEditor::importFile()
                              safe->refreshPresets();
                              if (playable.isEmpty())
                              {
-                                 safe->setMessage(utf8("Die Datei hat nur Klänge für ") + safe->otherPlugin()
-                                                      + utf8("; dort stehen sie jetzt im Menü."),
+                                 safe->setMessage(tonwerkui::tr("Die Datei hat nur Klänge für ") + safe->otherPlugin()
+                                                      + tonwerkui::tr("; dort stehen sie jetzt im Menü."),
                                                   true);
                                  return;
                              }
                              safe->processor.applyPatch(playable[0].patch, playable[0].name);
                              safe->refreshPresets();
                              safe->setMessage(playable.size() == 1
-                                                  ? utf8("Klang „") + playable[0].name + utf8("“ geladen.")
-                                                  : juce::String(playable.size()) + utf8(" Klänge geladen."));
+                                                  ? tonwerkui::tr("Klang „") + playable[0].name + tonwerkui::tr("“ geladen.")
+                                                  : juce::String(playable.size()) + tonwerkui::tr(" Klänge geladen."));
                          });
 }
 
 void TonwerkSynthEditor::exportFile()
 {
-    const auto name = processor.presetName().isNotEmpty() ? processor.presetName() : juce::String("Klang");
+    const auto name = processor.presetName().isNotEmpty() ? processor.presetName() : juce::String(tonwerkui::tr("Klang"));
     const auto start = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
                            .getChildFile(juce::File::createLegalFileName(name) + ".json");
-    chooser = std::make_unique<juce::FileChooser>("Klang speichern", start, "*.json");
+    chooser = std::make_unique<juce::FileChooser>(tonwerkui::tr("Klang speichern"), start, "*.json");
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                              | juce::FileBrowserComponent::warnAboutOverwriting,
@@ -719,9 +719,9 @@ void TonwerkSynthEditor::exportFile()
                              const bool written = file.replaceWithText(text);
 #endif
                              if (written)
-                                 safe->setMessage("Gespeichert in " + shown);
+                                 safe->setMessage(tonwerkui::tr("Gespeichert in ") + shown);
                              else
-                                 safe->setMessage("Konnte " + shown + " nicht schreiben.", true);
+                                 safe->setMessage(tonwerkui::tr("Konnte ") + shown + tonwerkui::tr(" nicht schreiben."), true);
                          });
 }
 
@@ -734,18 +734,18 @@ void TonwerkSynthEditor::deletePreset()
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     juce::AlertWindow::showAsync(juce::MessageBoxOptions()
                                      .withIconType(juce::MessageBoxIconType::QuestionIcon)
-                                     .withTitle(utf8("Klang löschen"))
+                                     .withTitle(tonwerkui::tr("Klang löschen"))
                                      .withMessage(utf8("„") + name
-                                                  + utf8("“ aus der Liste der Tonwerk-Plugins löschen? In Tonwerk bleibt er."))
-                                     .withButton(utf8("Löschen"))
-                                     .withButton("Abbrechen")
+                                                  + tonwerkui::tr("“ aus der Liste der Tonwerk-Plugins löschen? In Tonwerk bleibt er."))
+                                     .withButton(tonwerkui::tr("Löschen"))
+                                     .withButton(tonwerkui::tr("Abbrechen"))
                                      .withAssociatedComponent(this),
                                  [safe, name](int result) {
                                      if (result != 1 || safe == nullptr)
                                          return;
                                      safe->processor.library.remove(name);
                                      safe->refreshPresets();
-                                     safe->setMessage(utf8("„") + name + utf8("“ gelöscht."));
+                                     safe->setMessage(utf8("„") + name + tonwerkui::tr("“ gelöscht."));
                                  });
 }
 } // namespace tonwerk

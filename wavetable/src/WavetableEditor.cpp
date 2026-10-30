@@ -1,4 +1,5 @@
 #include "WavetableEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "WavetablePresets.h"
@@ -163,8 +164,8 @@ ModRow::ModRow(juce::AudioProcessorValueTreeState& state, int slot)
     addAndMakeVisible(amount);
     amountAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(state, base + "Amount", amount);
 
-    bipolar.setButtonText(utf8("±"));
-    bipolar.setTooltip(utf8("Bipolar: die Quelle schwingt um die Mitte statt nur nach oben"));
+    bipolar.setButtonText(tonwerkui::tr("±"));
+    bipolar.setTooltip(tonwerkui::tr("Bipolar: die Quelle schwingt um die Mitte statt nur nach oben"));
     addAndMakeVisible(bipolar);
     bipolarAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, base + "Bipolar", bipolar);
 }
@@ -205,8 +206,8 @@ void MatrixSection::resized()
 WavetableEditor::WavetableEditor(WavetableProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),
-      oscA(p, "Oszillator A", "a"),
-      oscB(p, "Oszillator B", "b"),
+      oscA(p, tonwerkui::tr("Oszillator A"), "a"),
+      oscB(p, tonwerkui::tr("Oszillator B"), "b"),
       sub(p.state, "Sub", { { { "subShape", "Form" }, { "subOctave", "Oktave" }, { "subLevel", "Pegel" },
                               { "subDirect", "Direkt" } } },
           "subOn"),
@@ -218,13 +219,13 @@ WavetableEditor::WavetableEditor(WavetableProcessor& p)
       distortion(p.state, "Verzerrung", { { { "distMode", "Modus" }, { "distDrive", "Drive" }, { "distMix", "Mix" } } },
                  "distOn"),
       master(p.state, "Master", { { { "master", "Pegel" } } }),
-      env1(p.state, utf8("HÜLLKURVE 1 · AMP"),
+      env1(p.state, tonwerkui::tr("HÜLLKURVE 1 · AMP"),
            { { { "env1Attack", "Attack" }, { "env1Decay", "Decay" }, { "env1Sustain", "Sustain" },
                { "env1Release", "Release" } } }),
-      env2(p.state, utf8("HÜLLKURVE 2"),
+      env2(p.state, tonwerkui::tr("HÜLLKURVE 2"),
            { { { "env2Attack", "Attack" }, { "env2Decay", "Decay" }, { "env2Sustain", "Sustain" },
                { "env2Release", "Release" } } }),
-      env3(p.state, utf8("HÜLLKURVE 3"),
+      env3(p.state, tonwerkui::tr("HÜLLKURVE 3"),
            { { { "env3Attack", "Attack" }, { "env3Decay", "Decay" }, { "env3Sustain", "Sustain" },
                { "env3Release", "Release" } } }),
       macros(p.state, "Makros",
@@ -249,11 +250,11 @@ WavetableEditor::WavetableEditor(WavetableProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tonwerkui::tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tonwerkui::tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

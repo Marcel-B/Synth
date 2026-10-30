@@ -1,4 +1,5 @@
 #include "ShimmerEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "ShimmerPresets.h"
@@ -25,15 +26,15 @@ void TailView::refresh()
 
 juce::String TailView::caption() const
 {
-    const auto dot = utf8(" · ");
+    const auto dot = tonwerkui::tr(" · ");
     juce::String text = "DECAY " + (shown.decay < 9.95f ? juce::String(shown.decay, 1)
                                                         : juce::String(juce::roundToInt(shown.decay)))
                         + " S" + dot + "PREDELAY " + juce::String(juce::roundToInt(shown.predelay * 1000.0f)) + " MS";
     if (shown.hold)
-        text << dot << "HALTEN";
+        text << dot << tonwerkui::tr("HALTEN");
     else if (shown.shimmer > 0.0f)
         text << dot
-             << utf8(kIntervals[(std::size_t) std::clamp(shown.interval, 0, (int) kIntervals.size() - 1)].name)
+             << tonwerkui::tr(kIntervals[(std::size_t) std::clamp(shown.interval, 0, (int) kIntervals.size() - 1)].name)
                     .toUpperCase()
              << " " << juce::roundToInt(shown.shimmer * 100.0f) << " %";
     return text;
@@ -100,10 +101,10 @@ void TailView::paint(juce::Graphics& g)
 
 TailSection::TailSection(ShimmerProcessor& p)
     : Section(p.state, "Raum",
-              { { { "size", utf8("Größe") },
+              { { { "size", tonwerkui::tr("Größe") },
                   { "decay", "Decay" },
                   { "predelay", "Predelay" },
-                  { "damping", utf8("Dämpfung") },
+                  { "damping", tonwerkui::tr("Dämpfung") },
                   { "lowCut", "Low Cut" },
                   { "modulation", "Modulation" },
                   { "hold", "Halten" } } },

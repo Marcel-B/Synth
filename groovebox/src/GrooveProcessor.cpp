@@ -1,4 +1,5 @@
 #include "GrooveProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "GrooveEditor.h"
@@ -18,7 +19,7 @@ juce::StringArray utf8Array(std::initializer_list<const char*> items)
 {
     juce::StringArray result;
     for (const auto* item : items)
-        result.add(utf8(item));
+        result.add(tonwerkui::tr(item));
     return result;
 }
 
@@ -29,12 +30,12 @@ void number(Layout& layout, const juce::String& id, const juce::String& name, fl
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tonwerkui::tr(unit).isEmpty() ? juce::String() : " " + tonwerkui::tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, version }, name, range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, version }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Like `number`, but the top of the range leaves the sound untouched and reads "Aus". */
@@ -44,16 +45,17 @@ void numberOrOff(Layout& layout, const juce::String& id, const juce::String& nam
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     auto toText = [suffix, max](float value, int) {
         return value >= max - 0.5f ? juce::String("Aus") : juce::String(juce::roundToInt(value)) + suffix;
     };
     auto fromText = [max](const juce::String& text) {
-        return text.trim().equalsIgnoreCase("Aus") ? max : text.getFloatValue();
+        return text.trim().equalsIgnoreCase("Aus") || text.trim().equalsIgnoreCase(tonwerkui::tr("Aus")) ? max
+                                                                                                  : text.getFloatValue();
     };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, version }, name, range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, version }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Shares in whole percent; the value runs from `min` to `max` (1 is 100 %). */
@@ -63,22 +65,23 @@ void percent(Layout& layout, const juce::String& id, const juce::String& name, f
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, version }, name, juce::NormalisableRange<float>(min, max), initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, version }, tonwerkui::tr(name), juce::NormalisableRange<float>(min, max), initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 void choice(Layout& layout, const juce::String& id, const juce::String& name, const juce::StringArray& items, int initial,
             int version = 1)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, version }, name, items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, version }, tonwerkui::tr(name),
+                                                            tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial, int version = 1)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID { id, version }, name, initial,
-        juce::AudioParameterBoolAttributes().withStringFromValueFunction(
-            [](bool on, int) { return on ? juce::String("An") : juce::String("Aus"); })));
+        juce::ParameterID { id, version }, tonwerkui::tr(name), initial,
+        juce::AudioParameterBoolAttributes().withStringFromValueFunction(tonwerkui::translated(
+            [](bool on, int) { return on ? juce::String("An") : juce::String("Aus"); }))));
 }
 
 /** How long each instrument may ring, in ms: a closed hat is a tick, a cymbal washes for seconds. */
@@ -133,13 +136,13 @@ Layout GrooveProcessor::createParameterLayout()
     for (int t = 0; t < kTracks; ++t)
     {
         const auto& track = d.track[(std::size_t) t];
-        const juce::String name = utf8(kTrackNames[(std::size_t) t]) + " ";
+        const juce::String name = tonwerkui::tr(kTrackNames[(std::size_t) t]) + " ";
         const auto [shortest, longest] = decayRange((Instrument) t);
         number(layout, id(t, "Tune"), name + "Stimmung", -24.0f, 24.0f, track.tune, "HT");
         number(layout, id(t, "Decay"), name + "Abklingen", shortest, longest, track.decay * 1000.0f, "ms",
                std::sqrt(shortest * longest));
-        percent(layout, id(t, "Tone"), name + utf8(kSoundKnobs[(std::size_t) t].first), track.tone);
-        percent(layout, id(t, "Character"), name + utf8(kSoundKnobs[(std::size_t) t].second), track.character);
+        percent(layout, id(t, "Tone"), name + tonwerkui::tr(kSoundKnobs[(std::size_t) t].first), track.tone);
+        percent(layout, id(t, "Character"), name + tonwerkui::tr(kSoundKnobs[(std::size_t) t].second), track.character);
         number(layout, id(t, "Level"), name + "Pegel", -36.0f, 6.0f, track.levelDb, "dB");
         percent(layout, id(t, "Pan"), name + "Panorama", track.pan, -1.0f, 1.0f);
         percent(layout, id(t, "Delay"), name + "Delay", track.delaySend);
@@ -153,8 +156,9 @@ Layout GrooveProcessor::createParameterLayout()
         auto toText = [](int value, int) { return juce::String(value) + " Schritte"; };
         auto fromText = [](const juce::String& text) { return text.getIntValue(); };
         layout.add(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID { "length", 1 }, utf8("Länge"), 1, kSteps, d.length,
-            juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+            juce::ParameterID { "length", 1 }, tonwerkui::tr("Länge"), 1, kSteps, d.length,
+            juce::AudioParameterIntAttributes()
+                .withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
     }
     choice(layout, "rate", "Raster", { "1/16", "1/8", "1/16 T", "1/32" }, (int) d.rate);
     percent(layout, "swing", "Swing", d.swing, 0.5f, 0.75f);
@@ -174,13 +178,13 @@ Layout GrooveProcessor::createParameterLayout()
     percent(layout, "fxDelayFeedback", "Delay Feedback", fxDefaults.delay.feedback, 0.0f, 0.9f);
     number(layout, "fxDelayTone", "Delay Ton", 500.0f, 12000.0f, fxDefaults.delay.tone, "Hz", 3000.0f);
     percent(layout, "fxReverbMix", "Hall Mix", 0.5f);
-    number(layout, "fxReverbDecay", utf8("Hall Länge"), 300.0f, 8000.0f, 1500.0f, "ms", 2000.0f);
+    number(layout, "fxReverbDecay", tonwerkui::tr("Hall Länge"), 300.0f, 8000.0f, 1500.0f, "ms", 2000.0f);
 
     // Version 2: the shaping every track has besides its two sound knobs, appended so projects keep their ids.
     for (int t = 0; t < kTracks; ++t)
     {
         const auto& track = d.track[(std::size_t) t];
-        const juce::String name = utf8(kTrackNames[(std::size_t) t]) + " ";
+        const juce::String name = tonwerkui::tr(kTrackNames[(std::size_t) t]) + " ";
         number(layout, id(t, "Attack"), name + "Attack", 0.0f, 100.0f, track.attack * 1000.0f, "ms", 10.0f, 2);
         number(layout, id(t, "Hold"), name + "Halten", 0.0f, 2000.0f, track.hold * 1000.0f, "ms", 200.0f, 2);
         number(layout, id(t, "PitchMod"), name + "Pitch-Mod", -24.0f, 48.0f, track.pitchMod, "HT", 0.0f, 2);
@@ -200,17 +204,18 @@ Layout GrooveProcessor::createParameterLayout()
     // Version 3: the drum machine each track is built like.
     juce::StringArray machines;
     for (const auto* machine : kMachineNames)
-        machines.add(utf8(machine));
+        machines.add(tonwerkui::tr(machine));
     for (int t = 0; t < kTracks; ++t)
-        choice(layout, id(t, "Machine"), utf8(kTrackNames[(std::size_t) t]) + " Maschine", machines,
+        choice(layout, id(t, "Machine"), tonwerkui::tr(kTrackNames[(std::size_t) t]) + " Maschine", machines,
                (int) d.track[(std::size_t) t].machine, 3);
 
     // Version 4: delay and hall off with one click, the power switch on the effects panel.
     toggle(layout, "fxOn", "Effekte", true, 4);
     // The dice on the pattern, for all tracks and for each.
-    percent(layout, "roll", utf8("Würfeln"), d.roll, 0.0f, 1.0f, 4);
+    percent(layout, "roll", tonwerkui::tr("Würfeln"), d.roll, 0.0f, 1.0f, 4);
     for (int t = 0; t < kTracks; ++t)
-        percent(layout, id(t, "Roll"), utf8(kTrackNames[(std::size_t) t]) + utf8(" Würfeln"), d.track[(std::size_t) t].roll,
+        percent(layout, id(t, "Roll"), tonwerkui::tr(kTrackNames[(std::size_t) t]) + tonwerkui::tr(" Würfeln"),
+                d.track[(std::size_t) t].roll,
                 0.0f, 1.0f, 4);
     return layout;
 }
@@ -223,7 +228,7 @@ juce::AudioProcessor::BusesProperties GrooveProcessor::buses()
 {
     auto properties = BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true);
     for (const auto* name : kTrackNames)
-        properties = properties.withOutput(utf8(name), juce::AudioChannelSet::stereo(), false);
+        properties = properties.withOutput(tonwerkui::tr(name), juce::AudioChannelSet::stereo(), false);
     return properties;
 }
 
@@ -645,7 +650,8 @@ void GrooveProcessor::setCurrentProgram(int index)
 const juce::String GrooveProcessor::getProgramName(int index)
 {
     const auto& kits = factoryKits();
-    return juce::isPositiveAndBelow(index, (int) kits.size()) ? utf8(kits[(std::size_t) index].name) : juce::String();
+    return juce::isPositiveAndBelow(index,
+                                    (int) kits.size()) ? tonwerkui::tr(kits[(std::size_t) index].name) : juce::String();
 }
 
 void GrooveProcessor::getStateInformation(juce::MemoryBlock& destData)

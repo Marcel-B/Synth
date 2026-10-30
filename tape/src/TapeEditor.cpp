@@ -1,4 +1,5 @@
 #include "TapeEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "TapePresets.h"
@@ -97,12 +98,12 @@ void CassetteView::paint(juce::Graphics& g)
     if (! isRunning)
     {
         g.setColour(colours::muted);
-        g.drawText("STOPP", readout, juce::Justification::centred);
+        g.drawText(tonwerkui::tr("STOPP"), readout, juce::Justification::centred);
         return;
     }
     // The pitch the wobble gives right now: what the ear hears as the tape going out of tune.
     g.setColour(std::abs(shownCents) >= 10 ? colours::red : colours::cyan);
-    g.drawText(utf8("TONHÖHE ") + (shownCents > 0 ? "+" : "") + juce::String(shownCents) + " ct", readout,
+    g.drawText(tonwerkui::tr("TONHÖHE ") + (shownCents > 0 ? "+" : "") + juce::String(shownCents) + " ct", readout,
                juce::Justification::centred);
 }
 
@@ -129,8 +130,9 @@ TapeEditor::TapeEditor(TapeProcessor& p)
                         kTapeCategories)),
       // The input is read as far behind as the tape delays the output, so the two traces line up.
       scope(p.scopeOut, &p.scopeIn, [&p] { return p.getLatencySamples(); }),
-      tape(p.state, "Band", { { { "type", "Typ" } }, { { "drive", utf8("Sättigung") }, { "input", "Eingang" } } }),
-      head(p.state, "Tonkopf", { { { "tone", utf8("Höhen") } }, { { "noise", "Rauschen" } } }),
+      tape(p.state, "Tonband",
+           { { { "type", "Typ" } }, { { "drive", tonwerkui::tr("Sättigung") }, { "input", "Eingang" } } }),
+      head(p.state, "Tonkopf", { { { "tone", tonwerkui::tr("Höhen") } }, { { "noise", "Rauschen" } } }),
       output(p.state, "Ausgang", { { { "mix", "Mix" } }, { { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);

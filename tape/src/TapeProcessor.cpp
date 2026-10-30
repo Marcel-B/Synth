@@ -1,4 +1,5 @@
 #include "TapeProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "TapeEditor.h"
@@ -20,8 +21,8 @@ std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* na
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(juce::String::fromUTF8(name)), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText));
 }
 
 std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* name, float initial)
@@ -38,17 +39,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout TapeProcessor::createParamet
     juce::StringArray types;
     for (const auto* type : { "Spulenband", "Chrom", "Ferro", "Diktiergerät" })
         types.add(juce::String::fromUTF8(type));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "type", 1 }, "Band", types, 2));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { "type", 1 }, tonwerkui::tr("Tonband"),
+                                                            tonwerkui::tr(types), 2));
     // Skewed so the dark half (where lo-fi lives) gets most of the turn.
     layout.add(number("tone", "Höhen", juce::NormalisableRange<float>(2000.0f, 20000.0f, 0.0f, 0.5f), 12000.0f, "Hz"));
     layout.add(percent("wow", "Leiern", 0.2f));
     layout.add(percent("flutter", "Flattern", 0.2f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { "noise", 1 }, "Rauschen", juce::NormalisableRange<float>(kNoiseOff, -30.0f), -66.0f,
+        juce::ParameterID { "noise", 1 }, tonwerkui::tr("Rauschen"), juce::NormalisableRange<float>(kNoiseOff, -30.0f), -66.0f,
         Attributes()
-            .withStringFromValueFunction([](float value, int) {
+            .withStringFromValueFunction(tonwerkui::translated([](float value, int) {
                 return value <= kNoiseOff ? juce::String("Aus") : juce::String(juce::roundToInt(value)) + " dB";
-            })
+            }))
             .withValueFromStringFunction([](const juce::String& text) {
                 return text.trim().startsWithIgnoreCase("aus") ? kNoiseOff : text.getFloatValue();
             })));

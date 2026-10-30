@@ -12,8 +12,9 @@ juce::Font mono(float size)
     return juce::Font(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), size, juce::Font::bold));
 }
 
-void paintPanel(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& title)
+void paintPanel(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& panelTitle)
 {
+    const auto title = tr(panelTitle);
     const auto box = area.toFloat().reduced(0.5f);
     const float cut = 10.0f;
     juce::Path shape;
@@ -208,7 +209,7 @@ Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& para
     jassert(parameter != nullptr);
     if (dynamic_cast<juce::AudioParameterBool*>(parameter) != nullptr)
     {
-        toggle = std::make_unique<juce::ToggleButton>(utf8("an"));
+        toggle = std::make_unique<juce::ToggleButton>(tr("an"));
         addAndMakeVisible(*toggle);
         toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
     }
@@ -254,7 +255,7 @@ void Control::showMapping()
         return;
     if (learn->learning() == id)
     {
-        name.setText(utf8("CC lernen …"), juce::dontSendNotification);
+        name.setText(tr("CC lernen …"), juce::dontSendNotification);
         name.setColour(juce::Label::textColourId, colours::yellow);
     }
     else if (const int controller = learn->controllerFor(id); controller >= 0)
@@ -278,9 +279,9 @@ void Control::showMidiMenu()
     const int controller = learn->controllerFor(id);
     juce::PopupMenu popup;
     popup.addSectionHeader(controller >= 0 ? "MIDI: CC " + juce::String(controller) : juce::String("MIDI"));
-    popup.addItem(1, learning ? juce::String("Lernen abbrechen") : utf8("MIDI lernen (nächster Controller)"));
+    popup.addItem(1, learning ? tr("Lernen abbrechen") : tr("MIDI lernen (nächster Controller)"));
     if (controller >= 0)
-        popup.addItem(2, "CC " + juce::String(controller) + " entfernen");
+        popup.addItem(2, "CC " + juce::String(controller) + tr(" entfernen"));
     juce::Component::SafePointer<Control> safe(this);
     popup.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(slider.get()), [safe, learning](int chosen) {
         if (safe == nullptr)
@@ -309,7 +310,7 @@ void Control::resized()
 
 Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& sectionTitle, std::vector<Row> rows,
                  const juce::String& powerId, Display displayRoom)
-    : title(sectionTitle), display(displayRoom), items(std::move(rows))
+    : title(tr(sectionTitle)), display(displayRoom), items(std::move(rows))
 {
     juce::StringArray switchIds;
     for (const auto& row : items)
@@ -338,7 +339,7 @@ Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& 
     if (powerId.isNotEmpty())
     {
         power = std::make_unique<juce::ToggleButton>();
-        power->setTooltip(utf8("Ein/Aus"));
+        power->setTooltip(tr("Ein/Aus"));
         addAndMakeVisible(*power);
         powerAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, powerId, *power);
     }

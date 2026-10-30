@@ -5,6 +5,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "Language.h"
+
 /**
  * The look Tonwerk Wavetable started and the other Tonwerk plugins share: Night City, as in Chrome Glitch. Near black,
  * the yellow, cyan and red of Cyberpunk 2077's interface, panels with a cut corner, screens with scan lines.
@@ -114,12 +116,12 @@ public:
     {
         Item(const juce::String& parameterId, const char* name, int width = 0, const juce::String& switchId = {},
              bool shownWhenOn = false)
-            : Item(parameterId, utf8(name), width, switchId, shownWhenOn)
+            : Item(parameterId, tr(name), width, switchId, shownWhenOn)
         {
         }
         Item(const juce::String& parameterId, const juce::String& name, int width = 0,
              const juce::String& switchId = {}, bool shownWhenOn = false)
-            : id(parameterId), label(name), slots(width), when(switchId), whenOn(shownWhenOn)
+            : id(parameterId), label(tr(name)), slots(width), when(switchId), whenOn(shownWhenOn)
         {
         }
 
@@ -179,11 +181,11 @@ class ScopeView : public juce::Component, private juce::Timer
 {
 public:
     explicit ScopeView(const ScopeBuffer& source, const ScopeBuffer* behind = nullptr, std::function<int()> lag = {});
-    void setCaption(const juce::String& text) { caption = text; }
+    void setCaption(const juce::String& text) { caption = tr(text); }
     /** Names for the two traces, in their colours in the top right corner. */
     void setLegend(const juce::String& mainName, const juce::String& behindName)
     {
-        legend = { mainName, behindName };
+        legend = { tr(mainName), tr(behindName) };
     }
     void paint(juce::Graphics&) override;
     /** Takes the newest samples and draws them; the timer does this while the view is on screen. */

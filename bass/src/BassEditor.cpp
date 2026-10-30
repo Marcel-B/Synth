@@ -1,4 +1,5 @@
 #include "BassEditor.h"
+#include "Language.h"
 
 #include "BassPresets.h"
 #include "PresetCategories.h"
@@ -39,7 +40,7 @@ BassEditor::BassEditor(BassProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tonwerkui::tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -52,11 +53,11 @@ BassEditor::BassEditor(BassProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tonwerkui::tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tonwerkui::tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);
@@ -142,10 +143,10 @@ void BassEditor::resized()
 
 void BassEditor::timerCallback()
 {
-    juce::String caption = "OSZILLOSKOP";
+    juce::String caption = tonwerkui::tr("OSZILLOSKOP");
     if (const int note = synth.shownNote.load(); note >= 0)
     {
-        caption << utf8("  ·  ") << BassProcessor::noteName(note);
+        caption << tonwerkui::tr("  ·  ") << BassProcessor::noteName(note);
         if (synth.shownAccent.load())
             caption << "  ACCENT";
         if (synth.shownSlide.load())

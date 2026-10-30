@@ -1,3 +1,5 @@
+#include "Language.h"
+
 #include <juce_core/juce_core.h>
 #include <cstdio>
 #include <juce_events/juce_events.h>
@@ -8,6 +10,9 @@ int main()
     juce::ScopedJuceInitialiser_GUI juce;
     juce::UnitTestRunner runner;
     runner.setAssertOnFailure(false);
+    // The tests read German texts; TONWERK_LANGUAGE=en shows the editors' PNGs in English.
+    tonwerkui::setEnglish(juce::SystemStats::getEnvironmentVariable("TONWERK_LANGUAGE",
+                                                                    "de").startsWithIgnoreCase("en"));
     // TONWERK_TEST_CATEGORY=Presets runs one category, e.g. while tuning sounds.
     const auto category = juce::SystemStats::getEnvironmentVariable("TONWERK_TEST_CATEGORY", {});
     if (category.isNotEmpty())

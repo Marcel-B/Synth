@@ -1,4 +1,5 @@
 #include "DelayEditor.h"
+#include "Language.h"
 
 #include "DelayPresets.h"
 #include "PresetCategories.h"
@@ -29,7 +30,7 @@ juce::String EchoView::timeText() const
     juce::String text;
     if (shown.sync)
         text << kDivisions[(std::size_t) std::clamp(shown.division, 0, (int) kDivisions.size() - 1)].name
-             << utf8(" · ");
+             << tonwerkui::tr(" · ");
     text << juce::roundToInt(seconds * 1000.0) << " MS";
     return text;
 }
@@ -43,7 +44,7 @@ void EchoView::paint(juce::Graphics& g)
     auto inner = area.reduced(10.0f, 6.0f);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    g.drawText(timeText() + (shown.hold ? "  HALTEN" : ""), inner.removeFromTop(14.0f).toNearestInt(),
+    g.drawText(timeText() + (shown.hold ? tonwerkui::tr("  HALTEN") : ""), inner.removeFromTop(14.0f).toNearestInt(),
                juce::Justification::centredLeft);
 
     // The ducking's pull: a bar on the right, full when nothing is taken.
@@ -134,7 +135,7 @@ DelayEditor::DelayEditor(DelayProcessor& p)
                         kDelayCategories)),
       scope(p.scopeOut, &p.scopeIn),
       tone(p.state, "Klang",
-           { { { "lowCut", "Low Cut" }, { "highCut", "High Cut" }, { "drive", utf8("Sättigung") },
+           { { { "lowCut", "Low Cut" }, { "highCut", "High Cut" }, { "drive", tonwerkui::tr("Sättigung") },
                { "wow", "Leiern" } } }),
       ducking(p.state, "Ducking", { { { "duck", "Menge" }, { "duckRelease", "Release" } } }),
       output(p.state, "Ausgang", { { { "width", "Breite" }, { "mix", "Mix" }, { "output", "Pegel" } } })

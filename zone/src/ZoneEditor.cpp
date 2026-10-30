@@ -1,4 +1,5 @@
 #include "ZoneEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "ZonePresets.h"
@@ -35,18 +36,18 @@ void ZoneView::refresh()
 
 juce::String ZoneView::caption() const
 {
-    const auto dot = utf8(" · ");
-    const juce::String shapes[] = { "GLOCKE", "TIEFEN BIS", utf8("HÖHEN AB") };
+    const auto dot = tonwerkui::tr(" · ");
+    const juce::String shapes[] = { tonwerkui::tr("GLOCKE"), tonwerkui::tr("TIEFEN BIS"), tonwerkui::tr("HÖHEN AB") };
     juce::String text = shapes[(int) shown.shape] + " " + juce::String(juce::roundToInt(shown.frequency)) + " HZ";
     if (shown.shape == Shape::bell)
-        text << dot << juce::roundToInt(shown.widthSemitones) << " HT";
-    text << dot << (shown.mode == Mode::band ? "BAND" : "BREITBAND");
+        text << dot << juce::roundToInt(shown.widthSemitones) << tonwerkui::tr(" HT");
+    text << dot << (shown.mode == Mode::band ? "BAND" : tonwerkui::tr("BREITBAND"));
     if (shown.source == Source::sidechain)
-        text << dot << (keyConnected ? "SIDECHAIN" : "SIDECHAIN FEHLT");
+        text << dot << (keyConnected ? "SIDECHAIN" : tonwerkui::tr("SIDECHAIN FEHLT"));
     if (shown.lfoSemitones > 0.0f)
-        text << dot << utf8("LFO ±") << juce::roundToInt(shown.lfoSemitones) << " HT";
+        text << dot << tonwerkui::tr("LFO ±") << juce::roundToInt(shown.lfoSemitones) << tonwerkui::tr(" HT");
     if (shown.listen)
-        text << dot << utf8("HÖREN");
+        text << dot << tonwerkui::tr("HÖREN");
     text << dot << "GR " << juce::String(reduction, 1) << " DB";
     return text;
 }
@@ -142,7 +143,7 @@ ZoneSection::ZoneSection(ZoneProcessor& p)
                   { "frequency", "Frequenz" },
                   { "width", "Breite" },
                   { "mode", "Modus" },
-                  { "listen", utf8("Hören") } } },
+                  { "listen", tonwerkui::tr("Hören") } } },
               {}, { 0, kZoneDisplay }),
       view(p)
 {

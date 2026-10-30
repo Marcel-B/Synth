@@ -1,4 +1,5 @@
 #include "ArpProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "ArpEditor.h"
@@ -20,8 +21,8 @@ std::unique_ptr<juce::AudioParameterFloat> number(const juce::String& id, const 
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, name, range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText));
 }
 
 std::unique_ptr<juce::AudioParameterInt> whole(const juce::String& id, const juce::String& name, int low, int high,
@@ -29,21 +30,23 @@ std::unique_ptr<juce::AudioParameterInt> whole(const juce::String& id, const juc
 {
     const juce::String suffix = *unit == 0 ? juce::String() : juce::String(" ") + juce::String::fromUTF8(unit);
     return std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { id, 1 }, name, low, high, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), low, high, initial,
         juce::AudioParameterIntAttributes()
-            .withStringFromValueFunction([suffix](int value, int) { return juce::String(value) + suffix; })
+            .withStringFromValueFunction(
+                tonwerkui::translated([suffix](int value, int) { return juce::String(value) + suffix; }))
             .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); }));
 }
 
 std::unique_ptr<juce::AudioParameterChoice> menu(const char* id, const char* name, juce::StringArray items, int initial)
 {
-    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), items,
+    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 },
+                                                        tonwerkui::tr(juce::String::fromUTF8(name)), tonwerkui::tr(items),
                                                         initial);
 }
 
 std::unique_ptr<juce::AudioParameterBool> toggle(const juce::String& id, const juce::String& name, bool initial)
 {
-    return std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial);
+    return std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial);
 }
 
 juce::StringArray utf8Items(std::initializer_list<const char*> items)

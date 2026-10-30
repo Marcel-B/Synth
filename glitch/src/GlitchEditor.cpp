@@ -1,4 +1,5 @@
 #include "GlitchEditor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "GlitchPresets.h"
@@ -21,8 +22,6 @@ const juce::Colour kRed { 0xffff003c };
 constexpr int kSlot = 92;
 constexpr int kRowHeight = 128;
 constexpr int kGap = 10;
-
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
 juce::Font mono(float size)
 {
@@ -116,7 +115,7 @@ Control::Control(juce::AudioProcessorValueTreeState& state, const juce::String& 
     jassert(parameter != nullptr);
     if (dynamic_cast<juce::AudioParameterBool*>(parameter) != nullptr)
     {
-        toggle = std::make_unique<juce::ToggleButton>(utf8("an"));
+        toggle = std::make_unique<juce::ToggleButton>(tonwerkui::tr("an"));
         addAndMakeVisible(*toggle);
         toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
     }
@@ -158,7 +157,7 @@ Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& 
 {
     for (const auto& [id, label] : items)
     {
-        controls.push_back(std::make_unique<Control>(state, id, utf8(label)));
+        controls.push_back(std::make_unique<Control>(state, id, tonwerkui::tr(label)));
         addAndMakeVisible(*controls.back());
     }
 }
@@ -183,14 +182,15 @@ ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
               tonwerkui::menuOrder((int) factoryPresets().size(),
                                    [](int i) { return factoryPresets()[(std::size_t) i].category; },
                                    tonwerkui::kGlitchCategories)),
-      main(p.state, utf8("Gesamt"), { { "amount", "Stärke" }, { "freeze", "Einfrieren" }, { "mix", "Mix" } }),
-      stutter(p.state, utf8("Stottern"),
+      main(p.state, tonwerkui::tr("Gesamt"), { { "amount", "Stärke" }, { "freeze", "Einfrieren" }, { "mix", "Mix" } }),
+      stutter(p.state, tonwerkui::tr("Stottern"),
               { { "stutterChance", "Chance" }, { "stutterLength", "Länge" }, { "repeats", "Wiederh." },
                 { "accelerate", "Beschleun." } }),
-      dropout(p.state, utf8("Aussetzer"), { { "dropoutChance", "Chance" }, { "dropoutLength", "Länge" } }),
-      damage(p.state, utf8("Defekt"),
+      dropout(p.state, tonwerkui::tr("Aussetzer"), { { "dropoutChance", "Chance" }, { "dropoutLength", "Länge" } }),
+      damage(p.state, tonwerkui::tr("Defekt"),
              { { "crush", "Bitcrusher" }, { "pitchChance", "Pitch-Chance" }, { "pitchRange", "Pitch-Bereich" } }),
-      timing(p.state, utf8("Timing"), { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
+      timing(p.state, tonwerkui::tr("Timing"),
+             { { "sync", "Tempo-Sync" }, { "division", "Raster" }, { "chaos", "Chaos" }, { "seed", "Seed" } })
 {
     setLookAndFeel(&lookAndFeel);
     addAndMakeVisible(presets);

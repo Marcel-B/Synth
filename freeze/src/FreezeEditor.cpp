@@ -1,4 +1,5 @@
 #include "FreezeEditor.h"
+#include "Language.h"
 
 #include "FreezePresets.h"
 #include "PresetCategories.h"
@@ -116,14 +117,15 @@ void SpectrumView::paint(juce::Graphics& g)
     auto text = area.reduced(10.0f, 5.0f).toNearestInt().removeFromTop(16);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    g.drawText("SPEKTRUM", text, juce::Justification::centredLeft);
+    g.drawText(tonwerkui::tr("SPEKTRUM"), text, juce::Justification::centredLeft);
     const bool frozen = processor.state.getRawParameterValue("freeze")->load() > 0.5f;
     g.setFont(mono(13.0f));
     g.setColour(frozen ? colours::yellow : colours::cyan.withAlpha(0.8f));
-    g.drawText(frozen ? "EINGEFROREN" : "LIVE", text, juce::Justification::centredRight);
+    g.drawText(frozen ? tonwerkui::tr("EINGEFROREN") : "LIVE", text, juce::Justification::centredRight);
     g.setFont(mono(9.0f));
     g.setColour(colours::muted);
-    g.drawText(frozen ? "KLICKEN ZUM LOSLASSEN" : "KLICKEN ZUM EINFRIEREN", text.withTrimmedRight(110),
+    g.drawText(frozen ? tonwerkui::tr("KLICKEN ZUM LOSLASSEN") : tonwerkui::tr("KLICKEN ZUM EINFRIEREN"),
+               text.withTrimmedRight(110),
                juce::Justification::centredRight);
 }
 
@@ -134,11 +136,15 @@ FreezeEditor::FreezeEditor(FreezeProcessor& p)
               menuOrder((int) factoryPresets().size(), [](int i) { return factoryPresets()[(std::size_t) i].category; },
                         kFreezeCategories)),
       freeze(p.state, "Freeze",
-             { { { "trigger", utf8("Auslöser") }, { "interval", "Intervall" } },
-               { { "capture", "Aufnahme" }, { "fade", utf8("Überblenden") }, { "stack", "Stapeln" } } },
+             { { { "trigger", tonwerkui::tr("Auslöser") }, { "interval", "Intervall" } },
+               { { "capture", "Aufnahme" }, { "fade", tonwerkui::tr("Überblenden") }, { "stack", "Stapeln" } } },
              "freeze"),
-      sound(p.state, "Klang", { { { "pitch", utf8("Tonhöhe") }, { "shimmer", "Schimmer" } }, { { "lowCut", "Low Cut" }, { "highCut", "High Cut" } } }),
-      motion(p.state, "Bewegung", { { { "motion", "Bewegung" }, { "drift", "Drift" } }, { { "blur", utf8("Unschärfe") }, { "width", "Breite" } } }),
+      sound(p.state, "Klang",
+            { { { "pitch", tonwerkui::tr("Tonhöhe") }, { "shimmer", "Schimmer" } },
+              { { "lowCut", "Low Cut" }, { "highCut", "High Cut" } } }),
+      motion(p.state, "Bewegung",
+             { { { "motion", "Bewegung" }, { "drift", "Drift" } },
+               { { "blur", tonwerkui::tr("Unschärfe") }, { "width", "Breite" } } }),
       output(p.state, "Ausgang", { { { "mix", "Mix" } }, { { "level", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);

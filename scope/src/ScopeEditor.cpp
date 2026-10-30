@@ -1,4 +1,5 @@
 #include "ScopeEditor.h"
+#include "Language.h"
 
 #include "PresetCategories.h"
 #include "ScopePresets.h"
@@ -22,7 +23,7 @@ juce::String dbText(float db) { return db <= -99.0f ? juce::String("-INF") : juc
 juce::String perDivision(double seconds)
 {
     if (seconds < 0.001)
-        return juce::String(juce::roundToInt(seconds * 1.0e6)) + utf8(" µS/DIV");
+        return juce::String(juce::roundToInt(seconds * 1.0e6)) + tonwerkui::tr(" µS/DIV");
     if (seconds < 1.0)
         return (seconds < 0.01 ? juce::String(seconds * 1000.0, 1) : juce::String(juce::roundToInt(seconds * 1000.0)))
                + " MS/DIV";
@@ -90,32 +91,32 @@ float ScopeScreen::zoomFor(float peak)
 
 juce::String ScopeScreen::caption() const
 {
-    const auto dot = utf8(" · ");
+    const auto dot = tonwerkui::tr(" · ");
     juce::String text;
     switch (shown.mode)
     {
         case Mode::wave:
         {
-            text << "WELLE" << dot << juce::roundToInt(shown.timeMs) << " MS" << dot
+            text << tonwerkui::tr("WELLE") << dot << juce::roundToInt(shown.timeMs) << " MS" << dot
                  << perDivision(shown.timeMs * 0.001 / kDivisionsAcross);
             const char* triggers[] = { "STEIGEND", "FALLEND", "FREI" };
-            text << dot << triggers[(int) shown.trigger];
+            text << dot << tonwerkui::tr(triggers[(int) shown.trigger]);
             if (shown.trigger != Trigger::free)
                 text << " " << juce::roundToInt(shown.triggerLevel * 100.0f) << " %";
             break;
         }
         case Mode::bars:
-            text << "TAKT" << dot << juce::String(kWindowNames[(std::size_t) shown.window]).toUpperCase() << dot
+            text << tonwerkui::tr("TAKT") << dot << tonwerkui::tr(kWindowNames[(std::size_t) shown.window]).toUpperCase() << dot
                  << juce::roundToInt(processor.tempo.load()) << " BPM" << dot
-                 << (processor.playing.load() ? "SONG" : "EIGENER TAKT");
+                 << (processor.playing.load() ? "SONG" : tonwerkui::tr("EIGENER TAKT"));
             break;
         case Mode::xy: text << "XY" << dot << "GONIOMETER" << dot << juce::roundToInt(shown.timeMs) << " MS"; break;
-        case Mode::tuner: text << utf8("STIMMGERÄT") << dot << "A3 = " << juce::roundToInt(shown.reference) << " HZ"; break;
+        case Mode::tuner: text << tonwerkui::tr("STIMMGERÄT") << dot << "A3 = " << juce::roundToInt(shown.reference) << " HZ"; break;
     }
     if (shown.mode != Mode::xy)
     {
         const char* channels[] = { "SUMME", "LINKS", "RECHTS", "L + R", "SEITE" };
-        text << dot << channels[(int) shown.channel];
+        text << dot << tonwerkui::tr(channels[(int) shown.channel]);
     }
     return text;
 }
@@ -327,12 +328,12 @@ void ScopeScreen::paintTuner(juce::Graphics& g, juce::Rectangle<float> plot)
     area.removeFromTop(8.0f);
     juce::String words;
     if (! sounding)
-        words = "SPIEL EINEN TON";
+        words = tonwerkui::tr("SPIEL EINEN TON");
     else
     {
         const int cents = juce::roundToInt(tunerCents);
-        words << juce::String(tunerHz, 1) << " HZ" << utf8(" · ") << (cents > 0 ? "+" : "") << cents << " CT"
-              << utf8(" · ") << (off <= kInTuneCents ? "STIMMT" : tunerCents < 0.0f ? "ZU TIEF" : "ZU HOCH");
+        words << juce::String(tunerHz, 1) << " HZ" << tonwerkui::tr(" · ") << (cents > 0 ? "+" : "") << cents << " CT"
+              << tonwerkui::tr(" · ") << (off <= kInTuneCents ? tonwerkui::tr("STIMMT") : tunerCents < 0.0f ? tonwerkui::tr("ZU TIEF") : tonwerkui::tr("ZU HOCH"));
     }
     g.setFont(mono(13.0f));
     g.setColour(colour);
@@ -580,17 +581,17 @@ void ScopeScreen::paint(juce::Graphics& g)
     g.drawText(caption(), inner.withHeight(14.0f).toNearestInt(), juce::Justification::centredLeft);
     juce::String readout;
     if (shown.hold)
-        readout = "GEHALTEN";
+        readout = tonwerkui::tr("GEHALTEN");
     else if (pitch > 0.0f)
     {
         const double note = noteOf(pitch, shown.reference);
         const int nearest = (int) std::lround(note);
         const int cents = (int) std::lround((note - nearest) * 100.0);
-        readout << (pitch < 100.0f ? juce::String(pitch, 1) : juce::String(juce::roundToInt(pitch))) << " HZ" << utf8(" · ") << noteName(nearest)
+        readout << (pitch < 100.0f ? juce::String(pitch, 1) : juce::String(juce::roundToInt(pitch))) << " HZ" << tonwerkui::tr(" · ") << noteName(nearest)
               << noteOctave(nearest) << " " << (cents >= 0 ? "+" : "") << cents << " CT";
     }
     else
-        readout = silent ? "KEIN SIGNAL" : "-- HZ";
+        readout = silent ? tonwerkui::tr("KEIN SIGNAL") : "-- HZ";
     g.setColour(shown.hold || silent ? colours::red : colours::yellow);
     g.drawText(readout, inner.withHeight(14.0f).withTrimmedRight(kMeterWidth + 10.0f).toNearestInt(),
                juce::Justification::centredRight);
@@ -598,9 +599,10 @@ void ScopeScreen::paint(juce::Graphics& g)
     const auto bottom = inner.withTop(inner.getBottom() - 16.0f).withTrimmedRight(kMeterWidth + 10.0f);
     const float peak = std::max(peakDb[0], peakDb[1]);
     g.setColour(peak > -0.1f ? colours::red : colours::cyan.withAlpha(0.8f));
-    juce::String levels = "PEAK " + dbText(peak) + " DBFS" + utf8(" · ") + "RMS " + dbText(std::max(rmsDb[0], rmsDb[1]))
+    juce::String levels = "PEAK " + dbText(peak) + " DBFS" + tonwerkui::tr(" · ") + "RMS " + dbText(std::max(rmsDb[0],
+                                                                                                             rmsDb[1]))
                           + " DBFS";
-    levels << utf8(" · ZOOM ") << (zoom >= 1.0f ? "+" : "") << juce::roundToInt(juce::Decibels::gainToDecibels(zoom))
+    levels << tonwerkui::tr(" · ZOOM ") << (zoom >= 1.0f ? "+" : "") << juce::roundToInt(juce::Decibels::gainToDecibels(zoom))
            << " DB";
     g.drawText(levels, bottom.toNearestInt(), juce::Justification::centredLeft);
     // The correlation as a needle on a bar, -1 (out of phase) to +1 (mono).
@@ -660,9 +662,9 @@ ScopeEditor::ScopeEditor(ScopeProcessor& p)
                { "colour", "Farbe" } } }),
       trigger(p.state, "Trigger", { { { "trigger", "Flanke" }, { "triggerLevel", "Pegel" } } }),
       picture(p.state, "Bild",
-              { { { "gain", utf8("Verstärkung") }, { "autoGain", "Auto" }, { "persistence", "Nachleuchten" },
+              { { { "gain", tonwerkui::tr("Verstärkung") }, { "autoGain", "Auto" }, { "persistence", "Nachleuchten" },
                   { "hold", "Halten" } } }),
-      tuner(p.state, "Stimmen", { { { "reference", "Kammerton" } } })
+      tuner(p.state, "Stimmung", { { { "reference", "Kammerton" } } })
 {
     setLookAndFeel(&lookAndFeel);
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &screen, &view, &trigger, &picture, &tuner })

@@ -1,4 +1,5 @@
 #include "RobovoxProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "RobovoxEditor.h"
@@ -19,8 +20,8 @@ std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* na
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(juce::String::fromUTF8(name)), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText));
 }
 
 std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* name, float initial)
@@ -30,7 +31,8 @@ std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* n
 
 std::unique_ptr<juce::AudioParameterChoice> menu(const char* id, const char* name, juce::StringArray items, int initial)
 {
-    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), items,
+    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 },
+                                                        tonwerkui::tr(juce::String::fromUTF8(name)), tonwerkui::tr(items),
                                                         initial);
 }
 
@@ -57,9 +59,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout RobovoxProcessor::createPara
     layout.add(menu("key", "Tonart", kNoteNames, 2));
     layout.add(menu("scale", "Skala", utf8Items({ "Chromatisch", "Dur", "Moll", "Pentatonik" }), 2));
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { "octave", 1 }, "Oktave", -4, 1, -2,
+        juce::ParameterID { "octave", 1 }, tonwerkui::tr("Oktave"), -4, 1, -2,
         juce::AudioParameterIntAttributes()
-            .withStringFromValueFunction([](int value, int) { return juce::String(value) + " Okt"; })
+            .withStringFromValueFunction(
+                tonwerkui::translated([](int value, int) { return juce::String(value) + " Okt"; }))
             .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
     layout.add(number("glide", "Gleiten", juce::NormalisableRange<float>(0.0f, 500.0f, 0.0f, 0.4f), 0.0f, "ms"));
     layout.add(menu("wave", "Welle", utf8Items({ "Sägezahn", "Rechteck", "Puls" }), 0));

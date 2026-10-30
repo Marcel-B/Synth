@@ -1,4 +1,5 @@
 #include "WavetableProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "WavetableEditor.h"
@@ -17,7 +18,7 @@ juce::StringArray utf8Array(std::initializer_list<const char*> items)
 {
     juce::StringArray result;
     for (const auto* item : items)
-        result.add(utf8(item));
+        result.add(tonwerkui::tr(item));
     return result;
 }
 
@@ -28,12 +29,12 @@ void number(Layout& layout, const juce::String& id, const char* name, float min,
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tonwerkui::tr(unit).isEmpty() ? juce::String() : " " + tonwerkui::tr(unit);
     auto toText = [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), range, initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Shares and amounts in whole percent, -100 to 100 when `bipolar`. */
@@ -42,8 +43,8 @@ void percent(Layout& layout, const juce::String& id, const char* name, float ini
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(bipolar ? -1.0f : 0.0f, 1.0f), initial,
-        Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(bipolar ? -1.0f : 0.0f, 1.0f), initial,
+        Attributes().withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 /** Times in whole milliseconds, skewed so the short ones that shape a bass get most of the turn. */
@@ -55,22 +56,24 @@ void milliseconds(Layout& layout, const juce::String& id, const char* name, floa
 void integer(Layout& layout, const juce::String& id, const char* name, int min, int max, int initial,
              const char* unit = "")
 {
-    const juce::String suffix = utf8(unit).isEmpty() ? juce::String() : " " + utf8(unit);
+    const juce::String suffix = tonwerkui::tr(unit).isEmpty() ? juce::String() : " " + tonwerkui::tr(unit);
     auto toText = [suffix](int value, int) { return juce::String(value) + suffix; };
     auto fromText = [](const juce::String& text) { return text.getIntValue(); };
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { id, 1 }, utf8(name), min, max, initial,
-        juce::AudioParameterIntAttributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), min, max, initial,
+        juce::AudioParameterIntAttributes()
+            .withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
 }
 
 void choice(Layout& layout, const juce::String& id, const char* name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name),
+                                                            tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const juce::String& id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 
 juce::StringArray divisionNames()
@@ -84,7 +87,7 @@ juce::StringArray divisionNames()
 void oscillator(Layout& layout, const juce::String& p, const char* label, bool on)
 {
     const juce::String name(label);
-    auto n = [&name](const char* what) { return (name + " " + utf8(what)).toStdString(); };
+    auto n = [&name](const char* what) { return (name + " " + tonwerkui::tr(what)).toStdString(); };
     // juce::String keeps the text; the helpers take UTF-8.
     const auto onName = n("an"), table = n("Wavetable"), position = n("Position"), warpMode = n("Warp-Modus"),
                warp = n("Warp"), octave = n("Oktave"), semi = n("Halbton"), fine = n("Fein"), unison = n("Unison"),
@@ -92,7 +95,7 @@ void oscillator(Layout& layout, const juce::String& p, const char* label, bool o
     toggle(layout, p + "On", onName.c_str(), on);
     juce::StringArray tables;
     for (const auto& t : WavetableBank::names())
-        tables.add(utf8(t.c_str()));
+        tables.add(tonwerkui::tr(t.c_str()));
     choice(layout, p + "Table", table.c_str(), tables, 0);
     percent(layout, p + "Position", position.c_str(), 0.0f);
     choice(layout, p + "WarpMode", warpMode.c_str(),
@@ -161,8 +164,9 @@ Layout WavetableProcessor::createParameterLayout()
             };
             auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
             layout.add(std::make_unique<juce::AudioParameterFloat>(
-                juce::ParameterID { id("lfo", i, "Rate"), 1 }, utf8(name("Rate").c_str()), range, 2.0f,
-                Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
+                juce::ParameterID { id("lfo", i, "Rate"), 1 }, tonwerkui::tr(name("Rate").c_str()), range, 2.0f,
+                Attributes()
+                    .withStringFromValueFunction(tonwerkui::translated(toText)).withValueFromStringFunction(fromText)));
         }
         choice(layout, id("lfo", i, "Division"), name("Raster").c_str(), divisionNames(), kEighth);
         toggle(layout, id("lfo", i, "Retrigger"), name("Neustart").c_str(), true);

@@ -1,4 +1,5 @@
 #include "MultibandEditor.h"
+#include "Language.h"
 
 #include "MultibandPresets.h"
 #include "PresetCategories.h"
@@ -46,15 +47,15 @@ juce::String BandView::caption() const
     for (std::size_t b = 0; b < kBands; ++b)
     {
         if (b > 0)
-            text << utf8(" · ");
+            text << tonwerkui::tr(" · ");
         text << juce::String(kBandNames[b]).toUpperCase() << " ";
         if (! shown.bands[b].on)
-            text << "AUS";
+            text << tonwerkui::tr("AUS");
         else
             text << signedDb(changes[b]);
     }
     if (shown.depth < 0.995f)
-        text << utf8(" · TIEFE ") << juce::roundToInt(shown.depth * 100.0f) << " %";
+        text << tonwerkui::tr(" · TIEFE ") << juce::roundToInt(shown.depth * 100.0f) << " %";
     return text;
 }
 
@@ -173,10 +174,10 @@ MultibandEditor::MultibandEditor(MultibandProcessor& p)
     {
         const juce::String id = kBandIds[b];
         bandSections[b] = std::make_unique<Section>(
-            p.state, utf8(kBandNames[b]),
+            p.state, tonwerkui::tr(kBandNames[b]),
             std::vector<Section::Row> { { { id + "Threshold", "Threshold" },
                                           { id + "Ratio", "Ratio" },
-                                          { id + "Upward", utf8("Aufwärts") },
+                                          { id + "Upward", tonwerkui::tr("Aufwärts") },
                                           { id + "Gain", "Gain" } },
                                         { { id + "Attack", "Attack" }, { id + "Release", "Release" }, { id + "Solo", "Solo" } } },
             id + "On");

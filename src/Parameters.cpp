@@ -1,4 +1,5 @@
 #include "Parameters.h"
+#include "Language.h"
 
 #include "dsp/Ranges.h"
 
@@ -8,10 +9,7 @@ namespace
 {
 using Type = ParameterDescriptor::Type;
 
-/** Names with umlauts; juce::String takes a plain `const char*` as ASCII only. */
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
-
-const juce::StringArray kWaveNames { "Sinus", "Dreieck", utf8("Sägezahn"), "Rechteck/Puls" };
+const juce::StringArray kWaveNames { "Sinus", "Dreieck", tonwerkui::tr("Sägezahn"), "Rechteck/Puls" };
 
 /** A field of the patch, reached through a function so nested fields need no member-pointer chains. */
 template <typename T>
@@ -69,8 +67,10 @@ public:
         number(prefix + ".width", name + " Pulsbreite", ranges::width, [osc](Patch& p) -> float& { return osc(p).width; });
         number(prefix + ".pwm", name + " PWM LFO", ranges::pwm, [osc](Patch& p) -> float& { return osc(p).pwm; });
         toggle(prefix + ".pwmLfo", name + " PWM LFO an", [osc](Patch& p) -> bool& { return osc(p).pwmLfo; });
-        number(prefix + ".pwmAmpEnv", name + utf8(" PWM Lautst.-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmAmpEnv; });
-        number(prefix + ".pwmFilterEnv", name + utf8(" PWM Filter-Hüllk."), ranges::pwmEnv, [osc](Patch& p) -> float& { return osc(p).pwmFilterEnv; });
+        number(prefix + ".pwmAmpEnv", name + tonwerkui::tr(" PWM Lautst.-Hüllk."), ranges::pwmEnv,
+               [osc](Patch& p) -> float& { return osc(p).pwmAmpEnv; });
+        number(prefix + ".pwmFilterEnv", name + tonwerkui::tr(" PWM Filter-Hüllk."), ranges::pwmEnv,
+               [osc](Patch& p) -> float& { return osc(p).pwmFilterEnv; });
     }
 };
 
@@ -87,16 +87,18 @@ std::vector<ParameterDescriptor> build()
                          [](Patch& p) -> FilterType& { return p.analog.filter.type; });
     b.number("filter.cutoff", "Cutoff", ranges::cutoff, [](Patch& p) -> float& { return p.analog.filter.cutoff; }, 1000.0f, "Hz");
     b.number("filter.resonance", "Resonanz", ranges::resonance, [](Patch& p) -> float& { return p.analog.filter.resonance; });
-    b.number("filter.envAmount", utf8("Filter-Hüllk. Menge"), ranges::envAmount, [](Patch& p) -> float& { return p.analog.filter.envAmount; }, 0.0f, "Okt");
+    b.number("filter.envAmount", tonwerkui::tr("Filter-Hüllk. Menge"), ranges::envAmount,
+             [](Patch& p) -> float& { return p.analog.filter.envAmount; }, 0.0f, "Okt");
     b.number("filter.keyTrack", "Keytracking", ranges::keyTrack, [](Patch& p) -> float& { return p.analog.filter.keyTrack; });
-    b.envelope("filterEnv", utf8("Filter-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.filterEnv; });
-    b.envelope("ampEnv", utf8("Lautst.-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.ampEnv; });
+    b.envelope("filterEnv", tonwerkui::tr("Filter-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.filterEnv; });
+    b.envelope("ampEnv", tonwerkui::tr("Lautst.-Hüllk."), [](Patch& p) -> Envelope& { return p.analog.ampEnv; });
     b.choice<Wave>("lfo.wave", "LFO Welle", kWaveNames, [](Patch& p) -> Wave& { return p.analog.lfo.wave; });
     b.number("lfo.rate", "LFO Tempo", ranges::rate, [](Patch& p) -> float& { return p.analog.lfo.rate; }, 3.0f, "Hz");
-    b.choice<AnalogLfoTarget>("lfo.target", "LFO Ziel", { utf8("Tonhöhe"), "Filter", utf8("Lautstärke") },
+    b.choice<AnalogLfoTarget>("lfo.target", "LFO Ziel",
+                              { tonwerkui::tr("Tonhöhe"), "Filter", tonwerkui::tr("Lautstärke") },
                               [](Patch& p) -> AnalogLfoTarget& { return p.analog.lfo.target; });
     b.number("lfo.depth", "LFO Tiefe", ranges::depth, [](Patch& p) -> float& { return p.analog.lfo.depth; });
-    b.number("volume", utf8("Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.analog.volume; });
+    b.number("volume", tonwerkui::tr("Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.analog.volume; });
 
     // FM.
     juce::StringArray algorithms;
@@ -120,10 +122,12 @@ std::vector<ParameterDescriptor> build()
     }
     b.choice<Wave>("fm.lfo.wave", "FM LFO Welle", kWaveNames, [](Patch& p) -> Wave& { return p.fm.lfo.wave; });
     b.number("fm.lfo.rate", "FM LFO Tempo", ranges::rate, [](Patch& p) -> float& { return p.fm.lfo.rate; }, 3.0f, "Hz");
-    b.choice<FmLfoTarget>("fm.lfo.target", "FM LFO Ziel", { utf8("Tonhöhe"), "Index", utf8("Lautstärke") },
+    b.choice<FmLfoTarget>("fm.lfo.target", "FM LFO Ziel",
+                          { tonwerkui::tr("Tonhöhe"), "Index", tonwerkui::tr("Lautstärke") },
                           [](Patch& p) -> FmLfoTarget& { return p.fm.lfo.target; });
     b.number("fm.lfo.depth", "FM LFO Tiefe", ranges::depth, [](Patch& p) -> float& { return p.fm.lfo.depth; });
-    b.number("fm.volume", utf8("FM Lautstärke"), ranges::volume, [](Patch& p) -> float& { return p.fm.volume; });
+    b.number("fm.volume", tonwerkui::tr("FM Lautstärke"), ranges::volume,
+             [](Patch& p) -> float& { return p.fm.volume; });
 
     // Effects.
     b.number("fx.delay.mix", "Delay Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.delay.mix; });
@@ -131,7 +135,8 @@ std::vector<ParameterDescriptor> build()
     b.number("fx.delay.feedback", "Delay Feedback", ranges::delayFeedback, [](Patch& p) -> float& { return p.fx.delay.feedback; });
     b.number("fx.delay.tone", "Delay Ton", ranges::tone, [](Patch& p) -> float& { return p.fx.delay.tone; }, 3000.0f, "Hz");
     b.number("fx.reverb.mix", "Hall Mix", ranges::mix, [](Patch& p) -> float& { return p.fx.reverb.mix; });
-    b.number("fx.reverb.decay", utf8("Hall Länge"), ranges::reverbDecay, [](Patch& p) -> float& { return p.fx.reverb.decay; }, 2.0f, "s");
+    b.number("fx.reverb.decay", tonwerkui::tr("Hall Länge"), ranges::reverbDecay,
+             [](Patch& p) -> float& { return p.fx.reverb.decay; }, 2.0f, "s");
 
     // Added after the first release: appended, so the parameters before them keep their places in saved projects.
     const auto first = b.list.size();
@@ -151,12 +156,14 @@ std::vector<ParameterDescriptor> build()
     const auto third = b.list.size();
     b.number("fold.amount", "Wavefolder Menge", ranges::level, [](Patch& p) -> float& { return p.analog.fold.amount; });
     b.number("fold.symmetry", "Wavefolder Symmetrie", ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.symmetry; });
-    b.number("fold.env", utf8("Wavefolder Filter-Hüllk."), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.env; });
+    b.number("fold.env", tonwerkui::tr("Wavefolder Filter-Hüllk."), ranges::bipolar,
+             [](Patch& p) -> float& { return p.analog.fold.env; });
     b.number("sh.rate", "S&H Tempo", ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
     b.toggle("sh.sync", "S&H Sync", [](Patch& p) -> bool& { return p.analog.sampleHold.sync; });
     b.choice<int>("sh.division", "S&H Teilung", divisions, [](Patch& p) -> int& { return p.analog.sampleHold.division; });
     b.number("sh.filter", "S&H Filter", ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.filter; });
-    b.number("sh.pitch", utf8("S&H Tonhöhe"), ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
+    b.number("sh.pitch", tonwerkui::tr("S&H Tonhöhe"), ranges::depth,
+             [](Patch& p) -> float& { return p.analog.sampleHold.pitch; });
     for (auto i = third; i < b.list.size(); ++i)
         b.list[i].version = 3;
 
@@ -253,23 +260,26 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Editio
                     range.interval = 0.5f;
                 const auto text = textFor(d);
                 layout.add(std::make_unique<juce::AudioParameterFloat>(
-                    id, d.name, range, value,
-                    juce::AudioParameterFloatAttributes().withStringFromValueFunction(text.toText).withValueFromStringFunction(text.fromText)));
+                    id, tonwerkui::tr(d.name), range, value,
+                    juce::AudioParameterFloatAttributes()
+                        .withStringFromValueFunction(tonwerkui::translated(text.toText)).withValueFromStringFunction(text.fromText)));
                 break;
             }
             case Type::integer:
                 // The oscillators' octaves, the only whole numbers.
                 layout.add(std::make_unique<juce::AudioParameterInt>(
-                    id, d.name, (int) d.min, (int) d.max, (int) value,
+                    id, tonwerkui::tr(d.name), (int) d.min, (int) d.max, (int) value,
                     juce::AudioParameterIntAttributes()
-                        .withStringFromValueFunction([](int v, int) { return juce::String(v) + " Okt"; })
+                        .withStringFromValueFunction(
+                            tonwerkui::translated([](int v, int) { return juce::String(v) + " Okt"; }))
                         .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
                 break;
             case Type::choice:
-                layout.add(std::make_unique<juce::AudioParameterChoice>(id, d.name, d.choices, (int) value));
+                layout.add(std::make_unique<juce::AudioParameterChoice>(id, tonwerkui::tr(d.name),
+                                                                        tonwerkui::tr(d.choices), (int) value));
                 break;
             case Type::toggle:
-                layout.add(std::make_unique<juce::AudioParameterBool>(id, d.name, value > 0.5f));
+                layout.add(std::make_unique<juce::AudioParameterBool>(id, tonwerkui::tr(d.name), value > 0.5f));
                 break;
         }
     }
