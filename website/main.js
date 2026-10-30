@@ -66,11 +66,13 @@
   if (!dialog || typeof dialog.showModal !== 'function') return;
   const image = dialog.querySelector('img');
   const title = dialog.querySelector('strong');
+  // The same script serves the German pages and their English copies under en/.
+  const english = document.documentElement.lang === 'en';
 
   document.querySelectorAll('.shot').forEach((button) => {
     button.addEventListener('click', () => {
       image.src = button.dataset.full;
-      image.alt = 'Oberfläche von ' + button.dataset.title;
+      image.alt = (english ? 'Interface of ' : 'Oberfläche von ') + button.dataset.title;
       title.textContent = button.dataset.title;
       dialog.showModal();
     });

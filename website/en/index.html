@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Studio</title>
+  <meta name="description" content="Tonwerk: synthesizers, effects, an arpeggiator and an LFO for Logic Pro and any DAW with VST3. Our own code, source on GitHub, free for macOS, Linux and Windows, and on the iPad as an app in the App Store.">
+  <meta name="theme-color" content="#0a0b10">
+  <meta property="og:title" content="Tonwerk Studio">
+  <meta property="og:description" content="14 instruments, 17 effects and two MIDI effects for Logic Pro and VST3. Free, source on GitHub.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tonwerk.studio/en/">
+  <meta property="og:image" content="https://tonwerk.studio/img/wavetable.png">
+  <link rel="canonical" href="https://tonwerk.studio/en/">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="#">TONWERK<span>.STUDIO</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#instrumente">Instruments</a>
+        <a href="#effekte">Effects</a>
+        <a href="#midi" class="optional">MIDI</a>
+        <a href="#download">Download</a>
+        <a href="ai/">Tonwerk-AI</a>
+        <a href="modul/" class="optional">Module</a>
+        <a href="#offen" class="optional">Source</a>
+        <a class="lang" href="../" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <canvas id="scope" aria-hidden="true"></canvas>
+      <div class="wrap">
+        <p class="kicker">Synthesizers &amp; effects for Logic Pro</p>
+        <h1 class="title">TONWERK</h1>
+        <p class="lead">Instruments and effects from our own code: from the analog synth through FM, wavetable and granular to the acid bass and the drum machine, plus effects for vocals, dubstep and the mix. Free, as Audio Unit and VST3, with the source on GitHub.</p>
+        <ul class="stats">
+          <li><b>14</b>Instruments</li>
+          <li><b>17</b>Effects</li>
+          <li><b>2</b>MIDI effects</li>
+          <li><b>AU</b>VST3 · App</li>
+        </ul>
+        <div class="actions">
+          <a class="button" href="#download">Download</a>
+          <a class="button ghost" href="https://github.com/Marcel-B/Synth">Source code on GitHub</a>
+          <a class="store-badge" href="https://apps.apple.com/app/tonwerk/id6824013223"><img src="../icons/app-store-en.svg" alt="Download on the App Store" width="144" height="48"></a>
+        </div>
+      </div>
+    </div>
+
+    <section id="instrumente">
+      <div class="wrap">
+        <div class="heading"><h2>Instruments</h2><span class="count">14 plugins</span></div>
+        <p class="intro">Software instruments for an instrument track. Each comes with its own factory sounds, no copies from factory ROMs or other people's preset banks, all matched in loudness. In Logic under <b>Instrument → AU Instruments → b-velop</b>.</p>
+        <div class="grid">
+        <article class="card" id="analog">
+          <button class="shot" type="button" data-full="../img/analog.png" data-title="Tonwerk Analog" aria-label="Enlarge the screenshot of Tonwerk Analog">
+            <img src="../img/analog.png" alt="Interface of Tonwerk Analog" width="1270" height="566" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkAnalog.png" alt="" width="64" height="64">
+            <h3>Tonwerk Analog</h3>
+            <p class="code">aumu TwAn Bvlp</p>
+            <p class="tagline">The analog synth from Tonwerk in the browser, as a plugin. Sounds from Tonwerk sound the same here as there.</p>
+            <ul>
+            <li>Two oscillators with pulse and PWM, plus noise</li>
+            <li>Lowpass, highpass and bandpass with their own envelope</li>
+            <li>Wavefolder and sample &amp; hold, LFO also in song tempo</li>
+            <li>Delay and reverb built in, 16 voices</li>
+            </ul>
+            <div class="tags"><span>Subtractive</span><span>Poly</span></div>
+          </div>
+        </article>
+        <article class="card" id="fm">
+          <button class="shot" type="button" data-full="../img/fm.png" data-title="Tonwerk FM" aria-label="Enlarge the screenshot of Tonwerk FM">
+            <img src="../img/fm.png" alt="Interface of Tonwerk FM" width="1270" height="616" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkFM.png" alt="" width="64" height="64">
+            <h3>Tonwerk FM</h3>
+            <p class="code">aumu TwFm Bvlp</p>
+            <p class="tagline">Four sine operators in eight algorithms, like the 4-operator FM synths of the eighties and identical to Tonwerk's FM synth.</p>
+            <ul>
+            <li>An envelope and velocity per operator</li>
+            <li>Feedback on operator 4</li>
+            <li>LFO on pitch, index or volume</li>
+            <li>Electric pianos, bells, basses and brass as factory sounds</li>
+            </ul>
+            <div class="tags"><span>FM</span><span>Poly</span></div>
+          </div>
+        </article>
+        <article class="card" id="dx">
+          <button class="shot" type="button" data-full="../img/dx.png" data-title="Tonwerk DX" aria-label="Enlarge the screenshot of Tonwerk DX">
+            <img src="../img/dx.png" alt="Interface of Tonwerk DX" width="1270" height="714" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkDX.png" alt="" width="64" height="64">
+            <h3>Tonwerk DX</h3>
+            <p class="code">aumu TwDx Bvlp</p>
+            <p class="tagline">Six operators and 32 algorithms for the classic FM sound of the eighties: electric piano, bells, brass and basses.</p>
+            <ul>
+            <li>Envelopes and levels in the original's units, 0 to 99</li>
+            <li>LFO speed matched against measurements of real hardware</li>
+            <li>Reads SysEx banks of classic 6-operator synths</li>
+            <li>A full bank of 32 sounds of its own</li>
+            </ul>
+            <div class="tags"><span>FM</span><span>6 operators</span></div>
+          </div>
+        </article>
+        <article class="card" id="wavetable">
+          <button class="shot" type="button" data-full="../img/wavetable.png" data-title="Tonwerk Wavetable" aria-label="Enlarge the screenshot of Tonwerk Wavetable">
+            <img src="../img/wavetable.png" alt="Interface of Tonwerk Wavetable" width="1186" height="814" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkWavetable.png" alt="" width="64" height="64">
+            <h3>Tonwerk Wavetable</h3>
+            <p class="code">aumu TwWt Bvlp</p>
+            <p class="tagline">A wavetable synth for dubstep: wobble, growl, reese, riddim, screeches and wide leads.</p>
+            <ul>
+            <li>Two oscillators with warp, unison and sub</li>
+            <li>Tables from formulas, nothing copied from other synths</li>
+            <li>Modulation matrix with eight slots and four macros</li>
+            <li>33 factory sounds, the basses equally loud for the drop</li>
+            </ul>
+            <div class="tags"><span>Wavetable</span><span>Dubstep</span></div>
+          </div>
+        </article>
+        <article class="card" id="granular">
+          <button class="shot" type="button" data-full="../img/granular.png" data-title="Tonwerk Granular" aria-label="Enlarge the screenshot of Tonwerk Granular">
+            <img src="../img/granular.png" alt="Interface of Tonwerk Granular" width="1204" height="674" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkGranular.png" alt="" width="64" height="64">
+            <h3>Tonwerk Granular</h3>
+            <p class="code">aumu TwGr Bvlp</p>
+            <p class="tagline">Cuts a sound into many short grains and puts them back together as pads, clouds and frozen moments.</p>
+            <ul>
+            <li>Up to 40 grains per voice, 5 ms to 1 s long</li>
+            <li>Nine built-in sources or a file of your own</li>
+            <li>Position, spray, scan, reverse and spread across the stereo field</li>
+            <li>Equally loud with few grains and with many</li>
+            </ul>
+            <div class="tags"><span>Granular</span><span>Textures</span></div>
+          </div>
+        </article>
+        <article class="card" id="physical">
+          <button class="shot" type="button" data-full="../img/physical.png" data-title="Tonwerk Physical" aria-label="Enlarge the screenshot of Tonwerk Physical">
+            <img src="../img/physical.png" alt="Interface of Tonwerk Physical" width="1264" height="674" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkPhysical.png" alt="" width="64" height="64">
+            <h3>Tonwerk Physical</h3>
+            <p class="code">aumu TwPh Bvlp</p>
+            <p class="tagline">Computes how an instrument vibrates: plucked, struck, bowed or blown, on a string, tube, bar, bell, membrane or bowl.</p>
+            <ul>
+            <li>Exciter, resonator and body combine freely</li>
+            <li>Every hit sounds a little different</li>
+            <li>Bow and breath sustain the note as long as the key is down</li>
+            <li>Waveguides and modal resonators, computed sparingly</li>
+            </ul>
+            <div class="tags"><span>Physical modeling</span><span>Acoustic</span></div>
+          </div>
+        </article>
+        <article class="card" id="additiv">
+          <button class="shot" type="button" data-full="../img/additive.png" data-title="Tonwerk Additiv" aria-label="Enlarge the screenshot of Tonwerk Additiv">
+            <img src="../img/additive.png" alt="Interface of Tonwerk Additiv" width="1300" height="744" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkAdditiv.png" alt="" width="64" height="64">
+            <h3>Tonwerk Additiv</h3>
+            <p class="code">aumu TwAd Bvlp</p>
+            <p class="tagline">Builds sounds from up to 64 single partials, clean and glassy, for bells, organs, choirs and living pads.</p>
+            <ul>
+            <li>Two spectra, morphed into each other seamlessly</li>
+            <li>Vowel formants, comb, tilt and stretch</li>
+            <li>An envelope of its own for every partial, if you like</li>
+            <li>Cannot alias, eight partials per vector instruction</li>
+            </ul>
+            <div class="tags"><span>Additive</span><span>Poly</span></div>
+          </div>
+        </article>
+        <article class="card" id="pd">
+          <button class="shot" type="button" data-full="../img/pd.png" data-title="Tonwerk PD" aria-label="Enlarge the screenshot of Tonwerk PD">
+            <img src="../img/pd.png" alt="Interface of Tonwerk PD" width="1126" height="770" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkPD.png" alt="" width="64" height="64">
+            <h3>Tonwerk PD</h3>
+            <p class="code">aumu TwPd Bvlp</p>
+            <p class="tagline">Phase distortion as in the eighties: a cosine wave with a bent phase, digital and still warm.</p>
+            <ul>
+            <li>Eight waves from saw to resonant sweep</li>
+            <li>Two lines with their own DCW and DCA envelopes</li>
+            <li>Ring and noise, stereo chorus</li>
+            <li>Needs no filter and hardly any CPU</li>
+            </ul>
+            <div class="tags"><span>Phase distortion</span><span>80s</span></div>
+          </div>
+        </article>
+        <article class="card" id="sampler">
+          <button class="shot" type="button" data-full="../img/sampler.png" data-title="Tonwerk Sampler" aria-label="Enlarge the screenshot of Tonwerk Sampler">
+            <img src="../img/sampler.png" alt="Interface of Tonwerk Sampler" width="1024" height="704" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkSampler.png" alt="" width="64" height="64">
+            <h3>Tonwerk Sampler</h3>
+            <p class="code">aumu TwSm Bvlp</p>
+            <p class="tagline">A sampler for your own recordings: chromatic with a loop or cut into slices, one key per piece.</p>
+            <ul>
+            <li>Slices on a grid or at the transients</li>
+            <li>Forward, ping-pong and reverse loops with crossfade</li>
+            <li>Filter, LFO and lo-fi</li>
+            <li>Nine built-in sounds to get started</li>
+            </ul>
+            <div class="tags"><span>Sampler</span><span>Slices</span></div>
+          </div>
+        </article>
+        <article class="card" id="bass">
+          <button class="shot" type="button" data-full="../img/bass.png" data-title="Tonwerk Bass" aria-label="Enlarge the screenshot of Tonwerk Bass">
+            <img src="../img/bass.png" alt="Interface of Tonwerk Bass" width="1006" height="592" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkBass.png" alt="" width="64" height="64">
+            <h3>Tonwerk Bass</h3>
+            <p class="code">aumu TwBs Bvlp</p>
+            <p class="tagline">An acid bass: one voice, a squelching lowpass, slide and accent.</p>
+            <ul>
+            <li>Slide only while a key is held, without a new attack</li>
+            <li>Accents in a row build the sweep up</li>
+            <li>Ladder filter with drive, full resonance stays bounded</li>
+            <li>Modelled on the classics, nothing copied</li>
+            </ul>
+            <div class="tags"><span>Acid</span><span>Mono</span></div>
+          </div>
+        </article>
+        <article class="card" id="neuro">
+          <button class="shot" type="button" data-full="../img/neuro.png" data-title="Tonwerk Neuro" aria-label="Enlarge the screenshot of Tonwerk Neuro">
+            <img src="../img/neuro.png" alt="Interface of Tonwerk Neuro" width="1324" height="592" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkNeuro.png" alt="" width="64" height="64">
+            <h3>Tonwerk Neuro</h3>
+            <p class="code">aumu TwNr Bvlp</p>
+            <p class="tagline">A monophonic bass for the reese and neuro sounds of drum and bass and dubstep: beating saws, dirty FM and a clean sub.</p>
+            <ul>
+            <li>Reese from two detuned saws, the sub bypassing drive and filter</li>
+            <li>FM pair with feedback and bite from the mod envelope</li>
+            <li>Ladder, bandpass, notch or comb, drive up to 30 dB</li>
+            <li>Wobble LFO in song tempo, glide and legato</li>
+            </ul>
+            <div class="tags"><span>Bass</span><span>Mono</span></div>
+          </div>
+        </article>
+        <article class="card" id="expander">
+          <button class="shot" type="button" data-full="../img/expander.png" data-title="Tonwerk Expander" aria-label="Enlarge the screenshot of Tonwerk Expander">
+            <img src="../img/expander.png" alt="Interface of Tonwerk Expander" width="1066" height="810" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkExpander.png" alt="" width="64" height="64">
+            <h3>Tonwerk Expander</h3>
+            <p class="code">aumu TwEx Bvlp</p>
+            <p class="tagline">An eight-voice analog synth in the manner of the expander modules of the seventies: two oscillators and a 12 dB filter that sweeps seamlessly from lowpass through notch to highpass.</p>
+            <ul>
+            <li>Saw and pulse with PWM, hard sync with an envelope sweep</li>
+            <li>Lowpass, notch, highpass seamlessly, bandpass switch</li>
+            <li>Poly, mono or all eight voices in unison</li>
+            <li>Drift: every voice a little different, like separate modules</li>
+            <li>Hardware sheet: every sound as a picture with the knob positions for the real module</li>
+            </ul>
+            <div class="tags"><span>Poly</span><span>Analog</span></div>
+          </div>
+        </article>
+        <article class="card" id="groovebox">
+          <button class="shot" type="button" data-full="../img/groovebox.png" data-title="Tonwerk Groovebox" aria-label="Enlarge the screenshot of Tonwerk Groovebox">
+            <img src="../img/groovebox.png" alt="Interface of Tonwerk Groovebox" width="1114" height="794" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkGroovebox.png" alt="" width="64" height="64">
+            <h3>Tonwerk Groovebox</h3>
+            <p class="code">aumu TwGb Bvlp</p>
+            <p class="tagline">A drum machine with eight synthesised instruments and a step sequencer in time with the song.</p>
+            <ul>
+            <li>Kick, snare, clap, two toms, hi-hats and cymbal</li>
+            <li>A machine of its own per track, in the style of classic drum computers</li>
+            <li>13 knobs per track, swing and accents</li>
+            <li>Dice: chance in the pattern, for all tracks or per track</li>
+            <li>Delay and reverb with sends per track, switched off with a click</li>
+            <li>Separate outputs per track (multi-output)</li>
+            <li>No samples: every knob acts seamlessly</li>
+            </ul>
+            <div class="tags"><span>Drums</span><span>Sequencer</span></div>
+          </div>
+        </article>
+        <article class="card" id="rig">
+          <button class="shot" type="button" data-full="../img/rig.png" data-title="Tonwerk Rig" aria-label="Enlarge the screenshot of Tonwerk Rig">
+            <img src="../img/rig.png" alt="Interface of Tonwerk Rig" width="1114" height="894" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkRig.png" alt="" width="64" height="64">
+            <h3>Tonwerk Rig</h3>
+            <p class="code">aumu TwRg Bvlp</p>
+            <p class="tagline">One instrument with up to six effects behind it, saved as one sound.</p>
+            <ul>
+            <li>Any Tonwerk instrument, followed by Delay, Shimmer, Tape, Rumble and all the other effects</li>
+            <li>With the Groovebox, an effect on one instrument only, such as Rumble on the kick</li>
+            <li>The plugins' own interfaces, with their presets</li>
+            <li>Latency compensated, also between the Groovebox's tracks</li>
+            <li>Playable in the iPad app: that is how the effects get there too</li>
+            </ul>
+            <div class="tags"><span>Chain</span><span>iPad</span></div>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="effekte">
+      <div class="wrap">
+        <div class="heading"><h2>Effects</h2><span class="count">17 plugins</span></div>
+        <p class="intro">Audio effects for any track and any bus, with level-matched presets. In Logic under <b>Audio FX → Audio Units → b-velop</b>; Robovox and Vocoder go into the instrument slot and hear the voice through the side chain, so that they get MIDI.</p>
+        <div class="grid">
+        <article class="card" id="chrome-glitch">
+          <button class="shot" type="button" data-full="../img/chrome-glitch.png" data-title="Chrome Glitch" aria-label="Enlarge the screenshot of Chrome Glitch">
+            <img src="../img/chrome-glitch.png" alt="Interface of Chrome Glitch" width="892" height="332" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/ChromeGlitch.png" alt="" width="64" height="64">
+            <h3>Chrome Glitch</h3>
+            <p class="code">aufx ChGl Bvlp</p>
+            <p class="tagline">For a vocal track whose speech chrome is failing: syllables stutter, the voice drops out, crumbles and jumps in pitch.</p>
+            <ul>
+            <li>Stutters, dropouts and pitch jumps in song tempo</li>
+            <li>Crusher, full during a glitch and light in between</li>
+            <li>The same glitch at the same place in the song on every bounce</li>
+            <li>Monitor shows CHROME OK, INTERFERENCE, NO SIGNAL</li>
+            </ul>
+            <div class="tags"><span>Glitch</span><span>Vocals</span></div>
+          </div>
+        </article>
+        <article class="card" id="distortion">
+          <button class="shot" type="button" data-full="../img/distortion.png" data-title="Tonwerk Distortion" aria-label="Enlarge the screenshot of Tonwerk Distortion">
+            <img src="../img/distortion.png" alt="Interface of Tonwerk Distortion" width="560" height="314" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkDistortion.png" alt="" width="64" height="64">
+            <h3>Tonwerk Distortion</h3>
+            <p class="code">aufx TwDs Bvlp</p>
+            <p class="tagline">The circuit of a classic guitar distortion pedal, computed stage by stage, plus tube, clipper, folder, rectifier and bitcrusher.</p>
+            <ul>
+            <li>Diode clipper from the Shockley equation</li>
+            <li>Four times oversampled with ADAA, little aliasing</li>
+            <li>Dry/wet without comb filtering</li>
+            <li>Presets as loud as the dry signal</li>
+            </ul>
+            <div class="tags"><span>Distortion</span><span>Pedal</span></div>
+          </div>
+        </article>
+        <article class="card" id="robovox">
+          <button class="shot" type="button" data-full="../img/robovox.png" data-title="Tonwerk Robovox" aria-label="Enlarge the screenshot of Tonwerk Robovox">
+            <img src="../img/robovox.png" alt="Interface of Tonwerk Robovox" width="744" height="388" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkRobovox.png" alt="" width="64" height="64">
+            <h3>Tonwerk Robovox</h3>
+            <p class="code">aumf TwRv Bvlp</p>
+            <p class="tagline">The robot voice of AI songs: a low, steady synth sings with the formants of your voice.</p>
+            <ul>
+            <li>Carrier from the voice's pitch, snapped to a scale</li>
+            <li>Or played by MIDI, through the side chain</li>
+            <li>Formant, bass and sibilance adjustable</li>
+            <li>STFT vocoder with fine resolution</li>
+            </ul>
+            <div class="tags"><span>Vocoder</span><span>Vocals</span></div>
+          </div>
+        </article>
+        <article class="card" id="vocoder">
+          <button class="shot" type="button" data-full="../img/vocoder.png" data-title="Tonwerk Vocoder" aria-label="Enlarge the screenshot of Tonwerk Vocoder">
+            <img src="../img/vocoder.png" alt="Interface of Tonwerk Vocoder" width="708" height="522" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkVocoder.png" alt="" width="64" height="64">
+            <h3>Tonwerk Vocoder</h3>
+            <p class="code">aumf TwVc Bvlp</p>
+            <p class="tagline">The classic vocoder: your voice shapes a synth that you play on the keyboard, chords included.</p>
+            <ul>
+            <li>Its own eight-voice synth as the carrier</li>
+            <li>8 to 32 bands from 100 Hz to 8 kHz</li>
+            <li>Formant, freeze, sibilance and stereo width</li>
+            <li>A single note sounds as loud as a chord</li>
+            </ul>
+            <div class="tags"><span>Vocoder</span><span>MIDI</span></div>
+          </div>
+        </article>
+        <article class="card" id="wobble">
+          <button class="shot" type="button" data-full="../img/wobble.png" data-title="Tonwerk Wobble" aria-label="Enlarge the screenshot of Tonwerk Wobble">
+            <img src="../img/wobble.png" alt="Interface of Tonwerk Wobble" width="760" height="454" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkWobble.png" alt="" width="64" height="64">
+            <h3>Tonwerk Wobble</h3>
+            <p class="code">aufx TwWb Bvlp</p>
+            <p class="tagline">The wobble bass of dubstep on any track: filter and volume, moved by LFO curves you draw yourself.</p>
+            <ul>
+            <li>Curves with steps and bends per segment</li>
+            <li>On the beat, wherever playback starts</li>
+            <li>Lowpass, highpass, bandpass and vowel filter</li>
+            <li>Presets with ready-made curves</li>
+            </ul>
+            <div class="tags"><span>Modulation</span><span>Dubstep</span></div>
+          </div>
+        </article>
+        <article class="card" id="tape">
+          <button class="shot" type="button" data-full="../img/tape.png" data-title="Tonwerk Tape" aria-label="Enlarge the screenshot of Tonwerk Tape">
+            <img src="../img/tape.png" alt="Interface of Tonwerk Tape" width="760" height="388" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkTape.png" alt="" width="64" height="64">
+            <h3>Tonwerk Tape</h3>
+            <p class="code">aufx TwTp Bvlp</p>
+            <p class="tagline">A worn tape machine for lo-fi: the head saturates, the tape hisses, wobbles and loses contact.</p>
+            <ul>
+            <li>Wow and flutter with drifting speed</li>
+            <li>Dropouts, hiss and saturation with pre-emphasis</li>
+            <li>Tape types from dictaphone to reel-to-reel</li>
+            <li>The same on every bounce</li>
+            </ul>
+            <div class="tags"><span>Lo-fi</span><span>Saturation</span></div>
+          </div>
+        </article>
+        <article class="card" id="freeze">
+          <button class="shot" type="button" data-full="../img/freeze.png" data-title="Tonwerk Freeze" aria-label="Enlarge the screenshot of Tonwerk Freeze">
+            <img src="../img/freeze.png" alt="Interface of Tonwerk Freeze" width="744" height="408" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkFreeze.png" alt="" width="64" height="64">
+            <h3>Tonwerk Freeze</h3>
+            <p class="code">aufx TwFz Bvlp</p>
+            <p class="tagline">Freezes a moment of the sound into an endless pad that you keep playing over.</p>
+            <ul>
+            <li>Spectral freeze, one click into the spectrum is enough</li>
+            <li>Pitch, shimmer, blur, width and motion</li>
+            <li>Freeze anew in song tempo, morph or stack</li>
+            <li>No latency, the dry signal keeps running</li>
+            </ul>
+            <div class="tags"><span>Spectral</span><span>Pads</span></div>
+          </div>
+        </article>
+        <article class="card" id="delay">
+          <button class="shot" type="button" data-full="../img/delay.png" data-title="Tonwerk Delay" aria-label="Enlarge the screenshot of Tonwerk Delay">
+            <img src="../img/delay.png" alt="Interface of Tonwerk Delay" width="668" height="502" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkDelay.png" alt="" width="64" height="64">
+            <h3>Tonwerk Delay</h3>
+            <p class="code">aufx TwDl Bvlp</p>
+            <p class="tagline">A delay for rhythm and dub: echoes in song tempo that bounce between left and right.</p>
+            <ul>
+            <li>Ping-pong, stereo or mono, up to 4 s</li>
+            <li>Filters and saturation in the feedback</li>
+            <li>Ducking: echoes only in the gaps</li>
+            <li>Hold freezes the loop</li>
+            </ul>
+            <div class="tags"><span>Delay</span><span>Dub</span></div>
+          </div>
+        </article>
+        <article class="card" id="chorus">
+          <button class="shot" type="button" data-full="../img/chorus.png" data-title="Tonwerk Chorus" aria-label="Enlarge the screenshot of Tonwerk Chorus">
+            <img src="../img/chorus.png" alt="Interface of Tonwerk Chorus" width="688" height="502" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkChorus.png" alt="" width="64" height="64">
+            <h3>Tonwerk Chorus</h3>
+            <p class="code">aufx TwCh Bvlp</p>
+            <p class="tagline">Chorus, ensemble, flanger and phaser in one plugin, all moved by one LFO, free or in song tempo.</p>
+            <ul>
+            <li>Up to four voices per side</li>
+            <li>Ensemble without dips in level</li>
+            <li>Flanger and phaser with feedback</li>
+            <li>Low cut and high cut on the effect</li>
+            </ul>
+            <div class="tags"><span>Modulation</span><span>Stereo</span></div>
+          </div>
+        </article>
+        <article class="card" id="glue">
+          <button class="shot" type="button" data-full="../img/glue.png" data-title="Tonwerk Glue" aria-label="Enlarge the screenshot of Tonwerk Glue">
+            <img src="../img/glue.png" alt="Interface of Tonwerk Glue" width="728" height="512" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkGlue.png" alt="" width="64" height="64">
+            <h3>Tonwerk Glue</h3>
+            <p class="code">aufx TwGl Bvlp</p>
+            <p class="tagline">A bus compressor that glues a mix or drums together, with side chain and pumping in song tempo.</p>
+            <ul>
+            <li>Five ratios with a soft knee</li>
+            <li>Auto release for short hits and long passages</li>
+            <li>Side chain input for ducking under the kick</li>
+            <li>Pumping in time, without any kick at all</li>
+            </ul>
+            <div class="tags"><span>Dynamics</span><span>Bus</span></div>
+          </div>
+        </article>
+        <article class="card" id="shimmer">
+          <button class="shot" type="button" data-full="../img/shimmer.png" data-title="Tonwerk Shimmer" aria-label="Enlarge the screenshot of Tonwerk Shimmer">
+            <img src="../img/shimmer.png" alt="Interface of Tonwerk Shimmer" width="568" height="502" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkShimmer.png" alt="" width="64" height="64">
+            <h3>Tonwerk Shimmer</h3>
+            <p class="code">aufx TwSh Bvlp</p>
+            <p class="tagline">A reverb whose tail rises by an interval with every round trip, until it floats above the signal like a choir.</p>
+            <ul>
+            <li>Octave, fifth or another interval</li>
+            <li>Without shimmer a plain, dense reverb</li>
+            <li>Decay up to 30 s, hold for endless tails</li>
+            <li>Built lean for many tracks</li>
+            </ul>
+            <div class="tags"><span>Reverb</span><span>Ambient</span></div>
+          </div>
+        </article>
+        <article class="card" id="filter">
+          <button class="shot" type="button" data-full="../img/filter.png" data-title="Tonwerk Filter" aria-label="Enlarge the screenshot of Tonwerk Filter">
+            <img src="../img/filter.png" alt="Interface of Tonwerk Filter" width="528" height="620" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkFilter.png" alt="" width="64" height="64">
+            <h3>Tonwerk Filter</h3>
+            <p class="code">aufx TwFl Bvlp</p>
+            <p class="tagline">A multimode filter that moves: envelope follower for auto-wah and an LFO in song tempo.</p>
+            <ul>
+            <li>Eight types, among them ladder and comb</li>
+            <li>The ladder self-oscillates</li>
+            <li>Six LFO shapes with stereo offset</li>
+            <li>Drive before the filter</li>
+            </ul>
+            <div class="tags"><span>Filter</span><span>Auto-wah</span></div>
+          </div>
+        </article>
+        <article class="card" id="stutter">
+          <button class="shot" type="button" data-full="../img/stutter.png" data-title="Tonwerk Stutter" aria-label="Enlarge the screenshot of Tonwerk Stutter">
+            <img src="../img/stutter.png" alt="Interface of Tonwerk Stutter" width="724" height="492" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkStutter.png" alt="" width="64" height="64">
+            <h3>Tonwerk Stutter</h3>
+            <p class="code">aufx TwSt Bvlp</p>
+            <p class="tagline">Beat repeat on the song's grid: stutters, fills and rolls that sound the same on every bounce.</p>
+            <ul>
+            <li>Grid from 1/4 to 1/64, triplets too</li>
+            <li>Pitch, reverse, decay and filter sweep</li>
+            <li>Chance and seed, reproducible in the song</li>
+            <li>Hold for automation</li>
+            </ul>
+            <div class="tags"><span>Glitch</span><span>Rhythm</span></div>
+          </div>
+        </article>
+        <article class="card" id="multiband">
+          <button class="shot" type="button" data-full="../img/multiband.png" data-title="Tonwerk Multiband" aria-label="Enlarge the screenshot of Tonwerk Multiband">
+            <img src="../img/multiband.png" alt="Interface of Tonwerk Multiband" width="784" height="636" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkMultiband.png" alt="" width="64" height="64">
+            <h3>Tonwerk Multiband</h3>
+            <p class="code">aufx TwMb Bvlp</p>
+            <p class="tagline">Three bands, three compressors: pulls loud parts down and brings quiet ones up, all the way to the dense dubstep sound.</p>
+            <ul>
+            <li>Linkwitz-Riley crossovers, flat without compression</li>
+            <li>Downward and upward in every band</li>
+            <li>Depth for all bands at once, solo per band</li>
+            <li>Mix without comb filtering at the crossover frequencies</li>
+            </ul>
+            <div class="tags"><span>Dynamics</span><span>Mastering</span></div>
+          </div>
+        </article>
+        <article class="card" id="zone">
+          <button class="shot" type="button" data-full="../img/zone.png" data-title="Tonwerk Zone" aria-label="Enlarge the screenshot of Tonwerk Zone">
+            <img src="../img/zone.png" alt="Interface of Tonwerk Zone" width="708" height="552" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkZone.png" alt="" width="64" height="64">
+            <h3>Tonwerk Zone</h3>
+            <p class="code">aufx TwZn Bvlp</p>
+            <p class="tagline">A compressor for one frequency range: tames sibilance, harsh mids or booming bass notes and leaves the rest alone.</p>
+            <ul>
+            <li>Bell, lows or highs, freely adjustable</li>
+            <li>Only the range or the whole signal gets quieter</li>
+            <li>Side chain: room for the kick only in the bass's lows</li>
+            <li>LFO on the frequency, free or in song tempo</li>
+            <li>Below the threshold unchanged to the bit</li>
+            </ul>
+            <div class="tags"><span>Dynamics</span><span>EQ</span></div>
+          </div>
+        </article>
+        <article class="card" id="scope">
+          <button class="shot" type="button" data-full="../img/scope.png" data-title="Tonwerk Scope" aria-label="Enlarge the screenshot of Tonwerk Scope">
+            <img src="../img/scope.png" alt="Interface of Tonwerk Scope" width="1024" height="654" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkScope.png" alt="" width="64" height="64">
+            <h3>Tonwerk Scope</h3>
+            <p class="code">aufx TwSc Bvlp</p>
+            <p class="tagline">An oscilloscope with afterglow like on a picture tube: wave, the song's bars, stereo image or tuner, the audio stays untouched.</p>
+            <ul>
+            <li>Triggered wave that stands still on a held note</li>
+            <li>Bar view in song tempo shows pumping and ducking</li>
+            <li>Goniometer and correlation for the stereo image</li>
+            <li>Tuner with needle and strobe, accurate to under 1 cent</li>
+            <li>Pitch with note name, levels, freely resizable window</li>
+            </ul>
+            <div class="tags"><span>Analysis</span><span>Mix</span></div>
+          </div>
+        </article>
+        <article class="card" id="rumble">
+          <button class="shot" type="button" data-full="../img/rumble.png" data-title="Tonwerk Rumble" aria-label="Enlarge the screenshot of Tonwerk Rumble">
+            <img src="../img/rumble.png" alt="Interface of Tonwerk Rumble" width="586" height="540" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkRumble.png" alt="" width="64" height="64">
+            <h3>Tonwerk Rumble</h3>
+            <p class="code">aufx TwRb Bvlp</p>
+            <p class="tagline">The rolling rumble under the techno kick, made from the kick itself: reverb, distortion, lowpass and ducking in one.</p>
+            <ul>
+            <li>Right on the kick track, no side chain</li>
+            <li>Reverb, echo in song tempo or both</li>
+            <li>Four distortion curves, resonant lowpass</li>
+            <li>Ducks with the kick or on the song's grid</li>
+            <li>Rumble always mono, the kick unchanged</li>
+            </ul>
+            <div class="tags"><span>Techno</span><span>Drums</span></div>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="midi">
+      <div class="wrap">
+        <div class="heading"><h2>MIDI effects</h2><span class="count">2 plugins</span></div>
+        <p class="intro">They sit before the instrument and play or move it. In Logic in the MIDI FX slot above the instrument: <b>MIDI FX → Audio Units → b-velop</b>.</p>
+        <div class="grid">
+        <article class="card" id="arp">
+          <button class="shot" type="button" data-full="../img/arp.png" data-title="Tonwerk Arp" aria-label="Enlarge the screenshot of Tonwerk Arp">
+            <img src="../img/arp.png" alt="Interface of Tonwerk Arp" width="780" height="494" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkArp.png" alt="" width="64" height="64">
+            <h3>Tonwerk Arp</h3>
+            <p class="code">aumi TwAr Bvlp</p>
+            <p class="tagline">An arpeggiator and step sequencer in front of any synth: you hold keys, it plays notes from them on the grid.</p>
+            <ul>
+            <li>16 steps with pitch, velocity and tie</li>
+            <li>Arpeggiator or sequencer from one pattern</li>
+            <li>The grid sits on the song's bars</li>
+            <li>Works with any instrument, Logic's own included</li>
+            </ul>
+            <div class="tags"><span>MIDI</span><span>Sequencer</span></div>
+          </div>
+        </article>
+        <article class="card" id="lfo">
+          <button class="shot" type="button" data-full="../img/lfo.png" data-title="Tonwerk LFO" aria-label="Enlarge the screenshot of Tonwerk LFO">
+            <img src="../img/lfo.png" alt="Interface of Tonwerk LFO" width="668" height="436" loading="lazy" decoding="async">
+          </button>
+          <div class="body">
+            <img class="icon" src="../icons/TonwerkLFO.png" alt="" width="64" height="64">
+            <h3>Tonwerk LFO</h3>
+            <p class="code">aumi TwLf Bvlp</p>
+            <p class="tagline">An LFO that moves any knob of a Tonwerk instrument: it sends a MIDI controller, and the instrument learns it with a right click on the knob.</p>
+            <ul>
+            <li>Six shapes, free or in song tempo</li>
+            <li>14 bits, so slow sweeps do not step</li>
+            <li>Several in a row for several knobs</li>
+            <li>Starts with the song or with every phrase</li>
+            </ul>
+            <div class="tags"><span>MIDI</span><span>Modulation</span></div>
+          </div>
+        </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="wrap">
+        <div class="heading"><h2>Download</h2></div>
+        <p class="intro">All plugins come together in one package. The latest version is on <a href="https://github.com/Marcel-B/Synth/releases/latest">GitHub Releases</a>; to update, download the new package and install it the same way. Imported sounds and saved projects are kept.</p>
+        <div class="platforms">
+          <div class="panel">
+            <h3>macOS</h3>
+            <p>Audio Unit for Logic, VST3 and the apps, for Apple silicon and Intel from macOS 11. Signed and notarized by Apple.</p>
+            <p>Download the zip, quit Logic, then in Terminal:</p>
+            <pre>cd ~/Downloads/Tonwerk-Synth-*-macOS
+zsh install.sh</pre>
+          </div>
+          <div class="panel">
+            <h3>Linux</h3>
+            <p>VST3 and the apps for x64, for example for Bitwig, Reaper or Ardour. From version 0.5.0. The <code>install.sh</code> of newer releases adds the apps with their icons to the applications menu.</p>
+            <p>In a terminal:</p>
+            <pre>tar -xzf Tonwerk-Synth-*-Linux-x64.tar.gz
+cd Tonwerk-Synth-*-Linux-x64
+./install.sh</pre>
+          </div>
+          <div class="panel">
+            <h3>Windows</h3>
+            <p>VST3 and the apps for x64. From version 0.5.0. Not signed, so Windows asks the first time an app starts.</p>
+            <p>Unpack the zip and copy the contents of the <code>VST3</code> folder to <code>C:\Program Files\Common Files\VST3</code>, where every DAW finds them.</p>
+          </div>
+          <div class="panel">
+            <h3>iPad</h3>
+            <p>One app, Tonwerk, with every plugin as an AUv3 for Logic Pro for iPad, GarageBand and AUM. On its own it plays the instruments with a large keyboard and a MIDI keyboard, with Tonwerk Rig also with effects behind them, and shows in the scope what arrives at the microphone. The interfaces adapt to the screen, and a long press on a knob opens MIDI learn.</p>
+            <p>iPadOS 15 or later, in the App Store.</p>
+            <p><a class="store-badge" href="https://apps.apple.com/app/tonwerk/id6824013223"><img src="../icons/app-store-en.svg" alt="Download on the App Store" width="144" height="48"></a></p>
+          </div>
+          <div class="panel">
+            <h3>Mac App Store</h3>
+            <p>In the works: the same app, Tonwerk, for the Mac, with all plugins as AUv3 for Logic Pro, GarageBand and MainStage. Installed and updated from the store, without Terminal. A project opens with it just as with the plugins from the zip, only both at once does not work.</p>
+            <p>Comes first through TestFlight, not yet available.</p>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="button" href="https://github.com/Marcel-B/Synth/releases/latest">Download the latest version</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="modul">
+      <div class="wrap">
+        <div class="heading"><h2>Eurorack module</h2></div>
+        <div class="columns">
+          <div class="panel">
+            <h3>Tonwerk Wavetable to build yourself</h3>
+            <p>The sound engine of Tonwerk Wavetable on an ESP32-S3, as a 14 HP Eurorack module: two wavetable oscillators with warp, unison and sub, a multimode filter with drive, an envelope, V/Oct, gate and four CV inputs. Through-hole boards, front panel and knobs from the 3D printer, firmware flashed in the browser.</p>
+            <p><a href="modul/">Overview and operation</a> · <a href="modul/bauanleitung.html">Build guide</a> · <a href="modul/bauanleitung.html#downloads">Boards, parts, firmware</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tonwerk-ai">
+      <div class="wrap">
+        <div class="heading"><h2>Tonwerk-AI</h2></div>
+        <div class="columns">
+          <div class="panel">
+            <h3>Songs from your own Mac</h3>
+            <p>Tonwerk-AI is an app for iPhone, iPad and Mac that makes songs with the music models YuE2 and ACE-Step on your own Mac, plays them and opens them as a Logic project. The two synths Analog and FM play the tracks there.</p>
+            <p><a href="ai/#download">Download for Mac</a> · <a href="ai/">Features</a> · <a href="ai/einrichtung.html">Setup</a> · <a href="ai/ki.html">AI and responsibility</a> · <a href="ai/datenschutz.html">Privacy</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="offen">
+      <div class="wrap">
+        <div class="heading"><h2>Source code</h2></div>
+        <div class="columns">
+          <div class="panel">
+            <h3>Our own code</h3>
+            <p>Every sound is computed, not played back: wavetables from formulas, drums from oscillators and noise, instruments from their physics. Classic synthesizers, drum machines and pedals are modelled, none of them copied.</p>
+            <p>The instruments Analog and FM are the two browser synths from Tonwerk; a sound saved there can be imported and sounds the same here as there.</p>
+          </div>
+          <div class="panel">
+            <h3>Licence</h3>
+            <p>The source is on GitHub under the <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> (<a href="https://github.com/Marcel-B/Synth/blob/main/NOTICE">NOTICE</a>). Reading it, building it for yourself, changing it and passing it on are allowed, as long as it is not commercial and the notice “Tonwerk Synth by Marcel Benders” is kept. If you want to make money with it, ask first.</p>
+            <p>Built with <a href="https://juce.com">JUCE</a> 8.</p>
+          </div>
+          <div class="panel">
+            <h3>Get involved</h3>
+            <p>Found a bug or have an idea for a plugin? Open an <a href="https://github.com/Marcel-B/Synth/issues">issue on GitHub</a>. How to build the plugins yourself is in the <a href="https://github.com/Marcel-B/Synth#readme">README</a> (in German).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="impressum.html">Legal notice</a>
+        <a href="datenschutz.html">Privacy</a>
+        <a href="ai/">Tonwerk-AI</a>
+        <a href="modul/">Module</a>
+        <a href="https://github.com/Marcel-B/Synth">GitHub</a>
+        <a href="../" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+
+  <dialog id="lightbox" aria-label="Screenshot">
+    <div class="bar"><strong></strong><form method="dialog"><button>Close</button></form></div>
+    <img alt="">
+  </dialog>
+
+  <script src="../main.js" defer></script>
+</body>
+</html>
