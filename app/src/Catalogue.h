@@ -18,8 +18,9 @@ struct Entry
 };
 
 /**
- * The instruments the app plays, in the order of the website, and Tonwerk Scope last, to look at or tune what comes in.
- * The other effects are left out (they want a sound to work on, which a host gives them), the MIDI effects too (on their
+ * The instruments the app plays, in the order of the website, Tonwerk Rig (an instrument with effects behind it, the way
+ * the effects play in the app) and Tonwerk Scope last, to look at or tune what comes in. The other effects are left out
+ * on their own (they want a sound to work on, which a host or the rig gives them), the MIDI effects too (on their
  * own nothing hears what they send), and Tonwerk Synth, whose two engines are here as Tonwerk Analog and Tonwerk FM; all
  * of them are in the app as AUv3s.
  */

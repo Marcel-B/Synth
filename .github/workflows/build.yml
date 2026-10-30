@@ -25,7 +25,7 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_LTO=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build
-        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkFreeze_VST3 TonwerkArp_VST3 TonwerkSampler_VST3 TonwerkBass_VST3 TonwerkVocoder_VST3 TonwerkDelay_VST3 TonwerkChorus_VST3 TonwerkGlue_VST3 TonwerkShimmer_VST3 TonwerkFilter_VST3 TonwerkNeuro_VST3 TonwerkStutter_VST3 TonwerkMultiband_VST3 TonwerkZone_VST3 TonwerkScope_VST3 TonwerkExpander_VST3 TonwerkLFO_VST3 TonwerkRumble_VST3
+        run: cmake --build build --target TonwerkSynthTests TonwerkAnalog_VST3 TonwerkFM_VST3 TonwerkSynth_VST3 ChromeGlitch_VST3 TonwerkDistortion_VST3 TonwerkWavetable_VST3 TonwerkDX_VST3 TonwerkGranular_VST3 TonwerkPhysical_VST3 TonwerkAdditiv_VST3 TonwerkGroovebox_VST3 TonwerkRobovox_VST3 TonwerkWobble_VST3 TonwerkPD_VST3 TonwerkTape_VST3 TonwerkFreeze_VST3 TonwerkArp_VST3 TonwerkSampler_VST3 TonwerkBass_VST3 TonwerkVocoder_VST3 TonwerkDelay_VST3 TonwerkChorus_VST3 TonwerkGlue_VST3 TonwerkShimmer_VST3 TonwerkFilter_VST3 TonwerkNeuro_VST3 TonwerkStutter_VST3 TonwerkMultiband_VST3 TonwerkZone_VST3 TonwerkScope_VST3 TonwerkExpander_VST3 TonwerkLFO_VST3 TonwerkRumble_VST3 TonwerkRig_VST3
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -111,7 +111,7 @@ jobs:
           done
           [[ -f "$app/PrivacyInfo.xcprivacy" ]] || { echo "::error::the app has no privacy manifest"; exit 1; }
           echo "$count AUv3s"
-          (( count == 33 )) || { echo "::error::expected 33 AUv3s, found $count"; exit 1; }
+          (( count == 34 )) || { echo "::error::expected 34 AUv3s, found $count"; exit 1; }
       - name: Screenshots in the simulator
         run: |
           # The store takes iPad shots only at the 13" sizes (2752 x 2064 for the 13-inch iPad Pro), so an iPad Pro 13-inch
@@ -226,7 +226,7 @@ jobs:
             count=$((count + 1))
           done
           echo "$count AUv3s"
-          (( count == 33 )) || { echo "::error::expected 33 AUv3s, found $count"; exit 1; }
+          (( count == 34 )) || { echo "::error::expected 34 AUv3s, found $count"; exit 1; }
           # Registered with the system, a host finds them; shown for the log only.
           pluginkit -a "$app"/Contents/PlugIns/*.appex || true
           pluginkit -m -v -p com.apple.AudioUnit-UI | grep -i tonwerk || true
@@ -276,7 +276,7 @@ jobs:
       - name: Sign ad hoc
         run: |
           for dir in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkSynth:Tonwerk Synth" "ChromeGlitch:Chrome Glitch" "TonwerkDistortion:Tonwerk Distortion" \
-            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer" "TonwerkFilter:Tonwerk Filter" "TonwerkNeuro:Tonwerk Neuro" "TonwerkStutter:Tonwerk Stutter" "TonwerkMultiband:Tonwerk Multiband" "TonwerkZone:Tonwerk Zone" "TonwerkScope:Tonwerk Scope" "TonwerkExpander:Tonwerk Expander" "TonwerkLFO:Tonwerk LFO" "TonwerkRumble:Tonwerk Rumble"; do
+            "TonwerkWavetable:Tonwerk Wavetable" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer" "TonwerkFilter:Tonwerk Filter" "TonwerkNeuro:Tonwerk Neuro" "TonwerkStutter:Tonwerk Stutter" "TonwerkMultiband:Tonwerk Multiband" "TonwerkZone:Tonwerk Zone" "TonwerkScope:Tonwerk Scope" "TonwerkExpander:Tonwerk Expander" "TonwerkLFO:Tonwerk LFO" "TonwerkRumble:Tonwerk Rumble" "TonwerkRig:Tonwerk Rig"; do
             cd "$GITHUB_WORKSPACE/build/${dir%%:*}_artefacts/Release"
             name="${dir#*:}"
             "$GITHUB_WORKSPACE/scripts/sign-macos.sh" "AU/$name.component" "VST3/$name.vst3" "Standalone/$name.app"
@@ -334,9 +334,10 @@ jobs:
           cp -R "build/TonwerkExpander_artefacts/Release/AU/Tonwerk Expander.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkLFO_artefacts/Release/AU/Tonwerk LFO.component" ~/Library/Audio/Plug-Ins/Components/
           cp -R "build/TonwerkRumble_artefacts/Release/AU/Tonwerk Rumble.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "build/TonwerkRig_artefacts/Release/AU/Tonwerk Rig.component" ~/Library/Audio/Plug-Ins/Components/
           killall -9 AudioComponentRegistrar || true
           sleep 3
-          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e freeze -e arp -e sampler -e bass -e vocoder -e delay -e chorus -e glue -e shimmer -e filter -e neuro -e stutter -e multiband -e zone -e scope -e expander -e lfo -e rumble || true
+          auval -a | grep -i -e tonwerk -e glitch -e distortion -e wavetable -e dx -e granular -e physical -e additiv -e groovebox -e robovox -e wobble -e pd -e tape -e freeze -e arp -e sampler -e bass -e vocoder -e delay -e chorus -e glue -e shimmer -e filter -e neuro -e stutter -e multiband -e zone -e scope -e expander -e lfo -e rumble -e rig || true
           auval -strict -v aumu TwAn Bvlp
           auval -strict -v aumu TwFm Bvlp
           auval -strict -v aumu Twsy Bvlp
@@ -370,6 +371,7 @@ jobs:
           auval -strict -v aufx TwZn Bvlp
           auval -strict -v aufx TwSc Bvlp
           auval -strict -v aufx TwRb Bvlp
+          auval -strict -v aumu TwRg Bvlp
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -472,6 +474,9 @@ jobs:
           cd "$GITHUB_WORKSPACE/build/TonwerkRumble_artefacts/Release"
           ditto -c -k --keepParent "AU/Tonwerk Rumble.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Rumble-AU.zip"
           ditto -c -k --keepParent "VST3/Tonwerk Rumble.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Rumble-VST3.zip"
+          cd "$GITHUB_WORKSPACE/build/TonwerkRig_artefacts/Release"
+          ditto -c -k --keepParent "AU/Tonwerk Rig.component" "$GITHUB_WORKSPACE/Tonwerk-Synth-Rig-AU.zip"
+          ditto -c -k --keepParent "VST3/Tonwerk Rig.vst3" "$GITHUB_WORKSPACE/Tonwerk-Synth-Rig-VST3.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: tonwerk-synth-macos

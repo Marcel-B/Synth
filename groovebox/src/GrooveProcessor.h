@@ -109,6 +109,7 @@ public:
     int hitCount(int track) const { return engine.hitCount(track); }
 
 private:
+    static BusesProperties buses();
     void timerCallback() override;
     tonwerk::Effects effectsFor() const;
 

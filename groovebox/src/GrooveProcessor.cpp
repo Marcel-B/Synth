@@ -215,8 +215,20 @@ Layout GrooveProcessor::createParameterLayout()
     return layout;
 }
 
+/**
+ * The main output, then one stereo output per track, off unless a host (Logic's multi-output instrument) or Tonwerk Rig
+ * turns it on; a track whose output is on leaves the main one, so it can get effects of its own.
+ */
+juce::AudioProcessor::BusesProperties GrooveProcessor::buses()
+{
+    auto properties = BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true);
+    for (const auto* name : kTrackNames)
+        properties = properties.withOutput(utf8(name), juce::AudioChannelSet::stereo(), false);
+    return properties;
+}
+
 GrooveProcessor::GrooveProcessor()
-    : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+    : AudioProcessor(buses()),
       state(*this, nullptr, "TonwerkGroovebox", createParameterLayout())
 {
     auto value = [this](const juce::String& parameterId) {
@@ -363,14 +375,22 @@ void GrooveProcessor::patternsChanged()
 bool GrooveProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     const auto output = layouts.getMainOutputChannelSet();
-    return output == juce::AudioChannelSet::stereo() || output == juce::AudioChannelSet::mono();
+    if (output != juce::AudioChannelSet::stereo() && output != juce::AudioChannelSet::mono())
+        return false;
+    for (int bus = 1; bus < layouts.outputBuses.size(); ++bus)
+    {
+        const auto set = layouts.getChannelSet(false, bus);
+        if (! set.isDisabled() && set != juce::AudioChannelSet::stereo())
+            return false;
+    }
+    return layouts.outputBuses.size() <= 1 + kTracks;
 }
 
 void GrooveProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     engine.prepare(sampleRate);
     effects.prepare(sampleRate, samplesPerBlock);
-    work.setSize(4, samplesPerBlock);
+    work.setSize(4 + 2 * kTracks, samplesPerBlock);
     wetGain.reset(sampleRate, kBypassSeconds);
     wetGain.setCurrentAndTargetValue(fx.on->load() >= 0.5f ? 1.0f : 0.0f);
     effectsCleared = false;
@@ -463,18 +483,32 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
                 hits[(std::size_t) hitCount++] = { 0, t, 0.9f };
 
     if (work.getNumSamples() < count)
-        work.setSize(4, count, false, false, true);
+        work.setSize(4 + 2 * kTracks, count, false, false, true);
     work.clear();
     float* left = work.getWritePointer(0);
     float* right = work.getWritePointer(1);
     float* delaySend = work.getWritePointer(2);
     float* reverbSend = work.getWritePointer(3);
+    // The tracks whose own output is on render there, from channel 4 of the work buffer on.
+    std::array<float*, 2 * kTracks> ownOutput {};
+    bool anyOwn = false;
+    for (int t = 0; t < kTracks; ++t)
+        if (t + 1 < getBusCount(false) && getChannelCountOfBus(false, t + 1) == 2)
+        {
+            ownOutput[(std::size_t) (2 * t)] = work.getWritePointer(4 + 2 * t);
+            ownOutput[(std::size_t) (2 * t + 1)] = work.getWritePointer(5 + 2 * t);
+            anyOwn = true;
+        }
 
     int done = 0;
     auto renderUpTo = [&](int end) {
         if (end <= done)
             return;
-        engine.render(left + done, right + done, delaySend + done, reverbSend + done, end - done, s);
+        std::array<float*, 2 * kTracks> at {};
+        for (std::size_t c = 0; c < at.size(); ++c)
+            at[c] = ownOutput[c] != nullptr ? ownOutput[c] + done : nullptr;
+        engine.render(left + done, right + done, delaySend + done, reverbSend + done, end - done, s,
+                      anyOwn ? at.data() : nullptr);
         done = end;
     };
     // The sequencer's hits and the MIDI notes in time order; the hits came in order already.
@@ -512,7 +546,9 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     }
 
     buffer.clear();
-    if (buffer.getNumChannels() == 1)
+    // The main output alone; the tracks' own outputs follow it below.
+    auto main = getBusBuffer(buffer, false, 0);
+    if (main.getNumChannels() == 1)
     {
         for (int i = 0; i < count; ++i)
             left[i] = 0.5f * (left[i] + right[i]);
@@ -528,8 +564,8 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
         if (! effectsCleared)
             effects.reset();
         effectsCleared = true;
-        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-            buffer.copyFrom(channel, 0, channel == 0 ? left : right, count);
+        for (int channel = 0; channel < main.getNumChannels(); ++channel)
+            main.copyFrom(channel, 0, channel == 0 ? left : right, count);
     }
     else
     {
@@ -537,11 +573,11 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
         auto e = effectsFor();
         if (! fxOn)
             e.delay.mix = e.reverb.mix = 0.0f;
-        effects.process(e, left, right, delaySend, reverbSend, buffer, 0, count);
+        effects.process(e, left, right, delaySend, reverbSend, main, 0, count);
         if (wetGain.isSmoothing() || ! fxOn) // the fade may end inside this block
         {
-            float* out[2] = { buffer.getWritePointer(0),
-                              buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr };
+            float* out[2] = { main.getWritePointer(0),
+                              main.getNumChannels() > 1 ? main.getWritePointer(1) : nullptr };
             for (int i = 0; i < count; ++i)
             {
                 const float g = wetGain.getNextValue();
@@ -551,6 +587,15 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
             }
         }
     }
+    // The tracks on their own outputs get the same drive and master as the main one.
+    if (anyOwn)
+        for (int t = 0; t < kTracks; ++t)
+            if (ownOutput[(std::size_t) (2 * t)] != nullptr)
+            {
+                auto bus = getBusBuffer(buffer, false, t + 1);
+                for (int channel = 0; channel < 2; ++channel)
+                    bus.copyFrom(channel, 0, ownOutput[(std::size_t) (2 * t + channel)], count);
+            }
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         Engine::saturate(buffer.getWritePointer(channel), count, s.drive);
     buffer.applyGain(juce::Decibels::decibelsToGain(s.masterDb));

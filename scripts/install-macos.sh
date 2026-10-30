@@ -43,6 +43,7 @@ SCOPE="Tonwerk Scope"
 EXPANDER="Tonwerk Expander"
 LFO="Tonwerk LFO"
 RUMBLE="Tonwerk Rumble"
+RIG="Tonwerk Rig"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
 VST3="$HOME/Library/Audio/Plug-Ins/VST3"
 APPS="$HOME/Applications"
@@ -81,6 +82,7 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   rm -rf "$COMPONENTS/$EXPANDER.component" "$VST3/$EXPANDER.vst3" "$APPS/$EXPANDER.app"
   rm -rf "$COMPONENTS/$LFO.component" "$VST3/$LFO.vst3" "$APPS/$LFO.app"
   rm -rf "$COMPONENTS/$RUMBLE.component" "$VST3/$RUMBLE.vst3" "$APPS/$RUMBLE.app"
+  rm -rf "$COMPONENTS/$RIG.component" "$VST3/$RIG.vst3" "$APPS/$RIG.app"
   killall -9 AudioComponentRegistrar 2>/dev/null || true
   echo "Entfernt. Die Klänge in ~/Library/Application Support/$NAME bleiben."
   exit 0
@@ -94,7 +96,7 @@ cmake --build build-release --config Release --parallel "$(sysctl -n hw.ncpu)"
 
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
 BUNDLES=()
-for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS" TonwerkVocoder:"$VOCODER" TonwerkDelay:"$DELAY" TonwerkChorus:"$CHORUS" TonwerkGlue:"$GLUE" TonwerkShimmer:"$SHIMMER" TonwerkFilter:"$FILTER" TonwerkNeuro:"$NEURO" TonwerkStutter:"$STUTTER" TonwerkMultiband:"$MULTIBAND" TonwerkZone:"$ZONE" TonwerkScope:"$SCOPE" TonwerkExpander:"$EXPANDER" TonwerkLFO:"$LFO" TonwerkRumble:"$RUMBLE"; do
+for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS" TonwerkVocoder:"$VOCODER" TonwerkDelay:"$DELAY" TonwerkChorus:"$CHORUS" TonwerkGlue:"$GLUE" TonwerkShimmer:"$SHIMMER" TonwerkFilter:"$FILTER" TonwerkNeuro:"$NEURO" TonwerkStutter:"$STUTTER" TonwerkMultiband:"$MULTIBAND" TonwerkZone:"$ZONE" TonwerkScope:"$SCOPE" TonwerkExpander:"$EXPANDER" TonwerkLFO:"$LFO" TonwerkRumble:"$RUMBLE" TonwerkRig:"$RIG"; do
   ARTEFACTS="build-release/${target%%:*}_artefacts/Release"
   PRODUCT="${target#*:}"
   BUNDLES+=("$ARTEFACTS/AU/$PRODUCT.component" "$ARTEFACTS/VST3/$PRODUCT.vst3" "$ARTEFACTS/Standalone/$PRODUCT.app")
@@ -146,7 +148,8 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwMb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwZn Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwSc Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
-  && auval -v aufx TwRb Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
+  && auval -v aufx TwRb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwRg Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "auval: bestanden."
 else
   echo "auval ist fehlgeschlagen, das Protokoll steht in /tmp/tonwerk-auval.log"
@@ -157,6 +160,7 @@ echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumen
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE oder $SCOPE."
 echo "$RUMBLE auf der Kick-Spur: Audio-FX > Audio Units > b-velop > $RUMBLE."
+echo "$RIG, ein Instrument mit Effekten dahinter als ein Klang: Instrument > AU-Instrumente > b-velop > $RIG."
 echo "$WOBBLE auf jeder Spur, am liebsten dem Bass: Audio-FX > Audio Units > b-velop > $WOBBLE."
 echo "$FREEZE auf jeder Spur, für endlose Flächen: Audio-FX > Audio Units > b-velop > $FREEZE."
 echo "$ARP vor einem Synth: Software-Instrument-Spur, MIDI-FX > Audio Units > b-velop > $ARP."

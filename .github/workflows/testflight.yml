@@ -149,7 +149,7 @@ jobs:
           ls "$plugins"
           count=$(find "$plugins" -maxdepth 1 -name '*.appex' | wc -l | tr -d ' ')
           echo "$count AUv3s"
-          (( count == 33 )) || { echo "::error::expected 33 AUv3s in the archive, found $count"; exit 1; }
+          (( count == 34 )) || { echo "::error::expected 34 AUv3s in the archive, found $count"; exit 1; }
           [[ "${{ matrix.platform }}" == Mac ]] || exit 0
           for bundle in "$app" "$plugins"/*.appex; do
             codesign -d --entitlements - --xml "$bundle" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null
