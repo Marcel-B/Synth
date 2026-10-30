@@ -39,7 +39,7 @@ const std::vector<tonwerkui::EffectPreset>& factoryPresets()
         { "Nur Seite", "Stereo", { { "channel", side }, { "time", 30 }, { "colour", yellow } } },
 
         // A tuner for the instrument on the track; the reference stays at 440 Hz.
-        { "Stimmgerät", "Stimmen", { { "mode", tuner } } },
+        { "Stimmgerät", "Stimmen|Scope", { { "mode", tuner } } },
     };
     return presets;
 }

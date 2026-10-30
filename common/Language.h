@@ -37,7 +37,10 @@ bool refreshLanguage();
  */
 void forceLanguage(Language forced);
 
-/** A German text (UTF-8) in the current language. */
+/**
+ * A German text (UTF-8) in the current language. A text two plugins translate differently carries a context after a
+ * bar, "Hoch|Arp", which German leaves out.
+ */
 juce::String tr(const char* german);
 juce::String tr(const juce::String& german);
 
@@ -64,6 +67,9 @@ struct Localised
  * language changed.
  */
 juce::String retranslate(const juce::String& text);
+
+/** The twelve note names from C: German (Cis, ..., B, H) or English (C#, ..., A#, B). */
+juce::StringArray noteNames();
 
 /** The German texts asked for in English that the table lacks, since the start or `clearUntranslated`. */
 std::set<std::string> untranslated();

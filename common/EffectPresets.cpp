@@ -1,5 +1,7 @@
 #include "EffectPresets.h"
 
+#include "Language.h"
+
 namespace tonwerkui
 {
 namespace
@@ -60,7 +62,7 @@ PresetBar::PresetBar(juce::AudioProcessor& p, EffectPrograms& list, const std::v
     {
         const auto& preset = presets[(std::size_t) i];
         if (std::strcmp(preset.category, group) != 0 && *preset.category != 0)
-            box.addSectionHeading(juce::String::fromUTF8(preset.category));
+            box.addSectionHeading(tonwerkui::tr(preset.category));
         group = preset.category;
         box.addItem(juce::String::fromUTF8(preset.name), i + 1);
     }

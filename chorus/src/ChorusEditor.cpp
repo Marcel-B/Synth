@@ -77,7 +77,7 @@ juce::String SweepView::caption() const
     switch (shown.mode)
     {
         case Mode::chorus:
-            text << dot << std::clamp(shown.voices, 1, 4) << (shown.voices == 1 ? " STIMME" : " STIMMEN");
+            text << dot << std::clamp(shown.voices, 1, 4) << " " << (shown.voices == 1 ? tr("STIMME") : tr("STIMMEN"));
             break;
         case Mode::ensemble:
             text << dot << "3 LEITUNGEN";
@@ -187,8 +187,8 @@ ChorusEditor::ChorusEditor(ChorusProcessor& p)
       modeAttachment(*p.state.getParameter("mode"), [this](float value) { modeChanged(value); })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("CHORUS", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("CHORUS", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &sweep, &scope, &line, &phaser, &tone, &output })
         addAndMakeVisible(*c);
     const int lower = std::max(line.preferredWidth(), phaser.preferredWidth()) + tone.preferredWidth()

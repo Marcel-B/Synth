@@ -96,26 +96,26 @@ juce::String ScopeScreen::caption() const
     {
         case Mode::wave:
         {
-            text << "WELLE" << dot << juce::roundToInt(shown.timeMs) << " MS" << dot
+            text << tr("WELLE") << dot << juce::roundToInt(shown.timeMs) << " MS" << dot
                  << perDivision(shown.timeMs * 0.001 / kDivisionsAcross);
             const char* triggers[] = { "STEIGEND", "FALLEND", "FREI" };
-            text << dot << triggers[(int) shown.trigger];
+            text << dot << tr(triggers[(int) shown.trigger]);
             if (shown.trigger != Trigger::free)
                 text << " " << juce::roundToInt(shown.triggerLevel * 100.0f) << " %";
             break;
         }
         case Mode::bars:
-            text << "TAKT" << dot << juce::String(kWindowNames[(std::size_t) shown.window]).toUpperCase() << dot
+            text << tr("TAKT") << dot << tr(kWindowNames[(std::size_t) shown.window]).toUpperCase() << dot
                  << juce::roundToInt(processor.tempo.load()) << " BPM" << dot
-                 << (processor.playing.load() ? "SONG" : "EIGENER TAKT");
+                 << (processor.playing.load() ? juce::String("SONG") : tr("EIGENER TAKT"));
             break;
         case Mode::xy: text << "XY" << dot << "GONIOMETER" << dot << juce::roundToInt(shown.timeMs) << " MS"; break;
-        case Mode::tuner: text << utf8("STIMMGERÄT") << dot << "A3 = " << juce::roundToInt(shown.reference) << " HZ"; break;
+        case Mode::tuner: text << tr("STIMMGERÄT") << dot << "A3 = " << juce::roundToInt(shown.reference) << " HZ"; break;
     }
     if (shown.mode != Mode::xy)
     {
         const char* channels[] = { "SUMME", "LINKS", "RECHTS", "L + R", "SEITE" };
-        text << dot << channels[(int) shown.channel];
+        text << dot << tr(channels[(int) shown.channel]);
     }
     return text;
 }
@@ -327,12 +327,12 @@ void ScopeScreen::paintTuner(juce::Graphics& g, juce::Rectangle<float> plot)
     area.removeFromTop(8.0f);
     juce::String words;
     if (! sounding)
-        words = "SPIEL EINEN TON";
+        words = tr("SPIEL EINEN TON");
     else
     {
         const int cents = juce::roundToInt(tunerCents);
         words << juce::String(tunerHz, 1) << " HZ" << utf8(" · ") << (cents > 0 ? "+" : "") << cents << " CT"
-              << utf8(" · ") << (off <= kInTuneCents ? "STIMMT" : tunerCents < 0.0f ? "ZU TIEF" : "ZU HOCH");
+              << utf8(" · ") << (off <= kInTuneCents ? tr("STIMMT") : tunerCents < 0.0f ? tr("ZU TIEF") : tr("ZU HOCH"));
     }
     g.setFont(mono(13.0f));
     g.setColour(colour);
@@ -580,7 +580,7 @@ void ScopeScreen::paint(juce::Graphics& g)
     g.drawText(caption(), inner.withHeight(14.0f).toNearestInt(), juce::Justification::centredLeft);
     juce::String readout;
     if (shown.hold)
-        readout = "GEHALTEN";
+        readout = tr("GEHALTEN");
     else if (pitch > 0.0f)
     {
         const double note = noteOf(pitch, shown.reference);
@@ -590,7 +590,7 @@ void ScopeScreen::paint(juce::Graphics& g)
               << noteOctave(nearest) << " " << (cents >= 0 ? "+" : "") << cents << " CT";
     }
     else
-        readout = silent ? "KEIN SIGNAL" : "-- HZ";
+        readout = silent ? tr("KEIN SIGNAL") : juce::String("-- HZ");
     g.setColour(shown.hold || silent ? colours::red : colours::yellow);
     g.drawText(readout, inner.withHeight(14.0f).withTrimmedRight(kMeterWidth + 10.0f).toNearestInt(),
                juce::Justification::centredRight);
@@ -662,7 +662,7 @@ ScopeEditor::ScopeEditor(ScopeProcessor& p)
       picture(p.state, "Bild",
               { { { "gain", utf8("Verstärkung") }, { "autoGain", "Auto" }, { "persistence", "Nachleuchten" },
                   { "hold", "Halten" } } }),
-      tuner(p.state, "Stimmen", { { { "reference", "Kammerton" } } })
+      tuner(p.state, "Stimmen|Scope", { { { "reference", "Kammerton" } } })
 {
     setLookAndFeel(&lookAndFeel);
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &screen, &view, &trigger, &picture, &tuner })

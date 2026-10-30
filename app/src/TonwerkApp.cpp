@@ -1,4 +1,5 @@
 #include "Catalogue.h"
+#include "Language.h"
 #include "NightCity.h"
 #include "ScopeBuffer.h"
 
@@ -219,7 +220,7 @@ public:
         selector.addComponentListener(this);
         if (numbered)
         {
-            heading.setText(utf8("Eingänge (höchstens zwei)"), juce::dontSendNotification);
+            heading.setText(tonwerkui::tr("Eingänge (höchstens zwei)"), juce::dontSendNotification);
             heading.setColour(juce::Label::textColourId, colours::text);
             addAndMakeVisible(heading);
             view.setViewedComponent(&list, false);
@@ -269,7 +270,7 @@ private:
                 const bool named = unique.size() == names.size();
                 for (int i = 0; i < names.size(); ++i)
                 {
-                    auto text = "Eingang " + juce::String(i + 1);
+                    auto text = tonwerkui::tr("Eingang") + " " + juce::String(i + 1);
                     if (named)
                         text << utf8(" · ") << names[i];
                     auto* button = channels.add(new juce::ToggleButton(text));
@@ -349,7 +350,7 @@ public:
         addAndMakeVisible(picker);
 
         // A large editor (Tonwerk Wavetable) gets the whole screen when the keys are put away.
-        showKeyboard.setButtonText("Tasten");
+        showKeyboard.setButtonText(tonwerkui::tr("Tasten"));
         showKeyboard.setClickingTogglesState(true);
         showKeyboard.setToggleState(settings->getBoolValue("keyboard", true), juce::dontSendNotification);
         showKeyboard.onClick = [this] {
@@ -358,7 +359,7 @@ public:
         };
         addAndMakeVisible(showKeyboard);
 
-        input.setButtonText("Eingang");
+        input.setButtonText(tonwerkui::tr("Eingang"));
         input.onClick = [this] { chooseInput(); };
         addChildComponent(input);
 
@@ -385,7 +386,7 @@ public:
         octaveUp.setButtonText("+");
         octaveUp.onClick = [this] { shiftOctave(1); };
         addAndMakeVisible(octaveUp);
-        scope.setCaption("Oszilloskop");
+        scope.setCaption(tonwerkui::tr("Oszilloskop"));
         addAndMakeVisible(scope);
 
         addAndMakeVisible(frame);

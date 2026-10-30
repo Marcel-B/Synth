@@ -333,7 +333,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                                   { "filter.keyTrack", "Keytrack" } } });
         auto& sampleHold = add<Section>(analogSections, "Sample & Hold",
                                         std::vector<Section::Row> { { { "sh.sync", "Sync" },
-                                                                      { "sh.rate", "Tempo", 1, "sh.sync", false },
+                                                                      { "sh.rate", "Rate", 1, "sh.sync", false },
                                                                       { "sh.division", "Notenwert", 2, "sh.sync", true } },
                                                                     { { "sh.filter", "Filter" },
                                                                       { "sh.pitch", utf8("Tonhöhe") } } });
@@ -358,7 +358,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
         auto& lfo = add<Section>(analogSections, "LFO",
                                  std::vector<Section::Row> { { { "lfo.wave", "Welle", 2 },
                                                                { "lfo.sync", "Sync" },
-                                                               { "lfo.rate", "Tempo", 1, "lfo.sync", false },
+                                                               { "lfo.rate", "Rate", 1, "lfo.sync", false },
                                                                { "lfo.division", "Notenwert", 2, "lfo.sync", true },
                                                                { "lfo.target", "Ziel", 2 },
                                                                { "lfo.depth", "Tiefe" } } });
@@ -381,7 +381,7 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
         auto& lfo = add<Section>(fmSections, "LFO",
                                  std::vector<Section::Row> { { { "fm.lfo.wave", "Welle", 2 }, { "fm.lfo.target", "Ziel", 2 } },
                                                              { { "fm.lfo.sync", "Sync" },
-                                                               { "fm.lfo.rate", "Tempo", 1, "fm.lfo.sync", false },
+                                                               { "fm.lfo.rate", "Rate", 1, "fm.lfo.sync", false },
                                                                { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
                                                                { "fm.lfo.depth", "Tiefe" } } });
         auto& fx = add<Section>(fmSections, "Effekte",

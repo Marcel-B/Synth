@@ -363,7 +363,7 @@ DxEditor::DxEditor(DxProcessor& owner)
     algorithmSection = std::make_unique<DxAlgorithmSection>(state);
     lfoSection = std::make_unique<Section>(state, "LFO",
                                            std::vector<Section::Row> { { { "lfoWave", "Welle", 2 },
-                                                                         { "lfoSpeed", "Tempo" },
+                                                                         { "lfoSpeed", "Rate" },
                                                                          { "lfoDelay", tr("Verzög.") } },
                                                                        { { "lfoPitch", tr("Tonhöhe") },
                                                                          { "lfoPitchSens", "Empfindl." },

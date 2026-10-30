@@ -9,6 +9,25 @@
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
 #include "SamplerProcessor.h"
+#include "DistortionProcessor.h"
+#include "RobovoxProcessor.h"
+#include "WobbleProcessor.h"
+#include "TapeProcessor.h"
+#include "FreezeProcessor.h"
+#include "VocoderProcessor.h"
+#include "DelayProcessor.h"
+#include "ChorusProcessor.h"
+#include "GlueProcessor.h"
+#include "ShimmerProcessor.h"
+#include "FilterProcessor.h"
+#include "StutterProcessor.h"
+#include "MultibandProcessor.h"
+#include "ZoneProcessor.h"
+#include "ScopeProcessor.h"
+#include "RumbleProcessor.h"
+#include "ArpProcessor.h"
+#include "LfoProcessor.h"
+#include "GlitchProcessor.h"
 #include "English.h"
 #include "Language.h"
 #include "Platform.h"
@@ -72,6 +91,25 @@ std::vector<std::pair<const char*, Make>> plugins()
         { "Tonwerk Physical", [] { return std::make_unique<tonwerkphys::PhysicalProcessor>(); } },
         { "Tonwerk Sampler", [] { return std::make_unique<tonwerksampler::SamplerProcessor>(); } },
         { "Tonwerk Synth", [] { return std::make_unique<tonwerk::TonwerkSynthProcessor>(tonwerk::Edition::combined); } },
+        { "Tonwerk Distortion", [] { return std::make_unique<tonwerkdistortion::DistortionProcessor>(); } },
+        { "Tonwerk Robovox", [] { return std::make_unique<tonwerkrobovox::RobovoxProcessor>(); } },
+        { "Tonwerk Wobble", [] { return std::make_unique<tonwerkwobble::WobbleProcessor>(); } },
+        { "Tonwerk Tape", [] { return std::make_unique<tonwerktape::TapeProcessor>(); } },
+        { "Tonwerk Freeze", [] { return std::make_unique<tonwerkfreeze::FreezeProcessor>(); } },
+        { "Tonwerk Vocoder", [] { return std::make_unique<tonwerkvocoder::VocoderProcessor>(); } },
+        { "Tonwerk Delay", [] { return std::make_unique<tonwerkdelay::DelayProcessor>(); } },
+        { "Tonwerk Chorus", [] { return std::make_unique<tonwerkchorus::ChorusProcessor>(); } },
+        { "Tonwerk Glue", [] { return std::make_unique<tonwerkglue::GlueProcessor>(); } },
+        { "Tonwerk Shimmer", [] { return std::make_unique<tonwerkshimmer::ShimmerProcessor>(); } },
+        { "Tonwerk Filter", [] { return std::make_unique<tonwerkfilter::FilterProcessor>(); } },
+        { "Tonwerk Stutter", [] { return std::make_unique<tonwerkstutter::StutterProcessor>(); } },
+        { "Tonwerk Multiband", [] { return std::make_unique<tonwerkmultiband::MultibandProcessor>(); } },
+        { "Tonwerk Zone", [] { return std::make_unique<tonwerkzone::ZoneProcessor>(); } },
+        { "Tonwerk Scope", [] { return std::make_unique<tonwerkscope::ScopeProcessor>(); } },
+        { "Tonwerk Rumble", [] { return std::make_unique<tonwerkrumble::RumbleProcessor>(); } },
+        { "Tonwerk Arp", [] { return std::make_unique<tonwerkarp::ArpProcessor>(); } },
+        { "Tonwerk LFO", [] { return std::make_unique<tonwerklfo::LfoProcessor>(); } },
+        { "Chrome Glitch", [] { return std::make_unique<chromeglitch::ChromeGlitchProcessor>(); } },
     };
 }
 } // namespace

@@ -2,7 +2,9 @@
 
 #include "English.h"
 
+#include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <mutex>
 #include <unordered_map>
 
@@ -105,20 +107,36 @@ const std::set<std::string>& englishWords()
     return words;
 }
 
+/** Whether `text` has words to translate: more than two characters, not starting with a digit, with a letter. */
+bool isWords(const std::string& text)
+{
+    if (text.size() <= 2 || std::isdigit((unsigned char) text.front()))
+        return false;
+    return std::any_of(text.begin(), text.end(), [](char c) { return std::isalpha((unsigned char) c) || (c & 0x80); });
+}
+
+/** A key may carry a context after a bar ("Hoch|Arp"), for a word two plugins translate differently. */
+juce::String shown(const std::string& key)
+{
+    const auto bar = key.find('|');
+    return juce::String::fromUTF8(bar == std::string::npos ? key.c_str() : key.substr(0, bar).c_str());
+}
+
 juce::String translate(const std::string& german, bool record = true)
 {
     if (language() == Language::german)
-        return juce::String::fromUTF8(german.c_str());
+        return shown(german);
     const auto& map = tables().toEnglish;
     if (const auto found = map.find(german); found != map.end())
         return juce::String::fromUTF8(found->second.c_str());
-    // Already English (a text made while the plugin spoke English) passes as it is.
-    if (record && tables().toGerman.count(german) == 0 && ! german.empty())
+    // Already English (a text made while the plugin spoke English) passes as it is, and so do numbers, units and
+    // note values ("1/8 T", "ms", "%"), which are the same in both languages.
+    if (record && tables().toGerman.count(german) == 0 && isWords(german))
     {
         std::lock_guard<std::mutex> guard(state().lock);
         state().missing.insert(german);
     }
-    return juce::String::fromUTF8(german.c_str());
+    return shown(german);
 }
 } // namespace
 
@@ -175,8 +193,15 @@ juce::String retranslate(const juce::String& text)
         return translate(key, false);
     const auto& map = tables().toGerman;
     if (const auto found = map.find(key); found != map.end())
-        return juce::String::fromUTF8(found->second.c_str());
+        return shown(found->second);
     return text;
+}
+
+juce::StringArray noteNames()
+{
+    if (language() == Language::german)
+        return { "C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H" };
+    return { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 }
 
 std::set<std::string> untranslated()

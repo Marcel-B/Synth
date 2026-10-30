@@ -36,17 +36,17 @@ void ZoneView::refresh()
 juce::String ZoneView::caption() const
 {
     const auto dot = utf8(" · ");
-    const juce::String shapes[] = { "GLOCKE", "TIEFEN BIS", utf8("HÖHEN AB") };
+    const juce::String shapes[] = { tr("GLOCKE"), tr("TIEFEN BIS"), tr("HÖHEN AB") };
     juce::String text = shapes[(int) shown.shape] + " " + juce::String(juce::roundToInt(shown.frequency)) + " HZ";
     if (shown.shape == Shape::bell)
-        text << dot << juce::roundToInt(shown.widthSemitones) << " HT";
-    text << dot << (shown.mode == Mode::band ? "BAND" : "BREITBAND");
+        text << dot << juce::roundToInt(shown.widthSemitones) << " " << tr("HT");
+    text << dot << (shown.mode == Mode::band ? juce::String("BAND") : tr("BREITBAND"));
     if (shown.source == Source::sidechain)
-        text << dot << (keyConnected ? "SIDECHAIN" : "SIDECHAIN FEHLT");
+        text << dot << (keyConnected ? juce::String("SIDECHAIN") : tr("SIDECHAIN FEHLT"));
     if (shown.lfoSemitones > 0.0f)
-        text << dot << utf8("LFO ±") << juce::roundToInt(shown.lfoSemitones) << " HT";
+        text << dot << utf8("LFO ±") << juce::roundToInt(shown.lfoSemitones) << " " << tr("HT");
     if (shown.listen)
-        text << dot << utf8("HÖREN");
+        text << dot << tr("HÖREN");
     text << dot << "GR " << juce::String(reduction, 1) << " DB";
     return text;
 }
@@ -177,8 +177,8 @@ ZoneEditor::ZoneEditor(ZoneProcessor& p)
       output(p.state, "Ausgang", { { { "source", "Quelle" }, { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("ZONE", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("ZONE", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &zone, &scope, &compressor, &lfo, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin + std::max(zone.preferredWidth() + 260, compressor.preferredWidth() + lfo.preferredWidth() + output.preferredWidth() + 2 * kGap);

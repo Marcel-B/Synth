@@ -140,8 +140,8 @@ DelayEditor::DelayEditor(DelayProcessor& p)
       output(p.state, "Ausgang", { { { "width", "Breite" }, { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("DELAY", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("DELAY", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &echo, &scope, &tone, &ducking, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin

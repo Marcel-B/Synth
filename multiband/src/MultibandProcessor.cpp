@@ -1,4 +1,5 @@
 #include "MultibandProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "MultibandEditor.h"
@@ -11,9 +12,8 @@ namespace
 using Attributes = juce::AudioParameterFloatAttributes;
 using Layout = juce::AudioProcessorValueTreeState::ParameterLayout;
 
-juce::String utf8(const char* text) { return juce::String::fromUTF8(text); }
 
-void add(Layout& layout, const juce::String& id, const juce::String& name, juce::NormalisableRange<float> range,
+void add(Layout& layout, const juce::String& id, const tonwerkui::Localised& name, juce::NormalisableRange<float> range,
          float initial, std::function<juce::String(float, int)> toText)
 {
     auto fromText = [](const juce::String& text) { return text.getFloatValue(); };
@@ -23,18 +23,18 @@ void add(Layout& layout, const juce::String& id, const juce::String& name, juce:
 }
 
 /** A number shown whole with its unit; `centre` skews the knob so that value sits halfway. */
-void number(Layout& layout, const juce::String& id, const juce::String& name, float min, float max, float initial,
+void number(Layout& layout, const juce::String& id, const tonwerkui::Localised& name, float min, float max, float initial,
             const char* unit, float centre = 0.0f)
 {
     juce::NormalisableRange<float> range(min, max);
     if (centre > 0.0f)
         range.setSkewForCentre(centre);
-    const juce::String suffix = " " + utf8(unit);
+    const juce::String suffix = " " + tonwerkui::tr(unit);
     add(layout, id, name, range, initial, [suffix](float value, int) { return juce::String(juce::roundToInt(value)) + suffix; });
 }
 
 /** Shares in whole percent (1 is 100 %). */
-void percent(Layout& layout, const juce::String& id, const juce::String& name, float initial)
+void percent(Layout& layout, const juce::String& id, const tonwerkui::Localised& name, float initial)
 {
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
@@ -43,7 +43,7 @@ void percent(Layout& layout, const juce::String& id, const juce::String& name, f
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
-void toggle(Layout& layout, const juce::String& id, const juce::String& name, bool initial)
+void toggle(Layout& layout, const juce::String& id, const tonwerkui::Localised& name, bool initial)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, name, initial));
 }
@@ -66,14 +66,14 @@ Layout MultibandProcessor::createParameterLayout()
     number(layout, "output", "Ausgang", -24.0f, 12.0f, d.outputDb, "dB");
     for (std::size_t b = 0; b < kBands; ++b)
     {
-        const juce::String id = kBandIds[b], name = utf8(kBandNames[b]) + " ";
+        const juce::String id = kBandIds[b], name = tonwerkui::tr(kBandNames[b]) + " ";
         const auto& band = d.bands[b];
-        toggle(layout, id + "On", name + "an", band.on);
+        toggle(layout, id + "On", name + tonwerkui::tr("an"), band.on);
         number(layout, id + "Threshold", name + "Threshold", -60.0f, 0.0f, band.thresholdDb, "dB");
         juce::NormalisableRange<float> ratios(1.0f, 20.0f);
         ratios.setSkewForCentre(4.0f);
         add(layout, id + "Ratio", name + "Ratio", ratios, band.ratio, [](float value, int) { return ratioText(value); });
-        percent(layout, id + "Upward", name + utf8("Aufwärts"), band.upward);
+        percent(layout, id + "Upward", name + tonwerkui::tr("Aufwärts"), band.upward);
         number(layout, id + "Attack", name + "Attack", 0.5f, 200.0f, band.attackMs, "ms", 20.0f);
         number(layout, id + "Release", name + "Release", 10.0f, 1000.0f, band.releaseMs, "ms", 150.0f);
         number(layout, id + "Gain", name + "Gain", -24.0f, 24.0f, band.gainDb, "dB");

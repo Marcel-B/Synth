@@ -51,12 +51,12 @@ void NotesView::paint(juce::Graphics& g)
     g.drawText(noteName(note), text.removeFromTop(40), juce::Justification::centredLeft);
     g.setFont(mono(11.0f));
     g.setColour(colours::muted);
-    g.drawText("TASTEN", text.removeFromTop(14), juce::Justification::centredLeft);
+    g.drawText(tr("TASTEN"), text.removeFromTop(14), juce::Justification::centredLeft);
     if (keys.empty())
     {
         g.setFont(mono(15.0f));
         g.setColour(colours::red);
-        g.drawText("KEINE", text.removeFromTop(20), juce::Justification::centredLeft);
+        g.drawText(tr("KEINE"), text.removeFromTop(20), juce::Justification::centredLeft);
         return;
     }
     juce::StringArray names;
@@ -165,10 +165,10 @@ void StepGrid::paint(juce::Graphics& g)
     g.setFont(mono(10.0f));
     g.setColour(colours::muted);
     const std::array<std::pair<Lane, const char*>, 4> names {
-        { { Lane::on, "AN" }, { Lane::note, "TONH\xc3\x96HE" }, { Lane::velocity, "ANSCHLAG" }, { Lane::tie, "BINDEN" } }
+        { { Lane::on, "AN" }, { Lane::note, "TONHÖHE" }, { Lane::velocity, "ANSCHLAG" }, { Lane::tie, "BINDEN" } }
     };
     for (const auto& [lane, name] : names)
-        g.drawText(utf8(name), laneArea(lane).withWidth(kLabels - 6), juce::Justification::centredLeft);
+        g.drawText(tr(name), laneArea(lane).withWidth(kLabels - 6), juce::Justification::centredLeft);
 
     for (int s = 0; s < kSteps; ++s)
     {

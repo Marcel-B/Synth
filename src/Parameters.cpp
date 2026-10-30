@@ -154,7 +154,7 @@ std::vector<ParameterDescriptor> build()
     b.number("fold.amount", "Wavefolder " + tr("Menge"), ranges::level, [](Patch& p) -> float& { return p.analog.fold.amount; });
     b.number("fold.symmetry", "Wavefolder " + tr("Symmetrie"), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.symmetry; });
     b.number("fold.env", "Wavefolder " + tr("Filter-Hüllk."), ranges::bipolar, [](Patch& p) -> float& { return p.analog.fold.env; });
-    b.number("sh.rate", "S&H " + tr("Tempo"), ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
+    b.number("sh.rate", tr("S&H Tempo"), ranges::rate, [](Patch& p) -> float& { return p.analog.sampleHold.rate; }, 3.0f, "Hz");
     b.toggle("sh.sync", "S&H Sync", [](Patch& p) -> bool& { return p.analog.sampleHold.sync; });
     b.choice<int>("sh.division", "S&H " + tr("Teilung"), divisions, [](Patch& p) -> int& { return p.analog.sampleHold.division; });
     b.number("sh.filter", "S&H Filter", ranges::depth, [](Patch& p) -> float& { return p.analog.sampleHold.filter; });

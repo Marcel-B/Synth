@@ -30,10 +30,10 @@ juce::String TailView::caption() const
                                                         : juce::String(juce::roundToInt(shown.decay)))
                         + " S" + dot + "PREDELAY " + juce::String(juce::roundToInt(shown.predelay * 1000.0f)) + " MS";
     if (shown.hold)
-        text << dot << "HALTEN";
+        text << dot << tr("HALTEN");
     else if (shown.shimmer > 0.0f)
         text << dot
-             << utf8(kIntervals[(std::size_t) std::clamp(shown.interval, 0, (int) kIntervals.size() - 1)].name)
+             << tr(kIntervals[(std::size_t) std::clamp(shown.interval, 0, (int) kIntervals.size() - 1)].name)
                     .toUpperCase()
              << " " << juce::roundToInt(shown.shimmer * 100.0f) << " %";
     return text;
@@ -130,8 +130,8 @@ ShimmerEditor::ShimmerEditor(ShimmerProcessor& p)
       output(p.state, "Ausgang", { { { "width", "Breite" }, { "mix", "Mix" }, { "output", "Pegel" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("SHIMMER", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend("SHIMMER", tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &tail, &scope, &shimmer, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin

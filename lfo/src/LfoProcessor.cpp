@@ -1,4 +1,5 @@
 #include "LfoProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "LfoEditor.h"
@@ -19,7 +20,7 @@ void percent(Layout& layout, const char* id, const char* name, float initial)
     auto toText = [](float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + " %"; };
     auto fromText = [](const juce::String& text) { return text.getFloatValue() / 100.0f; };
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, utf8(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), juce::NormalisableRange<float>(0.0f, 1.0f), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText)));
 }
 
@@ -28,7 +29,7 @@ void whole(Layout& layout, const char* id, const char* name, int low, int high, 
 {
     const juce::String before = utf8(prefix), after = utf8(suffix);
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { id, 1 }, utf8(name), low, high, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), low, high, initial,
         juce::AudioParameterIntAttributes()
             .withStringFromValueFunction([before, after](int value, int) { return before + juce::String(value) + after; })
             .withValueFromStringFunction([](const juce::String& text) {
@@ -38,12 +39,12 @@ void whole(Layout& layout, const char* id, const char* name, int low, int high, 
 
 void choice(Layout& layout, const char* id, const char* name, const juce::StringArray& items, int initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, utf8(name), items, initial));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items), initial));
 }
 
 void toggle(Layout& layout, const char* id, const char* name, bool initial)
 {
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, utf8(name), initial));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), initial));
 }
 } // namespace
 
@@ -53,14 +54,14 @@ Layout LfoProcessor::createParameterLayout()
     Layout layout;
     juce::StringArray shapes;
     for (const auto* name : kShapeNames)
-        shapes.add(utf8(name));
+        shapes.add(tonwerkui::tr(name));
     choice(layout, "shape", "Form", shapes, (int) d.shape);
     toggle(layout, "sync", "Sync", d.sync);
     juce::NormalisableRange<float> rates(0.05f, 20.0f);
     rates.setSkewForCentre(2.0f);
     // Below 10 Hz a tenth of a hertz matters, so the free rate is shown with a decimal there, as in Tonwerk Filter.
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { "rate", 1 }, "Rate", rates, d.rate,
+        juce::ParameterID { "rate", 1 }, tonwerkui::tr("Rate"), rates, d.rate,
         Attributes()
             .withStringFromValueFunction([](float value, int) {
                 return (value < 9.95f ? juce::String(value, 1) : juce::String(juce::roundToInt(value))) + " Hz";
@@ -71,12 +72,12 @@ Layout LfoProcessor::createParameterLayout()
         divisions.add(division.name);
     choice(layout, "division", "Takt", divisions, d.division);
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { "phase", 1 }, "Phase", juce::NormalisableRange<float>(0.0f, 360.0f), d.phaseDegrees,
+        juce::ParameterID { "phase", 1 }, tonwerkui::tr("Phase"), juce::NormalisableRange<float>(0.0f, 360.0f), d.phaseDegrees,
         Attributes()
             .withStringFromValueFunction([](float value, int) { return juce::String(juce::roundToInt(value)) + utf8(" °"); })
             .withValueFromStringFunction([](const juce::String& text) { return text.getFloatValue(); })));
     percent(layout, "depth", "Tiefe", d.depth);
-    percent(layout, "centre", "Mitte", d.centre);
+    percent(layout, "centre", "Mitte|Wert", d.centre);
     whole(layout, "controller", "Controller", 0, kLastController, d.controller, "CC ", "");
     whole(layout, "channel", "Kanal", 1, 16, d.channel, "", "");
     toggle(layout, "fine", "14 Bit", d.fine);

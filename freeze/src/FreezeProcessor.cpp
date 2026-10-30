@@ -1,4 +1,5 @@
 #include "FreezeProcessor.h"
+#include "Language.h"
 #include "Platform.h"
 
 #include "FreezeEditor.h"
@@ -13,11 +14,11 @@ using Attributes = juce::AudioParameterFloatAttributes;
 std::unique_ptr<juce::AudioParameterFloat> number(const char* id, const char* name, juce::NormalisableRange<float> range,
                                                   float initial, const char* unit, float shown = 1.0f)
 {
-    const juce::String suffix = juce::String(" ") + juce::String::fromUTF8(unit);
+    const juce::String suffix = juce::String(" ") + tonwerkui::tr(unit);
     auto toText = [suffix, shown](float value, int) { return juce::String(juce::roundToInt(value * shown)) + suffix; };
     auto fromText = [shown](const juce::String& text) { return text.getFloatValue() / shown; };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), range, initial,
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name), range, initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
 
@@ -28,16 +29,8 @@ std::unique_ptr<juce::AudioParameterFloat> percent(const char* id, const char* n
 
 std::unique_ptr<juce::AudioParameterChoice> menu(const char* id, const char* name, juce::StringArray items, int initial)
 {
-    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, juce::String::fromUTF8(name), items,
+    return std::make_unique<juce::AudioParameterChoice>(juce::ParameterID { id, 1 }, tonwerkui::tr(name), tonwerkui::tr(items),
                                                         initial);
-}
-
-juce::StringArray utf8Items(std::initializer_list<const char*> items)
-{
-    juce::StringArray out;
-    for (const auto* item : items)
-        out.add(juce::String::fromUTF8(item));
-    return out;
 }
 
 /** Hertz up to 999, then kilohertz, whole numbers both. */
@@ -51,7 +44,7 @@ std::unique_ptr<juce::AudioParameterFloat> frequency(const char* id, const char*
         return text.containsIgnoreCase("k") ? value * 1000.0f : value;
     };
     return std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID { id, 1 }, juce::String::fromUTF8(name),
+        juce::ParameterID { id, 1 }, tonwerkui::tr(name),
         juce::NormalisableRange<float>(low, high, 0.0f, 0.25f), initial,
         Attributes().withStringFromValueFunction(toText).withValueFromStringFunction(fromText));
 }
@@ -66,16 +59,16 @@ double FreezeProcessor::intervalBeats(int index)
 juce::AudioProcessorValueTreeState::ParameterLayout FreezeProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { "freeze", 1 }, "Freeze", false));
-    layout.add(menu("trigger", "Auslöser", utf8Items({ "Manuell", "Tempo" }), 0));
-    layout.add(menu("interval", "Intervall", utf8Items({ "1/4", "1/2", "1 Takt", "2 Takte", "4 Takte" }), 2));
+    layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID { "freeze", 1 }, tonwerkui::tr("Freeze"), false));
+    layout.add(menu("trigger", "Auslöser", tonwerkui::tr({ "Manuell", "Tempo" }), 0));
+    layout.add(menu("interval", "Intervall", tonwerkui::tr({ "1/4", "1/2", "1 Takt", "2 Takte", "4 Takte" }), 2));
     layout.add(number("capture", "Aufnahme", juce::NormalisableRange<float>(20.0f, 2000.0f, 0.0f, 0.4f), 300.0f, "ms"));
     layout.add(number("fade", "Überblenden", juce::NormalisableRange<float>(10.0f, 10000.0f, 0.0f, 0.3f), 800.0f, "ms"));
     layout.add(percent("stack", "Stapeln", 0.0f));
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID { "pitch", 1 }, juce::String::fromUTF8("Tonhöhe"), -24, 24, 0,
+        juce::ParameterID { "pitch", 1 }, tonwerkui::tr("Tonhöhe"), -24, 24, 0,
         juce::AudioParameterIntAttributes()
-            .withStringFromValueFunction([](int value, int) { return juce::String(value) + " HT"; })
+            .withStringFromValueFunction([](int value, int) { return juce::String(value) + " " + tonwerkui::tr("HT"); })
             .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
     layout.add(percent("shimmer", "Schimmer", 0.0f));
     layout.add(percent("motion", "Bewegung", 0.3f));

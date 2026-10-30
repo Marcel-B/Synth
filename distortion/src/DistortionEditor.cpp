@@ -23,8 +23,8 @@ DistortionEditor::DistortionEditor(DistortionProcessor& p)
       input(p.state, "Eingang", { { { "mode", "Modus" }, { "input", "Gain" }, { "crushRate", "Crush" } } })
 {
     setLookAndFeel(&lookAndFeel);
-    scope.setCaption("OSZILLOSKOP");
-    scope.setLegend("AUSGANG", "EINGANG");
+    scope.setCaption(tr("OSZILLOSKOP"));
+    scope.setLegend(tr("AUSGANG"), tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &scope, &pedal, &input })
         addAndMakeVisible(*c);
     setSize(kWidth, 2 * kMargin + kHeader + kScope + kGap + pedal.preferredHeight());

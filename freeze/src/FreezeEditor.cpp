@@ -116,14 +116,14 @@ void SpectrumView::paint(juce::Graphics& g)
     auto text = area.reduced(10.0f, 5.0f).toNearestInt().removeFromTop(16);
     g.setFont(mono(10.0f));
     g.setColour(colours::cyan.withAlpha(0.8f));
-    g.drawText("SPEKTRUM", text, juce::Justification::centredLeft);
+    g.drawText(tr("SPEKTRUM"), text, juce::Justification::centredLeft);
     const bool frozen = processor.state.getRawParameterValue("freeze")->load() > 0.5f;
     g.setFont(mono(13.0f));
     g.setColour(frozen ? colours::yellow : colours::cyan.withAlpha(0.8f));
-    g.drawText(frozen ? "EINGEFROREN" : "LIVE", text, juce::Justification::centredRight);
+    g.drawText(frozen ? tr("EINGEFROREN") : juce::String("LIVE"), text, juce::Justification::centredRight);
     g.setFont(mono(9.0f));
     g.setColour(colours::muted);
-    g.drawText(frozen ? "KLICKEN ZUM LOSLASSEN" : "KLICKEN ZUM EINFRIEREN", text.withTrimmedRight(110),
+    g.drawText(frozen ? tr("KLICKEN ZUM LOSLASSEN") : tr("KLICKEN ZUM EINFRIEREN"), text.withTrimmedRight(110),
                juce::Justification::centredRight);
 }
 
