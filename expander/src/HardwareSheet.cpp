@@ -1,6 +1,7 @@
 #include "HardwareSheet.h"
 
 #include "HardwarePanel.h"
+#include "Language.h"
 
 namespace tonwerkexpander
 {
@@ -75,11 +76,11 @@ public:
         }
         if (! k.set)
         {
-            text(cx, cy + ring + 26.0f, k.value.empty() ? juce::String::fromUTF8("nach Gehör") : utf8(k.value), 16.0f, kMuted,
+            text(cx, cy + ring + 26.0f, k.value.empty() ? tonwerkui::tr("nach Gehör") : utf8(k.value), 16.0f, kMuted,
                  false, juce::Justification::centred, 2.4f * ring + 60.0f);
             return;
         }
-        text(cx, cy + ring + 26.0f, utf8(clockOf(k.position)) + " Uhr", 22.0f, kAccent, true);
+        text(cx, cy + ring + 26.0f, tonwerkui::tr("%1 Uhr").replace("%1", utf8(clockOf(k.position))), 22.0f, kAccent, true);
         if (! k.value.empty())
             text(cx, cy + ring + 52.0f, utf8(k.value), 16.0f, kMuted, false, juce::Justification::centred,
                  2.4f * ring + 60.0f);
@@ -114,13 +115,15 @@ int sourceIndex(VcfSource s) { return s == VcfSource::env ? 0 : s == VcfSource::
 
 juce::Image drawHardwareSheet(const Settings& settings, const juce::String& name)
 {
-    const Panel p = panelFor(settings);
+    using tonwerkui::tr;
+    const bool english = tonwerkui::language() == tonwerkui::Language::english;
+    const Panel p = panelFor(settings, english);
     juce::Image image(juce::Image::RGB, kWidth, kHeight, true);
     Sheet s(image);
     s.text(40.0f, 50.0f, "Tonwerk Expander " + juce::String::fromUTF8("· ") + name, 36.0f, kInk, true,
            juce::Justification::centredLeft, 1100.0f);
     s.text(kWidth - 40.0f, 50.0f,
-           juce::String::fromUTF8(p.secondSilent ? "Modul 2 stumm" : "beide Module gleich einstellen"), 20.0f,
+           tr(p.secondSilent ? "Modul 2 stumm" : "beide Module gleich einstellen"), 20.0f,
            kMuted, false, juce::Justification::centredRight, 600.0f);
 
     // Oscillators.
@@ -135,7 +138,7 @@ juce::Image drawHardwareSheet(const Settings& settings, const juce::String& name
         s.slide(cx, 650.0f, { "ENV", "E+V", "LFO" }, sourceIndex(p.vcoSource[i]));
         s.knob(cx, 760.0f, 32.0f, "PULSE WIDTH", p.pulseWidth[i], "10%", "90%");
     }
-    s.slide(375.0f, 270.0f, { "aus", "ON" }, p.sync ? 1 : 0, "SYNC", 40.0f);
+    s.slide(375.0f, 270.0f, { english ? "OFF" : "aus", "ON" }, p.sync ? 1 : 0, "SYNC", 40.0f);
 
     // Filter and its mixer.
     s.box(760.0f, 110.0f, 1330.0f, 880.0f, "VCF");
@@ -163,23 +166,23 @@ juce::Image drawHardwareSheet(const Settings& settings, const juce::String& name
     s.slide(660.0f, 1130.0f, { "ENV", "E+V", "EXT" }, 0, "VCA", 52.0f);
 
     // The two-voice controller.
-    s.box(1370.0f, 110.0f, 1760.0f, 1160.0f, "STEUERMODUL");
+    s.box(1370.0f, 110.0f, 1760.0f, 1160.0f, tr("STEUERMODUL"));
     s.slide(1565.0f, 230.0f, { "UNI", "SPLIT", "DUO" }, p.assign == Assign::uni ? 0 : p.assign == Assign::split ? 1 : 2,
             "ASSIGN");
     const float xmX[] { 1470.0f, 1660.0f };
     for (size_t i = 0; i < 2; ++i)
     {
         const float cx = xmX[i];
-        s.text(cx, 310.0f, "STIMME " + juce::String((int) i + 1), 24.0f, kInk, true);
-        s.knob(cx, 410.0f, 30.0f, "LEVEL", i == 1 && p.secondSilent ? Knob { 0.0f, "zu" } : Knob { 0.5f, "", false });
+        s.text(cx, 310.0f, tr("STIMME") + " " + juce::String((int) i + 1), 24.0f, kInk, true);
+        s.knob(cx, 410.0f, 30.0f, "LEVEL", i == 1 && p.secondSilent ? Knob { 0.0f, english ? "closed" : "zu" } : Knob { 0.5f, "", false });
         s.knob(cx, 630.0f, 30.0f, "PAN", p.pan[i]);
-        s.knob(cx, 860.0f, 30.0f, "PORTAMENTO", i == 0 ? p.portamento : Knob { p.portamento.position, "wie Stimme 1" });
+        s.knob(cx, 860.0f, 30.0f, "PORTAMENTO", i == 0 ? p.portamento : Knob { p.portamento.position, english ? "as voice 1" : "wie Stimme 1" });
     }
-    s.slide(1565.0f, 1110.0f, { "aus", "ON" }, p.portamentoOn ? 1 : 0, "PORTAMENTO");
+    s.slide(1565.0f, 1110.0f, { english ? "OFF" : "aus", "ON" }, p.portamentoOn ? 1 : 0, "PORTAMENTO");
 
     // What does not carry over.
     float y = 1200.0f;
-    s.text(40.0f, y, juce::String::fromUTF8(p.notes.empty() ? "Alles überträgt sich." : "Geht nicht 1:1:"), 21.0f,
+    s.text(40.0f, y, tr(p.notes.empty() ? "Alles überträgt sich." : "Geht nicht 1:1:"), 21.0f,
            kInk, true, juce::Justification::centredLeft, 600.0f);
     for (size_t i = 0; i < std::min<size_t>(p.notes.size(), 7); ++i)
     {
@@ -188,8 +191,8 @@ juce::Image drawHardwareSheet(const Settings& settings, const juce::String& name
                juce::Justification::centredLeft, kWidth - 100.0f);
     }
     s.text(kWidth - 40.0f, kHeight - 26.0f,
-           juce::String::fromUTF8("Stellung als Uhrzeit: ganz links 7 Uhr, Mitte 12 Uhr, ganz rechts 5 Uhr. Die Skalen "
-                                  "des Moduls sind geschätzt; die Feinheiten macht das Ohr."),
+           tr("Stellung als Uhrzeit: ganz links 7 Uhr, Mitte 12 Uhr, ganz rechts 5 Uhr. Die Skalen des Moduls sind "
+              "geschätzt; die Feinheiten macht das Ohr."),
            14.0f, kMuted, false, juce::Justification::centredRight, 1400.0f);
     return image;
 }

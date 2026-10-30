@@ -625,6 +625,13 @@ public:
             expectLessThan(panel.vcoModulation[0].position, 0.5f); // vibrato wins over PWM
             expect(panel.assign == Assign::duo && ! panel.secondSilent);
             expectGreaterOrEqual((int) panel.notes.size(), 3);     // both waves, vibrato with PWM, eight voices
+
+            // In English the sheet's notes and values carry no German.
+            const auto english = panelFor(s, true);
+            expectEquals(english.notes.size(), panel.notes.size());
+            for (const auto& n : english.notes)
+                expect(n.find("Modul") == std::string::npos && n.find("\xc3") == std::string::npos, n);
+            expect(english.tuning[0].rfind("root", 0) == 0);
         }
 
         beginTest("A sheet is written into the chosen file itself, replacing a longer one");

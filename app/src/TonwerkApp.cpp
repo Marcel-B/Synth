@@ -350,7 +350,6 @@ public:
         addAndMakeVisible(picker);
 
         // A large editor (Tonwerk Wavetable) gets the whole screen when the keys are put away.
-        showKeyboard.setButtonText(tonwerkui::tr("Tasten"));
         showKeyboard.setClickingTogglesState(true);
         showKeyboard.setToggleState(settings->getBoolValue("keyboard", true), juce::dontSendNotification);
         showKeyboard.onClick = [this] {
@@ -359,7 +358,6 @@ public:
         };
         addAndMakeVisible(showKeyboard);
 
-        input.setButtonText(tonwerkui::tr("Eingang"));
         input.onClick = [this] { chooseInput(); };
         addChildComponent(input);
 
@@ -386,8 +384,8 @@ public:
         octaveUp.setButtonText("+");
         octaveUp.onClick = [this] { shiftOctave(1); };
         addAndMakeVisible(octaveUp);
-        scope.setCaption(tonwerkui::tr("Oszilloskop"));
         addAndMakeVisible(scope);
+        label();
 
         addAndMakeVisible(frame);
         chooser.onChoose = [this](int index) { choose(index); };
@@ -629,7 +627,22 @@ private:
     }
 
     // A keyboard plugged in or paired later plays too.
-    void timerCallback() override { enableMidiInputs(); }
+    /** The app's own texts; the plugin's frame changes the language, the app follows it here. */
+    void label()
+    {
+        shownLanguage = tonwerkui::language();
+        showKeyboard.setButtonText(tonwerkui::tr("Tasten"));
+        input.setButtonText(tonwerkui::tr("Eingang"));
+        scope.setCaption(tonwerkui::tr("Oszilloskop"));
+        scope.repaint();
+    }
+
+    void timerCallback() override
+    {
+        enableMidiInputs();
+        if (tonwerkui::language() != shownLanguage)
+            label();
+    }
 
     void handleNoteOn(juce::MidiKeyboardState*, int channel, int note, float velocity) override
     {
@@ -653,6 +666,7 @@ private:
     int current = -1;
     int lowestKey = 36;
     bool audioOpen = false;
+    tonwerkui::Language shownLanguage = tonwerkui::Language::german;
     bool inputsOpen = false;
 
     juce::Rectangle<int> title, octaveLabel;
