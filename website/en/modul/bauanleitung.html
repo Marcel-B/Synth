@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Build guide · Tonwerk Wavetable module</title>
+  <meta name="description" content="Building Tonwerk Wavetable as a Eurorack module: order the parts, print the front panel and knobs, solder the boards, measure, flash the firmware, calibrate. With all files.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/modul/bauanleitung.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/bauanleitung.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/bauanleitung.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/bauanleitung.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Module navigation">
+        <a href="./#bedienung">Operation</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="#downloads" class="optional">Downloads</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../../modul/bauanleitung.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Build guide</h1>
+    <p class="lead-text">Step by step from ordering to the first sound: <a href="./">Tonwerk Wavetable as a Eurorack module</a> on the through-hole boards (v0.1), everything to solder yourself; only the ESP32 DevKit and the DAC module come ready-made and are plugged in.</p>
+    <p>If you would rather not solder that much: the main board also comes as an <a href="#smd">assembled SMD variant</a> that the board manufacturer delivers soldered.</p>
+
+    <p class="warning"><b>Important for the v0.1 boards:</b> the silkscreen of the two LEDs is the wrong way round. Inserted as printed, +5 V and ground reach the LED swapped, and it burns out the first time it is powered. The right orientation is in <a href="#bedienplatine">step 5</a>.</p>
+
+    <p class="note">As of 28 October 2026: one module has been built following this guide and plays (27 October 2026). Not yet tested on the hardware: the CV inputs and the V/Oct calibration. If you build one, feedback on <a href="https://github.com/Marcel-B/Synth/issues">GitHub</a> helps improve the guide and the boards. File names and the boards' labels are German: <i>Hauptplatine</i> is the main board, <i>Bedienplatine</i> the control board, <i>Frontplatte</i> the front panel, <i>Knopf</i> a knob.</p>
+
+    <h2 id="downloads">Downloads</h2>
+    <div class="download">
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">Firmware (.bin)</a>
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte.stl">Front panel (.stl)</a>
+      <a class="button" href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf.3mf">Ten knobs (.3mf)</a>
+      <p>All files are in the folder <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">esp32-wavetable</a> on GitHub, together with the sources (KiCad, OpenSCAD, firmware).</p>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>What</th><th>Files</th></tr></thead>
+        <tbody>
+          <tr><td>Boards to order (Gerber)</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/fertigung/tonwerk-haupt-tht-gerber.zip">Main board</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/fertigung/tonwerk-bedien-tht-gerber.zip">Control board</a></td></tr>
+          <tr><td>Schematics</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/tonwerk-haupt-tht-schaltplan.pdf">Main board (PDF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/tonwerk-bedien-tht-schaltplan.pdf">Control board (PDF)</a></td></tr>
+          <tr><td>Shopping list</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/einkaufsliste-tht.csv">einkaufsliste-tht.csv</a> (also <a href="#teile">below</a> as a table) · lists for uploading to distributors' tools: <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/hardware/pcb">in the pcb folder</a></td></tr>
+          <tr><td>Bills of materials by value</td><td><a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt-tht/fertigung/tonwerk-haupt-tht-bestueckliste.csv">Main board</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien-tht/fertigung/tonwerk-bedien-tht-bestueckliste.csv">Control board</a></td></tr>
+          <tr><td>Assembled variant (SMD)</td><td>Main board: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-gerber.zip">Gerber</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-bom-jlcpcb.csv">bill of materials (BOM)</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-cpl-jlcpcb.csv">placement (CPL)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/tonwerk-haupt-schaltplan.pdf">schematic</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-haupt/fertigung/tonwerk-haupt-handbestueckung.csv">by hand</a><br>Control board: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-gerber.zip">Gerber</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-bom-jlcpcb.csv">BOM</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-cpl-jlcpcb.csv">CPL</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/tonwerk-bedien-schaltplan.pdf">schematic</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/pcb/tonwerk-bedien/fertigung/tonwerk-bedien-handbestueckung.csv">by hand</a></td></tr>
+          <tr><td>Front panel</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte.stl">raised lettering</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-graviert.stl">engraved lettering</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-einlage.3mf">inlaid lettering (3MF, two colours)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-bohrplan.svg">1:1 drilling template for aluminium</a></td></tr>
+          <tr><td>Knobs</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf.3mf">ten knobs, two colours (3MF)</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-koerper.stl">body</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-zeiger.stl">pointer</a> · <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/knopf-probe.stl">fit test</a> · <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/hardware/knopf.scad">knopf.scad</a></td></tr>
+          <tr><td>Firmware</td><td><a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> (for address 0x0) · <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable/firmware">source (ESP-IDF 5.3)</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="werkzeug">What you need</h2>
+    <ul>
+      <li>Soldering iron with a fine tip, solder, side cutters, multimeter.</li>
+      <li>A Eurorack case with ±12 V; for the first power-up, better a bench supply with current limiting.</li>
+      <li>A computer with Chrome or Edge (for flashing in the browser) and a USB cable that carries data.</li>
+      <li>A 3D printer for the front panel and knobs (or 2 mm aluminium and a drill for the front).</li>
+      <li>For calibration, a voltage source for exactly 1.000 V and 3.000 V (a bench supply and the multimeter will do).</li>
+    </ul>
+
+    <h2 id="bestellen">1. Ordering</h2>
+    <p><b>Boards:</b> upload the two Gerber zips (<a href="#downloads">Downloads</a>) to a board manufacturer, JLCPCB for example: 5 of each, 2 layers, 1.6 mm, HASL, <b>without assembly</b>. Leave the other settings as the manufacturer suggests. Both boards are 66 × 107.5 mm.</p>
+    <p><b>Parts:</b> the <a href="#teile">shopping list</a> below, an estimated €60–80 plus boards. DevKit, DAC module, pots, jacks and LEDs are cheapest from the large Chinese shippers, the chips, resistors and capacitors from any electronics distributor.</p>
+    <p>What matters:</p>
+    <ul>
+      <li><b>ESP32-S3-DevKitC-1 N16R8</b>: N16R8 means 16 MB flash and 8 MB PSRAM. Without the 8 MB of PSRAM the firmware does not run; the tables need 5.7 MB. Clones work if the pinout is the same.</li>
+      <li><b>PCM5102A module “GY-PCM5102”</b> (purple) with the 6-pin header VIN GND LCK DIN BCK SCK.</li>
+      <li><b>74HCT125 or 74AHCT125</b>, not 74HC125: that one does not reliably read the ESP32's 3.3 V at 5 V. A 74HCT32 fits the same holes without changes.</li>
+      <li><b>WS2812D-F5</b> (5 mm, through-hole) with the pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; check the seller's datasheet. The flat side is at <b>DOUT</b>. APA106 and PL9823 have the same pin order but a different colour order (see <a href="#fehlersuche">troubleshooting</a>).</li>
+      <li><b>Electrolytic capacitors at most 11 mm tall</b>, 2 mm pitch.</li>
+      <li><b>Pots</b> 9 mm vertical, B10K linear. Their shaft sticks out only a little behind the printed front; the <a href="#knoepfe">knobs</a> to print are made for that.</li>
+    </ul>
+
+    <h3 id="teile">Shopping list</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Qty</th><th>Part</th><th>Type</th><th>Where</th><th>approx. €</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Boards</td><td>tonwerk-bedien-tht + tonwerk-haupt-tht, 5 of each, 2 layers, 1.6 mm, HASL, unassembled</td><td>—</td><td>15–30 with shipping</td></tr>
+          <tr><td>1</td><td>Microcontroller board</td><td>ESP32-S3-DevKitC-1 N16R8 (16 MB flash, 8 MB PSRAM), original or clone with the same pinout</td><td>Main U4</td><td>6–15</td></tr>
+          <tr><td>1</td><td>DAC module</td><td>PCM5102A module GY-PCM5102 (purple, 6-pin header VIN GND LCK DIN BCK SCK)</td><td>Main U5</td><td>2–4</td></tr>
+          <tr><td>1</td><td>ADC</td><td>MCP3208-CI/P (DIP-16)</td><td>Main U9</td><td>4.50</td></tr>
+          <tr><td>2</td><td>Op-amp</td><td>MCP6004-I/P (DIP-14)</td><td>Main U7 U8</td><td>1.40</td></tr>
+          <tr><td>1</td><td>Op-amp</td><td>TL072 (DIP-8)</td><td>Main U6</td><td>0.40</td></tr>
+          <tr><td>1</td><td>Buffer</td><td>74HCT125 or 74AHCT125 (DIP-14), not 74HC125; equivalent without changing the board: 74HCT32 (DIP-14)</td><td>Main U10</td><td>0.40</td></tr>
+          <tr><td>1</td><td>Voltage regulator 3.0 V</td><td>MCP1700-3002E/TO (TO-92)</td><td>Main U3</td><td>0.50</td></tr>
+          <tr><td>1</td><td>Transistor</td><td>BC547 (TO-92)</td><td>Main Q1</td><td>0.10</td></tr>
+          <tr><td>1</td><td>Switching regulator</td><td>Recom R-78E5.0-0.5 (SIP-3)</td><td>Main U1</td><td>3.00</td></tr>
+          <tr><td>3</td><td>Schottky diode</td><td>1N5817 (DO-41)</td><td>Main D1-D3</td><td>0.20</td></tr>
+          <tr><td>4</td><td>IC socket</td><td>3 × DIP-14, 1 × DIP-16 (plus 1 × DIP-8, see next row)</td><td>Main</td><td>0.60</td></tr>
+          <tr><td>1</td><td>IC socket</td><td>DIP-8</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>10</td><td>Resistor 1 %</td><td>100k (metal film 0207, 1/4 W)</td><td>Main</td><td>0.80</td></tr>
+          <tr><td>7</td><td>Resistor 1 %</td><td>1k</td><td>Main</td><td>0.60</td></tr>
+          <tr><td>5</td><td>Resistor 1 %</td><td>10k</td><td>Main</td><td>0.40</td></tr>
+          <tr><td>4</td><td>Resistor 1 %</td><td>30k</td><td>Main</td><td>0.30</td></tr>
+          <tr><td>2</td><td>Resistor 1 %</td><td>6.8k</td><td>Main</td><td>0.20</td></tr>
+          <tr><td>1</td><td>Resistor 1 %</td><td>37.4k</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>1</td><td>Resistor 1 %</td><td>17.4k</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>1</td><td>Resistor 1 %</td><td>16k</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>1</td><td>Resistor 1 %</td><td>330 Ω</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>1</td><td>Resistor 1 %</td><td>10 Ω</td><td>Main</td><td>0.10</td></tr>
+          <tr><td>20</td><td>Ceramic capacitor</td><td>100 nF X7R, 2.54 mm pitch (18 main, 2 control)</td><td>both</td><td>1.20</td></tr>
+          <tr><td>5</td><td>Ceramic capacitor</td><td>10 nF, 2.54 mm pitch</td><td>Main</td><td>0.30</td></tr>
+          <tr><td>2</td><td>Ceramic capacitor</td><td>1 µF X7R, 2.54 mm pitch</td><td>Main</td><td>0.30</td></tr>
+          <tr><td>4</td><td>Electrolytic capacitor</td><td>10 µF 25 V radial, 5 mm diameter, at most 11 mm tall, 2 mm pitch</td><td>Main</td><td>0.40</td></tr>
+          <tr><td>2</td><td>Female header</td><td>1 × 22, 2.54 mm pitch, 8.5 mm tall (or cut 2 × 1 × 40 down)</td><td>Main (DevKit)</td><td>1.50</td></tr>
+          <tr><td>1</td><td>Female header</td><td>1 × 6, 2.54 mm pitch, 8.5 mm tall</td><td>Main (DAC module)</td><td>0.30</td></tr>
+          <tr><td>2</td><td>Female header</td><td>1 × 14, 2.54 mm pitch, 8.5 mm tall</td><td>Main J3 J4</td><td>0.80</td></tr>
+          <tr><td>2</td><td>Pin header</td><td>1 × 14, 2.54 mm pitch, straight</td><td>Control J3 J4</td><td>0.30</td></tr>
+          <tr><td>1</td><td>Boxed header</td><td>2 × 5, 2.54 mm pitch, straight</td><td>Main J1</td><td>0.30</td></tr>
+          <tr><td>—</td><td>Hook-up wire</td><td>3 short wires from the DAC module's output (L, ground, R) to J13</td><td>Main</td><td>—</td></tr>
+          <tr><td>10</td><td>Potentiometer</td><td>Alpha 9 mm vertical, B10K linear (footprint Alpha RD901F), shaft to match the knobs</td><td>Control</td><td>3–6</td></tr>
+          <tr><td>10</td><td>Knob</td><td>the knobs to print (above), otherwise to match the shaft, at most 13 mm diameter</td><td>—</td><td>—</td></tr>
+          <tr><td>8</td><td>Jack socket</td><td>PJ398SM (Thonkiconn or clone)</td><td>Control</td><td>2–4</td></tr>
+          <tr><td>2</td><td>Push button</td><td>6 × 6 mm, 13 mm tall</td><td>Control</td><td>0.50</td></tr>
+          <tr><td>2</td><td>RGB LED</td><td>WS2812D-F5, 5 mm through-hole (check the pinout 1 DIN, 2 VDD, 3 GND, 4 DOUT)</td><td>Control</td><td>1–2</td></tr>
+          <tr><td>1</td><td>Eurorack cable</td><td>ribbon cable 10 to 16 pin</td><td>—</td><td>1–2</td></tr>
+          <tr><td>2</td><td>Standoffs</td><td>M3 × 11 mm female/female + 4 screws M3 × 5</td><td>—</td><td>1.00</td></tr>
+          <tr><td>4</td><td>Rack screws</td><td>M3 × 6 with nylon washers</td><td>—</td><td>0.50</td></tr>
+          <tr><td>1</td><td>Front panel</td><td>print frontplatte.stl (above)</td><td>—</td><td>1.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="frontplatte">2. Printing the front panel and knobs</h2>
+    <figure class="side">
+      <a href="../../modul/img/frontplatte-vorschau.png"><img src="../../modul/img/frontplatte-vorschau.png" alt="Preview of the front panel: 14 HP, black with yellow lettering" width="900" height="1630"></a>
+    </figure>
+    <p>14 HP (70.8 × 128.5 mm), 2.5 mm thick, with slots for the rack screws. Three variants, all already oriented for printing (PETG or PLA, 0.2 mm layers):</p>
+    <ul>
+      <li><b>Raised lettering</b> (<code>frontplatte.stl</code>): print with the front facing up, change filament at 2.5 mm height (after layer 13). The simplest; the module above is printed this way.</li>
+      <li><b>Engraved lettering</b> (<code>frontplatte-graviert.stl</code>): front facing up, fill the lettering with acrylic paint or wax and wipe the front clean.</li>
+      <li><b>Inlaid lettering</b> (<code>frontplatte-einlage.3mf</code>): for printers with several colours or a tool changer, front facing down; assign a tool to each of the two parts “Platte” (plate) and “Schrift” (lettering). The lettering is as deep as the first layer (0.5 mm).</li>
+    </ul>
+    <p>Hole sizes: pots 7.2 mm, jacks 6.2 mm, LEDs 5.1 mm, buttons 4.0 mm. After printing, push a pot, a jack, an LED and a button through once: the front is the jig when soldering the control board.</p>
+
+    <h3 id="knoepfe">Knobs</h3>
+    <figure class="side">
+      <a href="../../modul/img/knopf-vorschau.png"><img src="../../modul/img/knopf-vorschau.png" alt="Printed knob: black body with grip ridges, yellow pointer and ring in the cap" width="700" height="600"></a>
+    </figure>
+    <p>Black with a yellow pointer and ring, 13.4 mm in diameter. Underneath, the knob has a recess over the nut and washer, so it sits firmly even on the short shaft and almost on the front.</p>
+    <ol>
+      <li>The knobs have a bore of 6.15 mm: on the first build, 5.9 and 6.0 mm were too tight and 6.1 mm a little too snug, as printed holes come out smaller. On another printer, print the <b>fit test</b> first: three rings with bores of 6.05, 6.15 and 6.25 mm (one, two, three marks). Push them onto a shaft; if another than the middle one fits snugly, enter its size as <code>shaft_d</code> in <code>knopf.scad</code> and export again. Also there: D shaft instead of knurled, shaft length, nut height.</li>
+      <li>Then <code>knopf.3mf</code>: ten knobs, each with the parts “Körper” (body) and “Zeiger” (pointer). They are printed cap down; the pointer is the first layer, so it has the same smooth surface as the rest.</li>
+      <li>With only one nozzle: the first layer yellow, then change to black. The whole cap is then yellow; if you do not want that, set <code>einlage = false</code> in the .scad.</li>
+    </ol>
+
+    <h2 id="hauptplatine">3. Soldering the main board</h2>
+    <p>Everything goes on the <b>back</b> (the side with the silkscreen, which faces backwards in the module), only the two 14-pin female headers J3 and J4 on the front. Under the DevKit and the DAC module there is room only for flat parts, so go from flat to tall:</p>
+    <figure>
+      <a href="../../modul/img/haupt-bestueckung-hinten.png"><img src="../../modul/img/haupt-bestueckung-hinten.png" alt="Silkscreen of the main board from the back" width="752" height="1236" class="narrow"></a>
+      <figcaption>Silkscreen of the main board, seen from the back. Tap to enlarge.</figcaption>
+    </figure>
+    <ol>
+      <li><b>Resistors.</b> Measure each with the multimeter before soldering: the colour bands of 1 % resistors are easy to mix up.
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Value</th><th>Parts</th></tr></thead>
+            <tbody>
+              <tr><td>10 Ω</td><td>R3</td></tr>
+              <tr><td>330 Ω</td><td>R48</td></tr>
+              <tr><td>1k</td><td>R11 R14 R22 R25 R28 R31 R34</td></tr>
+              <tr><td>6.8k</td><td>R10 R13</td></tr>
+              <tr><td>10k</td><td>R9 R12 R40 R43 R46</td></tr>
+              <tr><td>16k</td><td>R42</td></tr>
+              <tr><td>17.4k</td><td>R41</td></tr>
+              <tr><td>30k</td><td>R24 R27 R30 R33</td></tr>
+              <tr><td>37.4k</td><td>R21</td></tr>
+              <tr><td>100k</td><td>R7 R8 R20 R23 R26 R29 R32 R44 R45 R47</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figure>
+          <a href="../../modul/img/haupt-widerstaende.png"><img src="../../modul/img/haupt-widerstaende.png" alt="Placement of the resistors, coloured by value" width="767" height="1213" class="narrow"></a>
+          <figcaption>The resistors coloured by value, component side, boxed header at the top right.</figcaption>
+        </figure>
+      </li>
+      <li><b>Diodes</b> 1N5817: D1, D2, D3. The band marks the cathode, as on the silkscreen.</li>
+      <li><b>Ceramic capacitors</b>: 100 nF (C10–C19, C27, C28, C35–C40), 10 nF (C30–C34), 1 µF (C4, C6). They have no polarity.
+        <figure>
+          <a href="../../modul/img/haupt-kondensatoren.png"><img src="../../modul/img/haupt-kondensatoren.png" alt="Placement of the capacitors, coloured by value" width="1605" height="1084"></a>
+          <figcaption>The capacitors coloured by value, board turned sideways (boxed header at the bottom right). The electrolytics (purple) come only in step 8.</figcaption>
+        </figure>
+      </li>
+      <li><b>IC sockets</b>: DIP-8 (U6), DIP-14 (U7, U8, U10), DIP-16 (U9). The notch as on the silkscreen. The chips go in only in step 7.</li>
+      <li><b>TO-92</b>: Q1 BC547 (flat side as on the silkscreen) and U3 MCP1700-3002E (3.0 V reference; pin 1 GND, 2 IN, 3 OUT, check the datasheet before soldering).</li>
+      <li><b>J13</b>: three pins (L, ground, R) for the wires from the DAC module, straight from the component side.</li>
+      <li><b>Female headers</b> for the modules: two 1 × 22 for the DevKit, one 1 × 6 for the DAC module, all 8.5 mm tall. First measure the distance between the two pin rows on your own DevKit: the original has 25.4 mm, some clones 22.86 mm; for the narrower one J3 has a second row of holes further in (labelled “22,86”). Best plug the DevKit into the headers, insert them like that and then solder, so they stand straight.</li>
+      <li><b>Electrolytic capacitors</b> 10 µF: C1, C2, C3, C5. <b>Mind the polarity</b>: C1 + to +12 V, C2 + to ground (it sits on −12 V), C3 + to +5 V, C5 + to +3V3A.</li>
+      <li><b>Switching regulator</b> U1 (R-78E5.0-0.5), label as on the silkscreen.</li>
+      <li><b>Boxed header</b> J1 (Eurorack power): pin 1 is −12 V, where the cable's red stripe goes.</li>
+      <li>Last, on the <b>front</b>, the female headers J3 and J4 (1 × 14, pin 1 at the top). So that they match the control board: plug in the control board's pin headers, screw both boards together with the standoffs (M3 × 11 mm) and only then solder. This can also wait until after step 5.</li>
+    </ol>
+
+    <h2 id="dac">4. Preparing the DAC module</h2>
+    <p>On the back of the GY-PCM5102 there are four solder jumpers with three pads each. With a blob of solder connect the middle pad to <b>L</b> (ground) or <b>H</b>:</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jumper</th><th>Function</th><th>Setting</th></tr></thead>
+        <tbody>
+          <tr><td>1 FLT</td><td>Filter</td><td><b>L</b></td></tr>
+          <tr><td>2 DEMP</td><td>De-emphasis</td><td><b>L</b> (off)</td></tr>
+          <tr><td>3 XSMT</td><td>Soft mute</td><td><b>H</b> (sound on)</td></tr>
+          <tr><td>4 FMT</td><td>Data format</td><td><b>L</b> (I2S)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Some modules come set this way already or without jumpers at all. SCK needs no wire, the board ties it to ground. Solder the pin header so that the module's labels match those on the main board (VIN GND LCK DIN BCK SCK). Then three short wires from the pads L, G, R next to the module's jack (or its solder lugs) to J13: L, ground, R. L is at J13's square pad, ground is the middle pin.</p>
+    <figure>
+      <a href="../../modul/img/haupt-j13.png"><img src="../../modul/img/haupt-j13.png" alt="Wiring from the DAC module to J13, from above and from the side" width="2024" height="1005"></a>
+      <figcaption>Three wires from the module to J13, on the left from above (component side), on the right from the side.</figcaption>
+    </figure>
+
+    <h2 id="bedienplatine">5. Soldering the control board</h2>
+    <p>Only C1 and C2 (100 nF) and the two pin headers J3 and J4 (pin 1 at the top) go on the back. Everything else sits on the front: ten pots (RV1 TUNE … RV10 CUT CV), eight jacks (J5 V/OCT … J12 VOICE), two buttons, two LEDs.</p>
+    <figure>
+      <a href="../../modul/img/bedien-bestueckung-vorn.png"><img src="../../modul/img/bedien-bestueckung-vorn.png" alt="Silkscreen of the control board from the front" width="702" height="1235" class="narrow"></a>
+      <figcaption>Control board from the front. Caution: the orientation of the LEDs D1 and D2 on this silkscreen is wrong, see below.</figcaption>
+    </figure>
+    <ol>
+      <li>Solder C1, C2 and the pin headers first.</li>
+      <li>Only insert the pots, jacks and buttons, put the printed front on and tighten the nuts lightly. Only then solder, so everything sits exactly in the holes.</li>
+      <li><b>LEDs: do not follow the silkscreen.</b> The v0.1 silkscreen shows the flat side at the square pad (pin 1), but on the WS2812D-F5 it is at DOUT (pin 4). Correct is:
+        <ul>
+          <li>The two <b>shorter legs</b> (DIN, VDD) into the <b>square pad</b> and the one next to it.</li>
+          <li>The two <b>longer</b> ones (GND, DOUT) on the other side.</li>
+          <li>Seen from the front, the <b>flat side is on the right</b>, away from the square pad.</li>
+        </ul>
+        Push them in far enough that the LEDs sit in the 5 mm holes with the front on, then solder.
+        <figure>
+          <svg class="led-sketch" viewBox="0 0 520 250" role="img" aria-label="LED from the front: flat side right, legs from left 1 DIN short, 2 VDD short, 3 GND long, 4 DOUT long, pin 1 at the square pad">
+            <path d="M 225 22 A 70 70 0 1 0 225 138 Z" style="fill:none;stroke:var(--yellow);stroke-width:3"/>
+            <text x="160" y="85" text-anchor="middle" style="fill:var(--text);font:14px var(--sans)">from the front</text>
+            <text x="234" y="85" style="fill:var(--yellow);font:bold 13px var(--sans)">flat</text>
+            <g style="stroke:var(--text);stroke-width:3">
+              <line x1="115" y1="140" x2="115" y2="190"/><line x1="145" y1="140" x2="145" y2="190"/>
+              <line x1="175" y1="140" x2="175" y2="210"/><line x1="205" y1="140" x2="205" y2="210"/>
+            </g>
+            <rect x="105" y="196" width="20" height="20" style="fill:none;stroke:var(--cyan);stroke-width:2"/>
+            <g style="fill:var(--text);font:bold 13px var(--sans)" text-anchor="middle">
+              <text x="115" y="238">1</text><text x="145" y="238">2</text><text x="175" y="238">3</text><text x="205" y="238">4</text>
+            </g>
+            <g style="fill:var(--text);font:13px var(--sans)">
+              <text x="290" y="60">1 DIN, short</text>
+              <text x="290" y="80">2 VDD (+5 V), short</text>
+              <text x="290" y="100">3 GND, long</text>
+              <text x="290" y="120">4 DOUT, long</text>
+            </g>
+            <g style="fill:var(--muted);font:12px var(--sans)">
+              <text x="290" y="170">Pin 1 to the square pad (blue),</text>
+              <text x="290" y="188">the flat side away from it</text>
+            </g>
+          </svg>
+          <figcaption>The WS2812D-F5 from the front, as it should stand on the board.</figcaption>
+        </figure>
+        The wrong way round, +5 V and ground reach the LED swapped; on the first build one burned out like that. If a pad tears off while desoldering: pad 4 (DOUT) of D2 is not connected, just cut the leg there.</li>
+    </ol>
+    <figure>
+      <a href="../../modul/img/bedien-messpunkte.png"><img src="../../modul/img/bedien-messpunkte.png" alt="Control board from the back with test points +5 V and ground and the LED enlarged" width="1234" height="1167"></a>
+      <figcaption>Control board from the back (solder side): J3 pin 14 is +5 V, pins 1 and 13 are ground. There must be no permanent beep between +5 V and ground.</figcaption>
+    </figure>
+
+    <h2 id="pruefen">6. First check without chips</h2>
+    <p>Do not put anything into the sockets yet; the DevKit and the DAC module stay out.</p>
+    <ol>
+      <li>Visual check: solder bridges, forgotten joints, polarity of electrolytics and diodes.</li>
+      <li>Multimeter on continuity, without power: +12 V, −12 V and +5 V must <b>not</b> be connected to ground (a short beep while the electrolytics charge is normal). Test points in the picture below.</li>
+      <li>Connect power, on a bench supply with a 50 mA limit per side, otherwise in the case (red stripe at pin 1 of J1 and on the bus at −12 V). The black probe on ground: the six middle pins of J1, or with the cable plugged in the middle pin of J13.
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Where</th><th>Target</th><th>On the first build</th></tr></thead>
+            <tbody>
+              <tr><td>U6 pin 8</td><td>about +11.7 V (+12 V minus a diode)</td><td>+11.8 V</td></tr>
+              <tr><td>U6 pin 4</td><td>about −11.7 V</td><td>−12.1 V</td></tr>
+              <tr><td>C3 + (5 V), also U10 pin 14</td><td>about +4.7 to 5 V</td><td>4.87 V</td></tr>
+              <tr><td>U9 pin 15 (reference)</td><td>3.00 V</td><td>3.01 V</td></tr>
+            </tbody>
+          </table>
+        </div>
+        There is no 3.3 V yet; it comes only with the DevKit, from its regulator.</li>
+      <li>If something is off or the current hits the limit: switch off and look for the fault before the chips go in.</li>
+    </ol>
+    <figure>
+      <a href="../../modul/img/haupt-messpunkte.png"><img src="../../modul/img/haupt-messpunkte.png" alt="Main board with test points: U6 pins 8 and 4, C3, U9 pin 15, ground at J1 and J13" width="1605" height="1094"></a>
+      <figcaption>Test points of the main board, component side, boxed header at the bottom right. Pin 1 of U9 is at the top right, pin 15 the second from the right in the bottom row.</figcaption>
+    </figure>
+
+    <h2 id="chips">7. Inserting chips and modules</h2>
+    <p>Power off. Then insert, the notch as on the silkscreen:</p>
+    <ul>
+      <li>U6 TL072, U7 and U8 MCP6004, U9 MCP3208, U10 74HCT125.</li>
+      <li>The DAC module onto its 6-pin header.</li>
+      <li>The DevKit onto its headers, <b>USB towards the bottom edge</b> (towards the side with the power connector).</li>
+    </ul>
+    <p>Switch on again. Without firmware the LEDs show nothing (the small LED on the DevKit may blink; that is the manufacturer's test program); the current on +12 V should stay below about 150 mA.</p>
+
+    <h2 id="flashen">8. Flashing the firmware</h2>
+    <p>The firmware is one file for address 0x0: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>.</p>
+    <ol>
+      <li>In Chrome or Edge open <a href="https://espressif.github.io/esptool-js/">Espressif's web flasher</a>, baud rate 921600, <b>Connect</b> and select the DevKit. The DevKit has two USB sockets: use the one labelled “UART” (or “COM”).</li>
+      <li>Enter <code>0x0</code> as the flash address, choose the file, <b>Program</b>.</li>
+      <li>Under “Console” (115200 baud) you can then see what the module is doing.</li>
+    </ol>
+    <p>On the <b>first start</b> the module computes its tables and stores them in flash, taking up to about a minute; meanwhile the LEDs light red and yellow and there is no sound. Every later start reads the tables in a fraction of a second. If both LEDs blink red, the PSRAM is missing (wrong DevKit).</p>
+    <p>Flashing works with and without Eurorack power; a diode separates the regulator from USB. New firmware is flashed the same way: the tables stay, but saved modes, hidden values and the V/Oct calibration are lost. So flash first, then calibrate.</p>
+    <p>Building it yourself: ESP-IDF 5.3, <code>idf.py build flash monitor</code> in the <code>firmware</code> folder; the README on GitHub describes it.</p>
+
+    <h2 id="zusammenbau">9. Assembly and first sound</h2>
+    <ol>
+      <li>Fasten the control board to the front with the nuts of the pots and jacks, put the knobs on.</li>
+      <li>Plug the main board with its female headers onto the control board's pin headers and screw them together with the two standoffs (holes H1, H2).</li>
+      <li>Connect it in the case (red stripe at −12 V) and fix it to the rails with four M3 screws.</li>
+      <li>The <b>VOICE</b> output to a mixer. Without a cable in GATE the gate is permanently on; the module plays as a drone and should sound at once. Turn TUNE, TABLE and CUTOFF, press WARP and FILTER briefly: LED 1 and 2 change colour.</li>
+    </ol>
+    <p class="note">The outputs are at module level (±5 V), far too loud for headphones. How everything is operated: <a href="./#bedienung">Operation</a>.</p>
+
+    <h2 id="kalibrieren">10. Calibrating V/Oct</h2>
+    <ol>
+      <li>Switch off, only V/OCT plugged in, <b>hold both buttons</b> and switch on. LED 1 blinks white.</li>
+      <li>Exactly 1.000 V into V/OCT, press <b>WARP</b>. LED 2 blinks white.</li>
+      <li>Apply exactly 3.000 V, press <b>FILTER</b>.</li>
+      <li>Three times green: saved. Three times red: the values were implausible and the old ones stay; check voltage and cable and repeat.</li>
+    </ol>
+    <p>Afterwards check with a tuner across several octaves.</p>
+
+    <h2 id="smd">Assembled variant (SMD)</h2>
+    <p class="warning"><b>Never built yet:</b> the SMD boards are designed and checked (netlist against the parts list, design rules without errors), but never ordered, assembled or powered. Whoever orders them is the first. So far only the through-hole variant above has been built and heard.</p>
+    <figure class="side">
+      <a href="../../modul/img/smd-haupt-hinten.png"><img src="../../modul/img/smd-haupt-hinten.png" alt="Layout of the SMD main board from the back with ESP32 module, USB-C socket and the small parts" width="683" height="1125"></a>
+      <figcaption>SMD main board from the back.</figcaption>
+    </figure>
+    <p>The same circuit, but the board manufacturer solders the main board: the ESP32-S3 module (WROOM-1 N16R8) directly on the board instead of the DevKit, the DAC as a chip instead of the module, all resistors, capacitors and chips in SMD on the back, plus a USB-C socket of its own for flashing and reset and boot buttons. Same dimensions, same front panel, same firmware; every control board fits every main board. The module is about 40 mm deep, 5 mm less than the through-hole variant.</p>
+
+    <h3>Ordering</h3>
+    <ol>
+      <li>Order the <b>main board</b> (<code>tonwerk-haupt</code>) with assembly; the files are prepared for JLCPCB: upload the Gerber zip, turn on assembly, side <b>Bottom</b> (the parts sit on the back), then upload the bill of materials (BOM) and placement (CPL).</li>
+      <li>Before paying, look at the assembly preview: with packages such as SOT-223, SOT-23-5 and the SOICs on the bottom side, the rotation is often off by 90° or 180°; rotate them in the preview window then. Compare pin 1 of every chip with the dot on the silkscreen.</li>
+      <li>Replace parts that are out of stock with equivalent ones by value in the manufacturer's tool.</li>
+      <li><b>Control board:</b> only C1/C2 on it are SMD, everything else is through-hole and by hand. It is simpler to order it unassembled, either <code>tonwerk-bedien</code> (C1, C2 as 0805 by hand) or straight away the through-hole <code>tonwerk-bedien-tht</code> from above.</li>
+    </ol>
+    <p class="note">Assembly costs considerably more than bare boards; a quote in October 2026 was about €180. In return almost all the soldering of the main board and the hunt for parts go away.</p>
+
+    <h3>What is still soldered by hand</h3>
+    <ul>
+      <li>Main board: J1 (Eurorack connector, pin 1 = −12 V, red stripe), U1 (R-78E5.0-0.5), on the front the female headers J3 and J4 (1 × 14, pin 1 at the top, as in <a href="#hauptplatine">step 3</a>, item 11), if you like the buttons SW1 (reset) and SW2 (boot).</li>
+      <li>The whole control board as in <a href="#bedienplatine">step 5</a>, <b>with the same warning about the LEDs</b>: the LED silkscreen of the SMD control board v0.1 is the wrong way round too.</li>
+    </ul>
+
+    <h3>Checking, flashing, calibrating</h3>
+    <ol>
+      <li>Before the first power-up, check with the multimeter that +12 V, −12 V, +5 V and +3.3 V are not shorted to ground. Then power up with current limiting and measure: U6 pin 8 about +11.7 V, pin 4 about −11.7 V, the reference U3 3.00 V, plus 3.3 V at the regulator U2.</li>
+      <li>Flash through the <b>main board's USB-C socket</b>, with the same file at address 0x0 as in <a href="#flashen">step 8</a>. If the web flasher finds nothing: hold the boot button (solder in SW1 and SW2 for that), press reset briefly, release boot, then <b>Connect</b> once more. The module's messages come through the same socket.</li>
+      <li>Continue with <a href="#zusammenbau">step 9</a> and <a href="#kalibrieren">step 10</a>.</li>
+    </ol>
+
+    <h2 id="fehlersuche">Troubleshooting</h2>
+    <dl class="tools">
+      <dt>No sound, LEDs light normally</dt>
+      <dd>Solder jumpers on the DAC module (step 4, especially 3 XSMT on H), the three wires to J13, is the TL072 the right way round? Listen at the DAC module's jack (headphones only quietly and not on your ears): if it sounds there, the fault lies between J13 and the output jacks (U6, R9–R14).</dd>
+      <dt>No sound on the first start</dt>
+      <dd>The tables are still being computed (step 8). Wait until the LEDs show the colours of the modes.</dd>
+      <dt>LEDs dark</dt>
+      <dd>U10 a 74HC125 instead of HCT? LEDs the right way round (step 5)? R48 (330 Ω) soldered?</dd>
+      <dt>An LED has burned out</dt>
+      <dd>It was the wrong way round (step 5). Desolder it and insert a new one the right way round.</dd>
+      <dt>LEDs in the wrong colours</dt>
+      <dd>With APA106 or PL9823, for example: they expect red-green-blue instead of green-red-blue. In <code>firmware/main/hw/Hardware.cpp</code>, in <code>showLeds</code>, swap red and green and build the firmware yourself.</dd>
+      <dt>Knobs do nothing or jump</dt>
+      <dd>A knob takes over only once it reaches the stored value (<a href="./#pickup">pick-up</a>). Otherwise check the headers J3 and J4 and the 100 nF capacitors C10–C19.</dd>
+      <dt>CV inputs do nothing</dt>
+      <dd>MCP3208 (U9) and MCP6004 (U7, U8) the right way round? 3.0 V at U9 pin 15?</dd>
+      <dt>Console</dt>
+      <dd>Over USB (115200 baud) the module reports the load of the audio core every 5 seconds; errors at start-up appear there too.</dd>
+    </dl>
+
+    <p class="stand">As of 28 October 2026. The same guide is in the repository as <a href="https://github.com/Marcel-B/Synth/blob/main/esp32-wavetable/BAUANLEITUNG.md">BAUANLEITUNG.md</a> (German). Boards, front panel, knobs and firmware are under the <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a>: building one for yourself yes, selling only with permission.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="../impressum.html">Legal notice</a>
+        <a href="../datenschutz.html">Privacy</a>
+        <a href="./">Operation</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../../modul/bauanleitung.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -389,3 +389,12 @@ dialog button:hover { border-color: var(--cyan); color: var(--cyan); }
 }
 
 code { font: 0.9em var(--mono); color: var(--cyan); background: var(--screen); border: 1px solid var(--border); padding: 1px 5px; }
+
+/* The language switch at the end of the top bar, set apart in cyan. On a phone the bar's links scroll sideways, so there
+   it moves up beside the brand, where it is always in view. */
+.top nav a.lang { color: var(--cyan); }
+.top nav a.lang:hover { color: var(--yellow); }
+@media (max-width: 720px) {
+  .top .wrap { position: relative; }
+  .top nav a.lang { position: absolute; top: 12px; right: 20px; }
+}
