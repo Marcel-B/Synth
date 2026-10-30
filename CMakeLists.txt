@@ -1441,6 +1441,7 @@ if(TONWERK_TESTS AND NOT TONWERK_STORE)
         ${TONWERK_DEFINITIONS}
         JucePlugin_Name="Tonwerk Synth"
         ${TONWERK_NO_ENTRIES}
+        TONWERK_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
         JUCE_MODAL_LOOPS_PERMITTED=0)
     target_link_libraries(TonwerkSynthTests
         PRIVATE juce::juce_audio_utils juce::juce_dsp

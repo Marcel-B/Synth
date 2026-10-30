@@ -341,7 +341,7 @@ Section::Section(juce::AudioProcessorValueTreeState& state, const juce::String& 
     if (powerId.isNotEmpty())
     {
         power = std::make_unique<juce::ToggleButton>();
-        power->setTooltip(utf8("Ein/Aus"));
+        power->setTooltip(tr("Ein/Aus"));
         addAndMakeVisible(*power);
         powerAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, powerId, *power);
     }

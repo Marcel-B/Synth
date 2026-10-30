@@ -59,7 +59,7 @@ private:
     ExpanderProcessor& synth;
     tonwerkui::LookAndFeel lookAndFeel;
     juce::ComboBox presets;
-    juce::TextButton previous { "<" }, next { ">" }, hardwareSheet { "Hardware-Blatt" };
+    juce::TextButton previous { "<" }, next { ">" }, hardwareSheet { tonwerkui::tr("Hardware-Blatt") };
     std::unique_ptr<juce::FileChooser> chooser;
     tonwerkui::ScopeView scope;
     Section osc1, osc2;

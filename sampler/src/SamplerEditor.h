@@ -48,7 +48,7 @@ private:
     void choose();
 
     SamplerProcessor& synth;
-    juce::TextButton load { juce::String::fromUTF8("Datei …") };
+    juce::TextButton load { tonwerkui::tr("Datei …") };
     std::unique_ptr<juce::FileChooser> chooser;
 };
 

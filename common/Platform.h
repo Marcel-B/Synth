@@ -205,6 +205,9 @@ private:
         for (auto* child : inner->getChildren())
         {
             const auto b = child->getBounds();
+            // An empty label (room for a message) is not a control.
+            if (auto* label = dynamic_cast<juce::Label*>(child); label != nullptr && label->getText().isEmpty())
+                continue;
             if (child->isVisible() && b.getY() < 44 && b.getBottom() <= 56 && b.getWidth() < inner->getWidth() / 2)
                 header.push_back(b);
         }

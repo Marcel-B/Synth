@@ -22,7 +22,7 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
                  { { { "reese", "Reese" }, { "detune", "Verstimmung" }, { "width", "Breite" }, { "sub", "Sub" },
                      { "subOctave", "Sub-Lage" }, { "tune", "Tune" } } }),
       fm(p.state, "FM",
-         { { { "fm", "FM" }, { "ratio", utf8("Verhältnis") }, { "fmIndex", "Index" }, { "feedback", "Feedback" },
+         { { { "fm", "FM" }, { "ratio", tr("Verhältnis") }, { "fmIndex", "Index" }, { "feedback", "Feedback" },
              { "envFm", "Env FM" } } }),
       filter(p.state, "Drive & Filter",
              { { { "driveMode", "Kurve" }, { "drive", "Drive" }, { "filterType", "Typ" }, { "cutoff", "Cutoff" },
@@ -47,7 +47,7 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -60,11 +60,11 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);
@@ -78,7 +78,7 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
     };
     previous.onClick = [step] { step(-1); };
     next.onClick = [step] { step(1); };
-    scope.setCaption("OSZILLOSKOP");
+    scope.setCaption(tr("OSZILLOSKOP"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &scope, &oscillator, &fm, &filter,
                                                             &ampEnvelope, &modEnvelope, &output, &lfo, &effects, &keyboard })
         addAndMakeVisible(*c);
@@ -151,10 +151,10 @@ void NeuroEditor::resized()
 
 void NeuroEditor::timerCallback()
 {
-    juce::String caption = "OSZILLOSKOP";
+    juce::String caption = tr("OSZILLOSKOP");
     if (const int note = synth.shownNote.load(); note >= 0)
     {
-        caption << utf8("  ·  ") << NeuroProcessor::noteName(note);
+        caption << juce::String::fromUTF8("  ·  ") << NeuroProcessor::noteName(note);
         caption << utf8("  ·  CUTOFF ") << juce::String(juce::roundToInt(synth.shownCutoff.load())) << " Hz";
     }
     if (caption != shownCaption)

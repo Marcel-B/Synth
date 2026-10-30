@@ -82,6 +82,29 @@ const Tables& tables()
     return instance;
 }
 
+const juce::String& separators()
+{
+    static const auto text = juce::String::fromUTF8(" /:()·,");
+    return text;
+}
+
+/** Every word of the English texts: a word both languages use ("Tempo") is no German left over. */
+const std::set<std::string>& englishWords()
+{
+    static const auto words = [] {
+        std::set<std::string> result;
+        for (const auto& entry : tables().toGerman)
+        {
+            juce::StringArray tokens;
+            tokens.addTokens(juce::String::fromUTF8(entry.first.c_str()), separators(), "");
+            for (const auto& token : tokens)
+                result.insert(token.toStdString());
+        }
+        return result;
+    }();
+    return words;
+}
+
 juce::String translate(const std::string& german, bool record = true)
 {
     if (language() == Language::german)
@@ -169,4 +192,22 @@ void clearUntranslated()
 }
 
 bool isEnglishText(const juce::String& text) { return tables().toGerman.count(text.toStdString()) > 0; }
+juce::String germanWordIn(const juce::String& text)
+{
+    if (text.isEmpty())
+        return {};
+    // The whole text first ("Hüllkurve 1"), then each word.
+    juce::StringArray words;
+    words.add(text);
+    words.addTokens(text, separators(), "");
+    for (const auto& word : words)
+    {
+        const auto key = word.toStdString();
+        const auto found = tables().toEnglish.find(key);
+        if (found != tables().toEnglish.end() && found->second != key && tables().toGerman.count(key) == 0
+            && englishWords().count(key) == 0)
+            return word;
+    }
+    return {};
+}
 } // namespace tonwerkui

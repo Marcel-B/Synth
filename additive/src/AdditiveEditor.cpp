@@ -49,13 +49,13 @@ void SpectrumView::paint(juce::Graphics& g)
     const auto inner = area.reduced(10.0f, 6.0f);
 
     const auto& s = settings;
-    juce::String caption = utf8(kSpectrumNames[(std::size_t) s.spectrumA]);
+    juce::String caption = tr(kSpectrumNames[(std::size_t) s.spectrumA]);
     if (s.morph > 0.005f)
-        caption << utf8(" ▸ ") << utf8(kSpectrumNames[(std::size_t) s.spectrumB]) << " "
+        caption << juce::String::fromUTF8(" ▸ ") << tr(kSpectrumNames[(std::size_t) s.spectrumB]) << " "
                 << juce::roundToInt(s.morph * 100.0f) << " %";
-    caption << utf8(" · ") << juce::roundToInt(s.partials) << utf8(" OBERTÖNE");
+    caption << juce::String::fromUTF8(" · ") << juce::roundToInt(s.partials) << " " + tr("OBERTÖNE");
     if (playing)
-        caption << utf8(" · ") << juce::roundToInt(frequency) << " HZ";
+        caption << juce::String::fromUTF8(" · ") << juce::roundToInt(frequency) << " HZ";
     g.setFont(mono(10.0f));
     g.setColour(cyan.withAlpha(0.8f));
     g.drawText(caption, inner.toNearestInt(), juce::Justification::topLeft);
@@ -103,7 +103,7 @@ void SpectrumView::paint(juce::Graphics& g)
 SpectrumSection::SpectrumSection(AdditiveProcessor& processor)
     : Section(processor.state, "Spektrum",
               { { { "spectrumA", "Spektrum A" }, { "spectrumB", "Spektrum B" }, { "morph", "Morph" },
-                  { "partials", utf8("Obertöne") }, { "tilt", "Neigung" } },
+                  { "partials", tr("Obertöne") }, { "tilt", "Neigung" } },
                 { { "oddEven", "Ger./Unger." }, { "stretch", "Spreizung" }, { "beating", "Schwebung" },
                   { "phases", "Phasen" }, { "width", "Breite" } } },
               {}, { 0, kDisplay }),
@@ -124,22 +124,22 @@ AdditiveEditor::AdditiveEditor(AdditiveProcessor& p)
       synth(p),
       spectrum(p),
       colour(p.state, "Formant & Kamm",
-             { { { "vowel", "Vokal" }, { "formantDepth", utf8("Stärke") }, { "formantShift", "Verschieb." } },
+             { { { "vowel", "Vokal" }, { "formantDepth", tr("Stärke") }, { "formantShift", "Verschieb." } },
                { { "combDepth", "Kamm" }, { "combSpacing", "Abstand" }, { "combShift", "Verschieb." } } }),
       filter(p.state, "Filter",
              { { { "filterMode", "Typ" }, { "cutoff", "Cutoff" }, { "resonance", "Resonanz" },
                  { "keytrack", "Keytrack" } } },
              "filterOn"),
-      spectralEnvelope(p.state, utf8("Obertöne-Hüllkurve"),
+      spectralEnvelope(p.state, tr("Obertöne-Hüllkurve"),
                        { { { "bloom", "Einschw." }, { "spectralDecay", "Abklingen" }, { "spectralSustain", "Halten" },
-                           { "spectralDamping", utf8("Dämpfung") } } },
+                           { "spectralDamping", tr("Dämpfung") } } },
                        "spectralOn"),
-      amp(p.state, utf8("Lautstärke"),
+      amp(p.state, tr("Lautstärke"),
           { { { "env1Attack", "Attack" }, { "env1Decay", "Decay" }, { "env1Sustain", "Sustain" },
               { "env1Release", "Release" }, { "dynamics", "Dynamik" } } }),
-      tone(p.state, utf8("Tonhöhe"), { { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } }),
+      tone(p.state, tr("Tonhöhe"), { { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } }),
       // The modulation in two rows each, so the editor stays narrow enough for a laptop's screen.
-      env2(p.state, utf8("HÜLLKURVE 2"),
+      env2(p.state, tr("HÜLLKURVE 2"),
            { { { "env2Attack", "Attack" }, { "env2Decay", "Decay" }, { "env2Sustain", "Sustain" },
                { "env2Release", "Release" } },
              { { "env2Target", "Ziel" }, { "env2Amount", "Menge" } } }),
@@ -162,7 +162,7 @@ AdditiveEditor::AdditiveEditor(AdditiveProcessor& p)
                   { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
                   { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
                   { "fxDelayFeedback", "Feedback" } },
-                { { "fxDelayTone", "Ton" }, { "fxReverbMix", "Hall" }, { "fxReverbDecay", utf8("Länge") } } }),
+                { { "fxDelayTone", "Ton" }, { "fxReverbMix", "Hall" }, { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -175,11 +175,11 @@ AdditiveEditor::AdditiveEditor(AdditiveProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

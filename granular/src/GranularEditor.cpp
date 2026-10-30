@@ -43,7 +43,7 @@ void GrainView::paint(juce::Graphics& g)
     if (source == nullptr || source->empty())
     {
         g.setColour(cyan.withAlpha(0.8f));
-        g.drawText(utf8("KEINE DATEI · HIERHER ZIEHEN ODER LADEN"), inner.toNearestInt(), juce::Justification::centred);
+        g.drawText(tr("KEINE DATEI · HIERHER ZIEHEN ODER LADEN"), inner.toNearestInt(), juce::Justification::centred);
         return;
     }
 
@@ -91,7 +91,7 @@ void GrainView::paint(juce::Graphics& g)
     }
 
     g.setColour(cyan.withAlpha(0.8f));
-    g.drawText(juce::String::fromUTF8(source->name.c_str()).toUpperCase(), inner.toNearestInt(),
+    g.drawText(tr(source->name.c_str()).toUpperCase(), inner.toNearestInt(),
                juce::Justification::topLeft);
 }
 
@@ -103,7 +103,7 @@ SourceSection::SourceSection(GranularProcessor& processor)
       view(processor)
 {
     addAndMakeVisible(view);
-    load.setTooltip(utf8("Eigene Audiodatei als Quelle laden (oder auf die Anzeige ziehen)"));
+    load.setTooltip(tr("Eigene Audiodatei als Quelle laden (oder auf die Anzeige ziehen)"));
     load.onClick = [this] { choose(); };
     addAndMakeVisible(load);
     view.update();
@@ -119,7 +119,7 @@ void SourceSection::resized()
 
 void SourceSection::choose()
 {
-    chooser = std::make_unique<juce::FileChooser>(utf8("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
+    chooser = std::make_unique<juce::FileChooser>(tr("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
                              const auto file = tonwerkui::keepChosen(c, tonwerkui::keptFilesFolder("Tonwerk Granular"));
@@ -147,19 +147,19 @@ GranularEditor::GranularEditor(GranularProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),
       source(p),
-      grains(p.state, utf8("KÖRNER"),
-             { { { "grainSize", utf8("Größe") }, { "density", "Dichte" }, { "jitter", "Zufall" },
-                 { "window", "Fenster" }, { "reverse", utf8("Rückwärts") }, { "width", "Breite" } },
+      grains(p.state, tr("KÖRNER"),
+             { { { "grainSize", tr("Größe") }, { "density", "Dichte" }, { "jitter", "Zufall" },
+                 { "window", "Fenster" }, { "reverse", tr("Rückwärts") }, { "width", "Breite" } },
                { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" }, { "scatter", "Streuung" },
                  { "scatterMode", "Raster" }, { "keyFollow", "Tastatur" } } }),
       filter(p.state, "Filter",
              { { { "filterMode", "Typ" }, { "cutoff", "Cutoff" }, { "resonance", "Resonanz" },
                  { "keytrack", "Keytrack" } } },
              "filterOn"),
-      env1(p.state, utf8("HÜLLKURVE 1 · AMP"),
+      env1(p.state, tr("HÜLLKURVE 1 · AMP"),
            { { { "env1Attack", "Attack" }, { "env1Decay", "Decay" }, { "env1Sustain", "Sustain" },
                { "env1Release", "Release" } } }),
-      env2(p.state, utf8("HÜLLKURVE 2"),
+      env2(p.state, tr("HÜLLKURVE 2"),
            { { { "env2Attack", "Attack" }, { "env2Decay", "Decay" }, { "env2Sustain", "Sustain" },
                { "env2Release", "Release" }, { "env2Target", "Ziel" }, { "env2Amount", "Menge" } } }),
       lfo1(p.state, "LFO 1",
@@ -181,7 +181,7 @@ GranularEditor::GranularEditor(GranularProcessor& p)
                   { "fxDelayFeedback", "Feedback" },
                   { "fxDelayTone", "Ton" },
                   { "fxReverbMix", "Hall" },
-                  { "fxReverbDecay", utf8("Länge") } } }),
+                  { "fxReverbDecay", tr("Länge") } } }),
       keyboard(p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
@@ -194,11 +194,11 @@ GranularEditor::GranularEditor(GranularProcessor& p)
         const auto& preset = factory[(std::size_t) i];
         const int category = categoryIndex(preset.category);
         if (category != group && category >= 0)
-            presets.addSectionHeading(utf8(preset.category));
+            presets.addSectionHeading(tr(preset.category));
         group = category;
         presets.addItem(utf8(preset.name), i + 1);
     }
-    presets.setTextWhenNothingSelected(utf8("Preset"));
+    presets.setTextWhenNothingSelected(tr("Preset"));
     presets.onChange = [this] {
         if (presets.getSelectedId() > 0)
             choosePreset(presets.getSelectedId() - 1);

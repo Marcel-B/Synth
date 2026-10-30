@@ -54,6 +54,8 @@ struct Localised
     Localised(const char* german) : text(tr(german)) {}
     Localised(juce::String ready) : text(std::move(ready)) {}
     operator const juce::String&() const { return text; }
+    friend juce::String operator+(const Localised& a, const char* b) { return a.text + b; }
+    friend juce::String operator+(const Localised& a, const juce::String& b) { return a.text + b; }
     juce::String text;
 };
 
@@ -69,4 +71,10 @@ void clearUntranslated();
 
 /** Every English text of the table, for tests that check what an editor shows. */
 bool isEnglishText(const juce::String& text);
+
+/**
+ * For tests: the first word of `text` that the table knows as German with another English ("Form" for "Shape"), so a
+ * name put together from untranslated parts is found; empty when there is none.
+ */
+juce::String germanWordIn(const juce::String& text);
 } // namespace tonwerkui
