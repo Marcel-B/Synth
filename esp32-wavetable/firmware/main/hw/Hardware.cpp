@@ -247,16 +247,18 @@ const esp_partition_t* tablesPartition()
 }
 } // namespace
 
-bool loadTables(void* block, std::size_t bytes, uint32_t version)
+bool loadBlock(void* block, std::size_t bytes, uint32_t magic, uint32_t version)
 {
     const esp_partition_t* part = tablesPartition();
     TablesHeader header {};
     if (part == nullptr || esp_partition_read(part, 0, &header, sizeof header) != ESP_OK)
         return false;
-    if (header.magic != kTablesMagic || header.version != version || header.bytes != bytes)
+    if (header.magic != magic || header.version != version || header.bytes != bytes || kTablesData + bytes > part->size)
         return false;
     return esp_partition_read(part, kTablesData, block, bytes) == ESP_OK;
 }
+
+bool loadTables(void* block, std::size_t bytes, uint32_t version) { return loadBlock(block, bytes, kTablesMagic, version); }
 
 void storeTables(const void* block, std::size_t bytes, uint32_t version)
 {

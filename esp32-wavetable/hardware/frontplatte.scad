@@ -1,5 +1,5 @@
-// Tonwerk Wavetable, Eurorack-Frontplatte 14 TE (3U), zum 3D-Druck. Mit engine = "physical" oder "pd" dieselbe Platte
-// mit der Beschriftung der Physical- oder PD-Firmware (Löcher an denselben Stellen).
+// Tonwerk Wavetable, Eurorack-Frontplatte 14 TE (3U), zum 3D-Druck. Mit engine = "physical", "pd" oder "granular"
+// dieselbe Platte mit der Beschriftung der anderen Firmwares (Löcher an denselben Stellen).
 // Maße nach Doepfer A-100: Höhe 128,5 mm, Breite 14 x 5,08 mm - 0,3 mm = 70,8 mm, Befestigungslöcher 3 mm vom
 // oberen/unteren Rand, 7,5 mm vom linken Rand und (TE - 3) x 5,08 mm weiter rechts.
 //
@@ -9,6 +9,7 @@
 //   openscad -D 'mode="2d"' -o frontplatte-bohrplan.svg frontplatte.scad   Bohrplan 1:1 (z. B. für Alu)
 //   openscad -D 'engine="physical"' -o frontplatte-physical.stl frontplatte.scad   Physical, Schrift erhaben
 //   openscad -D 'engine="pd"' -o frontplatte-pd.stl frontplatte.scad               PD, Schrift erhaben
+//   openscad -D 'engine="granular"' -o frontplatte-granular.stl frontplatte.scad   Granular, Schrift erhaben
 //
 // Schrift (style):
 //   "erhaben"  0,4 mm über der Front (zwei Schichten). Front nach oben drucken, bei 2,5 mm Höhe Filament wechseln,
@@ -23,7 +24,7 @@
 // dünner als zwei Düsenbreiten. Darum ist die Schrift jetzt größer, um bold mm fetter und weiter gesperrt.
 
 mode = "3d";             // "3d", "2d" oder "vorschau" (Front oben, für Bilder)
-engine = "wavetable";    // "wavetable", "physical" oder "pd": welche Firmware die Beschriftung meint
+engine = "wavetable";    // "wavetable", "physical", "pd" oder "granular": welche Firmware die Beschriftung meint
 hp = 14;
 width = hp * 5.08 - 0.3; // 70,8 mm
 height = 128.5;
@@ -48,9 +49,15 @@ jack_cols = [10.5, 27.2, 43.6, 60.3];
 
 physical = engine == "physical";
 pd = engine == "pd";
+granular = engine == "granular";
 
 // [x, y, Beschriftung]
-pots = pd ? [
+pots = granular ? [
+    [cols[0], 21, "TUNE"],  [cols[1], 21, "GRÖSSE"],  [cols[2], 21, "POSITION"],
+    [cols[0], 39, "FINE"],  [cols[1], 39, "DICHTE"],  [cols[2], 39, "STREUUNG"],
+    [cols[0], 57, "SCAN"],  [cols[1], 57, "POS CV"],  [cols[2], 57, "TONSTREU"],
+                            [cols[1], 75, "STR CV"],
+] : pd ? [
     [cols[0], 21, "TUNE"],  [cols[1], 21, "LINIE 2"], [cols[2], 21, "HÜLLK."],
     [cols[0], 39, "FINE"],  [cols[1], 39, "MIX"],     [cols[2], 39, "DCW"],
     [cols[0], 57, "DECAY"], [cols[1], 57, "POS CV"],  [cols[2], 57, "CHORUS"],
@@ -66,10 +73,14 @@ pots = pd ? [
     [cols[0], 57, "DECAY"], [cols[1], 57, "POS CV"],  [cols[2], 57, "RESO"],
                             [cols[1], 75, "CUT CV"],
 ];
-buttons = pd ? [[17, 75, "WELLE 1"], [54, 75, "WELLE 2"]]
+buttons = granular ? [[17, 75, "QUELLE"], [54, 75, "FENSTER"]]
+        : pd ? [[17, 75, "WELLE 1"], [54, 75, "WELLE 2"]]
         : physical ? [[17, 75, "ERREGER"], [54, 75, "RESON."]] : [[17, 75, "WARP"], [54, 75, "FILTER"]];
 leds = [[7.5, 75], [63.5, 75]];
-jacks = pd ? [
+jacks = granular ? [
+    [jack_cols[0], 94, "V/OCT"],  [jack_cols[1], 94, "GATE"],    [jack_cols[2], 94, "GRÖSSE"], [jack_cols[3], 94, "POS"],
+    [jack_cols[0], 112, "DICHTE"], [jack_cols[1], 112, "STREU."], [jack_cols[2], 112, "L"],      [jack_cols[3], 112, "R"],
+] : pd ? [
     [jack_cols[0], 94, "V/OCT"], [jack_cols[1], 94, "GATE"],  [jack_cols[2], 94, "LINIE 2"], [jack_cols[3], 94, "HÜLLK."],
     [jack_cols[0], 112, "MIX"],  [jack_cols[1], 112, "DCW"],  [jack_cols[2], 112, "L"],       [jack_cols[3], 112, "R"],
 ] : physical ? [
@@ -119,7 +130,7 @@ module labels() {
         translate([0.8, 0.8]) square([32.1, 13.8]);
     }
     label("TONWERK", width / 2, 6.8, 4.0);
-    label(pd ? "PD" : physical ? "PHYSICAL" : "WAVETABLE", width / 2, 123.0, 3.0);
+    label(granular ? "GRANULAR" : pd ? "PD" : physical ? "PHYSICAL" : "WAVETABLE", width / 2, 123.0, 3.0);
 }
 
 if (mode == "2d") {
@@ -129,11 +140,11 @@ if (mode == "2d") {
     }
 } else if (mode == "vorschau") {
     // Für Bilder, in den Farben des Drucks: Wavetable schwarz mit gelber Schrift, die anderen umgekehrt.
-    color(physical || pd ? "#fcee0a" : "#141414") difference() {
+    color(physical || pd || granular ? "#fcee0a" : "#141414") difference() {
         cube([width, height, thickness]);
         translate([0, 0, -1]) linear_extrude(thickness + 2) holes();
     }
-    color(physical || pd ? "#141414" : "#fcee0a") translate([0, 0, thickness]) linear_extrude(relief) labels();
+    color(physical || pd || granular ? "#141414" : "#fcee0a") translate([0, 0, thickness]) linear_extrude(relief) labels();
 } else if (style == "einlage") {
     // Gebaut mit der Front oben, dann um die y-Achse gedreht (nicht gespiegelt), damit die Front auf dem Druckbett
     // liegt und Löcher und Schrift von vorn gesehen richtig herum stehen.

@@ -11,3 +11,5 @@ esp32-wavetable/firmware/host/hoerproben/
 esp32-wavetable/firmware/host/hoerproben-physical/
 esp32-wavetable/firmware/host/pd-test
 esp32-wavetable/firmware/host/hoerproben-pd/
+esp32-wavetable/firmware/host/granular-test
+esp32-wavetable/firmware/host/hoerproben-granular/

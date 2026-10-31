@@ -1,12 +1,13 @@
 // Tonwerk Wavetable as a Eurorack module: firmware for the ESP32-S3. Built with -DTONWERK_PHYSICAL=1 the same
 // panel plays Tonwerk Physical instead (app/PhysicalModule.h, dsp/PhysicalVoice.h), with -DTONWERK_PD=1 Tonwerk PD
-// (app/PdModule.h, dsp/PdVoice.h); everything else is shared.
+// (app/PdModule.h, dsp/PdVoice.h), with -DTONWERK_GRANULAR=1 Tonwerk Granular (app/GranularModule.h,
+// dsp/GrainVoice.h, its sources flashed into the partition "tables"); everything else is shared.
 //
 // Core 1 runs the audio task alone: it renders one control step (32 samples) at a time and blocks on the I2S DMA,
 // which paces it. Core 0 runs the control task every 2 ms: pots, CVs, buttons, LEDs, saving. The two share the
 // voice's parameters through a sequence lock, so the audio task never waits for the control task.
 
-#if TONWERK_PHYSICAL && TONWERK_PD
+#if (TONWERK_PHYSICAL + TONWERK_PD + TONWERK_GRANULAR) > 1
 #error "one firmware at a time"
 #endif
 #if TONWERK_PHYSICAL
@@ -15,13 +16,16 @@
 #elif TONWERK_PD
 #include "app/PdModule.h"
 #include "dsp/PdVoice.h"
+#elif TONWERK_GRANULAR
+#include "app/GranularModule.h"
+#include "dsp/GrainVoice.h"
 #else
 #include "app/Module.h"
 #include "dsp/Tables.h"
 #include "dsp/Voice.h"
 #endif
 #if TONWERK_BENCH
-#if TONWERK_PHYSICAL || TONWERK_PD
+#if TONWERK_PHYSICAL || TONWERK_PD || TONWERK_GRANULAR
 #error "the bench test plays the wavetable firmware"
 #endif
 #include "app/Bench.h"
@@ -46,6 +50,11 @@ using Instrument = twm::phys::Player;
 #elif TONWERK_PD
 using Panel = twm::PdModule;
 using Instrument = twm::pd::Player;
+#elif TONWERK_GRANULAR
+using Panel = twm::GranularModule;
+using Instrument = twm::grain::Player;
+/** The nine sources in PSRAM, set up before the audio task starts. */
+twm::grain::Sources sources;
 #else
 using Panel = twm::Module;
 using Instrument = twm::Voice;
@@ -262,7 +271,31 @@ extern "C" void app_main()
         module.calibration = calibration;
 #endif
 
-#if ! TONWERK_PHYSICAL && ! TONWERK_PD
+#if TONWERK_GRANULAR
+    // The sources' full-rate samples were flashed with the firmware into the partition "tables"; the lower copies are
+    // computed from them in PSRAM at every start (well under a second).
+    const int64_t start = esp_timer_get_time();
+    auto* block = static_cast<int16_t*>(hw::allocateTables(twm::grain::Sources::bytes()));
+    if (block == nullptr
+        || ! hw::loadBlock(block, twm::grain::Sources::flashedBytes(), twm::grain::Sources::kMagic,
+                           twm::grain::Sources::kVersion))
+    {
+        // Without its sources the firmware has nothing to play: flash the whole image (tonwerk-granular.bin at 0x0).
+        ESP_LOGE(kTag, block == nullptr ? "not enough PSRAM for the sources (an N16R8 board has 8 MB)"
+                                        : "no grain sources in the partition \"tables\": flash tonwerk-granular.bin at 0x0");
+        for (;;)
+        {
+            hw::showLeds({ 255, 0, 60 }, { 255, 0, 60 });
+            vTaskDelay(pdMS_TO_TICKS(500));
+            hw::showLeds({}, {});
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+    }
+    sources.build(block);
+    twm::grain::Windows::instance();
+    voice.use(&sources);
+    ESP_LOGI(kTag, "grain sources ready in %lld ms", (esp_timer_get_time() - start) / 1000);
+#elif ! TONWERK_PHYSICAL && ! TONWERK_PD
     // The tables live in PSRAM. Computing them takes seconds, so the first start after flashing keeps a copy in
     // flash and every later start reads that instead.
     const int64_t start = esp_timer_get_time();
