@@ -1,6 +1,6 @@
-# The Physical, PD and Granular firmwares (app/PhysicalModule.h, app/PdModule.h, app/GranularModule.h) have no
-# wavetables to compute.
-if(TONWERK_PHYSICAL OR TONWERK_PD OR TONWERK_GRANULAR)
+# The Physical, PD, Granular and Additiv firmwares (app/PhysicalModule.h, app/PdModule.h, app/GranularModule.h,
+# app/AdditiveModule.h) have no wavetables to compute.
+if(TONWERK_PHYSICAL OR TONWERK_PD OR TONWERK_GRANULAR OR TONWERK_ADDITIVE)
     set(sources "main.cpp" "hw/Hardware.cpp")
 else()
     set(sources "main.cpp" "dsp/Tables.cpp" "hw/Hardware.cpp")
@@ -32,4 +32,8 @@ if(TONWERK_GRANULAR)
         message(FATAL_ERROR "data/grain-sources.bin is missing: make -C host grain-sources")
     endif()
     esptool_py_flash_to_partition(flash "tables" "${grain_sources}")
+endif()
+# Tonwerk Additiv on the same panel: idf.py -B build-additiv -DTONWERK_ADDITIVE=1 build
+if(TONWERK_ADDITIVE)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE TONWERK_ADDITIVE=1)
 endif()
