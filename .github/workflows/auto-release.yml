@@ -1,0 +1,62 @@
+name: Auto-Release
+
+# Every night, main becomes a release when something that reaches the packages changed since the newest tag v* and its
+# CI (build.yml) passed: scripts/release-plan.sh picks the version (a new plugin raises the minor, else the patch) and
+# lists the merged pull requests, then release.yml builds, signs, tags and publishes as when started by hand.
+# Marcel's choice of 2026-10-31: at most one release a day, the day's merges together.
+on:
+  schedule:
+    - cron: "0 2 * * *" # 03:00 in Germany in winter, 04:00 in summer
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      notes: ${{ steps.plan.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Plan
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Only a commit whose CI passed; one still running waits for the next night.
+          conclusion=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow build.yml --commit "$GITHUB_SHA" \
+            --json conclusion --jq '.[0].conclusion // ""')
+          if [ "$conclusion" != "success" ]; then
+            echo "CI of $GITHUB_SHA: ${conclusion:-not finished}. No release."
+            exit 0
+          fi
+          plan=$(scripts/release-plan.sh "$GITHUB_SHA")
+          if [ -z "$plan" ]; then
+            exit 0
+          fi
+          echo "$plan" >> "$GITHUB_OUTPUT"
+          {
+            echo "notes<<EOF_NOTES"
+            cat release-notes.md
+            echo "EOF_NOTES"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release $plan:"
+          cat release-notes.md
+
+  release:
+    needs: plan
+    if: needs.plan.outputs.version != ''
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.plan.outputs.version }}
+      notes: ${{ needs.plan.outputs.notes }}
+    secrets: inherit
