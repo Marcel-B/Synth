@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk PD module · Operation</title>
+  <meta name="description" content="The Eurorack module's third firmware: Tonwerk PD, phase distortion with two lines, DCW envelopes, ring, noise and chorus in stereo on the same boards. Knobs, buttons, jacks, LEDs and front panel.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/modul/pd.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/pd.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/pd.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/pd.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Module navigation">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="#bedienung" class="optional">PD</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../../modul/pd.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk PD as a Eurorack module</h1>
+    <p class="lead-text">A third firmware for the same boards as the <a href="./">wavetable module</a>: the sound engine of the plugin <a href="../#instrumente">Tonwerk PD</a>, phase distortion. A cosine wave is read through a bent phase. The more it is bent (<b>DCW</b>), the more the soft sine turns into a saw, a square, a pulse or a resonance, and an envelope on the bend opens the sound like a filter.</p>
+
+    <h2 id="ueberblick">Overview</h2>
+    <figure class="side">
+      <a href="../../modul/img/frontplatte-pd-vorschau.png"><img src="../../modul/img/frontplatte-pd-vorschau.png" alt="Preview of the PD front panel: 14 HP, yellow with black lettering" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>The same engine as the plugin</b>, rewritten in float: eight waves, each line's bend with its DCW envelope, the level with its own. A test on the computer compares every wave and every way of combining the lines with the plugin.</li>
+      <li><b>Two lines</b>: each with its own wave, optionally a second one that alternates cycle by cycle. Line 2 sits an interval above and slightly detuned; ring or noise connect the two.</li>
+      <li><b>Stereo</b>: the two lines sit apart left and right, followed by the plugin's chorus. The outputs are <b>L</b> and <b>R</b>.</li>
+      <li><b>One voice</b> (the plugin plays polyphonically): V/OCT, GATE and CV for the interval, the envelope, the mix and the bend.</li>
+      <li>A <a href="#frontplatte">front panel</a> of its own; the preview shows it yellow with black lettering like the Physical panel, the colours are up to you.</li>
+    </ul>
+    <p class="note">This firmware is tested on the computer; it has never run on an ESP32. On the computer it needs less processing time than the wavetable firmware.</p>
+
+    <h2 id="bedienung">Operation</h2>
+    <p>The front is the same as on the wavetable module, only the lettering differs. The WARP button is called <b>WELLE 1</b> (wave 1) here, the FILTER button <b>WELLE 2</b>. Layers, pick-up, holding versus tapping, saving and <a href="./#kalibrieren">calibration</a> work exactly as described there.</p>
+
+    <h3 id="regler">All knobs</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Knob</th><th>Normal</th><th>WELLE 1 held</th><th>WELLE 2 held</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Tuning ±2 octaves in semitones</td><td>Attack of the DCW envelope, 1 ms to 2 s</td><td>Detune of line 2, ±50 cents (default +7 cents)</td></tr>
+          <tr><td>FINE</td><td>Fine tuning ±50 cents</td><td>Sustain of the DCW envelope</td><td>Lines: 1, 2, 1 + 1′ (line 1 once more, with line 2's detune), 1 + 2′ (both, default)</td></tr>
+          <tr><td>LINIE 2</td><td>Interval of line 2, from unison to two octaves in semitones; one octave in the middle</td><td>Second wave of line 1: off or one of the eight. The two waves then alternate cycle by cycle.</td><td>Second wave of line 2</td></tr>
+          <tr><td>HÜLLK.</td><td>How far the DCW envelope bends both lines</td><td>Key tracking: above C3 high notes bend less, so they stay soft</td><td>Modulation: off, ring (line 2 times line 1), noise (line 2 read at a wandering phase)</td></tr>
+          <tr><td>MIX</td><td>Line 1 against line 2, both equally loud in the middle</td><td>Attack of the level, 1 ms to 2 s</td><td>Stereo width of the two lines (default 50 %)</td></tr>
+          <tr><td>DCW</td><td>Bend without the envelope: left a pure cosine, right fully bent</td><td>Sustain of the level</td><td>Chorus rate, 0.1 to 5 Hz (default 0.6 Hz)</td></tr>
+          <tr><td>CHORUS</td><td>Chorus mix, off on the left</td><td>Release of the level, 5 ms to 5 s</td><td>Chorus depth</td></tr>
+          <tr><td>DECAY</td><td>Decay of the DCW envelope, 5 ms to 5 s</td><td>Decay of the level, 5 ms to 5 s</td><td>Release of the DCW envelope, 5 ms to 5 s</td></tr>
+          <tr><td>POS CV</td><td>Attenuator for the HÜLLK. jack: middle 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+          <tr><td>DCW CV</td><td>Attenuator for the DCW jack: middle 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="wellen">Waves (tap WELLE 1 and WELLE 2)</h3>
+    <p>WELLE 1 picks the wave of line 1, LED 1 shows it; WELLE 2 and LED 2 do the same for line 2. Saw and square by default.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED</th><th>Wave</th><th>Fully bent</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>yellow</td><td>Saw</td><td>Sawtooth: all harmonics.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Square</td><td>Square: odd harmonics only, hollow.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Pulse</td><td>Narrow pulse, thin and nasal.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>green</td><td>Double sine</td><td>Two arches per cycle, the octave comes forward.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Saw-pulse</td><td>Half saw, half pulse.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>red</td><td>Resonance saw</td><td>A resonance up to 16 times the note, dying away under a saw: sounds like a filter with high resonance.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blue</td><td>Resonance triangle</td><td>The same resonance under a triangle, softer.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violet</td><td>Resonance trapezoid</td><td>Under a trapezoid, the fullest.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Unbent, every wave but the resonances is a pure cosine. Both LEDs light up with the level envelope and dim with it, never fully off.</p>
+
+    <h3 id="anschlagen">Striking a note</h3>
+    <dl class="tools">
+      <dt>With a gate</dt>
+      <dd>A rising edge at GATE restarts both envelopes; when the gate falls, their release begins.</dd>
+      <dt>With V/OCT only</dt>
+      <dd>While the gate is on, or no cable is in GATE, every <b>jump</b> at V/OCT of at least half a semitone also strikes, as with the <a href="physical.html#anschlagen">Physical firmware</a>. A sequencer without a gate thus plays every new note; a glide only moves the pitch.</dd>
+      <dt>Drone</dt>
+      <dd>Without a gate cable the note holds after the first strike. DCW, MIX and an LFO at the DCW jack then shape the sound.</dd>
+    </dl>
+
+    <h2 id="buchsen">Jacks</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jack</th><th>Range</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 to +7 V</td><td>Pitch, 1 V per octave, 0 V = C2. A jump strikes (see above).</td></tr>
+          <tr><td>GATE</td><td>from about 1.4 V</td><td>Rising: strike. Falling: release. Permanently on without a cable.</td></tr>
+          <tr><td>LINIE 2</td><td>±5 V</td><td>1 V per octave on line 2's interval: a second sequencer plays the second line.</td></tr>
+          <tr><td>HÜLLK.</td><td>±5 V</td><td>Shifts the depth of the DCW envelope, through the POS CV attenuator.</td></tr>
+          <tr><td>MIX</td><td>±5 V</td><td>Added to the mix, 5 V from the middle to the end stop.</td></tr>
+          <tr><td>DCW</td><td>±5 V</td><td>Bends both lines, through the DCW CV attenuator, 5 V over the whole travel. With an LFO this becomes a filter sweep.</td></tr>
+          <tr><td>L (output)</td><td>±5 V</td><td>Left channel.</td></tr>
+          <tr><td>R (output)</td><td>±5 V</td><td>Right channel. For mono set the width to 0 and the chorus off, then both are the same.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The outputs are at module level. They are far too loud for headphones; always go through a mixer or an output module.</p>
+
+    <h2 id="patches">First patches</h2>
+    <dl class="tools">
+      <dt>Bass</dt>
+      <dd>Saw on line 1, MIX fully left, DCW left, HÜLLK. half, DECAY short. Gate and V/OCT from the sequencer: every note opens and closes like a filter.</dd>
+      <dt>Resonance sweep</dt>
+      <dd>Resonance saw on line 1, a slow LFO at the DCW jack, DCW CV halfway right. The resonance wanders through the harmonics.</dd>
+      <dt>Wide pad</dt>
+      <dd>Saw and square (the default), LINIE 2 on the octave, MIX in the middle, CHORUS half, long attacks in the WELLE 1 layer. L and R separately into the mixer.</dd>
+      <dt>Bell</dt>
+      <dd>Hold WELLE 2 and set HÜLLK. to ring, LINIE 2 to an odd interval (a sixth and a few cents), a long level decay.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Front panel</h2>
+    <p>The same three variants as for the wavetable module (<a href="bauanleitung.html#frontplatte">build guide, step 2</a>), with this firmware's lettering: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd.stl">raised lettering</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd-graviert.stl">engraved lettering</a> and <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd-einlage.3mf">inlaid lettering (3MF, two colours)</a>. For the raised print start with the panel's colour and change to the lettering's at 2.5 mm.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, written to address 0x0 as in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. It needs no tables; the first start takes no longer than any other. Going back works the same way, with <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> or <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>.</p>
+    <p class="note">Flashing erases the saved settings and the calibration. So calibrate again after flashing.</p>
+
+    <p class="stand">As of 31 October 2026. Source code and front panel are on <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> under the same <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> as the plugins: building one for yourself yes, selling only with permission.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="../impressum.html">Legal notice</a>
+        <a href="../datenschutz.html">Privacy</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../../modul/pd.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

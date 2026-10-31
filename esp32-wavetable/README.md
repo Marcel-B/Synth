@@ -6,7 +6,7 @@ Stand 2026-10-28. **Ein Modul ist gebaut und spielt** (bedrahtete Platinen v0.1,
 
 ![Frontplatte](hardware/frontplatte-vorschau.png)
 
-Mit einer zweiten Firmware spielt dasselbe Modul **Tonwerk Physical** (Physical Modeling, eigene Frontplatte): [Zweite Firmware](#zweite-firmware-tonwerk-physical).
+Mit anderen Firmwares spielt dasselbe Modul **Tonwerk Physical** (Physical Modeling, eigene Frontplatte): [Zweite Firmware](#zweite-firmware-tonwerk-physical), oder **Tonwerk PD** (Phase Distortion, eigene Frontplatte): [Dritte Firmware](#dritte-firmware-tonwerk-pd).
 
 Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren. Auf der Website: [Bedienung](https://tonwerk.studio/modul/) und [Bauanleitung mit Bildern](https://tonwerk.studio/modul/bauanleitung.html).
 
@@ -63,6 +63,31 @@ Dieselben Platinen spielen mit einer anderen Firmware **Tonwerk Physical** (Plug
 
 Buchsen: **V/OCT**, **GATE** wie oben; **HÄRTE**, **POS**, **KRAFT**, **DÄMPF.** (±5 V, je über den ganzen Weg ihres Reglers, POS und DÄMPF. über ihre Abschwächer); Ausgänge **ROH** (die Stimmen ohne Korpus, an der Stelle von OSC) und **KLANG** (mit Korpus, an der Stelle von VOICE). Ohne Korpus sind beide gleich.
 
+## Dritte Firmware: Tonwerk PD
+
+Eine dritte Firmware für dieselben Platinen: **Tonwerk PD** (Plugin in diesem Repo, `pd/src/`), Phase Distortion. Eine Kosinuswelle wird über eine gebogene Phase gelesen; je stärker die Biegung (DCW), desto mehr wird aus dem Sinus eine Säge, ein Rechteck, ein Puls oder eine Resonanz. Zwei **Linien** mit eigener Welle, eigener DCW- und Lautstärke-Hüllkurve, Ring- oder Rauschmodulation zwischen ihnen und der Chorus des Plugins, in Stereo an den beiden Ausgängen. Eine Stimme (das Plugin spielt mehrstimmig). Eine eigene Frontplatte gehört dazu.
+
+![Frontplatte PD](hardware/frontplatte-pd-vorschau.png)
+
+| Regler | Normal | WELLE 1 gehalten | WELLE 2 gehalten |
+|---|---|---|---|
+| TUNE | ±2 Oktaven in Halbtönen | Attack der DCW-Hüllkurve, 1 ms bis 2 s | Verstimmung von Linie 2, ±50 Cent (ab Werk +7) |
+| FINE | ±50 Cent | Sustain der DCW-Hüllkurve | Linien: 1, 2, 1 + 1′ (Linie 1 noch einmal mit der Verstimmung von Linie 2), 1 + 2′ (ab Werk) |
+| LINIE 2 (TABLE) | Intervall von Linie 2: Einklang bis zwei Oktaven in Halbtönen, Mitte eine Oktave | Zweite Welle von Linie 1: aus oder eine der acht, dann wechseln die Wellen von Periode zu Periode | Zweite Welle von Linie 2 |
+| HÜLLK. (POSITION) | Wie weit die DCW-Hüllkurve beide Linien biegt | Keytracking: über C3 biegen hohe Töne weniger | Modulation: aus, Ring (Linie 2 mal Linie 1), Rauschen |
+| MIX (WARP) | Linie 1 gegen Linie 2, Mitte beide gleich | Attack der Lautstärke, 1 ms bis 2 s | Stereobreite der beiden Linien (ab Werk 50 %) |
+| DCW (CUTOFF) | Biegung ohne Hüllkurve: links reiner Kosinus, rechts ganz gebogen | Sustain der Lautstärke | Rate des Chorus, 0,1 bis 5 Hz (ab Werk 0,6 Hz) |
+| CHORUS (RESO) | Mix des Chorus | Release der Lautstärke, 5 ms bis 5 s | Tiefe des Chorus |
+| DECAY | Decay der DCW-Hüllkurve, 5 ms bis 5 s | Decay der Lautstärke, 5 ms bis 5 s | Release der DCW-Hüllkurve, 5 ms bis 5 s |
+| POS CV | Abschwächer für die HÜLLK.-CV, Mitte = 0 | – | – |
+| DCW CV (CUT CV) | Abschwächer für die DCW-CV, Mitte = 0 | – | – |
+
+- **WELLE 1 kurz drücken** (die WARP-Taste): die Welle von Linie 1, **WELLE 2** (die FILTER-Taste) die von Linie 2, je Säge, Rechteck, Puls, Doppelsinus, Säge-Puls, Resonanz Säge, Resonanz Dreieck, Resonanz Trapez. LED 1 und 2 zeigen sie: gelb, cyan, magenta, grün, orange, rot, blau, violett. Ab Werk Säge und Rechteck.
+- Halten, Pick-up, Speichern und Kalibrieren wie oben. Beide LEDs leuchten mit der Hüllkurve auf und werden mit ihr dunkler, nie ganz aus.
+- **Anschlagen:** Eine steigende Flanke an GATE startet beide Hüllkurven neu, fällt das Gate, beginnt ihr Release. Ist das Gate an (oder steckt kein Kabel), schlägt auch ein **Sprung an V/OCT** um mindestens einen halben Halbton an, wie bei Physical; ein Glide zieht nur die Tonhöhe. Ohne Gate-Kabel hält der Ton, so spielt das Modul auch als Drone.
+
+Buchsen: **V/OCT**, **GATE** wie oben; **LINIE 2** (1 V pro Oktave auf das Intervall von Linie 2), **HÜLLK.** (über POS CV), **MIX** (±5 V von der Mitte bis zum Anschlag), **DCW** (über DCW CV, ±5 V über den ganzen Weg); Ausgänge **L** und **R** (an der Stelle von OSC und VOICE), die beiden Linien um die Breite auseinander und durch den Chorus. Für Mono die Breite auf 0 und den Chorus aus, dann sind beide gleich.
+
 ## Hardware
 
 Schaltplan-Skizze: [hardware/schaltplan.pdf](hardware/schaltplan.pdf) (auch als SVG und PNG). Die Stufen:
@@ -90,7 +115,8 @@ Im Eurorack ist die Frontplatte das Gehäuse; das Modul hängt mit vier M3-Schra
   - Der erste Druck (0,6 mm tief, Front nach unten, Schrift 2,3–2,5 mm) war schlecht lesbar: Nach unten gedruckte Gravuren überbrückt der Drucker, und die Striche waren zu dünn. Jetzt ist die Schrift 2,6–4 mm groß, fetter und weiter gesperrt.
 - Drehknöpfe zum Drucken, schwarz mit gelbem Zeiger und Ring: [hardware/knopf.3mf](hardware/knopf.3mf) (zehn Stück, Teile „Körper“ und „Zeiger“, Deckel nach unten; der Zeiger ist die erste Schicht) oder einzeln [hardware/knopf-koerper.stl](hardware/knopf-koerper.stl) und [hardware/knopf-zeiger.stl](hardware/knopf-zeiger.stl). 13,4 mm Durchmesser; unten eine Aussparung über Mutter und Scheibe, damit der Knopf auch auf der kurzen Achse hinter der gedruckten Front fest sitzt. Die Bohrung ist 6,15 mm: beim ersten Aufbau waren 5,9 und 6,0 zu eng und 6,1 etwas zu stramm. Auf einem anderen Drucker erst [hardware/knopf-probe.stl](hardware/knopf-probe.stl) drucken (Bohrungen 6,05, 6,15 und 6,25 mm, 1–3 Striche) und die strammste passende als `shaft_d` in [hardware/knopf.scad](hardware/knopf.scad) eintragen; dort auch D-Achse, Achslänge und Mutter.
 - **Physical-Front** (für die [zweite Firmware](#zweite-firmware-tonwerk-physical)): dieselben drei Varianten mit ihrer Beschriftung, [hardware/frontplatte-physical.stl](hardware/frontplatte-physical.stl), [hardware/frontplatte-physical-graviert.stl](hardware/frontplatte-physical-graviert.stl) und [hardware/frontplatte-physical-einlage.3mf](hardware/frontplatte-physical-einlage.3mf) (Teile einzeln: `frontplatte-physical-einlage-platte.stl`, `-schrift.stl`). Gedacht gelbe Platte, schwarze Schrift. Neu bauen mit `-D 'engine="physical"'` in OpenSCAD.
-- [hardware/frontplatte.scad](hardware/frontplatte.scad): die Quelle (OpenSCAD), alle Positionen und Lochmaße oben als Variablen; `engine` wählt die Beschriftung (`"wavetable"` oder `"physical"`).
+- **PD-Front** (für die [dritte Firmware](#dritte-firmware-tonwerk-pd)): ebenso [hardware/frontplatte-pd.stl](hardware/frontplatte-pd.stl), [hardware/frontplatte-pd-graviert.stl](hardware/frontplatte-pd-graviert.stl) und [hardware/frontplatte-pd-einlage.3mf](hardware/frontplatte-pd-einlage.3mf) (`frontplatte-pd-einlage-platte.stl`, `-schrift.stl`), neu bauen mit `-D 'engine="pd"'`. Die Vorschau zeigt sie gelb mit schwarzer Schrift wie die Physical-Front; die Farben sind frei.
+- [hardware/frontplatte.scad](hardware/frontplatte.scad): die Quelle (OpenSCAD), alle Positionen und Lochmaße oben als Variablen; `engine` wählt die Beschriftung (`"wavetable"`, `"physical"` oder `"pd"`).
 - [hardware/frontplatte-bohrplan.svg](hardware/frontplatte-bohrplan.svg): Umriss und Löcher 1:1, falls die Front lieber aus 2-mm-Alu gebohrt werden soll.
 
 Lochmaße: Potis 7,2 mm (Alpha 9 mm, M7), Buchsen 6,2 mm (Thonkiconn), LEDs 5,1 mm, Taster 4,0 mm. Vor dem Bestellen der Platine einmal drucken und Potis und Buchsen durchstecken.
@@ -104,9 +130,11 @@ firmware/
   main/dsp/Tables.*   die zehn Tabellen des Plugins, als int16 mit 9 Bandbegrenzungs-Stufen (256 Obertöne)
   main/dsp/Voice.h    die Stimme: 2 Oszillatoren mit Unisono (bis 4) und Warp, Sub, Filter, ADSR
   main/dsp/PhysicalVoice.h   Tonwerk Physical: Erreger, Resonatoren, Filter, Korpus, bis 4 Stimmen
-  main/app/Panel.h    Bedienlogik beider Firmwares ohne Hardware: Ebenen, Pick-up, Tasten, Kalibrierung
+  main/dsp/PdVoice.h  Tonwerk PD: zwei Linien mit DCW und DCA, Ring, Rauschen, Chorus
+  main/app/Panel.h    Bedienlogik aller Firmwares ohne Hardware: Ebenen, Pick-up, Tasten, Kalibrierung
   main/app/Module.h   Regler, Modi und LEDs der Wavetable-Firmware
   main/app/PhysicalModule.h  dasselbe für Tonwerk Physical
+  main/app/PdModule.h        dasselbe für Tonwerk PD
   main/hw/            Treiber: I2S, MCP3208 (SPI), ADC, WS2812 (RMT), NVS, Flash-Kopie der Tabellen
   main/main.cpp       Audio-Task auf Kern 1, Steuer-Task (2 ms) auf Kern 0
   host/               Test auf dem Rechner, gegen die Stimmen der Plugins
@@ -134,9 +162,15 @@ Tonwerk Physical statt Wavetable (keine Tabellen, der erste Start dauert nicht l
 idf.py -B build-physical -DTONWERK_PHYSICAL=1 build flash monitor
 ```
 
-Fertig gebaut: [firmware/modul-physical/tonwerk-physical.bin](firmware/modul-physical/tonwerk-physical.bin), ebenfalls für Adresse 0x0. Zurück zur anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
+Fertig gebaut: [firmware/modul-physical/tonwerk-physical.bin](firmware/modul-physical/tonwerk-physical.bin), ebenfalls für Adresse 0x0. Tonwerk PD ebenso:
 
-Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle drei Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: physical]` (oder `modul`, `bench`), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
+```sh
+idf.py -B build-pd -DTONWERK_PD=1 build flash monitor
+```
+
+Fertig gebaut: [firmware/modul-pd/tonwerk-pd.bin](firmware/modul-pd/tonwerk-pd.bin). Zurück zu einer anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
+
+Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle vier Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: pd]` (oder `physical`, `modul`, `bench`, auch mehrere), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
 
 Oder mit PlatformIO: `pio run -t upload -t monitor` im Ordner `firmware`. Der serielle Monitor zeigt alle 5 s die Last des Audio-Kerns.
 
@@ -157,7 +191,7 @@ Test auf dem Rechner (nimmt Tonwerk Wavetable aus diesem Repo):
 ```sh
 cd firmware/host
 make test        # Vergleich mit den Plugins, Stimmung, Bedienlogik, Rechenzeit
-make examples    # schreibt auch Hörproben nach hoerproben/ und hoerproben-physical/
+make examples    # schreibt auch Hörproben nach hoerproben/, hoerproben-physical/ und hoerproben-pd/
 ```
 
 ## Platinen (KiCad)
@@ -208,9 +242,10 @@ Aufbau, was anders ist:
 - **Firmware:** baut mit ESP-IDF 5.3.1 für den ESP32-S3 ohne Warnungen (348 KB). Im Emulator (QEMU) ließ sie sich nicht starten, weil der keinen PSRAM nachbildet.
 - **Auf Hardware:** Die Steckbrett-Test-Firmware ließ sich am 17.10.2026 auf ein ESP32-S3-N16R8-DevKit flashen (Prüfsumme bestätigt); Ton kam noch keiner, das PCM5102-Modul hatte da noch keine Versorgung an VIN. Am 27.10.2026 lief der erste Aufbau der bedrahteten Platinen (v0.1): Versorgung gemessen (+11,8 V, −12,1 V, 4,87 V, Referenz 3,01 V), Modul-Firmware geflasht, es spielt am VOICE-Ausgang und die Regler wirken. Dabei fiel der falsche LED-Bestückungsdruck auf (siehe Bedrahtete Variante).
 - **Physical-Firmware, auf dem Rechner:** Der Host-Test spielt alle 28 Paare aus Erreger und Resonator durch die Stimme des Plugins (`tonwerkphys::Voice`) und durch die Portierung: Abweichung höchstens −41 dB, Pegel je 50 ms auf 0,5 dB gleich. Stimmung 0–5 V auf 0,04 Cent wie das Plugin; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide, Stimmenzahl, Korpus nur an KLANG, alle Paare an den Extremen ohne Ausreißer, Spitzenpegel ab Werk unter Vollaussteuerung. Baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen (Programm 323 KB). Vier Stimmen brauchen auf dem Rechner etwa 1 % Echtzeit; auf dem ESP32 schätze ich 10–30 % eines Kerns. **Auf dem ESP32 ist sie noch nie gelaufen**, auch die Frontplatte ist noch nicht gedruckt.
+- **PD-Firmware, auf dem Rechner:** Der Host-Test spielt alle acht Wellen auf drei Tönen und zwei Biegungen, alle Arten der Linien, Ring und Rauschen und die wechselnden Wellen durch die Engine des Plugins (`tonwerkpd`) und durch die Portierung: Abweichung höchstens −56 dB, der Chorus −73 dB. Stimmung 0–5 V auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide; alle Wellen ganz gebogen mit beiden Linien und Chorus unter Vollaussteuerung. Auf dem Rechner 0,3 % Echtzeit. Baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen (Image 401 KB). **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
 - **Nicht getestet:** alles andere auf echter Hardware: CV-Eingänge, V/Oct-Kalibrierung, Rechenlast, die übrigen Modi im Einzelnen. Die Last schätze ich auf 10–25 % eines Kerns für den schwersten Fall (2 × 4 Unisono, FM, Sub, LP24 mit Drive); auf dem Rechner braucht er 1 % Echtzeit.
 
-Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B. Von der Physical-Firmware acht Paare am KLANG-Ausgang (gezupfte Saite, auch steif wie ein Klavier, geschlagener Stab, Glocke und Fell, gestrichene Saite, geblasenes Rohr, gestrichene Schale).
+Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B. Von der Physical-Firmware acht Paare am KLANG-Ausgang (gezupfte Saite, auch steif wie ein Klavier, geschlagener Stab, Glocke und Fell, gestrichene Saite, geblasenes Rohr, gestrichene Schale). Von der PD-Firmware sechs in Stereo (Säge-Bass, Resonanz-Sweep, zwei Linien mit Chorus, Ring-Glocke, Rauschen als Perkussion, Puls-Fläche).
 
 ## Nächste Schritte
 
@@ -221,4 +256,4 @@ Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmwa
 
 Ideen für später: USB-MIDI über die zweite USB-Buchse des S3 (GPIO19/20 sind frei gehalten), die Presets des Plugins als Startpunkte, ein interner LFO auf einem der drei freien MCP3208-Kanäle als Rate-CV.
 
-Felucca-Code ist hier nicht enthalten (GPL); alles stammt aus Tonwerk Wavetable und Tonwerk Physical und ist neu geschrieben.
+Felucca-Code ist hier nicht enthalten (GPL); alles stammt aus Tonwerk Wavetable, Tonwerk Physical und Tonwerk PD und ist neu geschrieben.
