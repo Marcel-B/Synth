@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Additiv Modul · Bedienung</title>
+  <meta name="description" content="Die fünfte Firmware des Eurorack-Moduls: Tonwerk Additiv, 64 Sinus-Teiltöne aus zwei gemorphten Spektren mit Neigung, Spreizung, Kamm, Vokalen, Filter und eigener Hüllkurve je Teilton, in Stereo auf denselben Platinen. Regler, Tasten, Buchsen, LEDs und Frontplatte.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/additiv.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/additiv.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/additiv.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/additiv.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="granular.html" class="optional">Granular</a>
+        <a href="#bedienung" class="optional">Additiv</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../en/modul/additiv.html" hreflang="en" lang="en" title="English">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Additiv als Eurorack-Modul</h1>
+    <p class="lead-text">Eine fünfte Firmware für dieselben Platinen wie das <a href="./">Wavetable-Modul</a>: die Klangerzeugung des Plugins <a href="../#instrumente">Tonwerk Additiv</a>. Der Klang entsteht aus bis zu <b>64 Sinus-Teiltönen</b>, deren Stärke und Lage das Modul ständig neu setzt. Morph, Neigung und Spreizung über CV machen aus einer Säge eine Orgel, eine Glocke oder einen Vokal, ohne dass je etwas zurückfaltet.</p>
+
+    <h2 id="ueberblick">Überblick</h2>
+    <figure class="side">
+      <a href="img/frontplatte-additiv-vorschau.png"><img src="img/frontplatte-additiv-vorschau.png" alt="Vorschau der Additiv-Frontplatte: 14 TE, gelb mit schwarzer Schrift" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>Derselbe Klang wie das Plugin</b>: das Modul rechnet die Teiltöne wie das Plugin. Ein Test auf dem Rechner vergleicht jedes Spektrum und jede Formung mit dem Plugin.</li>
+      <li><b>Zwölf Spektren</b>: Sinus, Säge, Rechteck, Dreieck, Puls, Orgel, Hohl, Hell, Oktaven, Glas, Primzahlen, Zufall. Zwei davon (A und B) blendet MORPH ineinander.</li>
+      <li><b>Formung</b>: Anzahl der Teiltöne, Neigung, gerade gegen ungerade, Spreizung, Schwebung, ein Kamm, drei Formanten eines Vokals und ein Filter. Alles wirkt als Pegel je Teilton, darum kann der Filter weder pfeifen noch zurückfalten.</li>
+      <li><b>Hüllkurve je Teilton</b>: die hohen Teiltöne kommen später und klingen früher ab, wie bei einer gezupften Saite oder einer Glocke.</li>
+      <li><b>Stereo</b>: gerade und ungerade Teiltöne nach links und rechts, die Ausgänge sind <b>L</b> und <b>R</b>.</li>
+      <li><b>Eine Stimme</b>: V/OCT, GATE und CV für Morph, Anzahl, Neigung und Spreizung.</li>
+      <li>Eine eigene <a href="#frontplatte">Frontplatte</a>; die Vorschau zeigt sie gelb mit schwarzer Schrift, die Farben sind frei.</li>
+    </ul>
+    <p class="note">Diese Firmware ist auf dem Rechner getestet, auf einem ESP32 ist sie noch nie gelaufen. Mit allen 64 Teiltönen und jeder Formung schätze ich 30 bis 50 % eines Kerns.</p>
+
+    <h2 id="bedienung">Bedienung</h2>
+    <p>Die Front ist dieselbe wie beim Wavetable-Modul, nur die Beschriftung ist anders. Die WARP-Taste heißt hier <b>KLANG A</b>, die FILTER-Taste <b>KLANG B</b>. Ebenen, Pick-up, Halten gegen kurzes Drücken, Speichern und <a href="./#kalibrieren">Kalibrieren</a> funktionieren genauso wie dort beschrieben.</p>
+
+    <h3 id="regler">Alle Regler</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Regler</th><th>Normal</th><th>KLANG A gehalten</th><th>KLANG B gehalten</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Stimmung ±2 Oktaven in Halbtönen</td><td>Attack, 1 ms bis 10 s</td><td>Filter: aus, Tiefpass, Hochpass, Bandpass, Kerbe (ab Werk aus)</td></tr>
+          <tr><td>FINE</td><td>Feinstimmung ±50 Cent</td><td>Decay, 5 ms bis 10 s</td><td>Cutoff, 20 Hz bis 20 kHz</td></tr>
+          <tr><td>MORPH</td><td>Von Spektrum A (links) nach Spektrum B (rechts)</td><td>Sustain</td><td>Resonanz</td></tr>
+          <tr><td>OBERTÖNE</td><td>Wie viele Teiltöne klingen, 1 bis 64; der erste Teil des Wegs gilt den ersten wenigen</td><td>Release, 5 ms bis 10 s</td><td>Keytracking des Filters</td></tr>
+          <tr><td>NEIGUNG</td><td>±12 dB pro Oktave: rechts heller, links dunkler. Die Lautstärke bleibt dabei gleich.</td><td>Gerade gegen ungerade: rechts nur die ungeraden Teiltöne (hohl), links mehr die geraden</td><td>Tiefe des Kamms</td></tr>
+          <tr><td>SPREIZ.</td><td>Spreizung: in der Mitte harmonisch, rechts rücken die Teiltöne nach oben wie bei einer steifen Saite oder Glocke, links nach unten</td><td>Schwebung: jeder Teilton bis 50 Cent verstimmt, jeder in seine Richtung</td><td>Abstand des Kamms, alle 2 bis 16 Teiltöne</td></tr>
+          <tr><td>ABKLING.</td><td>Wie schnell die Teiltöne abklingen, 50 ms bis 20 s, die hohen früher. Ganz rechts klingen sie nie ab.</td><td>Einschwingen: wie spät die hohen Teiltöne kommen, links sofort, bis 5 s</td><td>Verschiebung des Kamms</td></tr>
+          <tr><td>VOKAL</td><td>Links aus, dann blenden die Formanten auf A ein und wandern über E, I und O bis U</td><td>Breite im Stereobild (ab Werk 50 %)</td><td>Formanten ±12 Halbtöne verschoben: ein kleinerer oder größerer Rachen</td></tr>
+          <tr><td>OBT CV</td><td>Abschwächer für die OBERT.-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>Halten: bis wohin die Teiltöne abklingen (ab Werk ganz aus)</td><td>Phasen: links alle gleich (harter Anschlag), rechts zufällig (ab Werk)</td></tr>
+          <tr><td>SPR CV</td><td>Abschwächer für die SPREIZ.-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>Dämpfung: wie viel früher die hohen Teiltöne abklingen (ab Werk 50 %)</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="spektren">Spektren (KLANG A und KLANG B kurz drücken)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED</th><th>Spektrum</th><th>Wie es klingt</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffffff"></span>weiß</td><td>Sinus</td><td>Nur der Grundton.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Säge</td><td>Alle Teiltöne, jeder um seine Nummer leiser. Ab Werk Spektrum A.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Rechteck</td><td>Nur die ungeraden Teiltöne, hohl. Ab Werk Spektrum B.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>Dreieck</td><td>Ungerade Teiltöne, schnell leiser: weich.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Puls</td><td>Ein Puls von einem Viertel Breite: jeder vierte Teilton fehlt.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Orgel</td><td>Die ersten acht Teiltöne wie gezogene Zugriegel.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blau</td><td>Hohl</td><td>Starke ungerade, schwache gerade Teiltöne, wie eine Klarinette.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffc878"></span>hellorange</td><td>Hell</td><td>Alle Teiltöne, langsam leiser: heller als die Säge.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violett</td><td>Oktaven</td><td>Nur Grundton und Oktaven.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#78ffdc"></span>türkis</td><td>Glas</td><td>Nur die Teiltöne 1, 4, 9, 16 …: gläsern, mit Spreizung eine Glocke.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>Primzahlen</td><td>Grundton und die Teiltöne mit Primzahl-Nummer.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#787878"></span>grau</td><td>Zufall</td><td>Jeder Teilton zufällig stark, immer derselbe Zufall.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><b>KLANG A</b> kurz drücken schaltet Spektrum A weiter, LED 1 zeigt es; <b>KLANG B</b> dasselbe für Spektrum B an LED 2. Alle Spektren sind gleich laut. Beide LEDs leuchten mit der Hüllkurve auf und werden mit ihr dunkler, nie ganz aus.</p>
+
+    <h3 id="anschlagen">Anschlagen und Tonhöhe</h3>
+    <dl class="tools">
+      <dt>Mit Gate</dt>
+      <dd>Eine steigende Flanke an GATE startet die Hüllkurve und die Hüllkurven der Teiltöne; fällt das Gate, beginnt das Release.</dd>
+      <dt>Nur mit V/OCT</dt>
+      <dd>Ist das Gate an oder steckt kein Kabel in GATE, tut ein <b>Sprung</b> an V/OCT um mindestens einen halben Halbton dasselbe, wie bei der <a href="physical.html#anschlagen">Physical-Firmware</a>. Ein Glide zieht nur die Tonhöhe.</dd>
+      <dt>Gezupft oder gehalten</dt>
+      <dd>Steht ABKLING. nicht ganz rechts, klingt jeder Anschlag aus, auch bei gehaltenem Gate, die hohen Teiltöne zuerst. Ganz rechts hält der Ton, solange das Gate an ist.</dd>
+      <dt>Tonhöhe</dt>
+      <dd>0 V ist C2, 1 V pro Oktave. Teiltöne über 0,47 der Abtastrate fallen weg; hohe Töne haben darum weniger Teiltöne, aber nie Spiegelfrequenzen.</dd>
+    </dl>
+
+    <h2 id="buchsen">Buchsen</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Buchse</th><th>Bereich</th><th>Was sie tut</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 bis +7 V</td><td>Tonhöhe, 1 V pro Oktave, 0 V = C2. Ein Sprung schlägt an (siehe oben).</td></tr>
+          <tr><td>GATE</td><td>ab etwa 1,4 V</td><td>Steigend: Anschlag. Fallend: Release. Ohne Kabel dauerhaft an.</td></tr>
+          <tr><td>MORPH</td><td>±5 V</td><td>Kommt zum Morph dazu, 5 V über den ganzen Weg des Reglers.</td></tr>
+          <tr><td>OBERT.</td><td>±5 V</td><td>Verschiebt die Anzahl der Teiltöne, über den Abschwächer OBT CV.</td></tr>
+          <tr><td>NEIG.</td><td>±5 V</td><td>Kommt zur Neigung dazu, 5 V über den ganzen Weg; zusammen mit dem Regler bis ±24 dB pro Oktave.</td></tr>
+          <tr><td>SPREIZ.</td><td>±5 V</td><td>Verschiebt die Spreizung, über den Abschwächer SPR CV.</td></tr>
+          <tr><td>L (Ausgang)</td><td>±5 V</td><td>Linker Kanal.</td></tr>
+          <tr><td>R (Ausgang)</td><td>±5 V</td><td>Rechter Kanal. Für Mono die Breite auf 0, dann sind beide gleich.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Die Ausgänge haben Modulpegel. Für Kopfhörer sind sie viel zu laut, immer über einen Mixer oder ein Ausgangsmodul gehen. Mit viel Resonanz oder Vokal kann ein Spektrum über Vollaussteuerung gehen; der Ausgang rundet das weich ab.</p>
+
+    <h2 id="patches">Erste Patches</h2>
+    <dl class="tools">
+      <dt>Morph-Fläche</dt>
+      <dd>Orgel als A, Hohl als B, kein Gate-Kabel, ein langsamer LFO an MORPH. Breite (KLANG A gehalten, VOKAL) ganz rechts.</dd>
+      <dt>Glocke</dt>
+      <dd>Hell oder Glas, SPREIZ. weit rechts, ABKLING. auf etwa zwei Sekunden, Gate vom Sequencer; in der KLANG-A-Ebene etwas Schwebung und Sustain auf 0.</dd>
+      <dt>Sprechender Bass</dt>
+      <dd>Säge, ABKLING. ganz rechts, Gate und V/OCT vom Sequencer, VOKAL von Hand zwischen A und U drehen und ein LFO an NEIG.</dd>
+      <dt>Teiltöne zählen</dt>
+      <dd>Säge, Phasen gleich (KLANG B gehalten, OBT CV ganz links), OBERTÖNE langsam von links nach rechts, oder ein Hüllkurven-CV an OBERT.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Frontplatte</h2>
+    <p>Dieselben drei Varianten wie beim Wavetable-Modul (<a href="bauanleitung.html#frontplatte">Bauanleitung, Schritt 2</a>), mit der Beschriftung dieser Firmware: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv.stl">Schrift erhaben</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv-graviert.stl">Schrift vertieft</a> und <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a>. Beim erhabenen Druck mit der Farbe der Platte beginnen und bei 2,5 mm auf die der Schrift wechseln.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>, geschrieben an Adresse 0x0 wie in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Sie braucht keine Tabellen, der erste Start ist so kurz wie jeder andere.</p>
+    <p class="note">Flashen löscht die gespeicherten Einstellungen und die Kalibrierung. Darum nach dem Flashen neu kalibrieren.</p>
+
+    <p class="stand">Stand 31.10.2026. Quelltext und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../en/modul/additiv.html" hreflang="en" lang="en">English</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

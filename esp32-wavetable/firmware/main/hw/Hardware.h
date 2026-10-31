@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../app/Module.h"
+#include "../app/Panel.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -32,6 +32,9 @@ void save(const char* key, const void* data, std::size_t size);
 void* allocateTables(std::size_t bytes);
 /** Reads the tables' copy from the flash partition "tables"; false when it is missing or of another version. */
 bool loadTables(void* block, std::size_t bytes, uint32_t version);
+/** Reads `bytes` from the partition "tables" when its header says it holds `magic` at `version`: another firmware's
+ *  data flashed there with its image (Tonwerk Granular's sources). */
+bool loadBlock(void* block, std::size_t bytes, uint32_t magic, uint32_t version);
 /** Keeps the computed tables in the flash partition "tables" (takes some 20 s, once after flashing). */
 void storeTables(const void* block, std::size_t bytes, uint32_t version);
 } // namespace hw

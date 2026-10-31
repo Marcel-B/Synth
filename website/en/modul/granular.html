@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Granular module · Operation</title>
+  <meta name="description" content="The Eurorack module's fourth firmware: Tonwerk Granular, grain clouds from nine sound sources with windows, pitch scatter, filter and LFO in stereo on the same boards. Knobs, buttons, jacks, LEDs and front panel.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/modul/granular.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/granular.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/granular.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/granular.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Module navigation">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="#bedienung" class="optional">Granular</a>
+        <a href="additiv.html" class="optional">Additiv</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../../modul/granular.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Granular as a Eurorack module</h1>
+    <p class="lead-text">A fourth firmware for the same boards as the <a href="./">wavetable module</a>: the sound engine of the plugin <a href="../#instrumente">Tonwerk Granular</a>. The module keeps cutting short <b>grains</b> from a sound source, each with its own envelope, pitch, direction and place in the stereo field, up to 40 at once. A choir turns into clouds, glass into sparks and a rhythm into a stutter.</p>
+
+    <h2 id="ueberblick">Overview</h2>
+    <figure class="side">
+      <a href="../../modul/img/frontplatte-granular-vorschau.png"><img src="../../modul/img/frontplatte-granular-vorschau.png" alt="Preview of the Granular front panel: 14 HP, yellow with black lettering" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>The same grain cloud as the plugin</b>: when a grain starts, how long it lasts and how high it sounds is computed exactly as in the plugin. A test on the computer compares every source, every window, the grids, the filters and the LFO with the plugin.</li>
+      <li><b>Nine sources</b> from the plugin, 4 seconds each: choir, glass, strings, plucks, organ, wind, metal, sine, rhythm. They are flashed into the module with the firmware; it does not load files of your own.</li>
+      <li><b>Stereo</b>: the grains spread across the stereo field, the outputs are <b>L</b> and <b>R</b>.</li>
+      <li><b>One voice</b>: V/OCT, GATE and CV for grain size, position, density and spray.</li>
+      <li>A <a href="#frontplatte">front panel</a> of its own; the preview shows it yellow with black lettering, the colours are up to you.</li>
+    </ul>
+    <p class="note">This firmware is tested on the computer; it has never run on an ESP32. Every grain reads from the PSRAM; with 40 grains I estimate up to half a core.</p>
+
+    <h2 id="bedienung">Operation</h2>
+    <p>The front is the same as on the wavetable module, only the lettering differs. The WARP button is called <b>QUELLE</b> (source) here, the FILTER button <b>FENSTER</b> (window). Layers, pick-up, holding versus tapping, saving and <a href="./#kalibrieren">calibration</a> work exactly as described there.</p>
+
+    <h3 id="regler">All knobs</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Knob</th><th>Normal</th><th>QUELLE held</th><th>FENSTER held</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Tuning ±2 octaves in semitones</td><td>Attack, 1 ms to 10 s</td><td>Filter: off, lowpass 12, lowpass 24, highpass 12, bandpass (default off)</td></tr>
+          <tr><td>FINE</td><td>Fine tuning ±50 cents</td><td>Decay, 5 ms to 10 s</td><td>Cutoff, 20 Hz to 20 kHz</td></tr>
+          <tr><td>GRÖSSE</td><td>Length of a grain, 5 ms to 1 s</td><td>Sustain</td><td>Resonance</td></tr>
+          <tr><td>POSITION</td><td>Where in the source the grains come from, from start to end</td><td>Release, 5 ms to 10 s</td><td>Key tracking of the filter</td></tr>
+          <tr><td>DICHTE</td><td>Grains per second, 1 to 200</td><td>Randomness: how irregularly the grains come</td><td>LFO rate, 0.05 to 20 Hz</td></tr>
+          <tr><td>STREUUNG</td><td>How far around the position a grain may start, up to the whole source</td><td>Reverse: the share of grains that run backwards</td><td>LFO target: none, position, spray, size, density, pitch, cutoff</td></tr>
+          <tr><td>SCAN</td><td>The position moves through the source. In the middle it stands still, to the right it runs forwards, to the left backwards, at the ends twice as fast as the source itself.</td><td>Grid of the pitch scatter: free, octaves, fifths</td><td>LFO amount: middle 0, left inverted</td></tr>
+          <tr><td>TONSTREU</td><td>How far a grain's pitch may stray, up to two octaves; the first part of the travel covers the first semitones</td><td>Stereo width (default 60 %)</td><td>LFO shape: sine, triangle, ramp down, ramp up, square, random</td></tr>
+          <tr><td>POS CV</td><td>Attenuator for the POS jack: middle 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+          <tr><td>STR CV</td><td>Attenuator for the STREU. jack: middle 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="quellen">Sources (tap QUELLE, LED 1)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 1</th><th>Source</th><th>What it holds</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>yellow</td><td>Choir</td><td>A sung a e i o u, three voices with vibrato. Default.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Glass</td><td>Struck glass every half second, on the note and its octaves.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Strings</td><td>Seven detuned saws, bowed in slowly, with a breathing lowpass.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>green</td><td>Plucks</td><td>Eight plucked strings.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Organ</td><td>Drawbar organ, with a fast rotor from halfway on.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blue</td><td>Wind</td><td>Noise through a wandering band, over a rumble.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violet</td><td>Metal</td><td>FM at inharmonic ratios, the index swelling up and back.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffffff"></span>white</td><td>Sine</td><td>A pure sine: the colour comes from the grains alone.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>red</td><td>Rhythm</td><td>Two bars of sixteenths at 120 BPM: kick, hats and chord stabs.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>All sources sit on C4 and are equally loud. Tapping <b>FENSTER</b> picks the shape of a grain, LED 2 shows it: <b>bell</b> (yellow, soft, default), <b>flat</b> (cyan, short fades, the grain sounds almost whole) or <b>struck</b> (magenta, a steep start, then dying away). Both LEDs light up with the envelope and dim with it, never fully off.</p>
+
+    <h3 id="anschlagen">Striking and pitch</h3>
+    <dl class="tools">
+      <dt>With a gate</dt>
+      <dd>A rising edge at GATE starts the envelope and reads from the position again: a source that SCAN runs through starts over. When the gate falls, the release begins.</dd>
+      <dt>With V/OCT only</dt>
+      <dd>While the gate is on, or no cable is in GATE, a <b>jump</b> at V/OCT of at least half a semitone does the same, as with the <a href="physical.html#anschlagen">Physical firmware</a>. A glide only moves the pitch.</dd>
+      <dt>Cloud</dt>
+      <dd>Without a gate cable the cloud sounds all the time; POSITION, SCAN and an LFO at the POS jack move it.</dd>
+      <dt>Pitch</dt>
+      <dd>0 V plays the sources at their own pitch (C4), 1 V per octave. Every new grain takes the pitch present at V/OCT. A grain running faster than the source reads a copy filtered beforehand, so nothing folds back.</dd>
+    </dl>
+
+    <h2 id="buchsen">Jacks</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jack</th><th>Range</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 to +7 V</td><td>Pitch, 1 V per octave, 0 V = C4. A jump strikes (see above).</td></tr>
+          <tr><td>GATE</td><td>from about 1.4 V</td><td>Rising: strike. Falling: release. Permanently on without a cable.</td></tr>
+          <tr><td>GRÖSSE</td><td>±5 V</td><td>Added to the grain size, 5 V over the knob's whole travel.</td></tr>
+          <tr><td>POS</td><td>±5 V</td><td>Shifts the position, through the POS CV attenuator; past the end it carries on from the start.</td></tr>
+          <tr><td>DICHTE</td><td>±5 V</td><td>Added to the density, 5 V over the whole travel.</td></tr>
+          <tr><td>STREU.</td><td>±5 V</td><td>Shifts the spray, through the STR CV attenuator.</td></tr>
+          <tr><td>L (output)</td><td>±5 V</td><td>Left channel.</td></tr>
+          <tr><td>R (output)</td><td>±5 V</td><td>Right channel. For mono set the width to 0, then both are the same.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The outputs are at module level. They are far too loud for headphones; always go through a mixer or an output module.</p>
+
+    <h2 id="patches">First patches</h2>
+    <dl class="tools">
+      <dt>Choir cloud</dt>
+      <dd>Choir, no gate cable, GRÖSSE a little past the middle, DICHTE half, STREUUNG a third, SCAN slightly right. L and R into the mixer.</dd>
+      <dt>Glass sparks</dt>
+      <dd>Glass, FENSTER on struck, GRÖSSE small, STREUUNG fully right, TONSTREU fully right and the grid set to octaves in the QUELLE layer.</dd>
+      <dt>Stutter</dt>
+      <dd>Rhythm, flat window, DICHTE on a few grains per second, randomness (QUELLE held, DICHTE) at 0, a random CV at POS.</dd>
+      <dt>Melody</dt>
+      <dd>Plucks or strings, gate and V/OCT from the sequencer, SCAN right, in the QUELLE layer sustain at 0 and a short decay.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Front panel</h2>
+    <p>The same three variants as for the wavetable module (<a href="bauanleitung.html#frontplatte">build guide, step 2</a>), with this firmware's lettering: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular.stl">raised lettering</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular-graviert.stl">engraved lettering</a> and <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular-einlage.3mf">inlaid lettering (3MF, two colours)</a>. For the raised print start with the panel's colour and change to the lettering's at 2.5 mm.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, written to address 0x0 as in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. It carries its nine sources and is therefore 6.7 MB; writing it takes one to two minutes. The sources sit where the wavetable firmware keeps its tables: after flashing <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> again, it computes them once more at its first start.</p>
+    <p class="note">Flashing erases the saved settings and the calibration. So calibrate again after flashing. If both LEDs blink red, the sources are missing: write the whole file to 0x0 again.</p>
+
+    <p class="stand">As of 31 October 2026. Source code and front panel are on <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> under the same <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> as the plugins: building one for yourself yes, selling only with permission.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="../impressum.html">Legal notice</a>
+        <a href="../datenschutz.html">Privacy</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../../modul/granular.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

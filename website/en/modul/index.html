@@ -19,6 +19,10 @@
       <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
       <nav aria-label="Module navigation">
         <a href="#bedienung">Operation</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="granular.html" class="optional">Granular</a>
+        <a href="additiv.html" class="optional">Additiv</a>
         <a href="bauanleitung.html">Build guide</a>
         <a href="bauanleitung.html#downloads" class="optional">Downloads</a>
         <a href="../">Plugins</a>
@@ -51,6 +55,7 @@
       <li>Everything with ten knobs and two buttons; what does not fit on the front lies in two hidden layers under the buttons.</li>
       <li>14 HP, about 45 mm deep. Current estimated at about 110 mA on +12 V and about 10 mA on −12 V, no +5 V from the bus.</li>
     </ul>
+    <p><b>Second firmware:</b> the same boards also play <a href="physical.html">Tonwerk Physical</a>, physical modelling with exciter and resonator, up to four voices and a front panel of its own (yellow with black lettering). A third one plays <a href="pd.html">Tonwerk PD</a>, phase distortion with two lines and chorus in stereo, a fourth <a href="granular.html">Tonwerk Granular</a>, grain clouds from nine sound sources, a fifth <a href="additiv.html">Tonwerk Additiv</a>, 64 sine partials from two morphed spectra.</p>
     <p class="note">So far one module has been built (the through-hole boards v0.1). Tested: power, flashing, sound at the VOICE output, the knobs. Not yet tested on the hardware: the CV inputs and the V/Oct calibration.</p>
 
     <h2 id="bedienung">Operation</h2>
@@ -204,7 +209,7 @@
     <p>Afterwards check with a tuner across several octaves. Without calibration the module uses the circuit's nominal values; how well they track depends on the parts.</p>
 
     <h2 id="firmware">New firmware</h2>
-    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, written at address 0x0 with Espressif's web flasher in the browser (Chrome or Edge). How is described in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. This works in the rack or loose on the USB cable.</p>
+    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, written at address 0x0 with Espressif's web flasher in the browser (Chrome or Edge). How is described in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. This works in the rack or loose on the USB cable. For <a href="physical.html">Tonwerk Physical</a> it is <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, for <a href="pd.html">Tonwerk PD</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, for <a href="granular.html">Tonwerk Granular</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, for <a href="additiv.html">Tonwerk Additiv</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>.</p>
     <p class="note">Flashing erases the saved modes, the hidden values and the calibration; the tables stay. So calibrate again after an update.</p>
 
     <h2 id="probleme">Problems</h2>

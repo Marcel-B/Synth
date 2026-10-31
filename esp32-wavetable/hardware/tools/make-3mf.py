@@ -40,9 +40,11 @@ if sys.argv[1] == "--knoepfe":
     model = (HEAD + '<resources>' + mesh(1, "Körper", body) + mesh(2, "Zeiger", marks) + objects +
              '</resources><build>' + items + '</build></model>')
 else:
+    # plate.stl text.stl out.3mf [name], the name "Tonwerk Wavetable" unless another firmware's panel is given
     plate, text, out = sys.argv[1:4]
+    name = sys.argv[4] if len(sys.argv) > 4 else "Tonwerk Wavetable"
     model = (HEAD + '<resources>' + mesh(1, "Platte", plate) + mesh(2, "Schrift", text) +
-             '<object id="3" name="Tonwerk Wavetable Frontplatte" type="model"><components>'
+             f'<object id="3" name="{name} Frontplatte" type="model"><components>'
              '<component objectid="1"/><component objectid="2"/></components></object>'
              '</resources><build><item objectid="3" transform="1 0 0 0 1 0 0 0 1 70 70 0"/></build></model>')
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:

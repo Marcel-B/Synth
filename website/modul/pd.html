@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk PD Modul · Bedienung</title>
+  <meta name="description" content="Die dritte Firmware des Eurorack-Moduls: Tonwerk PD, Phase Distortion mit zwei Linien, DCW-Hüllkurven, Ring, Rauschen und Chorus in Stereo auf denselben Platinen. Regler, Tasten, Buchsen, LEDs und Frontplatte.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/pd.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/pd.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/pd.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/pd.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="#bedienung" class="optional">PD</a>
+        <a href="granular.html" class="optional">Granular</a>
+        <a href="additiv.html" class="optional">Additiv</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../en/modul/pd.html" hreflang="en" lang="en" title="English">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk PD als Eurorack-Modul</h1>
+    <p class="lead-text">Eine dritte Firmware für dieselben Platinen wie das <a href="./">Wavetable-Modul</a>: die Klangerzeugung des Plugins <a href="../#instrumente">Tonwerk PD</a>, Phase Distortion. Eine Kosinuswelle wird über eine gebogene Phase gelesen. Je stärker die Biegung (<b>DCW</b>), desto mehr wird aus dem weichen Sinus eine Säge, ein Rechteck, ein Puls oder eine Resonanz, und eine Hüllkurve auf der Biegung öffnet den Klang wie ein Filter.</p>
+
+    <h2 id="ueberblick">Überblick</h2>
+    <figure class="side">
+      <a href="img/frontplatte-pd-vorschau.png"><img src="img/frontplatte-pd-vorschau.png" alt="Vorschau der PD-Frontplatte: 14 TE, gelb mit schwarzer Schrift" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>Dieselbe Engine wie das Plugin</b>, in float neu geschrieben: acht Wellen, die Biegung je Linie mit ihrer DCW-Hüllkurve, die Lautstärke mit ihrer eigenen. Ein Test auf dem Rechner vergleicht alle Wellen und alle Arten, die Linien zu verbinden, mit dem Plugin.</li>
+      <li><b>Zwei Linien</b>: jede mit eigener Welle, auf Wunsch einer zweiten, die von Periode zu Periode wechselt. Linie 2 sitzt ein Intervall darüber und ist leicht verstimmt; Ring oder Rauschen verbinden die beiden.</li>
+      <li><b>Stereo</b>: die beiden Linien liegen links und rechts auseinander, dahinter der Chorus des Plugins. Die Ausgänge sind <b>L</b> und <b>R</b>.</li>
+      <li><b>Eine Stimme</b> (das Plugin spielt mehrstimmig): V/OCT, GATE und CV für das Intervall, die Hüllkurve, den Mix und die Biegung.</li>
+      <li>Eine eigene <a href="#frontplatte">Frontplatte</a>; die Vorschau zeigt sie gelb mit schwarzer Schrift wie die Physical-Front, die Farben sind frei.</li>
+    </ul>
+    <p class="note">Diese Firmware ist auf dem Rechner getestet, auf einem ESP32 ist sie noch nie gelaufen. Auf dem Rechner braucht sie weniger Rechenzeit als die Wavetable-Firmware.</p>
+
+    <h2 id="bedienung">Bedienung</h2>
+    <p>Die Front ist dieselbe wie beim Wavetable-Modul, nur die Beschriftung ist anders. Die WARP-Taste heißt hier <b>WELLE 1</b>, die FILTER-Taste <b>WELLE 2</b>. Ebenen, Pick-up, Halten gegen kurzes Drücken, Speichern und <a href="./#kalibrieren">Kalibrieren</a> funktionieren genauso wie dort beschrieben.</p>
+
+    <h3 id="regler">Alle Regler</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Regler</th><th>Normal</th><th>WELLE 1 gehalten</th><th>WELLE 2 gehalten</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Stimmung ±2 Oktaven in Halbtönen</td><td>Attack der DCW-Hüllkurve, 1 ms bis 2 s</td><td>Verstimmung von Linie 2, ±50 Cent (ab Werk +7 Cent)</td></tr>
+          <tr><td>FINE</td><td>Feinstimmung ±50 Cent</td><td>Sustain der DCW-Hüllkurve</td><td>Linien: 1, 2, 1 + 1′ (Linie 1 noch einmal, mit der Verstimmung von Linie 2), 1 + 2′ (beide, ab Werk)</td></tr>
+          <tr><td>LINIE 2</td><td>Intervall von Linie 2, vom Einklang bis zwei Oktaven in Halbtönen; in der Mitte eine Oktave</td><td>Zweite Welle von Linie 1: aus oder eine der acht. Dann wechseln die beiden Wellen von Periode zu Periode.</td><td>Zweite Welle von Linie 2</td></tr>
+          <tr><td>HÜLLK.</td><td>Wie weit die DCW-Hüllkurve beide Linien biegt</td><td>Keytracking: über C3 biegen hohe Töne weniger, so bleiben sie weich</td><td>Modulation: aus, Ring (Linie 2 mal Linie 1), Rauschen (Linie 2 an einer wandernden Phase gelesen)</td></tr>
+          <tr><td>MIX</td><td>Linie 1 gegen Linie 2, in der Mitte beide gleich laut</td><td>Attack der Lautstärke, 1 ms bis 2 s</td><td>Stereobreite der beiden Linien (ab Werk 50 %)</td></tr>
+          <tr><td>DCW</td><td>Biegung ohne Hüllkurve: links reiner Kosinus, rechts ganz gebogen</td><td>Sustain der Lautstärke</td><td>Rate des Chorus, 0,1 bis 5 Hz (ab Werk 0,6 Hz)</td></tr>
+          <tr><td>CHORUS</td><td>Mix des Chorus, links aus</td><td>Release der Lautstärke, 5 ms bis 5 s</td><td>Tiefe des Chorus</td></tr>
+          <tr><td>DECAY</td><td>Decay der DCW-Hüllkurve, 5 ms bis 5 s</td><td>Decay der Lautstärke, 5 ms bis 5 s</td><td>Release der DCW-Hüllkurve, 5 ms bis 5 s</td></tr>
+          <tr><td>POS CV</td><td>Abschwächer für die HÜLLK.-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+          <tr><td>DCW CV</td><td>Abschwächer für die DCW-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="wellen">Wellen (WELLE 1 und WELLE 2 kurz drücken)</h3>
+    <p>WELLE 1 wählt die Welle von Linie 1, LED 1 zeigt sie; WELLE 2 und LED 2 dasselbe für Linie 2. Ab Werk Säge und Rechteck.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED</th><th>Welle</th><th>Ganz gebogen</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Säge</td><td>Sägezahn: alle Obertöne.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Rechteck</td><td>Rechteck: nur ungerade Obertöne, hohl.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Puls</td><td>Schmaler Puls, dünn und nasal.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>Doppelsinus</td><td>Zwei Bögen je Periode, die Oktave tritt hervor.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Säge-Puls</td><td>Halb Säge, halb Puls.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>Resonanz Säge</td><td>Eine Resonanz bis zum 16-Fachen des Tons, unter einer Säge abklingend: klingt wie ein Filter mit hoher Resonanz.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blau</td><td>Resonanz Dreieck</td><td>Dieselbe Resonanz unter einem Dreieck, weicher.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violett</td><td>Resonanz Trapez</td><td>Unter einem Trapez, am vollsten.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ungebogen ist jede Welle außer den Resonanzen ein reiner Kosinus. Beide LEDs leuchten mit der Lautstärke-Hüllkurve auf und werden mit ihr dunkler, nie ganz aus.</p>
+
+    <h3 id="anschlagen">Anschlagen</h3>
+    <dl class="tools">
+      <dt>Mit Gate</dt>
+      <dd>Eine steigende Flanke an GATE startet beide Hüllkurven neu, fällt das Gate, beginnt ihr Release.</dd>
+      <dt>Nur mit V/OCT</dt>
+      <dd>Ist das Gate an oder steckt kein Kabel in GATE, schlägt auch jeder <b>Sprung</b> an V/OCT um mindestens einen halben Halbton an, wie bei der <a href="physical.html#anschlagen">Physical-Firmware</a>. Ein Sequencer ohne Gate spielt so jede neue Note; ein Glide zieht nur die Tonhöhe.</dd>
+      <dt>Drone</dt>
+      <dd>Ohne Gate-Kabel hält der Ton nach dem ersten Anschlag. Dann formen DCW, MIX und ein LFO an der DCW-Buchse den Klang.</dd>
+    </dl>
+
+    <h2 id="buchsen">Buchsen</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Buchse</th><th>Bereich</th><th>Was sie tut</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 bis +7 V</td><td>Tonhöhe, 1 V pro Oktave, 0 V = C2. Ein Sprung schlägt an (siehe oben).</td></tr>
+          <tr><td>GATE</td><td>ab etwa 1,4 V</td><td>Steigend: Anschlag. Fallend: Release. Ohne Kabel dauerhaft an.</td></tr>
+          <tr><td>LINIE 2</td><td>±5 V</td><td>1 V pro Oktave auf das Intervall von Linie 2: ein zweiter Sequencer spielt so die zweite Linie.</td></tr>
+          <tr><td>HÜLLK.</td><td>±5 V</td><td>Verschiebt die Tiefe der DCW-Hüllkurve, über den Abschwächer POS CV.</td></tr>
+          <tr><td>MIX</td><td>±5 V</td><td>Kommt zum Mix dazu, 5 V von der Mitte bis zum Anschlag.</td></tr>
+          <tr><td>DCW</td><td>±5 V</td><td>Biegt beide Linien, über den Abschwächer DCW CV, 5 V über den ganzen Weg. Mit einem LFO wird daraus ein Filter-Sweep.</td></tr>
+          <tr><td>L (Ausgang)</td><td>±5 V</td><td>Linker Kanal.</td></tr>
+          <tr><td>R (Ausgang)</td><td>±5 V</td><td>Rechter Kanal. Für Mono die Breite auf 0 und den Chorus aus, dann sind beide gleich.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Die Ausgänge haben Modulpegel. Für Kopfhörer sind sie viel zu laut, immer über einen Mixer oder ein Ausgangsmodul gehen.</p>
+
+    <h2 id="patches">Erste Patches</h2>
+    <dl class="tools">
+      <dt>Bass</dt>
+      <dd>Säge auf Linie 1, MIX ganz links, DCW links, HÜLLK. halb, DECAY kurz. Gate und V/OCT vom Sequencer: jede Note öffnet und schließt wie ein Filter.</dd>
+      <dt>Resonanz-Sweep</dt>
+      <dd>Resonanz Säge auf Linie 1, ein langsamer LFO an der DCW-Buchse, DCW CV halb rechts. Die Resonanz wandert durch die Obertöne.</dd>
+      <dt>Breite Fläche</dt>
+      <dd>Säge und Rechteck (ab Werk), LINIE 2 auf die Oktave, MIX in der Mitte, CHORUS halb, lange Attacks in der WELLE-1-Ebene. L und R getrennt an den Mixer.</dd>
+      <dt>Glocke</dt>
+      <dd>WELLE 2 halten und HÜLLK. auf Ring, LINIE 2 auf ein krummes Intervall (eine Sexte und ein paar Cent), DECAY der Lautstärke lang.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Frontplatte</h2>
+    <p>Dieselben drei Varianten wie beim Wavetable-Modul (<a href="bauanleitung.html#frontplatte">Bauanleitung, Schritt 2</a>), mit der Beschriftung dieser Firmware: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd.stl">Schrift erhaben</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd-graviert.stl">Schrift vertieft</a> und <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-pd-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a>. Beim erhabenen Druck mit der Farbe der Platte beginnen und bei 2,5 mm auf die der Schrift wechseln.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, geschrieben an Adresse 0x0 wie in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Sie braucht keine Tabellen; der erste Start dauert nicht länger als jeder andere. Zurück geht es genauso, mit <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> oder <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>.</p>
+    <p class="note">Flashen löscht die gespeicherten Einstellungen und die Kalibrierung. Darum nach dem Flashen neu kalibrieren.</p>
+
+    <p class="stand">Stand 31.10.2026. Quelltext und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../en/modul/pd.html" hreflang="en" lang="en">English</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

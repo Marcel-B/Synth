@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Additiv module · Operation</title>
+  <meta name="description" content="The Eurorack module's fifth firmware: Tonwerk Additiv, 64 sine partials from two morphed spectra with tilt, stretch, comb, vowels, filter and an envelope per partial, in stereo on the same boards. Knobs, buttons, jacks, LEDs and front panel.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/modul/additiv.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/additiv.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/additiv.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/additiv.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Module navigation">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="granular.html" class="optional">Granular</a>
+        <a href="#bedienung" class="optional">Additiv</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../../modul/additiv.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Additiv as a Eurorack module</h1>
+    <p class="lead-text">A fifth firmware for the same boards as the <a href="./">wavetable module</a>: the sound engine of the plugin <a href="../#instrumente">Tonwerk Additiv</a>. The sound is made of up to <b>64 sine partials</b> whose strength and place the module keeps setting anew. Morph, tilt and stretch under CV turn a saw into an organ, a bell or a vowel, and nothing ever folds back.</p>
+
+    <h2 id="ueberblick">Overview</h2>
+    <figure class="side">
+      <a href="../../modul/img/frontplatte-additiv-vorschau.png"><img src="../../modul/img/frontplatte-additiv-vorschau.png" alt="Preview of the Additiv front panel: 14 HP, yellow with black lettering" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>The same sound as the plugin</b>: the module computes the partials as the plugin does. A test on the computer compares every spectrum and every kind of shaping with the plugin.</li>
+      <li><b>Twelve spectra</b>: sine, saw, square, triangle, pulse, organ, hollow, bright, octaves, glass, primes, random. MORPH blends two of them (A and B).</li>
+      <li><b>Shaping</b>: number of partials, tilt, odd against even, stretch, beating, a comb, three formants of a vowel and a filter. All of it acts as a level per partial, so the filter can neither whistle nor fold back.</li>
+      <li><b>An envelope per partial</b>: the high partials come in later and die away sooner, as on a plucked string or a bell.</li>
+      <li><b>Stereo</b>: odd and even partials to the left and right, the outputs are <b>L</b> and <b>R</b>.</li>
+      <li><b>One voice</b>: V/OCT, GATE and CV for morph, count, tilt and stretch.</li>
+      <li>A <a href="#frontplatte">front panel</a> of its own; the preview shows it yellow with black lettering, the colours are up to you.</li>
+    </ul>
+    <p class="note">This firmware is tested on the computer; it has never run on an ESP32. With all 64 partials and every kind of shaping I estimate 30 to 50 % of a core.</p>
+
+    <h2 id="bedienung">Operation</h2>
+    <p>The front is the same as on the wavetable module, only the lettering differs. The WARP button is called <b>KLANG A</b> (sound A) here, the FILTER button <b>KLANG B</b>. Layers, pick-up, holding versus tapping, saving and <a href="./#kalibrieren">calibration</a> work exactly as described there.</p>
+
+    <h3 id="regler">All knobs</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Knob</th><th>Normal</th><th>KLANG A held</th><th>KLANG B held</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Tuning ±2 octaves in semitones</td><td>Attack, 1 ms to 10 s</td><td>Filter: off, lowpass, highpass, bandpass, notch (default off)</td></tr>
+          <tr><td>FINE</td><td>Fine tuning ±50 cents</td><td>Decay, 5 ms to 10 s</td><td>Cutoff, 20 Hz to 20 kHz</td></tr>
+          <tr><td>MORPH</td><td>From spectrum A (left) to spectrum B (right)</td><td>Sustain</td><td>Resonance</td></tr>
+          <tr><td>OBERTÖNE</td><td>How many partials sound, 1 to 64; the first part of the travel is for the first few</td><td>Release, 5 ms to 10 s</td><td>Key tracking of the filter</td></tr>
+          <tr><td>NEIGUNG</td><td>Tilt, ±12 dB per octave: brighter to the right, darker to the left. The loudness stays the same.</td><td>Odd against even: to the right only the odd partials (hollow), to the left more of the even ones</td><td>Depth of the comb</td></tr>
+          <tr><td>SPREIZ.</td><td>Stretch: harmonic in the middle; to the right the partials move up as on a stiff string or a bell, to the left down</td><td>Beating: each partial detuned by up to 50 cents, each its own way</td><td>Spacing of the comb, every 2 to 16 partials</td></tr>
+          <tr><td>ABKLING.</td><td>How fast the partials die away, 50 ms to 20 s, the high ones sooner. Fully right they never do.</td><td>Bloom: how late the high partials come in, at once on the left, up to 5 s</td><td>Shift of the comb</td></tr>
+          <tr><td>VOKAL</td><td>Off on the left, then the formants fade in on A and move through E, I and O to U</td><td>Width in the stereo field (default 50 %)</td><td>Formants shifted by ±12 semitones: a smaller or larger throat</td></tr>
+          <tr><td>OBT CV</td><td>Attenuverter for the OBERT. jack: middle 0, right full, left inverted</td><td>Hold: how far the partials die away to (default all the way)</td><td>Phases: left all alike (a hard attack), right random (default)</td></tr>
+          <tr><td>SPR CV</td><td>Attenuverter for the SPREIZ. jack: middle 0, right full, left inverted</td><td>Damping: how much sooner the high partials die away (default 50 %)</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="spektren">Spectra (tap KLANG A and KLANG B)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED</th><th>Spectrum</th><th>How it sounds</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffffff"></span>white</td><td>Sine</td><td>The fundamental alone.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>yellow</td><td>Saw</td><td>Every partial, each quieter by its number. Spectrum A by default.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Square</td><td>Only the odd partials, hollow. Spectrum B by default.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>green</td><td>Triangle</td><td>Odd partials, quickly quieter: soft.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Pulse</td><td>A pulse a quarter wide: every fourth partial missing.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Organ</td><td>The first eight partials like pulled drawbars.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blue</td><td>Hollow</td><td>Strong odd and faint even partials, like a clarinet.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffc878"></span>light orange</td><td>Bright</td><td>Every partial, slowly quieter: brighter than the saw.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violet</td><td>Octaves</td><td>Only the fundamental and its octaves.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#78ffdc"></span>turquoise</td><td>Glass</td><td>Only partials 1, 4, 9, 16 …: glassy, a bell with some stretch.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>red</td><td>Primes</td><td>The fundamental and the partials with a prime number.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#787878"></span>grey</td><td>Random</td><td>Each partial randomly strong, always the same randomness.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A tap on <b>KLANG A</b> steps spectrum A on, LED 1 shows it; <b>KLANG B</b> does the same for spectrum B on LED 2. All spectra are equally loud. Both LEDs light up with the envelope and dim with it, never quite off.</p>
+
+    <h3 id="anschlagen">Striking and pitch</h3>
+    <dl class="tools">
+      <dt>With a gate</dt>
+      <dd>A rising edge at GATE starts the envelope and the partials' envelopes; when the gate falls, the release begins.</dd>
+      <dt>With V/OCT alone</dt>
+      <dd>While the gate is on, or no cable is in GATE, a <b>jump</b> at V/OCT of at least half a semitone does the same, as with the <a href="physical.html#anschlagen">Physical firmware</a>. A glide only moves the pitch.</dd>
+      <dt>Plucked or held</dt>
+      <dd>Unless ABKLING. is fully right, every strike dies away, even with the gate held, the high partials first. Fully right the note holds as long as the gate is on.</dd>
+      <dt>Pitch</dt>
+      <dd>0 V is C2, 1 V per octave. Partials above 0.47 of the sample rate are dropped; high notes therefore have fewer partials, but never aliases.</dd>
+    </dl>
+
+    <h2 id="buchsen">Jacks</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jack</th><th>Range</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 to +7 V</td><td>Pitch, 1 V per octave, 0 V = C2. A jump strikes (see above).</td></tr>
+          <tr><td>GATE</td><td>from about 1.4 V</td><td>Rising: strike. Falling: release. Without a cable always on.</td></tr>
+          <tr><td>MORPH</td><td>±5 V</td><td>Adds to the morph, 5 V over the knob's whole travel.</td></tr>
+          <tr><td>OBERT.</td><td>±5 V</td><td>Moves the number of partials, through the attenuverter OBT CV.</td></tr>
+          <tr><td>NEIG.</td><td>±5 V</td><td>Adds to the tilt, 5 V over the whole travel; with the knob up to ±24 dB per octave.</td></tr>
+          <tr><td>SPREIZ.</td><td>±5 V</td><td>Moves the stretch, through the attenuverter SPR CV.</td></tr>
+          <tr><td>L (output)</td><td>±5 V</td><td>Left channel.</td></tr>
+          <tr><td>R (output)</td><td>±5 V</td><td>Right channel. For mono set the width to 0, then both are the same.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The outputs are at module level. They are far too loud for headphones; always go through a mixer or an output module. With a lot of resonance or vowel a spectrum can go over full scale; the output rounds that off softly.</p>
+
+    <h2 id="patches">First patches</h2>
+    <dl class="tools">
+      <dt>Morphing pad</dt>
+      <dd>Organ as A, hollow as B, no gate cable, a slow LFO into MORPH. Width (KLANG A held, VOKAL) fully right.</dd>
+      <dt>Bell</dt>
+      <dd>Bright or glass, SPREIZ. well to the right, ABKLING. at about two seconds, gate from the sequencer; in the KLANG A layer a little beating and sustain at 0.</dd>
+      <dt>Talking bass</dt>
+      <dd>Saw, ABKLING. fully right, gate and V/OCT from the sequencer, turn VOKAL by hand between A and U and put an LFO into NEIG.</dd>
+      <dt>Counting partials</dt>
+      <dd>Saw, phases alike (KLANG B held, OBT CV fully left), OBERTÖNE slowly from left to right, or an envelope CV into OBERT.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Front panel</h2>
+    <p>The same three variants as for the wavetable module (<a href="bauanleitung.html#frontplatte">build guide, step 2</a>), with this firmware's lettering: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv.stl">raised lettering</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv-graviert.stl">engraved lettering</a> and <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-additiv-einlage.3mf">inlaid lettering (3MF, two colours)</a>. For the raised print start with the panel's colour and change to the lettering's at 2.5 mm.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>, written to address 0x0 as in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. It needs no tables; the first start is as short as any other.</p>
+    <p class="note">Flashing erases the saved settings and the calibration. So calibrate again after flashing.</p>
+
+    <p class="stand">As of 31 October 2026. Source code and front panel are on <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> under the same <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> as the plugins: building one for yourself yes, selling only with permission.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="../impressum.html">Legal notice</a>
+        <a href="../datenschutz.html">Privacy</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../../modul/additiv.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
