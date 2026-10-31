@@ -6,7 +6,7 @@ Stand 2026-10-28. **Ein Modul ist gebaut und spielt** (bedrahtete Platinen v0.1,
 
 ![Frontplatte](hardware/frontplatte-vorschau.png)
 
-Mit anderen Firmwares spielt dasselbe Modul **Tonwerk Physical** (Physical Modeling): [Zweite Firmware](#zweite-firmware-tonwerk-physical), **Tonwerk PD** (Phase Distortion): [Dritte Firmware](#dritte-firmware-tonwerk-pd), oder **Tonwerk Granular** (Kornwolken aus neun Quellen): [Vierte Firmware](#vierte-firmware-tonwerk-granular), jede mit eigener Frontplatte.
+Mit anderen Firmwares spielt dasselbe Modul **Tonwerk Physical** (Physical Modeling): [Zweite Firmware](#zweite-firmware-tonwerk-physical), **Tonwerk PD** (Phase Distortion): [Dritte Firmware](#dritte-firmware-tonwerk-pd), **Tonwerk Granular** (Kornwolken aus neun Quellen): [Vierte Firmware](#vierte-firmware-tonwerk-granular), oder **Tonwerk Additiv** (64 Sinus-Teiltöne): [Fünfte Firmware](#fünfte-firmware-tonwerk-additiv), jede mit eigener Frontplatte.
 
 Nachbauen: **[BAUANLEITUNG.md](BAUANLEITUNG.md)** führt Schritt für Schritt durch die bedrahtete Variante, vom Bestellen über Löten und erste Messungen bis zum Flashen und Kalibrieren. Auf der Website: [Bedienung](https://tonwerk.studio/modul/) und [Bauanleitung mit Bildern](https://tonwerk.studio/modul/bauanleitung.html).
 
@@ -115,6 +115,33 @@ Eine vierte Firmware für dieselben Platinen: **Tonwerk Granular** (Plugin in di
 
 Buchsen: **V/OCT**, **GATE** wie oben; **GRÖSSE** und **DICHTE** (±5 V über den ganzen Weg ihres Reglers), **POS** und **STREU.** (über ihre Abschwächer); Ausgänge **L** und **R** (an der Stelle von OSC und VOICE). Für Mono die Breite (QUELLE gehalten, TONSTREU) auf 0, dann sind beide gleich.
 
+## Fünfte Firmware: Tonwerk Additiv
+
+Eine fünfte Firmware für dieselben Platinen: **Tonwerk Additiv** (Plugin in diesem Repo, `additive/src/`). Der Klang besteht aus bis zu **64 Sinus-Teiltönen**, deren Stärken das Modul alle 32 Samples neu setzt: zwei **Spektren** (Sinus, Säge, Rechteck, Dreieck, Puls, Orgel, Hohl, Hell, Oktaven, Glas, Primzahlen, Zufall) ineinander gemorpht, ihre Anzahl, die Neigung, gerade gegen ungerade, die Spreizung (Teiltöne weg von den ganzen Vielfachen, wie bei einer steifen Saite oder Glocke), Schwebung, ein Kamm, drei Formanten eines Vokals und ein Filter, alles als Pegel je Teilton, so dass nichts zurückfaltet. Jeder Teilton kann seine eigene Hüllkurve haben: die hohen kommen später und klingen früher ab. In Stereo an den beiden Ausgängen (gerade und ungerade Teiltöne nach links und rechts). Eine Stimme. Eine eigene Frontplatte gehört dazu.
+
+![Frontplatte Additiv](hardware/frontplatte-additiv-vorschau.png)
+
+| Regler | Normal | KLANG A gehalten | KLANG B gehalten |
+|---|---|---|---|
+| TUNE | ±2 Oktaven in Halbtönen | Attack, 1 ms bis 10 s | Filter: aus, Tiefpass, Hochpass, Bandpass, Kerbe (ab Werk aus) |
+| FINE | ±50 Cent | Decay, 5 ms bis 10 s | Cutoff, 20 Hz bis 20 kHz |
+| MORPH (TABLE) | Von Spektrum A (links) nach B (rechts) | Sustain | Resonanz |
+| OBERTÖNE (POSITION) | Wie viele Teiltöne klingen, 1 bis 64 | Release, 5 ms bis 10 s | Keytracking des Filters |
+| NEIGUNG (WARP) | ±12 dB pro Oktave, rechts heller, links dunkler; die Lautstärke bleibt | Gerade/ungerade: rechts nur die ungeraden, links mehr die geraden | Tiefe des Kamms |
+| SPREIZ. (CUTOFF) | Teiltöne nach oben (rechts) oder unten (links) von den ganzen Vielfachen weg, Mitte harmonisch | Schwebung: jeder Teilton bis 50 Cent verstimmt | Abstand des Kamms, alle 2 bis 16 Teiltöne |
+| ABKLING. (DECAY) | Wie schnell die Teiltöne abklingen, 50 ms bis 20 s, die hohen früher; ganz rechts nie | Einschwingen: wie spät die hohen Teiltöne kommen, links sofort, bis 5 s | Verschiebung des Kamms |
+| VOKAL (RESO) | Links aus, dann die Formanten von A über E, I, O bis U | Breite im Stereobild (ab Werk 50 %) | Formanten ±12 Halbtöne verschoben (kleinerer oder größerer Rachen) |
+| OBT CV (POS CV) | Abschwächer für die OBERT.-CV, Mitte = 0 | Halten: wohin die Teiltöne abklingen (ab Werk 0) | Phasen: links alle gleich (harter Anschlag), rechts zufällig (ab Werk) |
+| SPR CV (CUT CV) | Abschwächer für die SPREIZ.-CV, Mitte = 0 | Dämpfung: wie viel früher die hohen Teiltöne abklingen (ab Werk 50 %) | – |
+
+- **KLANG A kurz drücken** (die WARP-Taste): Spektrum A, das nächste von zwölf. LED 1: weiß Sinus, gelb Säge, cyan Rechteck, grün Dreieck, magenta Puls, orange Orgel, blau Hohl, hellorange Hell, violett Oktaven, türkis Glas, rot Primzahlen, grau Zufall.
+- **KLANG B kurz drücken** (die FILTER-Taste): Spektrum B, in denselben Farben an LED 2. Ab Werk Säge und Rechteck.
+- Halten, Pick-up, Speichern und Kalibrieren wie oben. Beide LEDs leuchten mit der Hüllkurve auf und werden mit ihr dunkler, nie ganz aus.
+- **Anschlagen:** wie bei den anderen Firmwares, mit der steigenden Flanke an GATE oder einem Sprung an V/OCT, solange das Gate an ist (oder kein Kabel steckt); ein Glide zieht nur die Tonhöhe. Steht ABKLING. nicht ganz rechts, klingt jeder Anschlag aus wie eine gezupfte Saite oder Glocke, auch bei gehaltenem Gate; ganz rechts hält der Ton, solange das Gate an ist.
+- **Tonhöhe:** 0 V ist C2, 1 V pro Oktave. Teiltöne über 0,47 der Abtastrate fallen weg, darum klingen hohe Töne mit weniger Teiltönen.
+
+Buchsen: **V/OCT**, **GATE** wie oben; **MORPH** (±5 V über den ganzen Weg ihres Reglers), **OBERT.** und **SPREIZ.** (über ihre Abschwächer), **NEIG.** (±5 V über den ganzen Weg, also bis ±24 dB pro Oktave); Ausgänge **L** und **R** (an der Stelle von OSC und VOICE). Für Mono die Breite (KLANG A gehalten, VOKAL) auf 0, dann sind beide gleich.
+
 ## Hardware
 
 Schaltplan-Skizze: [hardware/schaltplan.pdf](hardware/schaltplan.pdf) (auch als SVG und PNG). Die Stufen:
@@ -144,7 +171,8 @@ Im Eurorack ist die Frontplatte das Gehäuse; das Modul hängt mit vier M3-Schra
 - **Physical-Front** (für die [zweite Firmware](#zweite-firmware-tonwerk-physical)): dieselben drei Varianten mit ihrer Beschriftung, [hardware/frontplatte-physical.stl](hardware/frontplatte-physical.stl), [hardware/frontplatte-physical-graviert.stl](hardware/frontplatte-physical-graviert.stl) und [hardware/frontplatte-physical-einlage.3mf](hardware/frontplatte-physical-einlage.3mf) (Teile einzeln: `frontplatte-physical-einlage-platte.stl`, `-schrift.stl`). Gedacht gelbe Platte, schwarze Schrift. Neu bauen mit `-D 'engine="physical"'` in OpenSCAD.
 - **PD-Front** (für die [dritte Firmware](#dritte-firmware-tonwerk-pd)): ebenso [hardware/frontplatte-pd.stl](hardware/frontplatte-pd.stl), [hardware/frontplatte-pd-graviert.stl](hardware/frontplatte-pd-graviert.stl) und [hardware/frontplatte-pd-einlage.3mf](hardware/frontplatte-pd-einlage.3mf) (`frontplatte-pd-einlage-platte.stl`, `-schrift.stl`), neu bauen mit `-D 'engine="pd"'`. Die Vorschau zeigt sie gelb mit schwarzer Schrift wie die Physical-Front; die Farben sind frei.
 - **Granular-Front** (für die [vierte Firmware](#vierte-firmware-tonwerk-granular)): [hardware/frontplatte-granular.stl](hardware/frontplatte-granular.stl), [hardware/frontplatte-granular-graviert.stl](hardware/frontplatte-granular-graviert.stl) und [hardware/frontplatte-granular-einlage.3mf](hardware/frontplatte-granular-einlage.3mf), neu bauen mit `-D 'engine="granular"'`.
-- [hardware/frontplatte.scad](hardware/frontplatte.scad): die Quelle (OpenSCAD), alle Positionen und Lochmaße oben als Variablen; `engine` wählt die Beschriftung (`"wavetable"`, `"physical"`, `"pd"` oder `"granular"`).
+- **Additiv-Front** (für die [fünfte Firmware](#fünfte-firmware-tonwerk-additiv)): [hardware/frontplatte-additiv.stl](hardware/frontplatte-additiv.stl), [hardware/frontplatte-additiv-graviert.stl](hardware/frontplatte-additiv-graviert.stl) und [hardware/frontplatte-additiv-einlage.3mf](hardware/frontplatte-additiv-einlage.3mf), neu bauen mit `-D 'engine="additiv"'`.
+- [hardware/frontplatte.scad](hardware/frontplatte.scad): die Quelle (OpenSCAD), alle Positionen und Lochmaße oben als Variablen; `engine` wählt die Beschriftung (`"wavetable"`, `"physical"`, `"pd"`, `"granular"` oder `"additiv"`).
 - [hardware/frontplatte-bohrplan.svg](hardware/frontplatte-bohrplan.svg): Umriss und Löcher 1:1, falls die Front lieber aus 2-mm-Alu gebohrt werden soll.
 
 Lochmaße: Potis 7,2 mm (Alpha 9 mm, M7), Buchsen 6,2 mm (Thonkiconn), LEDs 5,1 mm, Taster 4,0 mm. Vor dem Bestellen der Platine einmal drucken und Potis und Buchsen durchstecken.
@@ -160,11 +188,13 @@ firmware/
   main/dsp/PhysicalVoice.h   Tonwerk Physical: Erreger, Resonatoren, Filter, Korpus, bis 4 Stimmen
   main/dsp/PdVoice.h  Tonwerk PD: zwei Linien mit DCW und DCA, Ring, Rauschen, Chorus
   main/dsp/GrainVoice.h  Tonwerk Granular: Kornwolke, Fenster, Filter, LFO; die Quellen aus data/
+  main/dsp/AdditiveVoice.h  Tonwerk Additiv: 64 Teiltöne, Spektren, Formung, Hüllkurve je Teilton
   main/app/Panel.h    Bedienlogik aller Firmwares ohne Hardware: Ebenen, Pick-up, Tasten, Kalibrierung
   main/app/Module.h   Regler, Modi und LEDs der Wavetable-Firmware
   main/app/PhysicalModule.h  dasselbe für Tonwerk Physical
   main/app/PdModule.h        dasselbe für Tonwerk PD
   main/app/GranularModule.h  dasselbe für Tonwerk Granular
+  main/app/AdditiveModule.h  dasselbe für Tonwerk Additiv
   data/grain-sources.bin     die neun Quellen des Plugins, 16 bit (schreibt `make grain-sources` in host/)
   main/hw/            Treiber: I2S, MCP3208 (SPI), ADC, WS2812 (RMT), NVS, Flash-Kopie der Tabellen
   main/main.cpp       Audio-Task auf Kern 1, Steuer-Task (2 ms) auf Kern 0
@@ -205,9 +235,15 @@ Fertig gebaut: [firmware/modul-pd/tonwerk-pd.bin](firmware/modul-pd/tonwerk-pd.b
 idf.py -B build-granular -DTONWERK_GRANULAR=1 build flash monitor
 ```
 
-Seine Quellen (3,5 MB aus `firmware/data/grain-sources.bin`) schreibt `idf.py flash` mit in die Partition `tables`, wo die Wavetable-Firmware sonst ihre Tabellen ablegt; nach dem Zurückflashen rechnet sie die einmal neu. Fertig gebaut: [firmware/modul-granular/tonwerk-granular.bin](firmware/modul-granular/tonwerk-granular.bin), 6,7 MB mit den Quellen, ebenfalls ganz an 0x0. Zurück zu einer anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
+Seine Quellen (3,5 MB aus `firmware/data/grain-sources.bin`) schreibt `idf.py flash` mit in die Partition `tables`, wo die Wavetable-Firmware sonst ihre Tabellen ablegt; nach dem Zurückflashen rechnet sie die einmal neu. Fertig gebaut: [firmware/modul-granular/tonwerk-granular.bin](firmware/modul-granular/tonwerk-granular.bin), 6,7 MB mit den Quellen, ebenfalls ganz an 0x0. Tonwerk Additiv braucht nichts Zusätzliches:
 
-Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle fünf Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: granular]` (oder `pd`, `physical`, `modul`, `bench`, auch mehrere), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
+```sh
+idf.py -B build-additiv -DTONWERK_ADDITIVE=1 build flash monitor
+```
+
+Fertig gebaut: [firmware/modul-additiv/tonwerk-additiv.bin](firmware/modul-additiv/tonwerk-additiv.bin). Zurück zu einer anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
+
+Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle sechs Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: additiv]` (oder `granular`, `pd`, `physical`, `modul`, `bench`, auch mehrere), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
 
 Oder mit PlatformIO: `pio run -t upload -t monitor` im Ordner `firmware`. Der serielle Monitor zeigt alle 5 s die Last des Audio-Kerns.
 
@@ -228,7 +264,7 @@ Test auf dem Rechner (nimmt Tonwerk Wavetable aus diesem Repo):
 ```sh
 cd firmware/host
 make test        # Vergleich mit den Plugins, Stimmung, Bedienlogik, Rechenzeit
-make examples    # schreibt auch Hörproben nach hoerproben/, hoerproben-physical/, hoerproben-pd/ und hoerproben-granular/
+make examples    # schreibt auch Hörproben nach hoerproben/, hoerproben-physical/, hoerproben-pd/, hoerproben-granular/ und hoerproben-additiv/
 ```
 
 ## Platinen (KiCad)
@@ -281,9 +317,10 @@ Aufbau, was anders ist:
 - **Physical-Firmware, auf dem Rechner:** Der Host-Test spielt alle 28 Paare aus Erreger und Resonator durch die Stimme des Plugins (`tonwerkphys::Voice`) und durch die Portierung: Abweichung höchstens −41 dB, Pegel je 50 ms auf 0,5 dB gleich. Stimmung 0–5 V auf 0,04 Cent wie das Plugin; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide, Stimmenzahl, Korpus nur an KLANG, alle Paare an den Extremen ohne Ausreißer, Spitzenpegel ab Werk unter Vollaussteuerung. Baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen (Programm 323 KB). Vier Stimmen brauchen auf dem Rechner etwa 1 % Echtzeit; auf dem ESP32 schätze ich 10–30 % eines Kerns. **Auf dem ESP32 ist sie noch nie gelaufen**, auch die Frontplatte ist noch nicht gedruckt.
 - **PD-Firmware, auf dem Rechner:** Der Host-Test spielt alle acht Wellen auf drei Tönen und zwei Biegungen, alle Arten der Linien, Ring und Rauschen und die wechselnden Wellen durch die Engine des Plugins (`tonwerkpd`) und durch die Portierung: Abweichung höchstens −56 dB, der Chorus −73 dB. Stimmung 0–5 V auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide; alle Wellen ganz gebogen mit beiden Linien und Chorus unter Vollaussteuerung. Auf dem Rechner 0,3 % Echtzeit. Baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen (Image 401 KB). **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
 - **Granular-Firmware, auf dem Rechner:** Der Host-Test spielt alle neun Quellen, alle drei Fenster, rückwärts, die Raster der Tonstreuung, Scan in beide Richtungen, alle Filter, den LFO auf Position, Tonhöhe, Cutoff und Dichte und eine Wolke aus 40 Körnern auf drei Tönen durch die Stimme des Plugins (`tonwerkgrain::Voice`) und durch die Portierung: Abweichung höchstens −65 dB. Die Quellen in `data/` sind die des Plugins auf 16 bit gerundet (der Test prüft die Datei Byte für Byte), ihre tieferen Kopien höchstens −77 dB daneben. Stimmung C2 bis C7 auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung; jede Quelle dünn und dicht unter Vollaussteuerung (das Schlag-Fenster mit wenigen Körnern kann darüber gehen, der Ausgang rundet das weich ab). 40 Körner mit Filter brauchen auf dem Rechner 0,8 % Echtzeit; auf dem ESP32 schätze ich bis zu 50 % eines Kerns, weil jedes Korn aus dem PSRAM liest. **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
+- **Additiv-Firmware, auf dem Rechner:** Der Host-Test spielt alle zwölf Spektren auf drei Tönen und jede Formung (Morph, Anzahl, Neigung beide Richtungen, gerade/ungerade, Spreizung, Schwebung, gleiche Phasen, Kamm, Vokale, alle vier Filter mit Resonanz, Einschwingen und Abklingen der Teiltöne) durch die Stimme des Plugins (`tonwerkadd::Voice`) und durch die Portierung: Abweichung höchstens −107 dB, beide drehen dieselben float-Zeiger. Stimmung C2 bis C7 auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide; jedes Spektrum unter Vollaussteuerung, auch mit gleichen Phasen und voller Breite (Resonanz und Formanten können darüber gehen, der Ausgang rundet das weich ab). 64 Teiltöne mit aller Formung, alles in jedem Schritt neu gerechnet, brauchen auf dem Rechner 1,1 % Echtzeit; auf dem ESP32 schätze ich 30–50 % eines Kerns. **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
 - **Nicht getestet:** alles andere auf echter Hardware: CV-Eingänge, V/Oct-Kalibrierung, Rechenlast, die übrigen Modi im Einzelnen. Die Last schätze ich auf 10–25 % eines Kerns für den schwersten Fall (2 × 4 Unisono, FM, Sub, LP24 mit Drive); auf dem Rechner braucht er 1 % Echtzeit.
 
-Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B. Von der Physical-Firmware acht Paare am KLANG-Ausgang (gezupfte Saite, auch steif wie ein Klavier, geschlagener Stab, Glocke und Fell, gestrichene Saite, geblasenes Rohr, gestrichene Schale). Von der PD-Firmware sechs in Stereo (Säge-Bass, Resonanz-Sweep, zwei Linien mit Chorus, Ring-Glocke, Rauschen als Perkussion, Puls-Fläche), von der Granular-Firmware sechs (Chor-Wolke, Glas-Funken in Oktaven, Streicher-Scan mit Filter, stotternder Rhythmus, Zupf-Sequenz, Orgel in Quinten).
+Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B. Von der Physical-Firmware acht Paare am KLANG-Ausgang (gezupfte Saite, auch steif wie ein Klavier, geschlagener Stab, Glocke und Fell, gestrichene Saite, geblasenes Rohr, gestrichene Schale). Von der PD-Firmware sechs in Stereo (Säge-Bass, Resonanz-Sweep, zwei Linien mit Chorus, Ring-Glocke, Rauschen als Perkussion, Puls-Fläche), von der Granular-Firmware sechs (Chor-Wolke, Glas-Funken in Oktaven, Streicher-Scan mit Filter, stotternder Rhythmus, Zupf-Sequenz, Orgel in Quinten), von der Additiv-Firmware sechs (Orgel nach Hohl gemorpht, Teiltöne von 1 bis 64 gezählt, gespreizte Glocke, Vokale, gezupfte Sequenz, Kamm-Sweep).
 
 ## Nächste Schritte
 
@@ -294,4 +331,4 @@ Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmwa
 
 Ideen für später: USB-MIDI über die zweite USB-Buchse des S3 (GPIO19/20 sind frei gehalten), die Presets des Plugins als Startpunkte, ein interner LFO auf einem der drei freien MCP3208-Kanäle als Rate-CV.
 
-Felucca-Code ist hier nicht enthalten (GPL); alles stammt aus Tonwerk Wavetable, Tonwerk Physical, Tonwerk PD und Tonwerk Granular und ist neu geschrieben.
+Felucca-Code ist hier nicht enthalten (GPL); alles stammt aus Tonwerk Wavetable, Tonwerk Physical, Tonwerk PD, Tonwerk Granular und Tonwerk Additiv und ist neu geschrieben.
