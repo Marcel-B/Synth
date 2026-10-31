@@ -98,6 +98,11 @@ jobs:
           app=build-ios/Tonwerk_artefacts/Release/Tonwerk.app
           [[ -d "$app" ]] || { echo "::error::Tonwerk.app was not built"; exit 1; }
           id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Info.plist")
+          # English and German, so the App Store lists both languages and the permission texts follow the system.
+          for language in en de; do
+            plutil -lint "$app/$language.lproj/InfoPlist.strings" || { echo "::error::$language.lproj is missing"; exit 1; }
+          done
+          /usr/libexec/PlistBuddy -c "Print :CFBundleLocalizations" "$app/Info.plist"
           count=0
           for appex in "$app"/PlugIns/*.appex; do
             [[ -d "$appex" ]] || continue
@@ -202,6 +207,9 @@ jobs:
           [[ -d "$app" ]] || { echo "::error::Tonwerk.app was not built"; exit 1; }
           id=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist")
           /usr/libexec/PlistBuddy -c "Print :LSApplicationCategoryType" "$app/Contents/Info.plist"
+          for language in en de; do
+            plutil -lint "$app/Contents/Resources/$language.lproj/InfoPlist.strings" || { echo "::error::$language.lproj is missing"; exit 1; }
+          done
           # The entitlements a bundle was signed with, as a plist file PlistBuddy can read.
           entitlements() { codesign -d --entitlements - --xml "$1" > "$RUNNER_TEMP/entitlements.plist" 2>/dev/null; }
           has() { /usr/libexec/PlistBuddy -c "Print :$2" "$RUNNER_TEMP/entitlements.plist" 2>/dev/null | grep -q true; }
