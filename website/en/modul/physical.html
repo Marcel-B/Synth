@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Physical module · Operation</title>
+  <meta name="description" content="The Eurorack module's second firmware: Tonwerk Physical, physical modelling with exciter and resonator on the same boards. Knobs, buttons, jacks, LEDs and front panel.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/en/modul/physical.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/physical.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/physical.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/physical.html">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Module navigation">
+        <a href="./">Wavetable</a>
+        <a href="#bedienung" class="optional">Physical</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../../modul/physical.html" hreflang="de" lang="de" title="Deutsch">DE</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Physical as a Eurorack module</h1>
+    <p class="lead-text">A second firmware for the same boards as the <a href="./">wavetable module</a>: the sound engine of the plugin <a href="../#instrumente">Tonwerk Physical</a>. Instead of playing back waveforms, the module computes how an instrument vibrates. An <b>exciter</b> (pluck, strike, bow, blow) sets a <b>resonator</b> (string, tube, bar, bell, skin, bowl) ringing, optionally through a filter and a body.</p>
+
+    <h2 id="ueberblick">Overview</h2>
+    <figure class="side">
+      <a href="../../modul/img/frontplatte-physical-vorschau.png"><img src="../../modul/img/frontplatte-physical-vorschau.png" alt="Preview of the Physical front panel: 14 HP, yellow with black lettering" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>The same engine as the plugin</b>, rewritten in float: string and tubes as delay lines, bar, bell, skin and bowl as up to 16 resonances. A test on the computer compares all 28 pairs of exciter and resonator with the plugin.</li>
+      <li><b>Up to four voices</b>: each strike takes the next one, the old ones ring out. A sequence of notes becomes a chord or a harp.</li>
+      <li><b>Two outputs</b>: <b>ROH</b> (raw) is the voices without the body, <b>KLANG</b> (sound) the same through the body (guitar, violin, box, soundboard). Without a body both are the same.</li>
+      <li><b>Six inputs</b>: V/OCT, GATE and CV for hardness, position, force and damping.</li>
+      <li>Its own <a href="#frontplatte">front panel</a>, meant to be yellow with black lettering, so the two modules are easy to tell apart in the rack.</li>
+    </ul>
+    <p class="note">This firmware is tested on the computer; it has never run on an ESP32 yet. I estimate the load at 10–30 % of a core.</p>
+
+    <h2 id="bedienung">Operation</h2>
+    <p>The front is the same as on the wavetable module, only the lettering differs. The WARP button is called <b>ERREGER</b> (exciter) here, the FILTER button <b>RESON.</b> (resonator). Layers, pick-up, holding versus tapping, saving and <a href="./#kalibrieren">calibration</a> work just as described there. The panel's labels are German; the tables give their meaning.</p>
+
+    <h3 id="regler">All knobs</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Knob</th><th>Normal</th><th>ERREGER held</th><th>RESON. held</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Tuning ±2 octaves in semitones</td><td>Attack of bow and breath, 1 ms to 2 s</td><td>Filter cutoff, 20 Hz to 20 kHz</td></tr>
+          <tr><td>FINE</td><td>Fine tuning ±50 cents</td><td>Decay of bow and breath, 5 ms to 5 s</td><td>Filter resonance</td></tr>
+          <tr><td>HÄRTE (hardness)</td><td>Hardness of the strike: soft and dark to hard and bright</td><td>Sustain of bow and breath</td><td>Filter: off, LP12, LP24, HP12, BP (off by default)</td></tr>
+          <tr><td>POSITION</td><td>Where it is excited, from the edge to the middle. Plucked in the middle, a string loses its even harmonics; at the edge it turns thin and bright.</td><td>Release of bow and breath, 5 ms to 5 s</td><td>Filter keytracking</td></tr>
+          <tr><td>KRAFT (force)</td><td>Bow pressure and breath; for pluck and strike, how hard it is struck</td><td>Noise: the bow's scratch, air in the breath</td><td>Body: off, guitar, violin, box, soundboard</td></tr>
+          <tr><td>DÄMPF. (damping)</td><td>Damping: how much faster the high harmonics die away</td><td>Dynamics: how much quieter a weak strike is</td><td>Body mix</td></tr>
+          <tr><td>INHARM.</td><td>Inharmonicity: on the string the stiffness that stretches its harmonics upwards as on a piano; on the others it stretches the resonances</td><td>–</td><td>–</td></tr>
+          <tr><td>DECAY</td><td>Decay time of the resonator, 20 ms to 20 s</td><td>Voices 1 to 4 (2 by default)</td><td>Damper after the gate, 5 ms to 60 s; 60 s by default, the note rings out</td></tr>
+          <tr><td>POS CV</td><td>Attenuverter for the POS jack: centre 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+          <tr><td>DMP CV</td><td>Attenuverter for the DÄMPF. jack: centre 0, right full, left inverted</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="erreger">Exciters (tap ERREGER, LED 1)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 1</th><th>Exciter</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>yellow</td><td>Pluck</td><td>A short burst over one period of the vibration. The default.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Strike</td><td>Hammer or mallet: the harder, the shorter and brighter.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Bow</td><td>A bow with stick and slip friction. The string vibrates by itself as long as the gate is on.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>green</td><td>Blow</td><td>On the closed tube a reed that oscillates by itself; otherwise a stream of air. Holds the note like the bow.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="resonator">Resonators (tap RESON., LED 2)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 2</th><th>Resonator</th><th>How it sounds</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>yellow</td><td>String</td><td>All harmonics, with INHARM. stiff like a piano string. The default.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Closed tube</td><td>Only odd harmonics, hollow like a clarinet.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>green</td><td>Open tube</td><td>All harmonics, like a flute.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Bar</td><td>Overtones at 4 and 10 times, like a tuned marimba bar.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blue</td><td>Bell</td><td>With the hum note an octave below the strike note and the minor third.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>red</td><td>Skin</td><td>The inharmonic tones of a drum.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Bowl</td><td>Singing bowl: pairs of closely spaced tones that beat against each other.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Both LEDs light up brightly when a note is struck and dim with it, never quite off.</p>
+
+    <h3 id="anschlagen">Striking</h3>
+    <dl class="tools">
+      <dt>With a gate</dt>
+      <dd>Every rising edge at GATE plucks or strikes the next voice, as hard as KRAFT is set. When the gate falls, the damper comes down on the newest voice, as fast as DECAY in the RESON. layer says. By default the damper is off (60 s), every note rings out.</dd>
+      <dt>With V/OCT only</dt>
+      <dd>While the gate is on, or no cable is in GATE, every <b>jump</b> at V/OCT of at least half a semitone strikes. A sequencer without a gate thus plays every new note; a glide or a slow LFO only moves the pitch.</dd>
+      <dt>Pitch</dt>
+      <dd>The newest voice follows V/OCT, TUNE and FINE; the older ones ring on at the pitch they were struck at.</dd>
+      <dt>Bow and blow</dt>
+      <dd>Hold the note as long as the gate is on; their envelope is in the ERREGER layer. Without a gate cable the bow plays all the time: a drone shaped with KRAFT, POSITION and DÄMPF.</dd>
+    </dl>
+
+    <h2 id="buchsen">Jacks</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Jack</th><th>Range</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 to +7 V</td><td>Pitch, 1 V per octave, 0 V = C2. A jump strikes (see above).</td></tr>
+          <tr><td>GATE</td><td>from about 1.4 V</td><td>Rising: strike. Falling: damper on the newest voice. On permanently without a cable.</td></tr>
+          <tr><td>HÄRTE</td><td>±5 V</td><td>Added to the hardness, ±5 V across the knob's whole travel.</td></tr>
+          <tr><td>POS</td><td>±5 V</td><td>Shifts the position, through the attenuverter POS CV.</td></tr>
+          <tr><td>KRAFT</td><td>±5 V</td><td>Added to the force: an LFO at KRAFT moves the bow.</td></tr>
+          <tr><td>DÄMPF.</td><td>±5 V</td><td>Shifts the damping, through the attenuverter DMP CV.</td></tr>
+          <tr><td>ROH (output)</td><td>±5 V</td><td>The voices with the filter, without the body.</td></tr>
+          <tr><td>KLANG (output)</td><td>±5 V</td><td>The same through the body.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">The outputs are at module level. They are far too loud for headphones; always go through a mixer or an output module.</p>
+
+    <h2 id="patches">First patches</h2>
+    <dl class="tools">
+      <dt>Harp from a sequencer</dt>
+      <dd>Pitch into V/OCT, no gate cable, KLANG to the mixer. Pluck on the string; ERREGER layer: four voices (DECAY fully right); RESON. layer: body guitar. DECAY long in the normal layer.</dd>
+      <dt>Marimba</dt>
+      <dd>Strike on the bar, HÄRTE in the middle, DECAY short, gate from the sequencer. A random CV at POS makes every hit a little different.</dd>
+      <dt>Bowed drone</dt>
+      <dd>Bow on the string or the bowl, no gate cable. A slow LFO at KRAFT, a second one at POS; DÄMPF. shapes the brightness.</dd>
+      <dt>Bells</dt>
+      <dd>Strike on the bell, DECAY long, INHARM. turned up a little, two to four voices.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Front panel</h2>
+    <p>The same three variants as for the wavetable module (<a href="bauanleitung.html#frontplatte">build guide, step 2</a>), with this firmware's lettering: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical.stl">raised lettering</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical-graviert.stl">engraved lettering</a> and <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical-einlage.3mf">inlaid lettering (3MF, two colours)</a>. Meant to be yellow with black lettering: for the raised print start with yellow and change to black at 2.5 mm.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, written to address 0x0 as in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. It needs no tables; the first start takes no longer than any other. Going back to the wavetable firmware works the same way, with <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>.</p>
+    <p class="note">Flashing erases the saved settings and the calibration. So calibrate again after flashing.</p>
+
+    <p class="stand">As of 31 October 2026. Source code and front panel are on <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> under the same <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> as the plugins: building one for yourself yes, selling only with permission.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Legal">
+        <a href="../impressum.html">Legal notice</a>
+        <a href="../datenschutz.html">Privacy</a>
+        <a href="bauanleitung.html">Build guide</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../../modul/physical.html" hreflang="de" lang="de">Deutsch</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

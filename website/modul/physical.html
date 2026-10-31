@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Physical Modul · Bedienung</title>
+  <meta name="description" content="Die zweite Firmware des Eurorack-Moduls: Tonwerk Physical, Physical Modeling mit Erreger und Resonator auf denselben Platinen. Regler, Tasten, Buchsen, LEDs und Frontplatte.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/physical.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/physical.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/physical.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/physical.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="./">Wavetable</a>
+        <a href="#bedienung" class="optional">Physical</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../en/modul/physical.html" hreflang="en" lang="en" title="English">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Physical als Eurorack-Modul</h1>
+    <p class="lead-text">Eine zweite Firmware für dieselben Platinen wie das <a href="./">Wavetable-Modul</a>: die Klangerzeugung des Plugins <a href="../#instrumente">Tonwerk Physical</a>. Statt Wellenformen abzuspielen, rechnet das Modul nach, wie ein Instrument schwingt. Ein <b>Erreger</b> (Zupfen, Schlagen, Streichen, Blasen) bringt einen <b>Resonator</b> (Saite, Rohr, Stab, Glocke, Fell, Schale) zum Klingen, auf Wunsch durch ein Filter und einen Korpus.</p>
+
+    <h2 id="ueberblick">Überblick</h2>
+    <figure class="side">
+      <a href="img/frontplatte-physical-vorschau.png"><img src="img/frontplatte-physical-vorschau.png" alt="Vorschau der Physical-Frontplatte: 14 TE, gelb mit schwarzer Schrift" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>Dieselbe Engine wie das Plugin</b>, in float neu geschrieben: Saite und Rohre als Verzögerungsleitungen, Stab, Glocke, Fell und Schale als bis zu 16 Resonanzen. Ein Test auf dem Rechner vergleicht alle 28 Paare aus Erreger und Resonator mit dem Plugin.</li>
+      <li><b>Bis zu vier Stimmen</b>: jeder Anschlag nimmt die nächste, die alten klingen aus. Eine Folge von Noten wird so zum Akkord oder zur Harfe.</li>
+      <li><b>Zwei Ausgänge</b>: <b>ROH</b> sind die Stimmen ohne Korpus, <b>KLANG</b> dieselben durch den Korpus (Gitarre, Geige, Kiste, Resonanzboden). Ohne Korpus sind beide gleich.</li>
+      <li><b>Sechs Eingänge</b>: V/OCT, GATE und CV für Härte, Position, Kraft und Dämpfung.</li>
+      <li>Eine eigene <a href="#frontplatte">Frontplatte</a>, gedacht gelb mit schwarzer Schrift, damit man die beiden Module im Rack auseinanderhält.</li>
+    </ul>
+    <p class="note">Diese Firmware ist auf dem Rechner getestet, auf einem ESP32 ist sie noch nie gelaufen. Die Rechenlast schätze ich auf 10–30 % eines Kerns.</p>
+
+    <h2 id="bedienung">Bedienung</h2>
+    <p>Die Front ist dieselbe wie beim Wavetable-Modul, nur die Beschriftung ist anders. Die WARP-Taste heißt hier <b>ERREGER</b>, die FILTER-Taste <b>RESON.</b>. Ebenen, Pick-up, Halten gegen kurzes Drücken, Speichern und <a href="./#kalibrieren">Kalibrieren</a> funktionieren genauso wie dort beschrieben.</p>
+
+    <h3 id="regler">Alle Regler</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Regler</th><th>Normal</th><th>ERREGER gehalten</th><th>RESON. gehalten</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Stimmung ±2 Oktaven in Halbtönen</td><td>Attack von Bogen und Atem, 1 ms bis 2 s</td><td>Cutoff des Filters, 20 Hz bis 20 kHz</td></tr>
+          <tr><td>FINE</td><td>Feinstimmung ±50 Cent</td><td>Decay von Bogen und Atem, 5 ms bis 5 s</td><td>Resonanz des Filters</td></tr>
+          <tr><td>HÄRTE</td><td>Härte des Anschlags: weich und dunkel bis hart und hell</td><td>Sustain von Bogen und Atem</td><td>Filter: aus, LP12, LP24, HP12, BP (ab Werk aus)</td></tr>
+          <tr><td>POSITION</td><td>Wo angeregt wird, vom Rand bis zur Mitte. In der Mitte gezupft verliert eine Saite ihre geraden Obertöne, am Rand wird sie dünn und hell.</td><td>Release von Bogen und Atem, 5 ms bis 5 s</td><td>Keytracking des Filters</td></tr>
+          <tr><td>KRAFT</td><td>Bogendruck und Atem; bei Zupfen und Schlagen, wie stark angeschlagen wird</td><td>Rauschen: Kratzen des Bogens, Luft im Atem</td><td>Korpus: aus, Gitarre, Geige, Kiste, Resonanzboden</td></tr>
+          <tr><td>DÄMPF.</td><td>Dämpfung: wie viel schneller die hohen Obertöne verklingen</td><td>Dynamik: wie viel leiser ein schwacher Anschlag ist</td><td>Mix des Korpus</td></tr>
+          <tr><td>INHARM.</td><td>Inharmonie: bei der Saite die Steifheit, die ihre Obertöne nach oben streckt wie bei einem Klavier; bei den anderen streckt sie die Resonanzen</td><td>–</td><td>–</td></tr>
+          <tr><td>DECAY</td><td>Abklingzeit des Resonators, 20 ms bis 20 s</td><td>Stimmen 1 bis 4 (ab Werk 2)</td><td>Dämpfer nach dem Gate, 5 ms bis 60 s; ab Werk 60 s, der Ton klingt aus</td></tr>
+          <tr><td>POS CV</td><td>Abschwächer für die POS-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+          <tr><td>DMP CV</td><td>Abschwächer für die DÄMPF.-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="erreger">Erreger (ERREGER kurz drücken, LED 1)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 1</th><th>Erreger</th><th>Was er tut</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Zupfen</td><td>Ein kurzer Stoß über eine Schwingungsperiode. Ab Werk.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Schlagen</td><td>Hammer oder Schlägel: je härter, desto kürzer und heller.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Streichen</td><td>Ein Bogen mit Haft- und Gleitreibung. Die Saite schwingt von selbst, solange das Gate an ist.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>Blasen</td><td>Am geschlossenen Rohr ein Rohrblatt, das selbst schwingt; sonst ein Luftstrom. Hält den Ton wie der Bogen.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="resonator">Resonatoren (RESON. kurz drücken, LED 2)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 2</th><th>Resonator</th><th>Wie er klingt</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Saite</td><td>Alle Obertöne, mit INHARM. steif wie eine Klaviersaite. Ab Werk.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Rohr geschlossen</td><td>Nur ungerade Obertöne, hohl wie eine Klarinette.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>Rohr offen</td><td>Alle Obertöne, wie eine Flöte.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Stab</td><td>Obertöne beim 4- und 10-fachen, wie ein gestimmter Marimbastab.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blau</td><td>Glocke</td><td>Mit dem Summton eine Oktave unter dem Schlagton und der kleinen Terz.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>Fell</td><td>Die unharmonischen Töne einer Trommel.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Schale</td><td>Klangschale: je zwei eng benachbarte Töne, die gegeneinander schweben.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Beide LEDs leuchten hell auf, wenn ein Ton angeschlagen wird, und werden mit ihm dunkler, nie ganz aus.</p>
+
+    <h3 id="anschlagen">Anschlagen</h3>
+    <dl class="tools">
+      <dt>Mit Gate</dt>
+      <dd>Jede steigende Flanke an GATE zupft oder schlägt die nächste Stimme an, so stark, wie KRAFT steht. Fällt das Gate, senkt sich der Dämpfer auf die neueste Stimme, so schnell, wie DECAY in der RESON.-Ebene sagt. Ab Werk ist der Dämpfer aus (60 s), jeder Ton klingt aus.</dd>
+      <dt>Nur mit V/OCT</dt>
+      <dd>Ist das Gate an oder steckt kein Kabel in GATE, schlägt jeder <b>Sprung</b> an V/OCT um mindestens einen halben Halbton an. Ein Sequencer ohne Gate spielt so jede neue Note; ein Glide oder ein langsamer LFO zieht dagegen nur die Tonhöhe.</dd>
+      <dt>Tonhöhe</dt>
+      <dd>Die neueste Stimme folgt V/OCT, TUNE und FINE, die älteren klingen in der Tonhöhe weiter, mit der sie angeschlagen wurden.</dd>
+      <dt>Streichen und Blasen</dt>
+      <dd>Halten den Ton, solange das Gate an ist, ihre Hüllkurve liegt in der ERREGER-Ebene. Ohne Gate-Kabel streicht der Bogen dauernd: eine Drone, die man mit KRAFT, POSITION und DÄMPF. formt.</dd>
+    </dl>
+
+    <h2 id="buchsen">Buchsen</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Buchse</th><th>Bereich</th><th>Was sie tut</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 bis +7 V</td><td>Tonhöhe, 1 V pro Oktave, 0 V = C2. Ein Sprung schlägt an (siehe oben).</td></tr>
+          <tr><td>GATE</td><td>ab etwa 1,4 V</td><td>Steigend: Anschlag. Fallend: Dämpfer auf die neueste Stimme. Ohne Kabel dauerhaft an.</td></tr>
+          <tr><td>HÄRTE</td><td>±5 V</td><td>Kommt zur Härte dazu, ±5 V über den ganzen Weg des Reglers.</td></tr>
+          <tr><td>POS</td><td>±5 V</td><td>Verschiebt die Position, über den Abschwächer POS CV.</td></tr>
+          <tr><td>KRAFT</td><td>±5 V</td><td>Kommt zur Kraft dazu: ein LFO an KRAFT bewegt den Bogen.</td></tr>
+          <tr><td>DÄMPF.</td><td>±5 V</td><td>Verschiebt die Dämpfung, über den Abschwächer DMP CV.</td></tr>
+          <tr><td>ROH (Ausgang)</td><td>±5 V</td><td>Die Stimmen mit Filter, ohne Korpus.</td></tr>
+          <tr><td>KLANG (Ausgang)</td><td>±5 V</td><td>Dieselben durch den Korpus.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Die Ausgänge haben Modulpegel. Für Kopfhörer sind sie viel zu laut, immer über einen Mixer oder ein Ausgangsmodul gehen.</p>
+
+    <h2 id="patches">Erste Patches</h2>
+    <dl class="tools">
+      <dt>Harfe vom Sequencer</dt>
+      <dd>Tonhöhe an V/OCT, kein Gate-Kabel, KLANG an den Mixer. Zupfen auf der Saite, ERREGER-Ebene: vier Stimmen (DECAY ganz rechts), RESON.-Ebene: Korpus Gitarre. DECAY in der normalen Ebene lang.</dd>
+      <dt>Marimba</dt>
+      <dd>Schlagen auf dem Stab, HÄRTE in der Mitte, DECAY kurz, Gate vom Sequencer. Ein Zufalls-CV an POS macht jeden Schlag etwas anders.</dd>
+      <dt>Gestrichene Drone</dt>
+      <dd>Streichen auf der Saite oder der Schale, kein Gate-Kabel. Ein langsamer LFO an KRAFT, ein zweiter an POS; DÄMPF. formt die Helligkeit.</dd>
+      <dt>Glocken</dt>
+      <dd>Schlagen auf der Glocke, DECAY lang, INHARM. leicht aufgedreht, zwei bis vier Stimmen.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Frontplatte</h2>
+    <p>Dieselben drei Varianten wie beim Wavetable-Modul (<a href="bauanleitung.html#frontplatte">Bauanleitung, Schritt 2</a>), mit der Beschriftung dieser Firmware: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical.stl">Schrift erhaben</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical-graviert.stl">Schrift vertieft</a> und <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-physical-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a>. Gedacht gelb mit schwarzer Schrift: beim erhabenen Druck mit Gelb beginnen und bei 2,5 mm auf Schwarz wechseln.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, geschrieben an Adresse 0x0 wie in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Sie braucht keine Tabellen; der erste Start dauert nicht länger als jeder andere. Zurück zur Wavetable-Firmware geht es genauso, mit <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>.</p>
+    <p class="note">Flashen löscht die gespeicherten Einstellungen und die Kalibrierung. Darum nach dem Flashen neu kalibrieren.</p>
+
+    <p class="stand">Stand 31.10.2026. Quelltext und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../en/modul/physical.html" hreflang="en" lang="en">English</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
