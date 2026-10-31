@@ -1,0 +1,57 @@
+# The ESP32 Eurorack module (esp32-wavetable/): the host tests against the plugins' voices, and the three firmware
+# images (Tonwerk Wavetable, Tonwerk Physical, the bench test) built with ESP-IDF 5.3 and merged into one file for
+# address 0x0 each, uploaded as the artifact `modul-firmware`. The committed images in firmware/modul*/ and
+# firmware/steckbrett-test/ are copied from such a run.
+name: Modul
+
+on:
+  push:
+    branches: [main]
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, src/dsp/**, .github/workflows/modul.yml]
+  pull_request:
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, src/dsp/**, .github/workflows/modul.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modul-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host-Tests (Wavetable und Physical gegen die Plugins)
+        run: make -C esp32-wavetable/firmware/host test
+
+  firmware:
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.3.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Firmware bauen
+        shell: bash
+        run: |
+          set -euo pipefail
+          . "$IDF_PATH/export.sh" > /dev/null
+          cd esp32-wavetable/firmware
+          mkdir -p out
+          build() {
+            local name=$1 file=$2; shift 2
+            idf.py -B "build-$name" -DIDF_TARGET=esp32s3 -DSDKCONFIG="build-$name/sdkconfig" "$@" build \
+              2>&1 | tee "build-$name.log"
+            # The module's own sources build without warnings.
+            if grep -E "main/.*warning:" "build-$name.log"; then echo "Warnungen in $name"; exit 1; fi
+            (cd "build-$name" && esptool.py --chip esp32s3 merge_bin -o "../out/$file" @flash_args)
+            ls -l "build-$name"/*.bin "out/$file"
+          }
+          build modul tonwerk-modul.bin
+          build physical tonwerk-physical.bin -DTONWERK_PHYSICAL=1
+          build bench tonwerk-steckbrett-test.bin -DTONWERK_BENCH=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modul-firmware
+          path: esp32-wavetable/firmware/out/*.bin

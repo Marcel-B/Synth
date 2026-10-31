@@ -1,5 +1,6 @@
 #include "Hardware.h"
 #include "Pins.h"
+#include "../dsp/Voice.h" // softClip
 
 #include "driver/gpio.h"
 #include "driver/i2s_std.h"

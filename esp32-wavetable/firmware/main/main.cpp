@@ -1,15 +1,24 @@
-// Tonwerk Wavetable as a Eurorack module: firmware for the ESP32-S3.
+// Tonwerk Wavetable as a Eurorack module: firmware for the ESP32-S3. Built with -DTONWERK_PHYSICAL=1 the same
+// panel plays Tonwerk Physical instead (app/PhysicalModule.h, dsp/PhysicalVoice.h); everything else is shared.
 //
 // Core 1 runs the audio task alone: it renders one control step (32 samples) at a time and blocks on the I2S DMA,
 // which paces it. Core 0 runs the control task every 2 ms: pots, CVs, buttons, LEDs, saving. The two share the
 // voice's parameters through a sequence lock, so the audio task never waits for the control task.
 
+#if TONWERK_PHYSICAL
+#include "app/PhysicalModule.h"
+#include "dsp/PhysicalVoice.h"
+#else
 #include "app/Module.h"
-#if TONWERK_BENCH
-#include "app/Bench.h"
-#endif
 #include "dsp/Tables.h"
 #include "dsp/Voice.h"
+#endif
+#if TONWERK_BENCH
+#if TONWERK_PHYSICAL
+#error "the bench test plays the wavetable firmware"
+#endif
+#include "app/Bench.h"
+#endif
 #include "hw/Hardware.h"
 
 #include "esp_cpu.h"
@@ -24,6 +33,15 @@
 
 namespace
 {
+#if TONWERK_PHYSICAL
+using Panel = twm::PhysicalModule;
+using Instrument = twm::phys::Player;
+#else
+using Panel = twm::Module;
+using Instrument = twm::Voice;
+#endif
+using Params = Panel::Params;
+
 const char* kTag = "tonwerk";
 constexpr int kControlMs = 2;
 /** Saved this long after the last change of a mode or a hidden value, so turning a knob writes the flash once. */
@@ -33,15 +51,15 @@ constexpr int kSaveAfterMs = 3000;
 struct SharedParams
 {
     std::atomic<uint32_t> sequence { 0 };
-    twm::VoiceParams params;
+    Params params;
 
-    void write(const twm::VoiceParams& p)
+    void write(const Params& p)
     {
         sequence.fetch_add(1, std::memory_order_acq_rel);
         std::memcpy(&params, &p, sizeof p);
         sequence.fetch_add(1, std::memory_order_acq_rel);
     }
-    void read(twm::VoiceParams& p) const
+    void read(Params& p) const
     {
         uint32_t before, after;
         do
@@ -54,11 +72,11 @@ struct SharedParams
 };
 
 SharedParams shared;
-twm::Voice voice;
+Instrument voice;
 std::atomic<float> envelope { 0.0f };
 /** The longest render of a block since the last report, in CPU cycles: the audio core's load on the serial monitor. */
 std::atomic<uint32_t> renderCycles { 0 };
-twm::Module module;
+Panel module;
 #if TONWERK_BENCH
 twm::Bench bench;
 /** Headphones straight on the module's jack, which has no volume knob: the voice on both sides, 16 dB down. */
@@ -68,8 +86,8 @@ constexpr float kBenchLevel = 0.15f;
 void audioTask(void*)
 {
     voice.prepare((float) hw::kSampleRate);
-    twm::VoiceParams params;
-    float osc[twm::Voice::kControl], out[twm::Voice::kControl];
+    Params params;
+    float osc[Instrument::kControl], out[Instrument::kControl];
     for (;;)
     {
         shared.read(params);
@@ -78,16 +96,16 @@ void audioTask(void*)
         params.gate = hw::readGate();
 #endif
         const uint32_t begin = esp_cpu_get_cycle_count();
-        voice.render(osc, out, twm::Voice::kControl, params);
+        voice.render(osc, out, Instrument::kControl, params);
         const uint32_t cycles = esp_cpu_get_cycle_count() - begin;
         renderCycles.store(std::max(renderCycles.load(std::memory_order_relaxed), cycles), std::memory_order_relaxed);
         envelope.store(voice.envelope(), std::memory_order_relaxed);
 #if TONWERK_BENCH
-        for (int i = 0; i < twm::Voice::kControl; ++i)
+        for (int i = 0; i < Instrument::kControl; ++i)
             out[i] *= kBenchLevel;
-        hw::writeAudio(out, out, twm::Voice::kControl);
+        hw::writeAudio(out, out, Instrument::kControl);
 #else
-        hw::writeAudio(osc, out, twm::Voice::kControl);
+        hw::writeAudio(osc, out, Instrument::kControl);
 #endif
     }
 }
@@ -159,7 +177,7 @@ void controlTask(void*)
 {
     twm::PanelInputs in;
     float codes[twm::kCvs];
-    twm::VoiceParams params;
+    Params params;
     int quietMs = 0, ledMs = 0, reportMs = 0;
     TickType_t wake = xTaskGetTickCount();
     int benchTable = -1;
@@ -193,7 +211,7 @@ void controlTask(void*)
             quietMs = kSaveAfterMs;
         }
         else if (quietMs > 0 && (quietMs -= kControlMs) <= 0)
-            hw::save("stored", &module.stored, sizeof module.stored);
+            hw::save(Panel::kStoreKey, &module.stored, sizeof module.stored);
 
         if ((ledMs += kControlMs) >= 33)
         {
@@ -207,7 +225,7 @@ void controlTask(void*)
             // A block of 32 samples at 48 kHz lasts 0.67 ms, 160000 cycles at 240 MHz.
             const uint32_t worst = renderCycles.exchange(0);
             ESP_LOGI(kTag, "audio core: worst block %lu cycles, %.1f %% load", (unsigned long) worst,
-                     100.0 * worst / (240.0e6 * twm::Voice::kControl / hw::kSampleRate));
+                     100.0 * worst / (240.0e6 * Instrument::kControl / hw::kSampleRate));
         }
         vTaskDelayUntil(&wake, pdMS_TO_TICKS(kControlMs));
     }
@@ -226,14 +244,15 @@ extern "C" void app_main()
     hw::showLeds({ 252, 238, 10 }, { 0, 240, 255 });
 
 #if ! TONWERK_BENCH
-    twm::Stored stored;
-    if (hw::load("stored", &stored, sizeof stored) && stored.version == twm::Stored {}.version)
+    Panel::Stored stored;
+    if (hw::load(Panel::kStoreKey, &stored, sizeof stored) && stored.version == Panel::Stored {}.version)
         module.stored = stored;
     twm::Calibration calibration;
     if (hw::load("calibration", &calibration, sizeof calibration) && calibration.version == twm::Calibration {}.version)
         module.calibration = calibration;
 #endif
 
+#if ! TONWERK_PHYSICAL
     // The tables live in PSRAM. Computing them takes seconds, so the first start after flashing keeps a copy in
     // flash and every later start reads that instead.
     const int64_t start = esp_timer_get_time();
@@ -260,6 +279,7 @@ extern "C" void app_main()
         hw::storeTables(block, twm::Bank::bytes(), twm::Bank::kVersion);
         ESP_LOGI(kTag, "and kept in flash after %lld ms", (esp_timer_get_time() - start) / 1000);
     }
+#endif
 
 #if TONWERK_BENCH
     (void) calibrate;

@@ -6,4 +6,6 @@ build-*/
 esp32-wavetable/firmware/sdkconfig
 esp32-wavetable/firmware/sdkconfig.old
 esp32-wavetable/firmware/host/host-test
+esp32-wavetable/firmware/host/physical-test
 esp32-wavetable/firmware/host/hoerproben/
+esp32-wavetable/firmware/host/hoerproben-physical/

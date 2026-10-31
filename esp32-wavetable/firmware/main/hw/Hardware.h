@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../app/Module.h"
+#include "../app/Panel.h"
 
 #include <cstddef>
 #include <cstdint>
