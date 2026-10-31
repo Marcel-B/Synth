@@ -281,8 +281,9 @@ extern "C" void app_main()
                            twm::grain::Sources::kVersion))
     {
         // Without its sources the firmware has nothing to play: flash the whole image (tonwerk-granular.bin at 0x0).
-        ESP_LOGE(kTag, block == nullptr ? "not enough PSRAM for the sources (an N16R8 board has 8 MB)"
-                                        : "no grain sources in the partition \"tables\": flash tonwerk-granular.bin at 0x0");
+        ESP_LOGE(kTag, "%s",
+                 block == nullptr ? "not enough PSRAM for the sources (an N16R8 board has 8 MB)"
+                                  : "no grain sources in the partition \"tables\": flash tonwerk-granular.bin at 0x0");
         for (;;)
         {
             hw::showLeds({ 255, 0, 60 }, { 255, 0, 60 });
