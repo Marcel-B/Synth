@@ -1291,7 +1291,8 @@ if(TONWERK_APP)
         BLUETOOTH_PERMISSION_ENABLED TRUE
         BLUETOOTH_PERMISSION_TEXT "Verbindet MIDI-Keyboards über Bluetooth."
         # No encryption beyond the system's, so TestFlight asks no export questions; the Mac App Store wants a category.
-        PLIST_TO_MERGE "<plist><dict><key>ITSAppUsesNonExemptEncryption</key><false/><key>LSApplicationCategoryType</key><string>public.app-category.music</string></dict></plist>"
+        # CFBundleLocalizations and the .lproj folders below make the App Store list English and German.
+        PLIST_TO_MERGE "<plist><dict><key>ITSAppUsesNonExemptEncryption</key><false/><key>LSApplicationCategoryType</key><string>public.app-category.music</string><key>CFBundleLocalizations</key><array><string>en</string><string>de</string></array></dict></plist>"
         # Last, so on the Mac the microphone joins the sandbox's options (Tonwerk Scope's input).
         ${TONWERK_IOS_OPTIONS}
         ${tonwerk_app_sandbox})
@@ -1322,6 +1323,13 @@ if(TONWERK_APP)
         foreach(bundle Tonwerk ${tonwerk_extensions})
             target_sources(${bundle} PRIVATE "${tonwerk_privacy}")
             set_property(TARGET ${bundle} APPEND PROPERTY RESOURCE "${tonwerk_privacy}")
+        endforeach()
+        # The permission texts per language (app/<language>.lproj/InfoPlist.strings); with these folders the App Store
+        # lists the app's languages as English and German, without them only one.
+        foreach(language en de)
+            set(tonwerk_strings "${CMAKE_CURRENT_SOURCE_DIR}/app/${language}.lproj/InfoPlist.strings")
+            target_sources(Tonwerk PRIVATE "${tonwerk_strings}")
+            set_source_files_properties("${tonwerk_strings}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/${language}.lproj")
         endforeach()
         # JUCE names an AUv3 <plugin's id>.<its last part>AUv3, two parts past the app's id; App Store Connect takes
         # only one (ITMS-90347), so each extension gets its plugin's id, de.bvelop.tonwerk.tonwerkdx. JUCE writes the

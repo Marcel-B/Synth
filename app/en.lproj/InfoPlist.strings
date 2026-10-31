@@ -1,0 +1,5 @@
+/* The app's permission texts in English; CMakeLists.txt writes them in German into the Info.plist (the plugins' own
+   standalone apps keep those), and these files let the system show the user's language. */
+"NSMicrophoneUsageDescription" = "Reads the audio interface's inputs to process or display them.";
+"NSBluetoothAlwaysUsageDescription" = "Connects MIDI keyboards over Bluetooth.";
+"NSBluetoothPeripheralUsageDescription" = "Connects MIDI keyboards over Bluetooth.";

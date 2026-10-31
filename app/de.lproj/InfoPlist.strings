@@ -1,0 +1,4 @@
+/* The app's permission texts in German, the same as in the Info.plist (see en.lproj). */
+"NSMicrophoneUsageDescription" = "Liest die Eingänge des Audio-Interfaces, um sie zu bearbeiten oder anzuzeigen.";
+"NSBluetoothAlwaysUsageDescription" = "Verbindet MIDI-Keyboards über Bluetooth.";
+"NSBluetoothPeripheralUsageDescription" = "Verbindet MIDI-Keyboards über Bluetooth.";
