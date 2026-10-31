@@ -1326,10 +1326,17 @@ if(TONWERK_APP)
         endforeach()
         # The permission texts per language (app/<language>.lproj/InfoPlist.strings); with these folders the App Store
         # lists the app's languages as English and German, without them only one.
+        # Copied after the build (Xcode signs the bundle after its last phase), since the Xcode generator flattens
+        # resources and ignores MACOSX_PACKAGE_LOCATION's subfolder; an iPad bundle keeps its resources at the top.
+        if(IOS)
+            set(tonwerk_resources "$<TARGET_BUNDLE_DIR:Tonwerk>")
+        else()
+            set(tonwerk_resources "$<TARGET_BUNDLE_CONTENT_DIR:Tonwerk>/Resources")
+        endif()
         foreach(language en de)
-            set(tonwerk_strings "${CMAKE_CURRENT_SOURCE_DIR}/app/${language}.lproj/InfoPlist.strings")
-            target_sources(Tonwerk PRIVATE "${tonwerk_strings}")
-            set_source_files_properties("${tonwerk_strings}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/${language}.lproj")
+            add_custom_command(TARGET Tonwerk POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                    "${CMAKE_CURRENT_SOURCE_DIR}/app/${language}.lproj" "${tonwerk_resources}/${language}.lproj")
         endforeach()
         # JUCE names an AUv3 <plugin's id>.<its last part>AUv3, two parts past the app's id; App Store Connect takes
         # only one (ITMS-90347), so each extension gets its plugin's id, de.bvelop.tonwerk.tonwerkdx. JUCE writes the
