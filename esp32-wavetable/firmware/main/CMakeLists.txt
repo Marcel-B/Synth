@@ -1,5 +1,5 @@
-# The Physical firmware (app/PhysicalModule.h) has no wavetables to compute.
-if(TONWERK_PHYSICAL)
+# The Physical and PD firmwares (app/PhysicalModule.h, app/PdModule.h) have no wavetables to compute.
+if(TONWERK_PHYSICAL OR TONWERK_PD)
     set(sources "main.cpp" "hw/Hardware.cpp")
 else()
     set(sources "main.cpp" "dsp/Tables.cpp" "hw/Hardware.cpp")
@@ -16,4 +16,8 @@ endif()
 # Tonwerk Physical on the same panel: idf.py -B build-physical -DTONWERK_PHYSICAL=1 build
 if(TONWERK_PHYSICAL)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE TONWERK_PHYSICAL=1)
+endif()
+# Tonwerk PD on the same panel: idf.py -B build-pd -DTONWERK_PD=1 build
+if(TONWERK_PD)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE TONWERK_PD=1)
 endif()

@@ -1,20 +1,27 @@
 // Tonwerk Wavetable as a Eurorack module: firmware for the ESP32-S3. Built with -DTONWERK_PHYSICAL=1 the same
-// panel plays Tonwerk Physical instead (app/PhysicalModule.h, dsp/PhysicalVoice.h); everything else is shared.
+// panel plays Tonwerk Physical instead (app/PhysicalModule.h, dsp/PhysicalVoice.h), with -DTONWERK_PD=1 Tonwerk PD
+// (app/PdModule.h, dsp/PdVoice.h); everything else is shared.
 //
 // Core 1 runs the audio task alone: it renders one control step (32 samples) at a time and blocks on the I2S DMA,
 // which paces it. Core 0 runs the control task every 2 ms: pots, CVs, buttons, LEDs, saving. The two share the
 // voice's parameters through a sequence lock, so the audio task never waits for the control task.
 
+#if TONWERK_PHYSICAL && TONWERK_PD
+#error "one firmware at a time"
+#endif
 #if TONWERK_PHYSICAL
 #include "app/PhysicalModule.h"
 #include "dsp/PhysicalVoice.h"
+#elif TONWERK_PD
+#include "app/PdModule.h"
+#include "dsp/PdVoice.h"
 #else
 #include "app/Module.h"
 #include "dsp/Tables.h"
 #include "dsp/Voice.h"
 #endif
 #if TONWERK_BENCH
-#if TONWERK_PHYSICAL
+#if TONWERK_PHYSICAL || TONWERK_PD
 #error "the bench test plays the wavetable firmware"
 #endif
 #include "app/Bench.h"
@@ -36,6 +43,9 @@ namespace
 #if TONWERK_PHYSICAL
 using Panel = twm::PhysicalModule;
 using Instrument = twm::phys::Player;
+#elif TONWERK_PD
+using Panel = twm::PdModule;
+using Instrument = twm::pd::Player;
 #else
 using Panel = twm::Module;
 using Instrument = twm::Voice;
@@ -252,7 +262,7 @@ extern "C" void app_main()
         module.calibration = calibration;
 #endif
 
-#if ! TONWERK_PHYSICAL
+#if ! TONWERK_PHYSICAL && ! TONWERK_PD
     // The tables live in PSRAM. Computing them takes seconds, so the first start after flashing keeps a copy in
     // flash and every later start reads that instead.
     const int64_t start = esp_timer_get_time();

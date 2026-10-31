@@ -9,3 +9,5 @@ esp32-wavetable/firmware/host/host-test
 esp32-wavetable/firmware/host/physical-test
 esp32-wavetable/firmware/host/hoerproben/
 esp32-wavetable/firmware/host/hoerproben-physical/
+esp32-wavetable/firmware/host/pd-test
+esp32-wavetable/firmware/host/hoerproben-pd/
