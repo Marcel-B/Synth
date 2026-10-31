@@ -1,7 +1,8 @@
 name: Release
 
 # A tag like v0.2.0 builds the plugins on macOS, Linux and Windows and attaches them to a GitHub release of that name.
-# Started by hand with a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed).
+# Started by hand with a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed);
+# the nightly auto-release.yml calls it that way too, with the notes of what changed.
 on:
   push:
     tags: ["v*"]
@@ -10,6 +11,15 @@ on:
       version:
         description: "Version ohne v, z. B. 0.2.0"
         required: true
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      notes:
+        description: "What is new, put above the installation notes"
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -49,7 +59,7 @@ jobs:
           echo "TONWERK_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
       - name: Version from the tag
         env:
-          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
         run: |
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
@@ -181,7 +191,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Version from the tag
         env:
-          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
         run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: |
@@ -208,7 +218,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Version from the tag
         env:
-          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
         run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       # The C++ runtime linked in statically, so the apps and plugins run without the Visual C++ Redistributable.
       - name: Configure
@@ -233,16 +243,19 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
           NOTARIZED: ${{ needs.macos.outputs.notarized }}
+          CHANGES: ${{ inputs.notes }}
         run: |
           VERSION="${TAG#v}"
+          # What is new (the nightly run's notes) goes above the installation notes, a blank line between.
+          [ -z "${CHANGES:-}" ] || CHANGES="$CHANGES"$'\n\n'
           if [ -n "${NOTARIZED:-}" ]; then
             SIGNING="Die Plugins sind mit Developer ID signiert und von Apple notarisiert; macOS öffnet sie nach dem Download ohne Rückfrage."
           else
             SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
           fi
-          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$(cat <<NOTES
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$CHANGES$(cat <<NOTES
           Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, der Reese- und Neuro-Bass Tonwerk Neuro, der achtstimmige Analog-Synth Tonwerk Expander, die Drum-Machine Tonwerk Groovebox, Tonwerk Rig (ein Instrument mit Effekten dahinter als ein Klang) und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Rumble (Rumble für die Kick) und Tonwerk Freeze, dazu der MIDI-Effekte Tonwerk Arp (Arpeggiator und Step-Sequencer) und Tonwerk LFO (bewegt per MIDI-Controller jeden Regler eines Instruments).
 
           **macOS** (\`Tonwerk-Synth-$VERSION-macOS.zip\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Zip laden, im Terminal
