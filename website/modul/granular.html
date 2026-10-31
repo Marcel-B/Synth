@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tonwerk Granular Modul · Bedienung</title>
+  <meta name="description" content="Die vierte Firmware des Eurorack-Moduls: Tonwerk Granular, Kornwolken aus neun Klangquellen mit Fenstern, Tonhöhen-Streuung, Filter und LFO in Stereo auf denselben Platinen. Regler, Tasten, Buchsen, LEDs und Frontplatte.">
+  <meta name="theme-color" content="#0a0b10">
+  <link rel="canonical" href="https://tonwerk.studio/modul/granular.html">
+  <link rel="alternate" hreflang="de" href="https://tonwerk.studio/modul/granular.html">
+  <link rel="alternate" hreflang="en" href="https://tonwerk.studio/en/modul/granular.html">
+  <link rel="alternate" hreflang="x-default" href="https://tonwerk.studio/modul/granular.html">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
+      <nav aria-label="Navigation des Moduls">
+        <a href="./">Wavetable</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="#bedienung" class="optional">Granular</a>
+        <a href="additiv.html" class="optional">Additiv</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="../">Plugins</a>
+        <a class="lang" href="../en/modul/granular.html" hreflang="en" lang="en" title="English">EN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap page">
+    <h1>Tonwerk Granular als Eurorack-Modul</h1>
+    <p class="lead-text">Eine vierte Firmware für dieselben Platinen wie das <a href="./">Wavetable-Modul</a>: die Klangerzeugung des Plugins <a href="../#instrumente">Tonwerk Granular</a>. Aus einer Klangquelle schneidet das Modul laufend kurze <b>Körner</b>, jedes mit eigener Hüllkurve, Tonhöhe, Richtung und Stelle im Stereobild, bis zu 40 zugleich. So werden aus einem Chor Wolken, aus Glas Funken und aus einem Rhythmus ein Stottern.</p>
+
+    <h2 id="ueberblick">Überblick</h2>
+    <figure class="side">
+      <a href="img/frontplatte-granular-vorschau.png"><img src="img/frontplatte-granular-vorschau.png" alt="Vorschau der Granular-Frontplatte: 14 TE, gelb mit schwarzer Schrift" width="900" height="1630"></a>
+    </figure>
+    <ul>
+      <li><b>Dieselbe Kornwolke wie das Plugin</b>: wann ein Korn beginnt, wie lang es ist und wie hoch es klingt, rechnet das Modul genau wie das Plugin. Ein Test auf dem Rechner vergleicht jede Quelle, jedes Fenster, die Raster, die Filter und den LFO mit dem Plugin.</li>
+      <li><b>Neun Quellen</b> aus dem Plugin, je 4 Sekunden: Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus. Sie kommen beim Flashen mit ins Modul; eigene Dateien lädt es nicht.</li>
+      <li><b>Stereo</b>: die Körner verteilen sich über das Stereobild, die Ausgänge sind <b>L</b> und <b>R</b>.</li>
+      <li><b>Eine Stimme</b>: V/OCT, GATE und CV für Korngröße, Position, Dichte und Streuung.</li>
+      <li>Eine eigene <a href="#frontplatte">Frontplatte</a>; die Vorschau zeigt sie gelb mit schwarzer Schrift, die Farben sind frei.</li>
+    </ul>
+    <p class="note">Diese Firmware ist auf dem Rechner getestet, auf einem ESP32 ist sie noch nie gelaufen. Jedes Korn liest aus dem PSRAM; mit 40 Körnern schätze ich bis zu die Hälfte eines Kerns.</p>
+
+    <h2 id="bedienung">Bedienung</h2>
+    <p>Die Front ist dieselbe wie beim Wavetable-Modul, nur die Beschriftung ist anders. Die WARP-Taste heißt hier <b>QUELLE</b>, die FILTER-Taste <b>FENSTER</b>. Ebenen, Pick-up, Halten gegen kurzes Drücken, Speichern und <a href="./#kalibrieren">Kalibrieren</a> funktionieren genauso wie dort beschrieben.</p>
+
+    <h3 id="regler">Alle Regler</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Regler</th><th>Normal</th><th>QUELLE gehalten</th><th>FENSTER gehalten</th></tr></thead>
+        <tbody>
+          <tr><td>TUNE</td><td>Stimmung ±2 Oktaven in Halbtönen</td><td>Attack, 1 ms bis 10 s</td><td>Filter: aus, Tiefpass 12, Tiefpass 24, Hochpass 12, Bandpass (ab Werk aus)</td></tr>
+          <tr><td>FINE</td><td>Feinstimmung ±50 Cent</td><td>Decay, 5 ms bis 10 s</td><td>Cutoff, 20 Hz bis 20 kHz</td></tr>
+          <tr><td>GRÖSSE</td><td>Länge eines Korns, 5 ms bis 1 s</td><td>Sustain</td><td>Resonanz</td></tr>
+          <tr><td>POSITION</td><td>Wo in der Quelle die Körner herkommen, vom Anfang bis zum Ende</td><td>Release, 5 ms bis 10 s</td><td>Keytracking des Filters</td></tr>
+          <tr><td>DICHTE</td><td>Körner pro Sekunde, 1 bis 200</td><td>Zufall: wie unregelmäßig die Körner kommen</td><td>Rate des LFO, 0,05 bis 20 Hz</td></tr>
+          <tr><td>STREUUNG</td><td>Wie weit um die Position ein Korn beginnen darf, bis zur ganzen Quelle</td><td>Rückwärts: der Anteil der Körner, die rückwärts laufen</td><td>Ziel des LFO: aus, Position, Streuung, Größe, Dichte, Tonhöhe, Cutoff</td></tr>
+          <tr><td>SCAN</td><td>Die Position wandert durch die Quelle. In der Mitte steht sie still, rechts läuft sie vorwärts, links rückwärts, an den Enden doppelt so schnell wie die Quelle selbst.</td><td>Raster der Tonstreuung: frei, Oktaven, Quinten</td><td>Menge des LFO: Mitte 0, links umgekehrt</td></tr>
+          <tr><td>TONSTREU</td><td>Wie weit ein Korn in der Tonhöhe abweichen darf, bis zwei Oktaven; der erste Teil des Wegs gilt den ersten Halbtönen</td><td>Breite im Stereobild (ab Werk 60 %)</td><td>Form des LFO: Sinus, Dreieck, Rampe ab, Rampe auf, Rechteck, Zufall</td></tr>
+          <tr><td>POS CV</td><td>Abschwächer für die POS-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+          <tr><td>STR CV</td><td>Abschwächer für die STREU.-Buchse: Mitte 0, rechts voll, links umgekehrt</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="quellen">Quellen (QUELLE kurz drücken, LED 1)</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>LED 1</th><th>Quelle</th><th>Was drin ist</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><span class="swatch" style="background:#fcee0a"></span>gelb</td><td>Chor</td><td>Ein gesungenes a e i o u, drei Stimmen mit Vibrato. Ab Werk.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#00f0ff"></span>cyan</td><td>Glas</td><td>Angeschlagenes Glas, alle halbe Sekunde, auf dem Ton und seinen Oktaven.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff2aa0"></span>magenta</td><td>Streicher</td><td>Sieben verstimmte Sägezähne, langsam eingestrichen, mit atmendem Tiefpass.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#28ff50"></span>grün</td><td>Zupfen</td><td>Acht gezupfte Saiten.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff6e00"></span>orange</td><td>Orgel</td><td>Zugriegel-Orgel, ab der Hälfte mit schnellem Rotor.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#0050ff"></span>blau</td><td>Wind</td><td>Rauschen durch ein wanderndes Band, über einem Grollen.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#a000ff"></span>violett</td><td>Metall</td><td>FM mit unharmonischen Verhältnissen, deren Index an- und abschwillt.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ffffff"></span>weiß</td><td>Sinus</td><td>Ein reiner Sinus: die Farbe kommt nur aus den Körnern.</td></tr>
+          <tr><td class="nowrap"><span class="swatch" style="background:#ff003c"></span>rot</td><td>Rhythmus</td><td>Zwei Takte Sechzehntel mit 120 BPM: Kick, Hats und Akkordstöße.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Alle Quellen stehen auf C4 und sind gleich laut. <b>FENSTER</b> kurz drücken wählt die Form eines Korns, LED 2 zeigt sie: <b>Glocke</b> (gelb, weich, ab Werk), <b>Flach</b> (cyan, kurze Blenden, das Korn klingt fast ganz) oder <b>Schlag</b> (magenta, steiler Anfang, dann ausklingend). Beide LEDs leuchten mit der Hüllkurve auf und werden mit ihr dunkler, nie ganz aus.</p>
+
+    <h3 id="anschlagen">Anschlagen und Tonhöhe</h3>
+    <dl class="tools">
+      <dt>Mit Gate</dt>
+      <dd>Eine steigende Flanke an GATE startet die Hüllkurve und liest wieder ab der Position: eine Quelle, die SCAN durchläuft, beginnt von vorn. Fällt das Gate, beginnt das Release.</dd>
+      <dt>Nur mit V/OCT</dt>
+      <dd>Ist das Gate an oder steckt kein Kabel in GATE, tut ein <b>Sprung</b> an V/OCT um mindestens einen halben Halbton dasselbe, wie bei der <a href="physical.html#anschlagen">Physical-Firmware</a>. Ein Glide zieht nur die Tonhöhe.</dd>
+      <dt>Wolke</dt>
+      <dd>Ohne Gate-Kabel klingt die Wolke dauernd; POSITION, SCAN und ein LFO an der POS-Buchse bewegen sie.</dd>
+      <dt>Tonhöhe</dt>
+      <dd>0 V spielt die Quellen in ihrer eigenen Tonhöhe (C4), 1 V pro Oktave. Jedes neue Korn nimmt die Tonhöhe, die gerade an V/OCT anliegt. Ein Korn, das schneller läuft als die Quelle, liest eine vorher gefilterte Kopie, so faltet nichts zurück.</dd>
+    </dl>
+
+    <h2 id="buchsen">Buchsen</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Buchse</th><th>Bereich</th><th>Was sie tut</th></tr></thead>
+        <tbody>
+          <tr><td>V/OCT</td><td>−1 bis +7 V</td><td>Tonhöhe, 1 V pro Oktave, 0 V = C4. Ein Sprung schlägt an (siehe oben).</td></tr>
+          <tr><td>GATE</td><td>ab etwa 1,4 V</td><td>Steigend: Anschlag. Fallend: Release. Ohne Kabel dauerhaft an.</td></tr>
+          <tr><td>GRÖSSE</td><td>±5 V</td><td>Kommt zur Korngröße dazu, 5 V über den ganzen Weg des Reglers.</td></tr>
+          <tr><td>POS</td><td>±5 V</td><td>Verschiebt die Position, über den Abschwächer POS CV; über das Ende hinaus geht es am Anfang weiter.</td></tr>
+          <tr><td>DICHTE</td><td>±5 V</td><td>Kommt zur Dichte dazu, 5 V über den ganzen Weg.</td></tr>
+          <tr><td>STREU.</td><td>±5 V</td><td>Verschiebt die Streuung, über den Abschwächer STR CV.</td></tr>
+          <tr><td>L (Ausgang)</td><td>±5 V</td><td>Linker Kanal.</td></tr>
+          <tr><td>R (Ausgang)</td><td>±5 V</td><td>Rechter Kanal. Für Mono die Breite auf 0, dann sind beide gleich.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Die Ausgänge haben Modulpegel. Für Kopfhörer sind sie viel zu laut, immer über einen Mixer oder ein Ausgangsmodul gehen.</p>
+
+    <h2 id="patches">Erste Patches</h2>
+    <dl class="tools">
+      <dt>Chorwolke</dt>
+      <dd>Chor, kein Gate-Kabel, GRÖSSE etwas über der Mitte, DICHTE halb, STREUUNG ein Drittel, SCAN leicht rechts. L und R an den Mixer.</dd>
+      <dt>Glasfunken</dt>
+      <dd>Glas, FENSTER auf Schlag, GRÖSSE klein, STREUUNG ganz rechts, TONSTREU ganz rechts und in der QUELLE-Ebene das Raster auf Oktaven.</dd>
+      <dt>Stottern</dt>
+      <dd>Rhythmus, Fenster Flach, DICHTE auf wenige Körner pro Sekunde, Zufall (QUELLE gehalten, DICHTE) auf 0, ein Zufalls-CV an POS.</dd>
+      <dt>Melodie</dt>
+      <dd>Zupfen oder Streicher, Gate und V/OCT vom Sequencer, SCAN rechts, in der QUELLE-Ebene Sustain auf 0 und ein kurzes Decay.</dd>
+    </dl>
+
+    <h2 id="frontplatte">Frontplatte</h2>
+    <p>Dieselben drei Varianten wie beim Wavetable-Modul (<a href="bauanleitung.html#frontplatte">Bauanleitung, Schritt 2</a>), mit der Beschriftung dieser Firmware: <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular.stl">Schrift erhaben</a>, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular-graviert.stl">Schrift vertieft</a> und <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/hardware/frontplatte-granular-einlage.3mf">Schrift als Einlage (3MF, zwei Farben)</a>. Beim erhabenen Druck mit der Farbe der Platte beginnen und bei 2,5 mm auf die der Schrift wechseln.</p>
+
+    <h2 id="firmware">Firmware</h2>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, geschrieben an Adresse 0x0 wie in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Sie trägt ihre neun Quellen mit und ist darum 6,7 MB groß; das Schreiben dauert ein bis zwei Minuten. Die Quellen liegen dort, wo die Wavetable-Firmware ihre Tabellen ablegt: nach dem Zurückflashen von <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> rechnet sie die beim ersten Start einmal neu.</p>
+    <p class="note">Flashen löscht die gespeicherten Einstellungen und die Kalibrierung. Darum nach dem Flashen neu kalibrieren. Blinken beide LEDs rot, fehlen die Quellen: die ganze Datei noch einmal an 0x0 schreiben.</p>
+
+    <p class="stand">Stand 31.10.2026. Quelltext und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© Marcel Benders · Tonwerk</span>
+      <nav aria-label="Rechtliches">
+        <a href="../impressum.html">Impressum</a>
+        <a href="../datenschutz.html">Datenschutz</a>
+        <a href="bauanleitung.html">Bauanleitung</a>
+        <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a>
+        <a href="../en/modul/granular.html" hreflang="en" lang="en">English</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

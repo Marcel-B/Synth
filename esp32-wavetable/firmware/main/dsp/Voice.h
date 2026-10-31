@@ -123,6 +123,12 @@ public:
         return level;
     }
     float current() const { return level; }
+    bool isActive() const { return stage != Stage::idle; }
+    void reset()
+    {
+        stage = Stage::idle;
+        level = 0.0f;
+    }
 
 private:
     enum class Stage : uint8_t { idle, attack, decay, release };

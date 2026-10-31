@@ -30,6 +30,8 @@ Worauf es ankommt:
 
 Eine der drei Varianten aus [hardware/](hardware/) drucken, die README erklärt sie unter [Frontplatte / Gehäuse](README.md#frontplatte--gehäuse). Am einfachsten ist [frontplatte.stl](hardware/frontplatte.stl) (Schrift erhaben, Front nach oben, bei 2,5 mm Filament wechseln).
 
+Für ein Modul mit der Physical-Firmware gibt es dieselben Varianten mit dessen Beschriftung: [frontplatte-physical.stl](hardware/frontplatte-physical.stl), [-graviert](hardware/frontplatte-physical-graviert.stl) und [-einlage.3mf](hardware/frontplatte-physical-einlage.3mf). Gedacht ist sie gelb mit schwarzer Schrift, also umgekehrt zur Wavetable-Front: beim erhabenen Druck mit gelb beginnen und bei 2,5 mm auf schwarz wechseln. Für die PD-Firmware genauso: [frontplatte-pd.stl](hardware/frontplatte-pd.stl), [-graviert](hardware/frontplatte-pd-graviert.stl) und [-einlage.3mf](hardware/frontplatte-pd-einlage.3mf), die Farben nach Wahl. Für Granular ebenso: [frontplatte-granular.stl](hardware/frontplatte-granular.stl), [-graviert](hardware/frontplatte-granular-graviert.stl) und [-einlage.3mf](hardware/frontplatte-granular-einlage.3mf). Für Additiv: [frontplatte-additiv.stl](hardware/frontplatte-additiv.stl), [-graviert](hardware/frontplatte-additiv-graviert.stl) und [-einlage.3mf](hardware/frontplatte-additiv-einlage.3mf).
+
 Dann einmal ein Poti, eine Klinkenbuchse, eine LED und einen Taster durchstecken. Die Front dient beim Löten der Bedienplatine als Lehre (Schritt 5).
 
 ## 3. Hauptplatine löten
@@ -118,7 +120,7 @@ Wieder einschalten. Ohne Firmware zeigen die LEDs nichts; der Strom sollte auf +
 
 ## 8. Firmware flashen
 
-Die fertige Firmware ist [firmware/modul/tonwerk-modul.bin](firmware/modul/tonwerk-modul.bin), eine Datei für Adresse 0x0.
+Die fertige Firmware ist [firmware/modul/tonwerk-modul.bin](firmware/modul/tonwerk-modul.bin), eine Datei für Adresse 0x0. Für Tonwerk Physical (die [zweite Firmware](README.md#zweite-firmware-tonwerk-physical), mit der Physical-Frontplatte) stattdessen [firmware/modul-physical/tonwerk-physical.bin](firmware/modul-physical/tonwerk-physical.bin); sie braucht keine Tabellen, der erste Start ist so kurz wie jeder andere. Für Tonwerk PD (die [dritte Firmware](README.md#dritte-firmware-tonwerk-pd), mit der PD-Frontplatte) ebenso [firmware/modul-pd/tonwerk-pd.bin](firmware/modul-pd/tonwerk-pd.bin). Für Tonwerk Granular (die [vierte Firmware](README.md#vierte-firmware-tonwerk-granular)) [firmware/modul-granular/tonwerk-granular.bin](firmware/modul-granular/tonwerk-granular.bin); sie trägt ihre Klangquellen mit und ist darum 6,7 MB groß, das Schreiben dauert ein bis zwei Minuten. Für Tonwerk Additiv (die [fünfte Firmware](README.md#fünfte-firmware-tonwerk-additiv)) [firmware/modul-additiv/tonwerk-additiv.bin](firmware/modul-additiv/tonwerk-additiv.bin).
 
 1. In Chrome oder Edge https://espressif.github.io/esptool-js/ öffnen, Baudrate 921600, **Connect** und das DevKit auswählen. Das DevKit hat zwei USB-Buchsen; die mit „UART“ (oder „COM“) beschriftete nehmen.
 2. Bei Flash Address `0x0` eintragen, die Datei wählen, **Program**.

@@ -19,6 +19,10 @@
       <a class="brand" href="./">TONWERK<span>.MODUL</span></a>
       <nav aria-label="Navigation des Moduls">
         <a href="#bedienung">Bedienung</a>
+        <a href="physical.html" class="optional">Physical</a>
+        <a href="pd.html" class="optional">PD</a>
+        <a href="granular.html" class="optional">Granular</a>
+        <a href="additiv.html" class="optional">Additiv</a>
         <a href="bauanleitung.html">Bauanleitung</a>
         <a href="bauanleitung.html#downloads" class="optional">Downloads</a>
         <a href="../">Plugins</a>
@@ -51,6 +55,7 @@
       <li>Alles mit zehn Reglern und zwei Tasten; was nicht auf die Front passt, liegt in zwei versteckten Ebenen unter den Tasten.</li>
       <li>14 TE, etwa 45 mm tief. Strom geschätzt +12 V etwa 110 mA, −12 V etwa 10 mA, kein +5 V vom Bus.</li>
     </ul>
+    <p><b>Zweite Firmware:</b> Dieselben Platinen spielen auch <a href="physical.html">Tonwerk Physical</a>, Physical Modeling mit Erreger und Resonator, bis zu vier Stimmen und einer eigenen Frontplatte (gelb mit schwarzer Schrift). Eine dritte spielt <a href="pd.html">Tonwerk PD</a>, Phase Distortion mit zwei Linien und Chorus in Stereo, eine vierte <a href="granular.html">Tonwerk Granular</a>, Kornwolken aus neun Klangquellen, eine fünfte <a href="additiv.html">Tonwerk Additiv</a>, 64 Sinus-Teiltöne aus zwei gemorphten Spektren.</p>
     <p class="note">Gebaut ist bisher ein Modul (die bedrahteten Platinen v0.1). Geprüft: Versorgung, Flashen, Klang am VOICE-Ausgang, die Regler. Noch nicht auf der Hardware geprüft sind die CV-Eingänge und die V/Oct-Kalibrierung.</p>
 
     <h2 id="bedienung">Bedienung</h2>
@@ -204,7 +209,7 @@
     <p>Danach mit einem Stimmgerät über mehrere Oktaven nachprüfen. Ohne Kalibrierung rechnet das Modul mit den Sollwerten der Schaltung; wie gut das stimmt, hängt von den Bauteilen ab.</p>
 
     <h2 id="firmware">Neue Firmware</h2>
-    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, geschrieben an Adresse 0x0 mit dem Web-Flasher von Espressif im Browser (Chrome oder Edge). Wie, steht in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Das geht im Rack oder lose am USB-Kabel.</p>
+    <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, geschrieben an Adresse 0x0 mit dem Web-Flasher von Espressif im Browser (Chrome oder Edge). Wie, steht in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Das geht im Rack oder lose am USB-Kabel. Für <a href="physical.html">Tonwerk Physical</a> ist es <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, für <a href="pd.html">Tonwerk PD</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, für <a href="granular.html">Tonwerk Granular</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, für <a href="additiv.html">Tonwerk Additiv</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>.</p>
     <p class="note">Flashen löscht die gespeicherten Modi, die versteckten Werte und die Kalibrierung, die Tabellen bleiben. Darum nach einem Update neu kalibrieren.</p>
 
     <h2 id="probleme">Probleme</h2>
