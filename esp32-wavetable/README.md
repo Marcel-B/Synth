@@ -136,7 +136,7 @@ idf.py -B build-physical -DTONWERK_PHYSICAL=1 build flash monitor
 
 Fertig gebaut: [firmware/modul-physical/tonwerk-physical.bin](firmware/modul-physical/tonwerk-physical.bin), ebenfalls für Adresse 0x0. Zurück zur anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
 
-Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle drei Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch; die Dateien hier im Repo stammen daraus.
+Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle drei Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: physical]` (oder `modul`, `bench`), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
 
 Oder mit PlatformIO: `pio run -t upload -t monitor` im Ordner `firmware`. Der serielle Monitor zeigt alle 5 s die Last des Audio-Kerns.
 
