@@ -270,6 +270,18 @@ extern "C" void app_main()
     hw::showLeds({ 252, 238, 10 }, { 0, 240, 255 });
 
 #if ! TONWERK_BENCH
+    {
+        // WARP alone held while switching on: the next image comes over Wi-Fi (../updater). Checked before the tables
+        // or sources take the PSRAM, and before any audio starts.
+        twm::PanelInputs in;
+        float codes[twm::kCvs];
+        hw::readInputs(in, codes);
+        if (in.warpButton && ! in.filterButton)
+            hw::startUpdater();
+    }
+#endif
+
+#if ! TONWERK_BENCH
     Panel::Stored stored;
     if (hw::load(Panel::kStoreKey, &stored, sizeof stored) && stored.version == Panel::Stored {}.version)
         module.stored = stored;

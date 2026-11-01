@@ -132,6 +132,8 @@ Wer selbst bauen will: ESP-IDF 5.3, `idf.py build flash monitor` im Ordner `firm
 
 Flashen geht mit und ohne Eurorack-Strom; D3 trennt den Regler vom USB. Eine neue Firmware so flashen wie die erste: Die Tabellen bleiben erhalten, aber das Image überschreibt auch den Bereich der Einstellungen, gespeicherte Modi, versteckte Werte und die V/Oct-Kalibrierung gehen also verloren. Darum erst flashen, dann kalibrieren.
 
+Spätere Updates gehen auch ohne Kabel über WLAN, und dabei bleiben Einstellungen und Kalibrierung: [README, Update über WLAN](README.md#update-über-wlan). Das erste Mal (und von einer Firmware vor dem 1.11.2026) muss es USB sein.
+
 ## 9. Zusammenbauen und erster Ton
 
 1. Die Bedienplatine mit den Muttern der Potis und Buchsen an der Front festziehen, die Knöpfe aufsetzen.

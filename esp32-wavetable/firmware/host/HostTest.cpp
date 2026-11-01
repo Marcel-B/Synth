@@ -6,6 +6,7 @@
 #include "app/Module.h"
 #include "dsp/Tables.h"
 #include "dsp/Voice.h"
+#include "hw/UpdateImage.h"
 
 #include "WaveEngine.h" // Tonwerk Wavetable, from the Synth repository
 
@@ -503,6 +504,57 @@ void drive()
     }
 }
 
+/** A whole image streamed in uneven pieces lands where USB would put it: the partition table compared, the instrument
+ *  in "factory", the data in "tables", bootloader, boot data and updater left alone. */
+void updateImage()
+{
+    using namespace twm::update;
+    Layout layout;
+    layout.app = { 0x10000, 0x180000 };
+    layout.tables = { 0x310000, 0x600000 };
+    // An image as large as Tonwerk Granular's: up to 3.5 MB into the tables.
+    const uint32_t size = 0x310000 + 0x380000;
+    std::vector<uint8_t> image(size);
+    for (uint32_t i = 0; i < size; ++i)
+        image[i] = (uint8_t) (i * 2654435761u >> 24);
+    std::vector<uint8_t> table(layout.partitionTable.size), app(layout.app.size), tables(layout.tables.size);
+    uint32_t skipped = 0, pieces = 0;
+    bool inPlace = true;
+    uint32_t at = 0, seed = 1;
+    while (at < size)
+    {
+        seed = seed * 1664525u + 1013904223u;
+        uint32_t piece = std::min(size - at, 1 + (seed >> 20)); // up to 4 KB, like the updater's reads
+        while (piece > 0)
+        {
+            const Span s = spanAt(layout, at, piece);
+            std::vector<uint8_t>* into = s.target == Target::partitionTable ? &table
+                                         : s.target == Target::app          ? &app
+                                         : s.target == Target::tables       ? &tables
+                                                                            : nullptr;
+            if (into == nullptr)
+                skipped += s.length;
+            else if (s.offset + s.length <= into->size())
+                std::copy(image.begin() + at, image.begin() + at + s.length, into->begin() + s.offset);
+            else
+                inPlace = false;
+            inPlace = inPlace && s.length > 0;
+            at += s.length;
+            piece -= s.length;
+            ++pieces;
+        }
+    }
+    auto same = [&](const std::vector<uint8_t>& part, uint32_t start, uint32_t length) {
+        return std::equal(part.begin(), part.begin() + length, image.begin() + start);
+    };
+    check(inPlace && same(table, 0x8000, 0xc00) && same(app, 0x10000, 0x180000) && same(tables, 0x310000, 0x380000)
+              && skipped == size - 0xc00 - 0x180000 - 0x380000,
+          "image over Wi-Fi: partition table, instrument and tables in place, bootloader, boot data and updater "
+          "skipped (" + std::to_string(pieces) + " pieces)");
+    const Span past = spanAt(layout, 0x910000, 100);
+    check(past.target == Target::skip && past.length == 100, "image over Wi-Fi: past the tables nothing is written");
+}
+
 int main(int argc, char** argv)
 {
     const auto start = std::chrono::steady_clock::now();
@@ -516,6 +568,7 @@ int main(int argc, char** argv)
     tuning();
     panel();
     drive();
+    updateImage();
     speed();
     benchTest();
     if (argc > 1)

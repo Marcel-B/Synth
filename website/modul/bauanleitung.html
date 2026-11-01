@@ -318,6 +318,7 @@
     </ol>
     <p>Beim <b>ersten Start</b> berechnet das Modul seine Tabellen und legt sie im Flash ab, bis zu etwa einer Minute; die LEDs leuchten solange rot und gelb, es kommt kein Ton. Jeder weitere Start liest die Tabellen in Bruchteilen einer Sekunde. Blinken beide LEDs rot, fehlt der PSRAM (falsches DevKit).</p>
     <p>Flashen geht mit und ohne Eurorack-Strom; eine Diode trennt den Regler vom USB. Eine neue Firmware wird genauso geflasht: Die Tabellen bleiben, aber gespeicherte Modi, versteckte Werte und die V/Oct-Kalibrierung gehen verloren. Darum erst flashen, dann kalibrieren.</p>
+    <p>Spätere Updates gehen auch ohne Kabel über WLAN, und dabei bleiben Einstellungen und Kalibrierung: <a href="./#wlan-update">Update über WLAN</a>. Das erste Mal (und von einer Firmware vor dem 1.11.2026) muss es USB sein.</p>
     <p>Selbst bauen: ESP-IDF 5.3, <code>idf.py build flash monitor</code> im Ordner <code>firmware</code>; das README auf GitHub beschreibt es.</p>
 
     <h2 id="zusammenbau">9. Zusammenbauen und erster Ton</h2>

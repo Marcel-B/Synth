@@ -24,6 +24,10 @@ bool readGate();
 void startLeds();
 void showLeds(twm::Rgb first, twm::Rgb second);
 
+/** Hands over to the updater (the partition "updater", ../updater): restarts into it, so the next image can come
+ *  over Wi-Fi. Returns only when there is no valid updater on the module (flashed without one). */
+void startUpdater();
+
 void startStorage();
 bool load(const char* key, void* data, std::size_t size);
 void save(const char* key, const void* data, std::size_t size);
