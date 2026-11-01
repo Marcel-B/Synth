@@ -100,9 +100,9 @@ public:
         {
             case pd::Wave::square: return { 0, 240, 255 };
             case pd::Wave::pulse: return { 255, 42, 160 };
-            case pd::Wave::doubleSine: return { 40, 255, 80 };
+            case pd::Wave::doubleSine: return { 0, 255, 0 };
             case pd::Wave::sawPulse: return { 255, 110, 0 };
-            case pd::Wave::resonanceSaw: return { 255, 0, 60 };
+            case pd::Wave::resonanceSaw: return { 255, 0, 0 };
             case pd::Wave::resonanceTriangle: return { 0, 80, 255 };
             case pd::Wave::resonanceTrapezoid: return { 160, 0, 255 };
             default: return { 252, 238, 10 };

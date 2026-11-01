@@ -105,8 +105,8 @@ public:
     {
         // Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus.
         static constexpr Rgb colours[grain::Sources::kCount] = {
-            { 252, 238, 10 }, { 0, 240, 255 }, { 255, 42, 160 }, { 40, 255, 80 },   { 255, 110, 0 },
-            { 0, 80, 255 },   { 160, 0, 255 }, { 255, 255, 255 }, { 255, 0, 60 },
+            { 252, 238, 10 }, { 0, 240, 255 }, { 255, 42, 160 }, { 0, 255, 0 },   { 255, 110, 0 },
+            { 0, 80, 255 },   { 160, 0, 255 }, { 255, 255, 255 }, { 255, 0, 0 },
         };
         return colours[std::clamp(source, 0, grain::Sources::kCount - 1)];
     }

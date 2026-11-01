@@ -110,7 +110,7 @@ public:
             case Warp::sync: return { 0, 240, 255 };
             case Warp::bend: return { 252, 238, 10 };
             case Warp::pwm: return { 255, 42, 160 };
-            case Warp::fm: return { 255, 0, 60 };
+            case Warp::fm: return { 255, 0, 0 };
             default: return { 90, 90, 90 };
         }
     }
@@ -122,9 +122,9 @@ public:
             case FilterMode::low12: return { 0, 240, 255 };
             case FilterMode::low24: return { 0, 80, 255 };
             case FilterMode::high12: return { 252, 238, 10 };
-            case FilterMode::band12: return { 40, 255, 80 };
+            case FilterMode::band12: return { 0, 255, 0 };
             case FilterMode::notch: return { 255, 42, 160 };
-            case FilterMode::comb: return { 255, 0, 60 };
+            case FilterMode::comb: return { 255, 0, 0 };
             default: return { 90, 90, 90 };
         }
     }
