@@ -188,15 +188,23 @@ void startLeds()
 
 void showLeds(twm::Rgb first, twm::Rgb second)
 {
-    // WS2812 wants green, red, blue. A third of full brightness is plenty behind a panel and keeps the 5 V rail calm.
+    // A third of full brightness is plenty behind a panel and keeps the 5 V rail calm.
     auto dim = [](uint8_t v) { return (uint8_t) (v / 3); };
     static uint8_t data[6];
-    data[0] = dim(first.g);
-    data[1] = dim(first.r);
-    data[2] = dim(first.b);
-    data[3] = dim(second.g);
-    data[4] = dim(second.r);
-    data[5] = dim(second.b);
+    auto put = [&](uint8_t* at, twm::Rgb c) {
+#if TONWERK_LED_GRB
+        // Worldsemi's own WS2812D-F5 wants green, red, blue.
+        at[0] = dim(c.g);
+        at[1] = dim(c.r);
+#else
+        // The 5 mm LEDs sold as WS2812D-F5 on the first module are APA106s (datasheet), which want red, green, blue.
+        at[0] = dim(c.r);
+        at[1] = dim(c.g);
+#endif
+        at[2] = dim(c.b);
+    };
+    put(data, first);
+    put(data + 3, second);
     rmt_transmit_config_t config = {};
     rmt_transmit(ledChannel, ledEncoder, data, sizeof(data), &config);
     // The 50 us low that latches the colours comes for free: the next frame is 33 ms away.

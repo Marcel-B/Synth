@@ -23,7 +23,7 @@ Worauf es ankommt:
 - **ESP32-S3-DevKitC-1 N16R8**: N16R8 heißt 16 MB Flash und 8 MB PSRAM. Ohne die 8 MB PSRAM läuft die Firmware nicht (die Tabellen brauchen 5,7 MB). Klone wie das YD-ESP32-S3 gehen, wenn die Pinbelegung gleich ist.
 - **PCM5102A-Modul „GY-PCM5102“** (lila) mit der 6-poligen Leiste VIN GND LCK DIN BCK SCK.
 - **74HCT125 oder 74AHCT125**, nicht 74HC125 (der erkennt die 3,3 V des ESP32 an 5 V nicht sicher). Ein 74HCT32 passt ohne Änderung in dieselben Löcher.
-- **WS2812D-F5** (5 mm, bedrahtet). Die Platine erwartet die Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite der LED liegt bei **DOUT**, nicht bei DIN (siehe Schritt 5). APA106/PL9823 haben dieselbe Pinfolge, aber eine andere Farbreihenfolge (siehe [Fehlersuche](#fehlersuche)).
+- **WS2812D-F5** (5 mm, bedrahtet). Die Platine erwartet die Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite der LED liegt bei **DOUT**, nicht bei DIN (siehe Schritt 5). Unter diesem Namen kommen oft APA106 (so beim ersten Modul): dieselbe Pinfolge, aber Rot-Grün-Blau statt Grün-Rot-Blau. Die fertigen Images sind für diese gemacht; echte WS2812D-F5 von Worldsemi brauchen eine eigene Firmware (siehe [Fehlersuche](#fehlersuche)).
 - **Elkos höchstens 11 mm hoch**, Rastermaß 2 mm.
 
 ## 2. Frontplatte drucken
@@ -163,7 +163,7 @@ Von Hand bleiben J1, U1, vorn J3 und J4 (wie Schritt 3, Punkt 11) und auf Wunsch
 - **Kein Ton, LEDs leuchten normal:** Lötbrücken auf dem DAC-Modul (Schritt 4, besonders 3 XSMT auf H), die drei Drähte zu J13, sitzt der TL072 richtig herum? An der Klinkenbuchse des DAC-Moduls hören (Kopfhörer nur leise und nicht aufsetzen, dort kommen 2 Veff): Klingt es dort, liegt der Fehler zwischen J13 und den Ausgangsbuchsen (U6, R9–R14).
 - **Kein Ton beim ersten Start:** Die Tabellen werden noch berechnet (Schritt 8). Abwarten, bis die LEDs die Farben der Modi zeigen.
 - **LEDs dunkel:** U10 ein 74HC125 statt HCT? Pinfolge der LEDs (Schritt 1)? R48 (330 Ω) gelötet?
-- **LEDs in falschen Farben** (z. B. mit APA106/PL9823): Diese LEDs erwarten Rot-Grün-Blau statt Grün-Rot-Blau. In `firmware/main/hw/Hardware.cpp` in `showLeds` je `g` und `r` tauschen (`data[0]`/`data[1]` und `data[3]`/`data[4]`) und die Firmware selbst bauen.
+- **LEDs in falschen Farben** (cyan erscheint lila, magenta türkis, grün rot): Die fertigen Images schicken Rot-Grün-Blau, wie es die APA106 (und PL9823) erwarten, die oft als WS2812D-F5 verkauft werden. Echte WS2812D-F5 von Worldsemi wollen Grün-Rot-Blau: die Firmware selbst bauen mit `-DTONWERK_LED_GRB=1` (z. B. `idf.py -DTONWERK_LED_GRB=1 build flash`).
 - **Regler tun nichts oder springen:** Ein Regler übernimmt erst, wenn er den gespeicherten Wert erreicht (Pick-up, siehe README). Sonst die Stiftleisten J3 und J4 und die 100-nF-Kondensatoren C10–C19 prüfen.
 - **CV-Eingänge tun nichts:** MCP3208 (U9) und die MCP6004 (U7, U8) richtig herum? 3,0 V an U9 Pin 15?
 - **Konsole:** Über USB (115200 Baud) meldet das Modul alle 5 s die Last des Audio-Kerns; Fehlermeldungen beim Start stehen dort auch.

@@ -152,7 +152,7 @@ Schaltplan-Skizze: [hardware/schaltplan.pdf](hardware/schaltplan.pdf) (auch als 
 - **Potis** an der Referenz **REF3030** in die ADC1-Eingänge des ESP32 (für Regler reicht dessen Genauigkeit).
 - **Gate** über einen NPN-Transistor an GPIO18; die Audio-Task liest es bei jedem Block (alle 0,67 ms).
 - **Strom**: +12 V über **Recom R-78E5.0** (Schaltregler, kühl) zu 5 V für DevKit und LEDs; −12 V nur für den TL072. Geschätzt +12 V ca. 110 mA, −12 V ca. 10 mA.
-- **LEDs**: zwei WS2812D-F5 an GPIO40, über einen 74AHCT1G125 auf 5-V-Pegel.
+- **LEDs**: zwei 5-mm-LEDs der WS2812-Art an GPIO40, über einen 74AHCT1G125 auf 5-V-Pegel. Die Firmware schickt Rot-Grün-Blau wie die APA106 des ersten Moduls (als WS2812D-F5 verkauft); echte WS2812D-F5 von Worldsemi wollen Grün-Rot-Blau, dafür `-DTONWERK_LED_GRB=1`.
 
 Stückliste: [hardware/stueckliste.csv](hardware/stueckliste.csv) (Semikolon-getrennt, öffnet in Numbers/Excel), rund 65–70 € ohne Platine aus der Fabrik.
 

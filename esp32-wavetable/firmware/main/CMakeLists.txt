@@ -10,6 +10,11 @@ idf_component_register(
     INCLUDE_DIRS "."
     REQUIRES esp_driver_i2s esp_driver_spi esp_driver_rmt esp_driver_gpio esp_adc esp_timer nvs_flash esp_psram)
 target_compile_options(${COMPONENT_LIB} PRIVATE -O2 -Wall -Wextra)
+# LEDs that take green, red, blue (Worldsemi's WS2812D-F5): -DTONWERK_LED_GRB=1. Without it red, green, blue, as the
+# APA106s of the first module.
+if(TONWERK_LED_GRB)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE TONWERK_LED_GRB=1)
+endif()
 # The bench test (app/Bench.h): idf.py -B build-bench -DTONWERK_BENCH=1 build
 if(TONWERK_BENCH)
     target_compile_definitions(${COMPONENT_LIB} PRIVATE TONWERK_BENCH=1)
