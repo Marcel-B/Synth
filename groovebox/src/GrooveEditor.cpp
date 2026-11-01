@@ -326,7 +326,7 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                     { "swing", "Swing" },
                     { "accent", "Akzent" },
                     { "roll", tr("Würfeln") } } }),
-      master(p.state, "Summe", { { { "drive", "Drive" }, { "master", "Master" } } }),
+      master(p.state, "Summe", { { { "drive", "Drive" }, { "master", "Master" }, { "trackOutputs", tr("Einzelausgänge") } } }),
       grid(p),
       machines(p),
       effects(p.state, "Effekte",

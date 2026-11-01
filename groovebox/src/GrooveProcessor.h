@@ -145,6 +145,7 @@ private:
         std::atomic<float>*delayMix, *delaySync, *delayTime, *delayDivision, *delayFeedback, *delayTone, *reverbMix,
             *reverbDecay, *on;
     } fx {};
+    std::atomic<float>* trackOutputs = nullptr;
     /** How long switching the effects off or on fades what they add. */
     static constexpr double kBypassSeconds = 0.02;
     juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> wetGain { 1.0f };
