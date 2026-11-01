@@ -98,7 +98,7 @@ public:
         {
             case phys::Exciter::strike: return { 0, 240, 255 };
             case phys::Exciter::bow: return { 255, 42, 160 };
-            case phys::Exciter::blow: return { 40, 255, 80 };
+            case phys::Exciter::blow: return { 0, 255, 0 };
             default: return { 252, 238, 10 };
         }
     }
@@ -108,10 +108,10 @@ public:
         switch (r)
         {
             case phys::Resonator::closedTube: return { 255, 110, 0 };
-            case phys::Resonator::openTube: return { 40, 255, 80 };
+            case phys::Resonator::openTube: return { 0, 255, 0 };
             case phys::Resonator::bar: return { 0, 240, 255 };
             case phys::Resonator::bell: return { 0, 80, 255 };
-            case phys::Resonator::membrane: return { 255, 0, 60 };
+            case phys::Resonator::membrane: return { 255, 0, 0 };
             case phys::Resonator::bowl: return { 255, 42, 160 };
             default: return { 252, 238, 10 };
         }

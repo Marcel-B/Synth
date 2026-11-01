@@ -10,7 +10,7 @@ Pos;Anzahl;Bauteil;Wert / Typ;Gehäuse;Wofür;Bezugsquelle (Beispiel);ca. Preis 
 9;1;Schottky-Diode;1N5819;DO-41;trennt 5 V vom USB des DevKits;Reichelt;0,10
 10;1;Transistor;MMBT3904 (oder BC547 bedrahtet);SOT-23 / TO-92;Gate-Eingang;Reichelt;0,10
 11;1;Pegelwandler;74AHCT1G125 (oder 74HCT125 bedrahtet);SOT-23-5 / DIP-14;3,3 V → 5 V für die LED-Daten;Mouser, Reichelt;0,40
-12;2;RGB-LED adressierbar;WS2812D-F5 (5 mm bedrahtet);5 mm;Anzeige Warp-Modus / Tabelle und Filtermodus;AliExpress, Reichelt;1,00
+12;2;RGB-LED adressierbar;WS2812D-F5 oder APA106 (5 mm bedrahtet);5 mm;Anzeige Warp-Modus / Tabelle und Filtermodus;AliExpress, Reichelt;1,00
 13;10;Potentiometer;Alpha RV09 9 mm vertikal, 10k linear (B10K), D-Achse;PCB;TUNE, FINE, TABLE, POSITION, WARP, CUTOFF, RESO, DECAY, POS CV, CUT CV;Thonk, Exploding Shed, Synthrotek;10,00
 14;10;Drehknopf;für D-Achse 6 mm, max. 13 mm Durchmesser (z. B. Davies 1900H-Klon oder Thonk „Rogan“-Stil);—;auf die Potis;Thonk, Exploding Shed;8,00
 15;8;Klinkenbuchse;Thonkiconn PJ398SM (3,5 mm mono, mit Schaltkontakt);PCB;V/OCT, GATE, TABLE, POS, WARP, CUTOFF, OSC, VOICE;Thonk, Exploding Shed;4,00

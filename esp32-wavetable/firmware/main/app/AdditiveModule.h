@@ -105,8 +105,8 @@ public:
     {
         // Sinus, Säge, Rechteck, Dreieck, Puls, Orgel, Hohl, Hell, Oktaven, Glas, Primzahlen, Zufall.
         static constexpr Rgb colours[(int) add::Spectrum::count] = {
-            { 255, 255, 255 }, { 252, 238, 10 }, { 0, 240, 255 }, { 40, 255, 80 },  { 255, 42, 160 }, { 255, 110, 0 },
-            { 0, 80, 255 },    { 255, 200, 120 }, { 160, 0, 255 }, { 120, 255, 220 }, { 255, 0, 60 },   { 120, 120, 120 },
+            { 255, 255, 255 }, { 252, 238, 10 }, { 0, 240, 255 }, { 0, 255, 0 },  { 255, 42, 160 }, { 255, 110, 0 },
+            { 0, 80, 255 },    { 255, 200, 120 }, { 160, 0, 255 }, { 120, 255, 220 }, { 255, 0, 0 },   { 120, 120, 120 },
         };
         return colours[std::clamp((int) s, 0, (int) add::Spectrum::count - 1)];
     }

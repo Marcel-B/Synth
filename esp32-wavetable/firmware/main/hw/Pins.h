@@ -31,6 +31,6 @@ inline constexpr gpio_num_t kGate = GPIO_NUM_18;
 inline constexpr gpio_num_t kWarpButton = GPIO_NUM_21;
 inline constexpr gpio_num_t kFilterButton = GPIO_NUM_47;
 
-// Two WS2812 LEDs in a chain (5 mm through-hole, e.g. WS2812D-F5).
+// Two WS2812-style LEDs in a chain (5 mm through-hole: APA106, or WS2812D-F5 with TONWERK_LED_GRB).
 inline constexpr gpio_num_t kLeds = GPIO_NUM_40;
 } // namespace pins

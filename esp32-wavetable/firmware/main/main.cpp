@@ -191,7 +191,7 @@ void calibrate()
         hw::save("calibration", &cal, sizeof cal);
     else
         cal = twm::Calibration {};
-    const twm::Rgb result = plausible ? twm::Rgb { 0, 255, 60 } : twm::Rgb { 255, 0, 60 };
+    const twm::Rgb result = plausible ? twm::Rgb { 0, 255, 0 } : twm::Rgb { 255, 0, 0 };
     for (int i = 0; i < 6; ++i)
     {
         hw::showLeds(i % 2 ? twm::Rgb {} : result, i % 2 ? twm::Rgb {} : result);
@@ -293,7 +293,7 @@ extern "C" void app_main()
                                   : "no grain sources in the partition \"tables\": flash tonwerk-granular.bin at 0x0");
         for (;;)
         {
-            hw::showLeds({ 255, 0, 60 }, { 255, 0, 60 });
+            hw::showLeds({ 255, 0, 0 }, { 255, 0, 0 });
             vTaskDelay(pdMS_TO_TICKS(500));
             hw::showLeds({}, {});
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -317,7 +317,7 @@ extern "C" void app_main()
         ESP_LOGE(kTag, "not enough PSRAM for the wavetables (an N16R8 board has 8 MB)");
         for (;;)
         {
-            hw::showLeds({ 255, 0, 60 }, { 255, 0, 60 });
+            hw::showLeds({ 255, 0, 0 }, { 255, 0, 0 });
             vTaskDelay(pdMS_TO_TICKS(500));
             hw::showLeds({}, {});
             vTaskDelay(pdMS_TO_TICKS(500));
@@ -328,7 +328,7 @@ extern "C" void app_main()
         ESP_LOGI(kTag, "wavetables read from flash in %lld ms", (esp_timer_get_time() - start) / 1000);
     else
     {
-        hw::showLeds({ 255, 0, 60 }, { 252, 238, 10 });
+        hw::showLeds({ 255, 0, 0 }, { 252, 238, 10 });
         twm::Bank::compute();
         ESP_LOGI(kTag, "wavetables computed in %lld ms", (esp_timer_get_time() - start) / 1000);
         hw::storeTables(block, twm::Bank::bytes(), twm::Bank::kVersion);

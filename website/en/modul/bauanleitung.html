@@ -80,7 +80,7 @@
       <li><b>ESP32-S3-DevKitC-1 N16R8</b>: N16R8 means 16 MB flash and 8 MB PSRAM. Without the 8 MB of PSRAM the firmware does not run; the tables need 5.7 MB. Clones work if the pinout is the same.</li>
       <li><b>PCM5102A module “GY-PCM5102”</b> (purple) with the 6-pin header VIN GND LCK DIN BCK SCK.</li>
       <li><b>74HCT125 or 74AHCT125</b>, not 74HC125: that one does not reliably read the ESP32's 3.3 V at 5 V. A 74HCT32 fits the same holes without changes.</li>
-      <li><b>WS2812D-F5</b> (5 mm, through-hole) with the pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; check the seller's datasheet. The flat side is at <b>DOUT</b>. APA106 and PL9823 have the same pin order but a different colour order (see <a href="#fehlersuche">troubleshooting</a>).</li>
+      <li><b>WS2812D-F5</b> (5 mm, through-hole) with the pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; check the seller's datasheet. The flat side is at <b>DOUT</b>. APA106s are often sold under this name (as on the first module): same pin order, but red-green-blue instead of green-red-blue. The ready-made images are made for those; genuine Worldsemi WS2812D-F5s need their own firmware build (see <a href="#fehlersuche">troubleshooting</a>).</li>
       <li><b>Electrolytic capacitors at most 11 mm tall</b>, 2 mm pitch.</li>
       <li><b>Pots</b> 9 mm vertical, B10K linear. Their shaft sticks out only a little behind the printed front; the <a href="#knoepfe">knobs</a> to print are made for that.</li>
     </ul>
@@ -379,7 +379,7 @@
       <dt>An LED has burned out</dt>
       <dd>It was the wrong way round (step 5). Desolder it and insert a new one the right way round.</dd>
       <dt>LEDs in the wrong colours</dt>
-      <dd>With APA106 or PL9823, for example: they expect red-green-blue instead of green-red-blue. In <code>firmware/main/hw/Hardware.cpp</code>, in <code>showLeds</code>, swap red and green and build the firmware yourself.</dd>
+      <dd>Cyan shows as purple, magenta as turquoise, green as red: the ready-made images send red-green-blue, as the APA106 (and PL9823) expect, which are often sold as WS2812D-F5. Genuine Worldsemi WS2812D-F5s want green-red-blue: build the firmware yourself with <code>idf.py -DTONWERK_LED_GRB=1 build flash</code>.</dd>
       <dt>Knobs do nothing or jump</dt>
       <dd>A knob takes over only once it reaches the stored value (<a href="./#pickup">pick-up</a>). Otherwise check the headers J3 and J4 and the 100 nF capacitors C10–C19.</dd>
       <dt>CV inputs do nothing</dt>

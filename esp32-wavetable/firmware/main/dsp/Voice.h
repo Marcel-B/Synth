@@ -361,10 +361,23 @@ private:
         combDelay.set(sampleRate / cutoff, first);
         combFeedback = 0.97f * resonance;
         const float drive = std::clamp(p.drive, 0.0f, 1.0f);
+        // Up to 24 dB into the clipper.
         driveGain = std::pow(10.0f, 1.2f * drive);
-        // Up to 24 dB into the clipper, about half of it taken back after.
-        driveMakeUp = std::pow(driveGain, -0.6f);
+        const bool wasOn = driveOn;
         driveOn = drive > 0.0f;
+        // The plugin takes a fixed share of the gain back (gain^-0.6), which suits its voices at a fraction of full
+        // scale; the module's oscillators reach the clipper at full swing, where that left a turned-up drive up to 12 dB
+        // quieter. So the module gives back what the clipper took, measured: the power before and after it, followed
+        // over about 100 ms. The VCA comes after, so the followers see the steady oscillators, not the notes.
+        if (driveOn && ! wasOn)
+            powerIn = powerOut = 0.0f;
+        float makeUp = driveMakeUp.to;
+        if (! driveOn)
+            makeUp = 1.0f;
+        else if (powerIn > 1.0e-8f && powerOut > 1.0e-8f)
+            makeUp = std::clamp(std::sqrt(powerIn / powerOut), 1.0f / 16.0f, 4.0f);
+        driveMakeUp.set(makeUp, first || ! wasOn);
+        powerCoefficient = 1.0f - std::exp(-1.0f / (0.1f * sampleRate));
     }
 
     void setOscillator(Oscillator& osc, const OscParams& o, float note)
@@ -410,7 +423,12 @@ private:
     float filter(FilterMode mode, float x, float t)
     {
         if (driveOn)
-            x = softClip(x * driveGain) * driveMakeUp;
+        {
+            const float y = softClip(x * driveGain);
+            powerIn += powerCoefficient * (x * x - powerIn);
+            powerOut += powerCoefficient * (y * y - powerOut);
+            x = y * driveMakeUp.at(t);
+        }
         if (mode == FilterMode::comb)
         {
             const float makeUp = std::sqrt(1.0f - combFeedback * combFeedback);
@@ -456,7 +474,8 @@ private:
     Ramp filterG, filterK, combDelay;
     float combFeedback = 0.0f;
     float driveGain = 1.0f;
-    float driveMakeUp = 1.0f;
+    Ramp driveMakeUp { 1.0f, 1.0f };
+    float powerIn = 0.0f, powerOut = 0.0f, powerCoefficient = 0.0f;
     bool driveOn = false;
 };
 } // namespace twm

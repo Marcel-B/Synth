@@ -80,7 +80,7 @@
       <li><b>ESP32-S3-DevKitC-1 N16R8</b>: N16R8 heißt 16 MB Flash und 8 MB PSRAM. Ohne die 8 MB PSRAM läuft die Firmware nicht, die Tabellen brauchen 5,7 MB. Nachbauten gehen, wenn die Pinbelegung gleich ist.</li>
       <li><b>PCM5102A-Modul „GY-PCM5102“</b> (lila) mit der 6-poligen Leiste VIN GND LCK DIN BCK SCK.</li>
       <li><b>74HCT125 oder 74AHCT125</b>, nicht 74HC125: der erkennt die 3,3 V des ESP32 an 5 V nicht sicher. Ein 74HCT32 passt ohne Änderung in dieselben Löcher.</li>
-      <li><b>WS2812D-F5</b> (5 mm, bedrahtet) mit den Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite liegt bei <b>DOUT</b>. APA106 und PL9823 haben dieselbe Pinfolge, aber eine andere Farbreihenfolge (siehe <a href="#fehlersuche">Fehlersuche</a>).</li>
+      <li><b>WS2812D-F5</b> (5 mm, bedrahtet) mit den Pins 1 DIN, 2 VDD, 3 GND, 4 DOUT; im Datenblatt des Händlers nachsehen. Die abgeflachte Seite liegt bei <b>DOUT</b>. Unter diesem Namen kommen oft APA106 (so beim ersten Modul): dieselbe Pinfolge, aber Rot-Grün-Blau statt Grün-Rot-Blau. Die fertigen Images sind für diese gemacht; echte WS2812D-F5 von Worldsemi brauchen eine eigene Firmware (siehe <a href="#fehlersuche">Fehlersuche</a>).</li>
       <li><b>Elkos höchstens 11 mm hoch</b>, Rastermaß 2 mm.</li>
       <li><b>Potis</b> 9 mm vertikal, B10K linear. Ihre Achse steht hinter der gedruckten Front nur wenig heraus; dafür sind die <a href="#knoepfe">Knöpfe</a> zum Drucken gemacht.</li>
     </ul>
@@ -379,7 +379,7 @@
       <dt>Eine LED ist durchgebrannt</dt>
       <dd>Sie war falsch herum (Schritt 5). Auslöten und eine neue richtig herum einsetzen.</dd>
       <dt>LEDs in falschen Farben</dt>
-      <dd>Etwa mit APA106 oder PL9823: Sie erwarten Rot-Grün-Blau statt Grün-Rot-Blau. In <code>firmware/main/hw/Hardware.cpp</code> in <code>showLeds</code> je Rot und Grün tauschen und die Firmware selbst bauen.</dd>
+      <dd>Cyan erscheint lila, magenta türkis, grün rot: Die fertigen Images schicken Rot-Grün-Blau, wie es die APA106 (und PL9823) erwarten, die oft als WS2812D-F5 verkauft werden. Echte WS2812D-F5 von Worldsemi wollen Grün-Rot-Blau: die Firmware selbst bauen mit <code>idf.py -DTONWERK_LED_GRB=1 build flash</code>.</dd>
       <dt>Regler tun nichts oder springen</dt>
       <dd>Ein Regler übernimmt erst, wenn er den gespeicherten Wert erreicht (<a href="./#pickup">Pick-up</a>). Sonst die Leisten J3 und J4 und die 100-nF-Kondensatoren C10–C19 prüfen.</dd>
       <dt>CV-Eingänge tun nichts</dt>
