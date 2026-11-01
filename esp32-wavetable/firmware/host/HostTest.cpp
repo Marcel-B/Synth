@@ -448,6 +448,61 @@ void examples(const std::string& dir)
 }
 } // namespace
 
+/** The drive keeps a full-level note about as loud as without it: the module's oscillators reach the clipper at
+ * full swing, where the plugin's fixed make-up took up to 12 dB away (Marcel's module, 2026-11-01). */
+void drive()
+{
+    struct Case
+    {
+        const char* name;
+        int table;
+        float position;
+        int unison;
+        bool b;
+    };
+    const Case cases[] = {
+        { "saw", 0, 2.0f / 3.0f, 1, false },
+        { "square", 0, 1.0f, 1, false },
+        { "sine", 0, 0.0f, 1, false },
+        { "vowel table", 3, 0.4f, 1, false },
+        { "saw, four unison voices", 0, 2.0f / 3.0f, 4, false },
+        { "saw with oscillator B", 0, 2.0f / 3.0f, 1, true },
+    };
+    for (const auto& c : cases)
+    {
+        std::string line = std::string("drive on a ") + c.name + ":";
+        double reference = 0.0, worst = 0.0;
+        for (float d : { 0.0f, 0.01f, 0.25f, 0.5f, 0.75f, 1.0f })
+        {
+            twm::VoiceParams p;
+            p.note = 48.0f;
+            p.a.table = c.table;
+            p.a.position = c.position;
+            p.a.unison = c.unison;
+            p.b.on = c.b;
+            p.b.table = c.table;
+            p.b.position = c.position;
+            p.filter = twm::FilterMode::low24;
+            p.cutoff = 20000.0f;
+            p.drive = d;
+            p.gate = true;
+            twm::Voice v;
+            v.prepare(kRate);
+            std::vector<float> osc, out;
+            renderPort(v, p, 0.5f, osc, out, [](float, twm::VoiceParams&) {});
+            const std::vector<float> tail(out.begin() + (long) out.size() / 2, out.end());
+            const double level = db(rms(tail));
+            if (d == 0.0f)
+                reference = level;
+            worst = std::max(worst, std::abs(level - reference));
+            char part[32];
+            std::snprintf(part, sizeof part, " %+.1f", level - reference);
+            line += part;
+        }
+        check(worst < 2.0, line + " dB at drive 0, 1, 25, 50, 75, 100 %");
+    }
+}
+
 int main(int argc, char** argv)
 {
     const auto start = std::chrono::steady_clock::now();
@@ -460,6 +515,7 @@ int main(int argc, char** argv)
     comparesWithPlugin();
     tuning();
     panel();
+    drive();
     speed();
     benchTest();
     if (argc > 1)

@@ -309,7 +309,7 @@ Aufbau, was anders ist:
 
 ## Was getestet ist
 
-- **Klang wie das Plugin:** Der Host-Test spielt dieselben Einstellungen durch die Stimme des Plugins (`tonwerkwave::Voice`) und durch die Portierung. Abweichung 65 bis 92 dB unter dem Signal, Pegel gleich auf 0,01 dB (Säge mit LP24, Rechteck ohne Filter, Vokal-Tabelle mit LP12, FM-Growl mit Sync-Warp und Bandpass, Rauh-Tabelle mit Bend-Warp und Kamm). Nur Töne unter ca. 94 Hz haben weniger Obertöne als im Plugin (256 statt 512, darüber ist es gleich).
+- **Klang wie das Plugin:** Der Host-Test spielt dieselben Einstellungen durch die Stimme des Plugins (`tonwerkwave::Voice`) und durch die Portierung. Abweichung 65 bis 92 dB unter dem Signal, Pegel gleich auf 0,01 dB (Säge mit LP24, Rechteck ohne Filter, Vokal-Tabelle mit LP12, FM-Growl mit Sync-Warp und Bandpass, Rauh-Tabelle mit Bend-Warp und Kamm). Nur Töne unter ca. 94 Hz haben weniger Obertöne als im Plugin (256 statt 512, darüber ist es gleich). Der Drive gleicht im Modul den Pegel nach Messung aus (Leistung vor und nach der Sättigung über etwa 100 ms), das Plugin mit einem festen Anteil der Verstärkung: Dort kommen die Stimmen leiser am Drive an, im Modul mit voller Aussteuerung, wo der feste Ausgleich den Ton aufgedreht bis zu 12 dB leiser machte. Der Host-Test hält den Pegel über den ganzen Drive-Weg innerhalb von 2 dB (gemessen 0 bis −1,3 dB).
 - **Stimmung:** C1 bis C7 auf 0,001 Cent genau (die V/Oct-Hardware ist nicht getestet).
 - **Bedienlogik:** Pick-up, Halten gegen kurzes Drücken, Modi, Kalibrierungs-Rechnung.
 - **Firmware:** baut mit ESP-IDF 5.3.1 für den ESP32-S3 ohne Warnungen (348 KB). Im Emulator (QEMU) ließ sie sich nicht starten, weil der keinen PSRAM nachbildet.
