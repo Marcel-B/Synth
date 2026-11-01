@@ -206,12 +206,18 @@ Layout GrooveProcessor::createParameterLayout()
     for (int t = 0; t < kTracks; ++t)
         percent(layout, id(t, "Roll"), tr(kTrackNames[(std::size_t) t]) + " " + tr("Würfeln"), d.track[(std::size_t) t].roll,
                 0.0f, 1.0f, 4);
+
+    // Version 5: whether the tracks may use their own outputs. Logic's AU v2 host turns every output bus on, the stereo
+    // variant too (JUCE's AU wrapper enables them all), and plays only the first, so the bus alone cannot say whether
+    // anyone listens there; without this switch every track went to an output nobody heard.
+    toggle(layout, "trackOutputs", tr("Einzelausgänge"), false, 5);
     return layout;
 }
 
 /**
  * The main output, then one stereo output per track, off unless a host (Logic's multi-output instrument) or Tonwerk Rig
- * turns it on; a track whose output is on leaves the main one, so it can get effects of its own.
+ * turns it on; a track whose output is on leaves the main one, so it can get effects of its own, but only while
+ * `trackOutputs` is on (see there).
  */
 juce::AudioProcessor::BusesProperties GrooveProcessor::buses()
 {
@@ -243,6 +249,7 @@ GrooveProcessor::GrooveProcessor()
                value("swing"),   value("accent"),  value("drive"),  value("master"), value("roll") };
     fx = { value("fxDelayMix"),      value("fxDelaySync"), value("fxDelayTime"), value("fxDelayDivision"),
            value("fxDelayFeedback"), value("fxDelayTone"), value("fxReverbMix"), value("fxReverbDecay"), value("fxOn") };
+    trackOutputs = value("trackOutputs");
     // A new instance starts with Init's beat, so pressing play gives a groove at once.
     setCurrentProgram(0);
     startTimerHz(10);
@@ -486,7 +493,8 @@ void GrooveProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     // The tracks whose own output is on render there, from channel 4 of the work buffer on.
     std::array<float*, 2 * kTracks> ownOutput {};
     bool anyOwn = false;
-    for (int t = 0; t < kTracks; ++t)
+    const bool ownAllowed = trackOutputs->load() >= 0.5f;
+    for (int t = 0; ownAllowed && t < kTracks; ++t)
         if (t + 1 < getBusCount(false) && getChannelCountOfBus(false, t + 1) == 2)
         {
             ownOutput[(std::size_t) (2 * t)] = work.getWritePointer(4 + 2 * t);
@@ -614,10 +622,10 @@ void GrooveProcessor::setCurrentProgram(int index)
     const auto& kit = kits[(std::size_t) index];
     // Everything back to its default first, so a kit only names what it changes; how the sequencer runs and the
     // machines chosen under the grid are the user's setup, not the kit's, and stay: a kit plays on any machine. So does
-    // the effects' switch: a kit chosen while listening dry stays dry.
+    // the effects' switch: a kit chosen while listening dry stays dry. And where the tracks go, which is the mixer's.
     for (auto* parameter : getParameters())
         if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter);
-            ranged && ranged->paramID != "seqMode" && ranged->paramID != "fxOn"
+            ranged && ranged->paramID != "seqMode" && ranged->paramID != "fxOn" && ranged->paramID != "trackOutputs"
             && ! ranged->paramID.endsWith("Machine"))
             ranged->setValueNotifyingHost(ranged->getDefaultValue());
     for (const auto& [parameterId, value] : kit.values)

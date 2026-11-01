@@ -297,6 +297,7 @@ const std::vector<Entry>& entries()
         { "E-Piano", "E-piano" },
         { "Eigene Audiodatei laden (oder auf die Anzeige ziehen)", "Load your own audio file (or drop it on the display)" },
         { "Einzeln", "Single" },
+        { "Einzelausgänge", "Separate outs" },
         { "Ende", "End" },
         { "Gate", nullptr },
         { "Klassisch", "Classic" },

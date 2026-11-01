@@ -1,5 +1,7 @@
 #include "RigProcessor.h"
 
+#include <algorithm>
+
 #include "Language.h"
 
 #include "GrooveProcessor.h"
@@ -105,6 +107,15 @@ void RigProcessor::rebuild()
 
     if (auto* inst = instrumentProcessor.get())
     {
+        // The groovebox uses its outputs only with its switch on (Logic turns all of them on regardless); set on every
+        // rebuild, since a groovebox state saved before the switch existed loads with it off.
+        if (auto* groove = dynamic_cast<tonwerkgroove::GrooveProcessor*>(inst))
+            if (auto* outputs = groove->state.getParameter("trackOutputs"))
+            {
+                const float value = std::any_of(wanted.begin(), wanted.end(), [](bool on) { return on; }) ? 1.0f : 0.0f;
+                if (std::abs(outputs->getValue() - value) > 0.5f)
+                    outputs->setValueNotifyingHost(value);
+            }
         if (tracks && wanted != trackOn)
         {
             // A track with an effect of its own leaves the groovebox's main output for its own.

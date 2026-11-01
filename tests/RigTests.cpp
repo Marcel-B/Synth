@@ -216,6 +216,12 @@ public:
             expectEquals(layout.outputBuses.size(), 1 + tonwerkgroove::kTracks);
             layout.outputBuses.getReference(1) = juce::AudioChannelSet::stereo();
             expect(groove.setBusesLayout(layout));
+            // Logic's AU host enables every bus, the stereo variant too, and plays only the first: with the switch off
+            // the kick stays in the main output whatever the layout.
+            expectWithinAbsoluteError(peakOf(render(groove, kick, 1.0), 0), peakOf(together, 0), 1.0e-4f);
+            groove.enableAllBuses();
+            expectWithinAbsoluteError(peakOf(render(groove, kick, 1.0), 0), peakOf(together, 0), 1.0e-4f);
+            groove.state.getParameter("trackOutputs")->setValueNotifyingHost(1.0f);
             const auto apart = render(groove, kick, 1.0);
             const int first = groove.getChannelIndexInProcessBlockBuffer(false, 1, 0);
             expect(peakOf(together, 0) > 0.1f);
