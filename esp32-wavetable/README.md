@@ -33,6 +33,7 @@ Ein monophoner Wavetable-Oszillator mit eingebautem Filter und Hüllkurve. Er kl
 - **FILTER kurz drücken:** Filtermodus weiter (LP12, LP24, HP12, BP12, Notch, Kamm, aus). LED 2 zeigt ihn.
 - **Taste halten und drehen** stellt die versteckte Ebene ein. Ein Regler übernimmt erst, wenn er den gespeicherten Wert erreicht („Pick-up“), damit nichts springt. Modi und versteckte Werte werden 3 s nach der letzten Änderung gespeichert.
 - **Beide Tasten beim Einschalten halten:** V/Oct-Kalibrierung. 1,000 V an V/OCT (sonst nichts gesteckt), WARP drücken; 3,000 V anlegen, FILTER drücken. Grün = gespeichert, rot = unplausibel (alte Werte bleiben).
+- **Nur WARP beim Einschalten halten:** Update über WLAN, siehe [Update über WLAN](#update-über-wlan). Bei den anderen Firmwares ist es dieselbe Taste (ERREGER, WELLE 1, QUELLE, KLANG A).
 
 Buchsen: **V/OCT** (−1…+7 V, 0 V = C2), **GATE** (ab ca. 1,4 V; ohne Kabel ist das Gate dauerhaft an, das Modul läuft als Drone), **TABLE** (±5 V, 5 V = alle zehn Tabellen), **POS**, **WARP**, **CUTOFF** (±5 V), Ausgänge **OSC** und **VOICE** (±5 V).
 
@@ -142,6 +143,21 @@ Eine fünfte Firmware für dieselben Platinen: **Tonwerk Additiv** (Plugin in di
 
 Buchsen: **V/OCT**, **GATE** wie oben; **MORPH** (±5 V über den ganzen Weg ihres Reglers), **OBERT.** und **SPREIZ.** (über ihre Abschwächer), **NEIG.** (±5 V über den ganzen Weg, also bis ±24 dB pro Oktave); Ausgänge **L** und **R** (an der Stelle von OSC und VOICE). Für Mono die Breite (KLANG A gehalten, VOKAL) auf 0, dann sind beide gleich.
 
+## Update über WLAN
+
+Neben dem Instrument liegt im Flash ein kleiner **Updater**. Mit ihm kommt eine neue Firmware ohne USB-Kabel aufs Modul, auch eine andere der fünf:
+
+1. Das Modul mit gehaltener linker Taste einschalten (WARP; bei den anderen Firmwares ERREGER, WELLE 1, QUELLE oder KLANG A), die rechte nicht. Die LEDs blinken blau im Wechsel.
+2. Mit Handy oder Rechner ins WLAN **Tonwerk-Modul** gehen (ohne Passwort) und http://192.168.4.1 öffnen.
+3. Das Image wählen, dieselbe .bin wie für USB (zum Beispiel `tonwerk-modul.bin` oder `tonwerk-granular.bin`), und **Hochladen**. Während der Übertragung leuchten die LEDs cyan, die rechte flackert; danach beide grün, und das Modul startet mit der neuen Firmware.
+
+- Gespeicherte Modi, versteckte Werte und die V/Oct-Kalibrierung bleiben erhalten, anders als beim Flashen über USB. Geschrieben werden nur das Instrument und, bei Tonwerk Granular, seine Quellen.
+- Wer es sich anders überlegt: die linke Taste noch einmal drücken. Nach 15 Minuten ohne Upload startet das Instrument von selbst wieder.
+- Rot blinkend: Das Image passt nicht (keine Firmware fürs Modul, eine andere Aufteilung des Flashs) oder die Übertragung brach ab; die Seite sagt, warum. Brach sie ab, nachdem das Instrument schon überschrieben wurde, bleibt der Updater an, auch nach dem Aus- und Einschalten, bis ein Image vollständig angekommen ist. Das Modul steht also nie ohne Firmware da.
+- Beide LEDs dauerhaft rot: Die Aufteilung im Flash kennt den Updater nicht. Dann einmal über USB flashen.
+- Den Updater bringt erst eine Firmware vom 1.11.2026 oder später mit, und sie ändert die Aufteilung des Flashs: **einmal über USB flashen** ([BAUANLEITUNG.md](BAUANLEITUNG.md), Schritt 8), danach geht es über WLAN. Ältere Images nimmt der Updater nicht an.
+- Das WLAN ist nur offen, solange der Updater läuft; das Instrument selbst hat kein WLAN, ihm bleiben Speicher und Rechenzeit wie vorher.
+
 ## Hardware
 
 Schaltplan-Skizze: [hardware/schaltplan.pdf](hardware/schaltplan.pdf) (auch als SVG und PNG). Die Stufen:
@@ -196,7 +212,10 @@ firmware/
   main/app/GranularModule.h  dasselbe für Tonwerk Granular
   main/app/AdditiveModule.h  dasselbe für Tonwerk Additiv
   data/grain-sources.bin     die neun Quellen des Plugins, 16 bit (schreibt `make grain-sources` in host/)
-  main/hw/            Treiber: I2S, MCP3208 (SPI), ADC, WS2812 (RMT), NVS, Flash-Kopie der Tabellen
+  main/hw/            Treiber: I2S, MCP3208 (SPI), ADC, LEDs (RMT), NVS, Flash-Kopie der Tabellen, Sprung in den Updater
+  main/hw/UpdateImage.h  wohin die Bytes eines Images beim Update über WLAN gehen (auch im Host-Test)
+  updater/            der Updater: WLAN Tonwerk-Modul, Seite zum Hochladen, schreibt das Instrument neu
+  partitions.csv      Flash: Einstellungen, Instrument (factory), Updater (ota_0), Tabellen bzw. Quellen
   main/main.cpp       Audio-Task auf Kern 1, Steuer-Task (2 ms) auf Kern 0
   host/               Test auf dem Rechner, gegen die Stimmen der Plugins
 ```
@@ -241,7 +260,14 @@ Seine Quellen (3,5 MB aus `firmware/data/grain-sources.bin`) schreibt `idf.py fl
 idf.py -B build-additiv -DTONWERK_ADDITIVE=1 build flash monitor
 ```
 
-Fertig gebaut: [firmware/modul-additiv/tonwerk-additiv.bin](firmware/modul-additiv/tonwerk-additiv.bin). Zurück zu einer anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen ohnehin neu zu machen.
+Fertig gebaut: [firmware/modul-additiv/tonwerk-additiv.bin](firmware/modul-additiv/tonwerk-additiv.bin). Zurück zu einer anderen Firmware geht es genauso; jede hat ihre eigenen gespeicherten Einstellungen, die Kalibrierung ist nach dem Flashen über USB ohnehin neu zu machen (über WLAN bleibt sie).
+
+Jedes fertige Image enthält den Updater an 0x190000. `idf.py flash` schreibt ihn nicht mit; wer selbst baut, baut und flasht ihn einmal dazu (danach bleibt er, bis die Aufteilung des Flashs sich ändert):
+
+```sh
+idf.py -C updater -B build-updater build
+esptool.py --chip esp32s3 write_flash 0x190000 build-updater/tonwerk-updater.bin
+```
 
 Die GitHub Action `Modul` (`.github/workflows/modul.yml`) baut bei jeder Änderung an der Firmware alle sechs Images mit ESP-IDF 5.3.1, prüft sie auf Warnungen und lädt sie als Artefakt `modul-firmware` hoch. Steht in der neuesten Commit-Nachricht eines Pull Requests `[Images: additiv]` (oder `granular`, `pd`, `physical`, `modul`, `bench`, auch mehrere), legt sie die genannten Images auch in dessen Zweig; so kommen die Dateien hier ins Repo.
 
@@ -318,6 +344,7 @@ Aufbau, was anders ist:
 - **PD-Firmware, auf dem Rechner:** Der Host-Test spielt alle acht Wellen auf drei Tönen und zwei Biegungen, alle Arten der Linien, Ring und Rauschen und die wechselnden Wellen durch die Engine des Plugins (`tonwerkpd`) und durch die Portierung: Abweichung höchstens −56 dB, der Chorus −73 dB. Stimmung 0–5 V auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide; alle Wellen ganz gebogen mit beiden Linien und Chorus unter Vollaussteuerung. Auf dem Rechner 0,3 % Echtzeit. Baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen (Image 401 KB). **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
 - **Granular-Firmware, auf dem Rechner:** Der Host-Test spielt alle neun Quellen, alle drei Fenster, rückwärts, die Raster der Tonstreuung, Scan in beide Richtungen, alle Filter, den LFO auf Position, Tonhöhe, Cutoff und Dichte und eine Wolke aus 40 Körnern auf drei Tönen durch die Stimme des Plugins (`tonwerkgrain::Voice`) und durch die Portierung: Abweichung höchstens −65 dB. Die Quellen in `data/` sind die des Plugins auf 16 bit gerundet (der Test prüft die Datei Byte für Byte), ihre tieferen Kopien höchstens −77 dB daneben. Stimmung C2 bis C7 auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung; jede Quelle dünn und dicht unter Vollaussteuerung (das Schlag-Fenster mit wenigen Körnern kann darüber gehen, der Ausgang rundet das weich ab). 40 Körner mit Filter brauchen auf dem Rechner 0,8 % Echtzeit; auf dem ESP32 schätze ich bis zu 50 % eines Kerns, weil jedes Korn aus dem PSRAM liest. **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
 - **Additiv-Firmware, auf dem Rechner:** Der Host-Test spielt alle zwölf Spektren auf drei Tönen und jede Formung (Morph, Anzahl, Neigung beide Richtungen, gerade/ungerade, Spreizung, Schwebung, gleiche Phasen, Kamm, Vokale, alle vier Filter mit Resonanz, Einschwingen und Abklingen der Teiltöne) durch die Stimme des Plugins (`tonwerkadd::Voice`) und durch die Portierung: Abweichung höchstens −107 dB, beide drehen dieselben float-Zeiger. Stimmung C2 bis C7 auf 0,001 Cent; Anschlag per Gate und per V/Oct-Sprung, kein Anschlag beim Glide; jedes Spektrum unter Vollaussteuerung, auch mit gleichen Phasen und voller Breite (Resonanz und Formanten können darüber gehen, der Ausgang rundet das weich ab). 64 Teiltöne mit aller Formung, alles in jedem Schritt neu gerechnet, brauchen auf dem Rechner 1,1 % Echtzeit; auf dem ESP32 schätze ich 30–50 % eines Kerns. **Auf dem ESP32 ist sie noch nie gelaufen**, die Frontplatte ist nicht gedruckt.
+- **Update über WLAN, auf dem Rechner:** Der Host-Test schickt ein Image von 6,6 MB in zufälligen Stücken bis 4 KB durch die Aufteilung (`hw/UpdateImage.h`): Partitionstabelle, Instrument und Quellen landen an ihrer Stelle, Bootloader, Boot-Daten, Einstellungen und der Updater selbst werden übersprungen, hinter den Tabellen wird nichts geschrieben. Der Updater baut in der GitHub Action mit ESP-IDF 5.3.1 ohne Warnungen. **Auf dem ESP32 ist er noch nie gelaufen**: weder das WLAN noch das Schreiben des Flashs noch der Sprung zurück ins Instrument. Über USB lässt sich jedes Modul weiterhin flashen.
 - **Nicht getestet:** alles andere auf echter Hardware: CV-Eingänge, V/Oct-Kalibrierung, Rechenlast, die übrigen Modi im Einzelnen. Die Last schätze ich auf 10–25 % eines Kerns für den schwersten Fall (2 × 4 Unisono, FM, Sub, LP24 mit Drive); auf dem Rechner braucht er 1 % Echtzeit.
 
 Hörproben der Portierung (auf dem Rechner gerendert, `make examples` in `firmware/host/`): ein FM-Growl-Bass am VOICE-Ausgang, alle zehn Tabellen nacheinander durchgefahren am OSC-Ausgang, eine Vokal-Fläche mit Oszillator B. Von der Physical-Firmware acht Paare am KLANG-Ausgang (gezupfte Saite, auch steif wie ein Klavier, geschlagener Stab, Glocke und Fell, gestrichene Saite, geblasenes Rohr, gestrichene Schale). Von der PD-Firmware sechs in Stereo (Säge-Bass, Resonanz-Sweep, zwei Linien mit Chorus, Ring-Glocke, Rauschen als Perkussion, Puls-Fläche), von der Granular-Firmware sechs (Chor-Wolke, Glas-Funken in Oktaven, Streicher-Scan mit Filter, stotternder Rhythmus, Zupf-Sequenz, Orgel in Quinten), von der Additiv-Firmware sechs (Orgel nach Hohl gemorpht, Teiltöne von 1 bis 64 gezählt, gespreizte Glocke, Vokale, gezupfte Sequenz, Kamm-Sweep).

@@ -101,6 +101,8 @@
       <dd>Länger als 0,3 Sekunden, oder kürzer, aber mit Drehen: öffnet die versteckte Ebene, der Modus bleibt. Ein Regler, der beim Drücken nur leicht berührt wird, zählt nicht als Drehen.</dd>
       <dt>Beide beim Einschalten halten</dt>
       <dd>Startet die <a href="#kalibrieren">V/Oct-Kalibrierung</a>.</dd>
+      <dt>Nur WARP beim Einschalten halten</dt>
+      <dd>Startet das <a href="#wlan-update">Update über WLAN</a>.</dd>
     </dl>
 
     <h3 id="warp">Warp-Modi (WARP kurz drücken, LED 1)</h3>
@@ -163,6 +165,7 @@
       <dt>Beide blinken rot</dt><dd>Zu wenig PSRAM: das DevKit ist kein N16R8.</dd>
       <dt>Eine blinkt weiß</dt><dd>Kalibrierung, das Modul wartet auf diese Taste.</dd>
       <dt>Beide blinken dreimal grün oder rot</dt><dd>Kalibrierung gespeichert oder verworfen.</dd>
+      <dt>Blau im Wechsel, cyan, grün, rot blinkend</dt><dd>Update über WLAN: wartet, empfängt, fertig, Image abgelehnt oder abgebrochen (siehe <a href="#wlan-update">unten</a>).</dd>
     </dl>
 
     <h2 id="buchsen">Buchsen</h2>
@@ -210,7 +213,22 @@
 
     <h2 id="firmware">Neue Firmware</h2>
     <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, geschrieben an Adresse 0x0 mit dem Web-Flasher von Espressif im Browser (Chrome oder Edge). Wie, steht in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Das geht im Rack oder lose am USB-Kabel. Für <a href="physical.html">Tonwerk Physical</a> ist es <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, für <a href="pd.html">Tonwerk PD</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, für <a href="granular.html">Tonwerk Granular</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, für <a href="additiv.html">Tonwerk Additiv</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>.</p>
-    <p class="note">Flashen löscht die gespeicherten Modi, die versteckten Werte und die Kalibrierung, die Tabellen bleiben. Darum nach einem Update neu kalibrieren.</p>
+    <p class="note">Flashen über USB löscht die gespeicherten Modi, die versteckten Werte und die Kalibrierung, die Tabellen bleiben. Darum danach neu kalibrieren. Über WLAN (unten) bleibt alles erhalten.</p>
+
+    <h3 id="wlan-update">Update über WLAN</h3>
+    <p>Neben dem Instrument liegt im Flash ein kleiner Updater. Mit ihm kommt eine neue Firmware ohne USB-Kabel aufs Modul, auch eine andere der fünf:</p>
+    <ol>
+      <li>Das Modul mit gehaltener linker Taste einschalten (WARP; bei den anderen Firmwares ERREGER, WELLE 1, QUELLE oder KLANG A), die rechte nicht. Die LEDs blinken blau im Wechsel.</li>
+      <li>Mit Handy oder Rechner ins WLAN <b>Tonwerk-Modul</b> gehen (ohne Passwort) und <code>http://192.168.4.1</code> öffnen.</li>
+      <li>Das Image wählen, dieselbe .bin wie für USB, und <b>Hochladen</b>. Während der Übertragung leuchten die LEDs cyan, die rechte flackert; danach beide grün, und das Modul startet mit der neuen Firmware.</li>
+    </ol>
+    <dl class="tools">
+      <dt>Was erhalten bleibt</dt><dd>Gespeicherte Modi, versteckte Werte und die Kalibrierung. Geschrieben werden nur das Instrument und, bei Tonwerk Granular, seine Quellen.</dd>
+      <dt>Doch nicht</dt><dd>Die linke Taste noch einmal drücken. Nach 15 Minuten ohne Upload startet das Instrument von selbst wieder.</dd>
+      <dt>Rot blinkend</dt><dd>Das Image passt nicht oder die Übertragung brach ab; die Seite sagt, warum. War das Instrument schon überschrieben, bleibt der Updater an, auch nach dem Aus- und Einschalten, bis ein Image ganz angekommen ist. Das Modul steht nie ohne Firmware da.</dd>
+      <dt>Beide dauerhaft rot</dt><dd>Die Aufteilung im Flash kennt den Updater nicht: einmal über USB flashen.</dd>
+    </dl>
+    <p class="note">Den Updater bringen erst die Firmwares vom 1.11.2026 an mit, und sie ändern die Aufteilung des Flashs: einmal über USB flashen, danach geht es über WLAN. Ältere Images nimmt der Updater nicht an. Das WLAN ist nur offen, solange der Updater läuft; das Instrument selbst hat kein WLAN. Noch nicht auf einem Modul ausprobiert, USB geht immer.</p>
 
     <h2 id="probleme">Probleme</h2>
     <dl class="tools">

@@ -1,14 +1,14 @@
 # The Physical, PD, Granular and Additiv firmwares (app/PhysicalModule.h, app/PdModule.h, app/GranularModule.h,
 # app/AdditiveModule.h) have no wavetables to compute.
 if(TONWERK_PHYSICAL OR TONWERK_PD OR TONWERK_GRANULAR OR TONWERK_ADDITIVE)
-    set(sources "main.cpp" "hw/Hardware.cpp")
+    set(sources "main.cpp" "hw/Hardware.cpp" "hw/Leds.cpp")
 else()
-    set(sources "main.cpp" "dsp/Tables.cpp" "hw/Hardware.cpp")
+    set(sources "main.cpp" "dsp/Tables.cpp" "hw/Hardware.cpp" "hw/Leds.cpp")
 endif()
 idf_component_register(
     SRCS ${sources}
     INCLUDE_DIRS "."
-    REQUIRES esp_driver_i2s esp_driver_spi esp_driver_rmt esp_driver_gpio esp_adc esp_timer nvs_flash esp_psram)
+    REQUIRES esp_driver_i2s esp_driver_spi esp_driver_rmt esp_driver_gpio esp_adc esp_timer nvs_flash esp_psram app_update)
 target_compile_options(${COMPONENT_LIB} PRIVATE -O2 -Wall -Wextra)
 # LEDs that take green, red, blue (Worldsemi's WS2812D-F5): -DTONWERK_LED_GRB=1. Without it red, green, blue, as the
 # APA106s of the first module.

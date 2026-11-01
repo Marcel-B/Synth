@@ -135,7 +135,7 @@
 
     <h2 id="firmware">Firmware</h2>
     <p>Die Firmware ist eine Datei, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, geschrieben an Adresse 0x0 wie in der <a href="bauanleitung.html#flashen">Bauanleitung, Schritt 8</a>. Sie trägt ihre neun Quellen mit und ist darum 6,7 MB groß; das Schreiben dauert ein bis zwei Minuten. Die Quellen liegen dort, wo die Wavetable-Firmware ihre Tabellen ablegt: nach dem Zurückflashen von <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a> rechnet sie die beim ersten Start einmal neu.</p>
-    <p class="note">Flashen löscht die gespeicherten Einstellungen und die Kalibrierung. Darum nach dem Flashen neu kalibrieren. Blinken beide LEDs rot, fehlen die Quellen: die ganze Datei noch einmal an 0x0 schreiben.</p>
+    <p class="note">Flashen über USB löscht die gespeicherten Einstellungen und die Kalibrierung. Darum danach neu kalibrieren. Über WLAN bleiben sie, mit der linken Taste beim Einschalten: <a href="index.html#wlan-update">Update über WLAN</a>. Blinken beide LEDs rot, fehlen die Quellen: die ganze Datei noch einmal an 0x0 schreiben.</p>
 
     <p class="stand">Stand 31.10.2026. Quelltext und Frontplatte stehen auf <a href="https://github.com/Marcel-B/Synth/tree/main/esp32-wavetable">GitHub</a> unter derselben <a href="https://github.com/Marcel-B/Synth/blob/main/LICENSE">PolyForm Noncommercial License</a> wie die Plugins: für sich nachbauen ja, verkaufen nur mit Erlaubnis.</p>
   </main>

@@ -101,6 +101,8 @@
       <dd>Longer than 0.3 seconds, or shorter but with turning: opens the hidden layer, the mode stays. A knob that is only touched lightly while pressing does not count as turning.</dd>
       <dt>Hold both while powering on</dt>
       <dd>Starts the <a href="#kalibrieren">V/Oct calibration</a>.</dd>
+      <dt>Hold only WARP while powering on</dt>
+      <dd>Starts the <a href="#wlan-update">update over Wi-Fi</a>.</dd>
     </dl>
 
     <h3 id="warp">Warp modes (short press on WARP, LED 1)</h3>
@@ -163,6 +165,7 @@
       <dt>Both blink red</dt><dd>Not enough PSRAM: the DevKit is not an N16R8.</dd>
       <dt>One blinks white</dt><dd>Calibration, the module is waiting for this button.</dd>
       <dt>Both blink green or red three times</dt><dd>Calibration saved or discarded.</dd>
+      <dt>Alternating blue, cyan, green, blinking red</dt><dd>Update over Wi-Fi: waiting, receiving, done, image refused or cut off (see <a href="#wlan-update">below</a>).</dd>
     </dl>
 
     <h2 id="buchsen">Jacks</h2>
@@ -210,7 +213,22 @@
 
     <h2 id="firmware">New firmware</h2>
     <p>The firmware is one file, <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul/tonwerk-modul.bin">tonwerk-modul.bin</a>, written at address 0x0 with Espressif's web flasher in the browser (Chrome or Edge). How is described in the <a href="bauanleitung.html#flashen">build guide, step 8</a>. This works in the rack or loose on the USB cable. For <a href="physical.html">Tonwerk Physical</a> it is <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-physical/tonwerk-physical.bin">tonwerk-physical.bin</a>, for <a href="pd.html">Tonwerk PD</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-pd/tonwerk-pd.bin">tonwerk-pd.bin</a>, for <a href="granular.html">Tonwerk Granular</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a>, for <a href="additiv.html">Tonwerk Additiv</a> <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-additiv/tonwerk-additiv.bin">tonwerk-additiv.bin</a>.</p>
-    <p class="note">Flashing erases the saved modes, the hidden values and the calibration; the tables stay. So calibrate again after an update.</p>
+    <p class="note">Flashing over USB erases the saved modes, the hidden values and the calibration; the tables stay. So calibrate again afterwards. Over Wi-Fi (below) everything is kept.</p>
+
+    <h3 id="wlan-update">Update over Wi-Fi</h3>
+    <p>Next to the instrument the flash holds a small updater. With it new firmware reaches the module without a USB cable, including another of the five:</p>
+    <ol>
+      <li>Switch the module on while holding the left button (WARP; in the other firmwares ERREGER, WELLE 1, QUELLE or KLANG A), not the right one. The LEDs blink blue in turn.</li>
+      <li>Join the Wi-Fi network <b>Tonwerk-Modul</b> (no password) with a phone or computer and open <code>http://192.168.4.1</code>.</li>
+      <li>Choose the image, the same .bin as for USB, and <b>upload</b> it. During the transfer the LEDs light cyan, the right one flickers; then both turn green and the module starts with the new firmware.</li>
+    </ol>
+    <dl class="tools">
+      <dt>What is kept</dt><dd>Saved modes, hidden values and the calibration. Only the instrument and, for Tonwerk Granular, its sources are written.</dd>
+      <dt>Changed your mind</dt><dd>Press the left button again. After 15 minutes without an upload the instrument starts again by itself.</dd>
+      <dt>Blinking red</dt><dd>The image does not fit or the transfer broke off; the page says why. If the instrument had already been overwritten, the updater stays on, even after switching off and on, until an image has arrived completely. The module is never left without firmware.</dd>
+      <dt>Both steady red</dt><dd>The flash layout does not know the updater: flash once over USB.</dd>
+    </dl>
+    <p class="note">Only the firmwares from 1 November 2026 on bring the updater, and they change the flash layout: flash once over USB, after that Wi-Fi works. The updater refuses older images. The Wi-Fi network is only open while the updater runs; the instrument itself has no Wi-Fi. Not yet tried on a module; USB always works.</p>
 
     <h2 id="probleme">Problems</h2>
     <dl class="tools">

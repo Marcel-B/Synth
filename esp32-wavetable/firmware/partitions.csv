@@ -1,6 +1,10 @@
-# 16 MB flash: the app, settings and a copy of the computed wavetables (5.7 MB, see hw::storeTables).
+# 16 MB flash: the instrument (factory), the updater that loads the next image over Wi-Fi (updater/, an OTA slot so
+# the boot data can point at it), settings and a copy of the computed wavetables (5.7 MB, see hw::storeTables). The
+# tables keep the place they had before the updater came, so a module flashed earlier keeps its copy.
 # Name,    Type, SubType, Offset,   Size
-nvs,       data, nvs,     0x9000,   0x6000
+nvs,       data, nvs,     0x9000,   0x4000
+otadata,   data, ota,     0xd000,   0x2000
 phy_init,  data, phy,     0xf000,   0x1000
-factory,   app,  factory, 0x10000,  3M
+factory,   app,  factory, 0x10000,  1536K
+updater,   app,  ota_0,   0x190000, 1536K
 tables,    data, 0x40,    0x310000, 6M
