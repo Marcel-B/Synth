@@ -413,6 +413,16 @@ def rig(p):
         p.line([(x0, 0.0), (x1, 0.0)], width=20)
 
 
+def pump(p):
+    # The pump's gain over three beats: down at once on each kick, then swelling back along its curve.
+    pts = []
+    for b in range(3):
+        x0 = -0.9 + b * 0.6
+        pts.append((x0, 0.55))
+        pts += [(x0 + 0.6 * i / 24, -0.55 + 1.1 * (1 - (1 - i / 24) ** 2.2)) for i in range(25)]
+    p.line(pts, 30)
+
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -449,6 +459,7 @@ ICONS = {
     "TonwerkArp": (arp, MIDI),
     "TonwerkLFO": (lfo, MIDI),
     "TonwerkRumble": (rumble, EFFECT),
+    "TonwerkPump": (pump, EFFECT),
     "TonwerkRig": (rig, INSTRUMENT),
 }
 

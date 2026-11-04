@@ -19,6 +19,7 @@
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
 #include "RumbleProcessor.h"
+#include "PumpProcessor.h"
 #include "SamplerProcessor.h"
 #include "ScopeProcessor.h"
 #include "ShimmerProcessor.h"
@@ -82,6 +83,7 @@ const std::vector<Kind>& effects()
         kind<tonwerkmultiband::MultibandProcessor>("multiband", "Tonwerk Multiband"),
         kind<tonwerkzone::ZoneProcessor>("zone", "Tonwerk Zone"),
         kind<tonwerkscope::ScopeProcessor>("scope", "Tonwerk Scope"),
+        kind<tonwerkpump::PumpProcessor>("pump", "Tonwerk Pump"),
     };
     return kinds;
 }

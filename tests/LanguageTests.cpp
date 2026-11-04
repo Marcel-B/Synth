@@ -25,6 +25,7 @@
 #include "ZoneProcessor.h"
 #include "ScopeProcessor.h"
 #include "RumbleProcessor.h"
+#include "PumpProcessor.h"
 #include "ArpProcessor.h"
 #include "LfoProcessor.h"
 #include "GlitchProcessor.h"
@@ -107,6 +108,7 @@ std::vector<std::pair<const char*, Make>> plugins()
         { "Tonwerk Zone", [] { return std::make_unique<tonwerkzone::ZoneProcessor>(); } },
         { "Tonwerk Scope", [] { return std::make_unique<tonwerkscope::ScopeProcessor>(); } },
         { "Tonwerk Rumble", [] { return std::make_unique<tonwerkrumble::RumbleProcessor>(); } },
+        { "Tonwerk Pump", [] { return std::make_unique<tonwerkpump::PumpProcessor>(); } },
         { "Tonwerk Arp", [] { return std::make_unique<tonwerkarp::ArpProcessor>(); } },
         { "Tonwerk LFO", [] { return std::make_unique<tonwerklfo::LfoProcessor>(); } },
         { "Chrome Glitch", [] { return std::make_unique<chromeglitch::ChromeGlitchProcessor>(); } },

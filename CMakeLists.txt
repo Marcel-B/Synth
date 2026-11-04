@@ -1163,6 +1163,40 @@ target_link_libraries(TonwerkRumble
     PRIVATE juce::juce_audio_utils
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Pump: a sidechain ducker made for pumping: a drawn curve on each kick, a sidechain compressor or the song's
+# grid, all of the signal or only its lows or highs (pump/).
+juce_add_plugin(TonwerkPump
+    PRODUCT_NAME "Tonwerk Pump"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkPump.png"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkpump
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwPm
+    FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
+    IS_SYNTH FALSE
+    ${TONWERK_INPUT_PERMISSION}
+    NEEDS_MIDI_INPUT FALSE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_Effect
+    VST3_CATEGORIES Fx Dynamics
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_PUMP_SOURCES
+    pump/src/PumpEditor.cpp
+    pump/src/PumpPresets.cpp
+    pump/src/PumpProcessor.cpp)
+
+target_sources(TonwerkPump PRIVATE ${TONWERK_PUMP_SOURCES} common/EffectPresets.cpp ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkPump PRIVATE common)
+target_compile_definitions(TonwerkPump PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkPump
+    PRIVATE juce::juce_audio_utils
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
 set(TONWERK_RIG_SOURCES
     rig/src/RigCatalogue.cpp
     rig/src/RigEditor.cpp
@@ -1209,10 +1243,11 @@ set(TONWERK_ALL_SOURCES
     ${TONWERK_SCOPE_SOURCES}
     ${TONWERK_EXPANDER_SOURCES}
     ${TONWERK_RUMBLE_SOURCES}
+    ${TONWERK_PUMP_SOURCES}
     ${TONWERK_RIG_SOURCES})
 set(TONWERK_ALL_INCLUDES src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src
     groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src
-    chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src rumble/src rig/src)
+    chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src rumble/src pump/src rig/src)
 # Each plugin defines the factory a host calls; the app and the tests make their processors themselves.
 set(TONWERK_NO_ENTRIES
     CHROME_GLITCH_NO_ENTRY=1
@@ -1245,6 +1280,7 @@ set(TONWERK_NO_ENTRIES
     TONWERK_EXPANDER_NO_ENTRY=1
     TONWERK_LFO_NO_ENTRY=1
     TONWERK_RUMBLE_NO_ENTRY=1
+    TONWERK_PUMP_NO_ENTRY=1
     TONWERK_RIG_NO_ENTRY=1)
 
 # Tonwerk Rig: one instrument with effects behind it, saved as one sound (rig/). It holds the other plugins' processors,
@@ -1316,7 +1352,7 @@ if(TONWERK_APP)
             TonwerkFreeze_AUv3 TonwerkArp_AUv3 TonwerkSampler_AUv3 TonwerkBass_AUv3 TonwerkVocoder_AUv3
             TonwerkDelay_AUv3 TonwerkChorus_AUv3 TonwerkGlue_AUv3 TonwerkShimmer_AUv3 TonwerkFilter_AUv3
             TonwerkNeuro_AUv3 TonwerkStutter_AUv3 TonwerkMultiband_AUv3 TonwerkZone_AUv3 TonwerkScope_AUv3
-            TonwerkExpander_AUv3 TonwerkLFO_AUv3 TonwerkRumble_AUv3 TonwerkRig_AUv3)
+            TonwerkExpander_AUv3 TonwerkLFO_AUv3 TonwerkRumble_AUv3 TonwerkPump_AUv3 TonwerkRig_AUv3)
         add_dependencies(Tonwerk ${tonwerk_extensions})
         # App Store Connect wants a privacy manifest in the app and in each extension.
         set(tonwerk_privacy "${CMAKE_CURRENT_SOURCE_DIR}/app/PrivacyInfo.xcprivacy")
@@ -1446,6 +1482,8 @@ if(TONWERK_TESTS AND NOT TONWERK_STORE)
         tests/MidiLearnTests.cpp
         ${TONWERK_RUMBLE_SOURCES}
         tests/RumbleTests.cpp
+        ${TONWERK_PUMP_SOURCES}
+        tests/PumpTests.cpp
         ${TONWERK_RIG_SOURCES}
         tests/RigTests.cpp
         tests/PresetTests.cpp
