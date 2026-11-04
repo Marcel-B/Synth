@@ -413,6 +413,15 @@ def rig(p):
         p.line([(x0, 0.0), (x1, 0.0)], width=20)
 
 
+def komponist(p):
+    # Lines of text on the left become notes of a piano roll on the right.
+    for i, w in enumerate((0.7, 0.55, 0.65)):
+        y = -0.5 + i * 0.5
+        p.line([(-0.95, y), (-0.95 + w, y)], 26)
+    for i, (x, y) in enumerate(((0.05, 0.45), (0.38, -0.05), (0.62, 0.55), (0.75, -0.55))):
+        p.box(x, y - 0.13, x + 0.28, y + 0.13, radius=0.05)
+
+
 INSTRUMENT, EFFECT, MIDI = YELLOW, CYAN, RED
 
 ICONS = {
@@ -450,6 +459,7 @@ ICONS = {
     "TonwerkLFO": (lfo, MIDI),
     "TonwerkRumble": (rumble, EFFECT),
     "TonwerkRig": (rig, INSTRUMENT),
+    "TonwerkKomponist": (komponist, MIDI),
 }
 
 # The iPad app with every plugin inside: Tonwerk Synth's sign, both engines.
