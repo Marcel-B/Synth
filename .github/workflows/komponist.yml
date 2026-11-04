@@ -1,0 +1,57 @@
+name: Komponist
+
+# Tonwerk Komponist (komponist/) is a CMake project of its own, so its build and tests run here, only when it changes.
+on:
+  push:
+    paths:
+      - "komponist/**"
+      - ".github/workflows/komponist.yml"
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Tests (Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev \
+            libcurl4-openssl-dev
+      - name: Configure
+        run: cmake -S komponist -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --target TonwerkKomponistTests TonwerkKomponist
+      # The fake server lets the tests go the whole way through HTTP and the stream.
+      - name: Test
+        run: |
+          python3 komponist/tests/fake-api.py 8765 &
+          sleep 1
+          KOMPONIST_API_URL=http://127.0.0.1:8765/v1/messages ctest --test-dir build --output-on-failure
+
+  macos:
+    name: App (macOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S komponist -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
+      - name: Test
+        run: |
+          python3 komponist/tests/fake-api.py 8765 &
+          sleep 1
+          KOMPONIST_API_URL=http://127.0.0.1:8765/v1/messages ctest --test-dir build --output-on-failure
+      - name: Sign ad hoc and pack
+        run: |
+          cd "build/TonwerkKomponist_artefacts/Release"
+          codesign --force --deep --sign - "Tonwerk Komponist.app"
+          ditto -c -k --keepParent "Tonwerk Komponist.app" "$GITHUB_WORKSPACE/Tonwerk-Komponist.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tonwerk-Komponist-macOS
+          path: Tonwerk-Komponist.zip
+          retention-days: 30
