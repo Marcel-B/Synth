@@ -404,6 +404,18 @@ def rumble(p):
     swell(0.2, 1.0)
 
 
+def reverb(p):
+    # A vault, and under it the sound dying away: a dense tail of reflections, each lower than the last.
+    p.curve(lambda x: -0.8 + 1.62 * math.sqrt(max(0.0, 1 - (x / 0.92) ** 2)), -0.92, 0.92, steps=300, width=34)
+    p.line([(-0.98, -0.8), (0.98, -0.8)], 34)
+    rng = random.Random(7)
+    x = -0.62
+    while x < 0.7:
+        h = 1.15 * math.exp(-2.6 * (x + 0.62)) * (0.75 + 0.25 * rng.random())
+        p.line([(x, -0.8), (x, -0.8 + max(0.05, h))], 16)
+        x += 0.085
+
+
 def rig(p):
     # The chain: the instrument as a filled box, two effects behind it, wired one after the other.
     p.box(-1.0, -0.3, -0.5, 0.3, fill=True, radius=0.06)
@@ -449,6 +461,7 @@ ICONS = {
     "TonwerkArp": (arp, MIDI),
     "TonwerkLFO": (lfo, MIDI),
     "TonwerkRumble": (rumble, EFFECT),
+    "TonwerkReverb": (reverb, EFFECT),
     "TonwerkRig": (rig, INSTRUMENT),
 }
 

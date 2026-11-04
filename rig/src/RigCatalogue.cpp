@@ -18,6 +18,7 @@
 #include "PdProcessor.h"
 #include "PhysicalProcessor.h"
 #include "PluginProcessor.h"
+#include "ReverbProcessor.h"
 #include "RumbleProcessor.h"
 #include "SamplerProcessor.h"
 #include "ScopeProcessor.h"
@@ -72,6 +73,7 @@ const std::vector<Kind>& effects()
         kind<tonwerkwobble::WobbleProcessor>("wobble", "Tonwerk Wobble"),
         kind<tonwerkchorus::ChorusProcessor>("chorus", "Tonwerk Chorus"),
         kind<tonwerkdelay::DelayProcessor>("delay", "Tonwerk Delay"),
+        kind<tonwerkreverb::ReverbProcessor>("reverb", "Tonwerk Reverb"),
         kind<tonwerkshimmer::ShimmerProcessor>("shimmer", "Tonwerk Shimmer"),
         kind<tonwerkfreeze::FreezeProcessor>("freeze", "Tonwerk Freeze"),
         kind<tonwerktape::TapeProcessor>("tape", "Tonwerk Tape"),
