@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Drums, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble und Tonwerk Pump aus einem Release-Download (liegt im Zip neben den Plugins).
+# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Drums, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble, Tonwerk Reverb und Tonwerk Pump aus einem Release-Download (liegt im Zip neben den Plugins).
 #
 #   cd ~/Downloads/Tonwerk-Synth-<version>-macOS && zsh install.sh
 #
@@ -43,6 +43,7 @@ SCOPE="Tonwerk Scope"
 EXPANDER="Tonwerk Expander"
 LFO="Tonwerk LFO"
 RUMBLE="Tonwerk Rumble"
+REVERB="Tonwerk Reverb"
 PUMP="Tonwerk Pump"
 RIG="Tonwerk Rig"
 COMPONENTS="$HOME/Library/Audio/Plug-Ins/Components"
@@ -51,7 +52,7 @@ APPS="$HOME/Applications"
 
 xattr -dr com.apple.quarantine . 2>/dev/null || true
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$DRUMS" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE" "$PUMP" "$RIG"; do
+for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$DRUMS" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE" "$REVERB" "$PUMP" "$RIG"; do
   rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
   cp -R "$PRODUCT.component" "$COMPONENTS/"
   cp -R "$PRODUCT.vst3" "$VST3/"
@@ -87,6 +88,7 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwZn Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwSc Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwRb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aufx TwRe Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwPm Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwRg Bvlp >>/tmp/tonwerk-auval.log 2>&1; then
   echo "Installiert und von auval geprüft."
@@ -96,7 +98,7 @@ else
 fi
 echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER, $GROOVEBOX oder $DRUMS."
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
-echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE, $SCOPE oder $PUMP."
+echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE, $SCOPE, $REVERB oder $PUMP."
 echo "$RUMBLE auf der Kick-Spur: Audio-FX > Audio Units > b-velop > $RUMBLE."
 echo "$RIG, ein Instrument mit Effekten dahinter als ein Klang: Instrument > AU-Instrumente > b-velop > $RIG."
 echo "$WOBBLE auf jeder Spur, am liebsten dem Bass: Audio-FX > Audio Units > b-velop > $WOBBLE."
