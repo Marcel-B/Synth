@@ -495,6 +495,16 @@ const std::vector<Entry>& entries()
         { "Trap", nullptr },
         { "Würfeln", "Roll" },
         { "Zerrung", "Drive" },
+        // Tonwerk Drums.
+        { "Claves", nullptr },
+        { "Conga", nullptr },
+        { "Cowbell", nullptr },
+        { "Hi-Hat Pedal", "Pedal hi-hat" },
+        { "Pads", nullptr },
+        { "Ride", nullptr },
+        { "Rim", nullptr },
+        { "Shaker", nullptr },
+        { "Tom mittel", "Mid tom" },
         // Tonwerk Bass.
         { "Ab Anschlag", "From velocity" },
         { "Accent ab Anschlag", "Accent from velocity" },

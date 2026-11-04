@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Baut Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, das bisherige Tonwerk Synth und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble und Tonwerk Pump auf dem Mac und installiert sie für Logic
+# Baut Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Drums, das bisherige Tonwerk Synth und die Effekte Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble und Tonwerk Pump auf dem Mac und installiert sie für Logic
 # (Audio Unit) und andere Hosts (VST3).
 # Braucht nur die Command Line Tools (xcode-select --install) und CMake (brew install cmake), kein volles Xcode.
 #
@@ -21,6 +21,7 @@ GRANULAR="Tonwerk Granular"
 PHYSICAL="Tonwerk Physical"
 ADDITIVE="Tonwerk Additiv"
 GROOVEBOX="Tonwerk Groovebox"
+DRUMS="Tonwerk Drums"
 ROBOVOX="Tonwerk Robovox"
 WOBBLE="Tonwerk Wobble"
 TAPE="Tonwerk Tape"
@@ -61,6 +62,7 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   rm -rf "$COMPONENTS/$PHYSICAL.component" "$VST3/$PHYSICAL.vst3" "$APPS/$PHYSICAL.app"
   rm -rf "$COMPONENTS/$ADDITIVE.component" "$VST3/$ADDITIVE.vst3" "$APPS/$ADDITIVE.app"
   rm -rf "$COMPONENTS/$GROOVEBOX.component" "$VST3/$GROOVEBOX.vst3" "$APPS/$GROOVEBOX.app"
+  rm -rf "$COMPONENTS/$DRUMS.component" "$VST3/$DRUMS.vst3" "$APPS/$DRUMS.app"
   rm -rf "$COMPONENTS/$ROBOVOX.component" "$VST3/$ROBOVOX.vst3" "$APPS/$ROBOVOX.app"
   rm -rf "$COMPONENTS/$WOBBLE.component" "$VST3/$WOBBLE.vst3" "$APPS/$WOBBLE.app"
   rm -rf "$COMPONENTS/$TAPE.component" "$VST3/$TAPE.vst3" "$APPS/$TAPE.app"
@@ -98,7 +100,7 @@ cmake --build build-release --config Release --parallel "$(sysctl -n hw.ncpu)"
 
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
 BUNDLES=()
-for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS" TonwerkVocoder:"$VOCODER" TonwerkDelay:"$DELAY" TonwerkChorus:"$CHORUS" TonwerkGlue:"$GLUE" TonwerkShimmer:"$SHIMMER" TonwerkFilter:"$FILTER" TonwerkNeuro:"$NEURO" TonwerkStutter:"$STUTTER" TonwerkMultiband:"$MULTIBAND" TonwerkZone:"$ZONE" TonwerkScope:"$SCOPE" TonwerkExpander:"$EXPANDER" TonwerkLFO:"$LFO" TonwerkRumble:"$RUMBLE" TonwerkPump:"$PUMP" TonwerkRig:"$RIG"; do
+for target in TonwerkAnalog:"$ANALOG" TonwerkFM:"$FM" TonwerkSynth:"$NAME" ChromeGlitch:"$GLITCH" TonwerkDistortion:"$DISTORTION" TonwerkWavetable:"$WAVETABLE" TonwerkDX:"$DX" TonwerkGranular:"$GRANULAR" TonwerkPhysical:"$PHYSICAL" TonwerkAdditiv:"$ADDITIVE" TonwerkGroovebox:"$GROOVEBOX" TonwerkDrums:"$DRUMS" TonwerkRobovox:"$ROBOVOX" TonwerkWobble:"$WOBBLE" TonwerkPD:"$PD" TonwerkTape:"$TAPE" TonwerkFreeze:"$FREEZE" TonwerkArp:"$ARP" TonwerkSampler:"$SAMPLER" TonwerkBass:"$BASS" TonwerkVocoder:"$VOCODER" TonwerkDelay:"$DELAY" TonwerkChorus:"$CHORUS" TonwerkGlue:"$GLUE" TonwerkShimmer:"$SHIMMER" TonwerkFilter:"$FILTER" TonwerkNeuro:"$NEURO" TonwerkStutter:"$STUTTER" TonwerkMultiband:"$MULTIBAND" TonwerkZone:"$ZONE" TonwerkScope:"$SCOPE" TonwerkExpander:"$EXPANDER" TonwerkLFO:"$LFO" TonwerkRumble:"$RUMBLE" TonwerkPump:"$PUMP" TonwerkRig:"$RIG"; do
   ARTEFACTS="build-release/${target%%:*}_artefacts/Release"
   PRODUCT="${target#*:}"
   BUNDLES+=("$ARTEFACTS/AU/$PRODUCT.component" "$ARTEFACTS/VST3/$PRODUCT.vst3" "$ARTEFACTS/Standalone/$PRODUCT.app")
@@ -130,7 +132,7 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwDs Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwWt Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwDx Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwGr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwPh Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwAd Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
-  && auval -v aumu TwGb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwGb Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwDr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumf TwRv Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aufx TwWb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwPd Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwTp Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
@@ -159,7 +161,7 @@ else
   exit 1
 fi
 echo
-echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER oder $GROOVEBOX."
+echo "Installiert. In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER, $GROOVEBOX oder $DRUMS."
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE, $SCOPE oder $PUMP."
 echo "$RUMBLE auf der Kick-Spur: Audio-FX > Audio Units > b-velop > $RUMBLE."

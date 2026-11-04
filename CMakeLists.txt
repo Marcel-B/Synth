@@ -427,6 +427,40 @@ target_link_libraries(TonwerkGroovebox
     PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
 
+# Tonwerk Drums: Tonwerk Groovebox's drums as an instrument to play, sixteen pads on General MIDI's drum notes (drums/).
+juce_add_plugin(TonwerkDrums
+    PRODUCT_NAME "Tonwerk Drums"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/TonwerkDrums.png"
+    COMPANY_NAME "b-velop"
+    COMPANY_WEBSITE "https://github.com/Marcel-B/Synth"
+    BUNDLE_ID ${TONWERK_BUNDLE_PREFIX}.tonwerkdrums
+    PLUGIN_MANUFACTURER_CODE Bvlp
+    PLUGIN_CODE TwDr
+    FORMATS ${TONWERK_FORMATS}
+    ${TONWERK_IOS_OPTIONS}
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+    AU_MAIN_TYPE kAudioUnitType_MusicDevice
+    VST3_CATEGORIES Instrument Drum
+    COPY_PLUGIN_AFTER_BUILD FALSE)
+
+set(TONWERK_DRUMS_SOURCES
+    drums/src/DrumsEditor.cpp
+    drums/src/DrumsPresets.cpp
+    drums/src/DrumsProcessor.cpp)
+
+# The instruments come from Tonwerk Groovebox (groovebox/src/GrooveEngine.h), and so do its kits' sounds.
+target_sources(TonwerkDrums PRIVATE ${TONWERK_DRUMS_SOURCES} groovebox/src/GroovePresets.cpp src/EffectsChain.cpp
+    ${TONWERK_UI_SOURCES})
+target_include_directories(TonwerkDrums PRIVATE src common groovebox/src)
+target_compile_definitions(TonwerkDrums PUBLIC ${TONWERK_DEFINITIONS})
+target_link_libraries(TonwerkDrums
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
+    PUBLIC juce::juce_recommended_config_flags tonwerk_lto_flags juce::juce_recommended_warning_flags)
+
 # Tonwerk Robovox: a voice sung through a synth, the robot voice of AI songs (robovox/). A music effect (aumf), so
 # Logic can send it MIDI notes for its carrier through the side chain.
 juce_add_plugin(TonwerkRobovox
@@ -1223,6 +1257,7 @@ set(TONWERK_ALL_SOURCES
     ${TONWERK_PHYSICAL_SOURCES}
     ${TONWERK_ADDITIVE_SOURCES}
     ${TONWERK_GROOVEBOX_SOURCES}
+    ${TONWERK_DRUMS_SOURCES}
     ${TONWERK_ROBOVOX_SOURCES}
     ${TONWERK_WOBBLE_SOURCES}
     ${TONWERK_PD_SOURCES}
@@ -1246,7 +1281,7 @@ set(TONWERK_ALL_SOURCES
     ${TONWERK_PUMP_SOURCES}
     ${TONWERK_RIG_SOURCES})
 set(TONWERK_ALL_INCLUDES src common glitch/src distortion/src wavetable/src dx/src granular/src physical/src additive/src
-    groovebox/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src
+    groovebox/src drums/src robovox/src wobble/src pd/src tape/src freeze/src arp/src sampler/src bass/src vocoder/src delay/src
     chorus/src glue/src shimmer/src filter/src neuro/src stutter/src multiband/src zone/src scope/src expander/src lfo/src rumble/src pump/src rig/src)
 # Each plugin defines the factory a host calls; the app and the tests make their processors themselves.
 set(TONWERK_NO_ENTRIES
@@ -1258,6 +1293,7 @@ set(TONWERK_NO_ENTRIES
     TONWERK_PHYSICAL_NO_ENTRY=1
     TONWERK_ADDITIVE_NO_ENTRY=1
     TONWERK_GROOVEBOX_NO_ENTRY=1
+    TONWERK_DRUMS_NO_ENTRY=1
     TONWERK_ROBOVOX_NO_ENTRY=1
     TONWERK_WOBBLE_NO_ENTRY=1
     TONWERK_PD_NO_ENTRY=1
@@ -1348,7 +1384,7 @@ if(TONWERK_APP)
         set(tonwerk_extensions
             TonwerkAnalog_AUv3 TonwerkFM_AUv3 TonwerkSynth_AUv3 ChromeGlitch_AUv3 TonwerkDistortion_AUv3
             TonwerkWavetable_AUv3 TonwerkDX_AUv3 TonwerkGranular_AUv3 TonwerkPhysical_AUv3 TonwerkAdditiv_AUv3
-            TonwerkGroovebox_AUv3 TonwerkRobovox_AUv3 TonwerkWobble_AUv3 TonwerkPD_AUv3 TonwerkTape_AUv3
+            TonwerkGroovebox_AUv3 TonwerkDrums_AUv3 TonwerkRobovox_AUv3 TonwerkWobble_AUv3 TonwerkPD_AUv3 TonwerkTape_AUv3
             TonwerkFreeze_AUv3 TonwerkArp_AUv3 TonwerkSampler_AUv3 TonwerkBass_AUv3 TonwerkVocoder_AUv3
             TonwerkDelay_AUv3 TonwerkChorus_AUv3 TonwerkGlue_AUv3 TonwerkShimmer_AUv3 TonwerkFilter_AUv3
             TonwerkNeuro_AUv3 TonwerkStutter_AUv3 TonwerkMultiband_AUv3 TonwerkZone_AUv3 TonwerkScope_AUv3
@@ -1435,6 +1471,8 @@ if(TONWERK_TESTS AND NOT TONWERK_STORE)
         tests/AdditiveTests.cpp
         ${TONWERK_GROOVEBOX_SOURCES}
         tests/GrooveboxTests.cpp
+        ${TONWERK_DRUMS_SOURCES}
+        tests/DrumsTests.cpp
         ${TONWERK_ROBOVOX_SOURCES}
         tests/RobovoxTests.cpp
         ${TONWERK_WOBBLE_SOURCES}

@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble und Tonwerk Pump aus einem Release-Download (liegt im Zip neben den Plugins).
+# Installiert Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv, Tonwerk PD, Tonwerk Sampler, Tonwerk Bass, Tonwerk Neuro, Tonwerk Expander, Tonwerk Groovebox, Tonwerk Drums, Tonwerk Synth, Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Freeze, Tonwerk Arp, Tonwerk LFO, Tonwerk Rumble und Tonwerk Pump aus einem Release-Download (liegt im Zip neben den Plugins).
 #
 #   cd ~/Downloads/Tonwerk-Synth-<version>-macOS && zsh install.sh
 #
@@ -20,6 +20,7 @@ GRANULAR="Tonwerk Granular"
 PHYSICAL="Tonwerk Physical"
 ADDITIVE="Tonwerk Additiv"
 GROOVEBOX="Tonwerk Groovebox"
+DRUMS="Tonwerk Drums"
 ROBOVOX="Tonwerk Robovox"
 WOBBLE="Tonwerk Wobble"
 TAPE="Tonwerk Tape"
@@ -50,7 +51,7 @@ APPS="$HOME/Applications"
 
 xattr -dr com.apple.quarantine . 2>/dev/null || true
 mkdir -p "$COMPONENTS" "$VST3" "$APPS"
-for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE" "$PUMP" "$RIG"; do
+for PRODUCT in "$ANALOG" "$FM" "$NAME" "$GLITCH" "$DISTORTION" "$WAVETABLE" "$DX" "$GRANULAR" "$PHYSICAL" "$ADDITIVE" "$GROOVEBOX" "$DRUMS" "$ROBOVOX" "$WOBBLE" "$PD" "$TAPE" "$FREEZE" "$ARP" "$SAMPLER" "$BASS" "$VOCODER" "$DELAY" "$CHORUS" "$GLUE" "$SHIMMER" "$FILTER" "$NEURO" "$STUTTER" "$MULTIBAND" "$ZONE" "$SCOPE" "$EXPANDER" "$LFO" "$RUMBLE" "$PUMP" "$RIG"; do
   rm -rf "$COMPONENTS/$PRODUCT.component" "$VST3/$PRODUCT.vst3" "$APPS/$PRODUCT.app"
   cp -R "$PRODUCT.component" "$COMPONENTS/"
   cp -R "$PRODUCT.vst3" "$VST3/"
@@ -65,7 +66,7 @@ if auval -v aumu TwAn Bvlp >/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwFm Bv
   && auval -v aufx TwDs Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwWt Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwDx Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwGr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwPh Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwAd Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
-  && auval -v aumu TwGb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
+  && auval -v aumu TwGb Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aumu TwDr Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumf TwRv Bvlp >>/tmp/tonwerk-auval.log 2>&1 && auval -v aufx TwWb Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aumu TwPd Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
   && auval -v aufx TwTp Bvlp >>/tmp/tonwerk-auval.log 2>&1 \
@@ -93,7 +94,7 @@ else
   echo "Installiert, aber auval ist fehlgeschlagen. Das Protokoll steht in /tmp/tonwerk-auval.log"
   exit 1
 fi
-echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER oder $GROOVEBOX."
+echo "In Logic: Software-Instrument-Spur, Instrument > AU-Instrumente > b-velop > $ANALOG, $FM, $DX, $WAVETABLE, $GRANULAR, $PHYSICAL, $ADDITIVE, $PD, $SAMPLER, $BASS, $NEURO, $EXPANDER, $GROOVEBOX oder $DRUMS."
 echo "$NAME (beide Engines in einem) bleibt für ältere Projekte installiert."
 echo "Die Effekte auf einer Audiospur: Audio-FX > Audio Units > b-velop > $GLITCH, $DISTORTION, $TAPE, $DELAY, $CHORUS, $GLUE, $SHIMMER, $FILTER, $STUTTER, $MULTIBAND, $ZONE, $SCOPE oder $PUMP."
 echo "$RUMBLE auf der Kick-Spur: Audio-FX > Audio Units > b-velop > $RUMBLE."

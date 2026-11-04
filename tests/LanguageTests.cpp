@@ -4,6 +4,7 @@
 #include "ExpanderProcessor.h"
 #include "GranularProcessor.h"
 #include "GrooveProcessor.h"
+#include "DrumsProcessor.h"
 #include "NeuroProcessor.h"
 #include "PdProcessor.h"
 #include "PhysicalProcessor.h"
@@ -87,6 +88,7 @@ std::vector<std::pair<const char*, Make>> plugins()
         { "Tonwerk Expander", [] { return std::make_unique<tonwerkexpander::ExpanderProcessor>(); } },
         { "Tonwerk Granular", [] { return std::make_unique<tonwerkgrain::GranularProcessor>(); } },
         { "Tonwerk Groovebox", [] { return std::make_unique<tonwerkgroove::GrooveProcessor>(); } },
+        { "Tonwerk Drums", [] { return std::make_unique<tonwerkdrums::DrumsProcessor>(); } },
         { "Tonwerk Neuro", [] { return std::make_unique<tonwerkneuro::NeuroProcessor>(); } },
         { "Tonwerk PD", [] { return std::make_unique<tonwerkpd::PdProcessor>(); } },
         { "Tonwerk Physical", [] { return std::make_unique<tonwerkphys::PhysicalProcessor>(); } },
