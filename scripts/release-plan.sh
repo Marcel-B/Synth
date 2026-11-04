@@ -13,11 +13,11 @@ if [ -z "$last" ]; then
     exit 1
 fi
 
-# Paths that never reach the packages: the website, the Eurorack module, the iPad and store app, CI, documents and
+# Paths that never reach the packages: the website, the Eurorack module, Tonwerk Komponist, the iPad and store app, CI, documents and
 # the scripts that serve those.
 reaches() {
     local left
-    left=$(grep -vE '^(website/|esp32-wavetable/|docs/|app/|\.github/|\.claude/|scripts/(build-website|build-ios|release-stats|release-plan)\.sh$|scripts/make-icons\.py$|\.gitignore$)|\.md$' || true)
+    left=$(grep -vE '^(website/|esp32-wavetable/|komponist/|icons/TonwerkKomponist\.png$|docs/|app/|\.github/|\.claude/|scripts/(build-website|build-ios|release-stats|release-plan)\.sh$|scripts/make-icons\.py$|\.gitignore$)|\.md$' || true)
     [ -n "$left" ]
 }
 
