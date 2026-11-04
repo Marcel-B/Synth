@@ -211,6 +211,21 @@ def groovebox(p):
             p.box(x0, y1 - s, x0 + s, y1, fill=ch == "X", width=18, radius=0.05)
 
 
+def drums(p):
+    # A snare drum with two sticks crossed above it.
+    def ellipse(cy, a0, a1, n=120):
+        return [(0.72 * math.cos(a0 + (a1 - a0) * i / n), cy + 0.22 * math.sin(a0 + (a1 - a0) * i / n))
+                for i in range(n + 1)]
+    p.line(ellipse(-0.05, 0, 2 * math.pi))
+    p.line(ellipse(-0.6, math.pi, 2 * math.pi))
+    p.line([(-0.72, -0.05), (-0.72, -0.6)])
+    p.line([(0.72, -0.05), (0.72, -0.6)])
+    p.line([(-0.75, 0.9), (0.15, 0.18)], 30)
+    p.line([(0.75, 0.9), (-0.15, 0.18)], 30)
+    p.dot(0.15, 0.18, 0.07)
+    p.dot(-0.15, 0.18, 0.07)
+
+
 def robovox(p):
     # A robot's head: square eyes, a mouth of bars that speak.
     p.box(-0.82, -0.82, 0.82, 0.72, fill=False, width=38, radius=0.16)
@@ -429,6 +444,7 @@ ICONS = {
     "TonwerkBass": (bass, INSTRUMENT),
     "TonwerkNeuro": (neuro, INSTRUMENT),
     "TonwerkGroovebox": (groovebox, INSTRUMENT),
+    "TonwerkDrums": (drums, INSTRUMENT),
     "ChromeGlitch": (chrome_glitch, YELLOW),
     "TonwerkDistortion": (distortion, EFFECT),
     "TonwerkRobovox": (robovox, EFFECT),

@@ -814,8 +814,18 @@ public:
     /** `detune` (semitones) and `levelDb` vary this one hit, as the track's `random` asks. */
     void trigger(Instrument which, float velocity, const TrackSettings& s, float detune = 0.0f, float levelDb = 0.0f)
     {
+        trigger(which, voicingFor(s.machine, which), velocity, s, detune, levelDb);
+    }
+
+    /**
+     * The same with the instrument built from `built` instead of its machine's voicing: Tonwerk Drums plays its rim,
+     * cowbell, congas and the like on these models with constants of their own.
+     */
+    void trigger(Instrument which, const Voicing& built, float velocity, const TrackSettings& s, float detune = 0.0f,
+                 float levelDb = 0.0f)
+    {
         instrument = which;
-        voicing = voicingFor(s.machine, which);
+        voicing = built;
         gain = (1.0f - s.velocity * (1.0f - velocity)) * std::pow(10.0f, levelDb / 20.0f);
         variation = pitchRatio(detune);
         playing = true;

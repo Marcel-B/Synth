@@ -6,6 +6,7 @@
 #include "DelayProcessor.h"
 #include "DistortionProcessor.h"
 #include "DxProcessor.h"
+#include "DrumsProcessor.h"
 #include "ExpanderProcessor.h"
 #include "FilterProcessor.h"
 #include "FreezeProcessor.h"
@@ -60,6 +61,7 @@ const std::vector<Kind>& instruments()
         kind<tonwerkneuro::NeuroProcessor>("neuro", "Tonwerk Neuro"),
         kind<tonwerkexpander::ExpanderProcessor>("expander", "Tonwerk Expander"),
         kind<tonwerkgroove::GrooveProcessor>(kTracksInstrument, "Tonwerk Groovebox"),
+        kind<tonwerkdrums::DrumsProcessor>("drums", "Tonwerk Drums"),
     };
     return kinds;
 }
