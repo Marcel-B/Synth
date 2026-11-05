@@ -848,7 +848,7 @@ Für Releases das Zertifikat im Schlüsselbund mit privatem Schlüssel als `.p12
 | `MACOS_INSTALLER_CERTIFICATE_P12` | optional: das Zertifikat **Developer ID Installer** als `.p12` in Base64, für das Installationspaket im Disk-Image (es darf auch mit in der ersten `.p12` stecken) |
 | `MACOS_INSTALLER_CERTIFICATE_PASSWORD` | dessen Passwort, wenn es ein anderes ist |
 
-Das Installer-Zertifikat legt man wie das erste an (developer.apple.com → Certificates → **Developer ID Installer**); `security find-identity -v` zeigt es als `Developer ID Installer: Vorname Nachname (TEAMID)`. Lokal signiert `scripts/make-macos-installer.sh` damit, wenn `TONWERK_INSTALLER_IDENTITY` es nennt.
+Das Installer-Zertifikat legt man wie das erste an (developer.apple.com → Certificates → **Developer ID Installer**); `security find-identity -v` zeigt es als `Developer ID Installer: Vorname Nachname (TEAMID)`. `scripts/upload-installer-certificate.sh Installer.p12` (braucht die GitHub CLI) prüft die exportierte `.p12` und legt beide Secrets an. Lokal signiert `scripts/make-macos-installer.sh` damit, wenn `TONWERK_INSTALLER_IDENTITY` es nennt.
 
 Fehlen die Secrets, signiert `release.yml` wie bisher ad hoc; fehlen nur die drei für die Notarisierung, signiert es mit Developer ID, ohne zu notarisieren. `build.yml` signiert immer ad hoc.
 
