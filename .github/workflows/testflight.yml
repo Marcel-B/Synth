@@ -83,7 +83,8 @@ jobs:
           if [[ -z "$version" ]]; then
             version=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo v0.1.0)
           fi
-          version="${version#v}"
+          # A nightly tag's date (1.3.20261106) does not fit an Audio Unit's version; the store gets its count instead.
+          version=$(scripts/plugin-version.sh "${version#v}")
           # TestFlight takes each upload only with a new build number; the run number grows with every run.
           echo "TONWERK_VERSION=$version" >> "$GITHUB_ENV"
           echo "TONWERK_BUILD_NUMBER=${{ github.run_number }}" >> "$GITHUB_ENV"

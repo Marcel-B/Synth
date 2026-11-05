@@ -63,9 +63,11 @@ jobs:
         run: |
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
-      # The plugin's version comes from the tag, so Logic sees each release as a new one.
+          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
+      # The plugin's version comes from the tag (a nightly's date as a count, scripts/plugin-version.sh), so Logic sees each
+      # release as a new one.
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTONWERK_VERSION="$VERSION"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTONWERK_VERSION="$PLUGIN_VERSION"
       - name: Build
         run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
       - name: Test
@@ -198,14 +200,16 @@ jobs:
       - name: Version from the tag
         env:
           TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
-        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+        run: |
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
             libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$VERSION"
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$PLUGIN_VERSION"
       - name: Build
         run: cmake --build build --parallel "$(nproc)"
       - name: Package
@@ -225,10 +229,12 @@ jobs:
       - name: Version from the tag
         env:
           TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
-        run: echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+        run: |
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
       # The C++ runtime linked in statically, so the apps and plugins run without the Visual C++ Redistributable.
       - name: Configure
-        run: cmake -S . -B build -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$VERSION" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+        run: cmake -S . -B build -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$PLUGIN_VERSION" -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
       - name: Build
         run: cmake --build build --config Release --parallel
       - name: Package

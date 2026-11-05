@@ -740,7 +740,7 @@ In Logic: neue Software-Instrument-Spur, im Kanalzug **Instrument → AU-Instrum
 
 Entfernen: `scripts/install-macos.sh --uninstall`.
 
-Neue Versionen erscheinen von selbst: Jede Nacht prüft die Action `auto-release.yml`, ob sich seit dem letzten Release an den Plugins etwas geändert hat und die Tests auf main grün sind. Dann baut sie ein neues Release, mit einem neuen Plugin als nächste Minor-Version (0.6.0 → 0.7.0), sonst als Patch (0.6.0 → 0.6.1). In den Notizen stehen die Titel der Pull Requests seitdem. Änderungen nur an der Website, am ESP32-Modul oder an der iPad-App lösen kein Release aus.
+Neue Versionen erscheinen von selbst: Jede Nacht prüft die Action `auto-release.yml`, ob sich seit dem letzten Release an den Plugins etwas geändert hat und die Tests auf main grün sind. Dann baut sie ein neues Release, benannt nach der aktuellen Version und dem Tag (1.3.20261106); ein neues Plugin hebt die Minor-Version (1.3 → 1.4). Die Plugins selbst tragen intern 1.3.1, 1.3.2 … (`scripts/plugin-version.sh`), da ein Audio Unit für die letzte Stelle nur Zahlen bis 255 kennt; Logic sieht so jedes Release als neuer. Versionen von Hand wie 1.3.0 bleiben, wie sie sind. In den Notizen stehen die Titel der Pull Requests seitdem. Änderungen nur an der Website, am ESP32-Modul oder an der iPad-App lösen kein Release aus.
 
 Zwischenstände ohne Release: Jeder Lauf der Action `build.yml` legt die Dateien auch als Artefakt `tonwerk-synth-macos` ab (Actions → Lauf → Artifacts). Für sie gilt dasselbe wie für Releases, die Quarantäne-Markierung muss weg.
 

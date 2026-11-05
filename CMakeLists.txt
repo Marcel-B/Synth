@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
 
 # A release passes its tag's version (-DTONWERK_VERSION=0.2.0); Logic takes a higher version as a new plugin.
-set(TONWERK_VERSION "1.2.0" CACHE STRING "Plugin version")
+set(TONWERK_VERSION "1.3.0" CACHE STRING "Plugin version")
+# An Audio Unit's version keeps eight bits for the patch, a Windows file version 16 per part: a nightly's date
+# (1.3.20261106) must go through scripts/plugin-version.sh first.
+string(REGEX MATCH "[0-9]+$" tonwerk_version_patch "${TONWERK_VERSION}")
+if(tonwerk_version_patch GREATER 255)
+    message(FATAL_ERROR "TONWERK_VERSION ${TONWERK_VERSION}: the patch must be at most 255 (scripts/plugin-version.sh)")
+endif()
 project(TonwerkSynth VERSION ${TONWERK_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
