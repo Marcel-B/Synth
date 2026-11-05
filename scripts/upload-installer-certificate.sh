@@ -23,7 +23,8 @@ if ! command -v gh >/dev/null; then
 fi
 gh auth status >/dev/null 2>&1 || { echo "Erst bei GitHub anmelden: gh auth login" >&2; exit 1; }
 
-read -r -s -p "Passwort der .p12: " password
+printf "Passwort der .p12: "
+read -r -s password
 echo
 
 # Import into a throwaway keychain, as the release does, to see what the file really holds.
