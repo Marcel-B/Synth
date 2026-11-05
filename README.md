@@ -710,18 +710,27 @@ Ein LFO, der jeden Regler eines Tonwerk-Instruments bewegen kann. Er sitzt im **
 
 ## Herunterladen
 
-Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Zip mit Audio Unit, VST3, App (für Synth und Effekt) und Installationsskript, für Apple Silicon und Intel ab macOS 11. Nach dem Laden im Terminal:
+Unter [Releases](https://github.com/Marcel-B/Synth/releases) liegt zu jeder Version ein Disk-Image (`Tonwerk-Synth-<Version>-macOS.dmg`) mit Audio Units, VST3 und den Apps, für Apple Silicon und Intel ab macOS 11:
+
+1. Das Disk-Image öffnen und den Ordner **Tonwerk** auf **Applications** ziehen. Das sind die Apps, jedes Plugin auch allein spielbar; sie landen in `/Applications/Tonwerk`.
+2. **Tonwerk Plugins.pkg** doppelklicken. Das Paket legt die Audio Units nach `/Library/Audio/Plug-Ins/Components` und die VST3 nach `/Library/Audio/Plug-Ins/VST3`, für alle Benutzer des Macs (fragt deshalb nach dem Passwort); unter „Anpassen“ lässt sich eins davon abwählen. Kopien, die `install.sh` früher in die eigene Library gelegt hat, ersetzt es, damit Logic nicht zwei Plugins mit demselben Code sieht. Die Apps aus `~/Applications` bleiben liegen, bis man sie löscht (oder deinstalliert, siehe unten).
+
+Logic sollte dabei geschlossen sein. Zum Aktualisieren das neue Disk-Image genauso installieren; importierte Klänge bleiben erhalten, und gespeicherte Projekte laden ihre Einstellungen weiter. Gebaut wird es von `scripts/make-macos-installer.sh`, `build.yml` installiert es bei jedem Lauf auf dem Mac der Action, prüft mit `auval` und legt es als Artefakt `tonwerk-synth-macos-dmg` ab (unsigniert).
+
+Daneben gibt es weiter das Zip mit Installationsskript, das in die eigene Library installiert. Nach dem Laden im Terminal:
 
 ```sh
 cd ~/Downloads/Tonwerk-Synth-*-macOS
 zsh install.sh
 ```
 
-Sind im Repository die Secrets für Apple Developer ID hinterlegt (siehe „Signieren mit Developer ID“), ist das Release damit signiert und von Apple notarisiert, und macOS öffnet es nach dem Download ohne Rückfrage. Sonst sind die Plugins nur ad hoc signiert, und macOS versieht alles aus dem Netz mit einer Quarantäne-Markierung, die Logic die Plugins nicht laden lässt. `install.sh` entfernt die Markierung in beiden Fällen (`xattr -dr com.apple.quarantine`), kopiert die Dateien an ihren Platz und prüft die Audio Unit mit `auval`. Wer ein ad hoc signiertes Release lieber von Hand installiert, ruft vorher selbst `xattr -dr com.apple.quarantine` auf den entpackten Ordner auf.
+Sind im Repository die Secrets für Apple Developer ID hinterlegt (siehe „Signieren mit Developer ID“), sind Plugins und Apps damit signiert und von Apple notarisiert, und macOS öffnet sie nach dem Download ohne Rückfrage. Das Installationspaket braucht dafür ein zweites Zertifikat, **Developer ID Installer**; ohne es bleibt das Paket unsigniert, und macOS startet es erst nach Rechtsklick → Öffnen (oder Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen). Ohne die Secrets sind die Plugins nur ad hoc signiert, und macOS versieht alles aus dem Netz mit einer Quarantäne-Markierung, die Logic die Plugins nicht laden lässt. `install.sh` entfernt die Markierung in beiden Fällen (`xattr -dr com.apple.quarantine`), kopiert die Dateien an ihren Platz und prüft die Audio Unit mit `auval`. Wer ein ad hoc signiertes Release lieber von Hand installiert, ruft vorher selbst `xattr -dr com.apple.quarantine` auf den entpackten Ordner auf.
 
-Zum Aktualisieren lädst du das neue Zip und rufst dessen `install.sh` genauso auf. Logic sollte dabei geschlossen sein. Importierte Klänge bleiben erhalten, und gespeicherte Projekte laden ihre Einstellungen weiter.
+Zum Aktualisieren mit dem Zip lädst du das neue und rufst dessen `install.sh` genauso auf.
 
-Ein neues Release entsteht, wenn ein Tag wie `v0.2.0` gepusht wird, oder von Hand unter Actions → Release → „Run workflow“ mit einer Versionsnummer. Die Action `release.yml` baut dann, testet, prüft mit `auval` und hängt das Zip an. Die Versionsnummer des Plugins kommt aus dem Tag, so erkennt Logic eine neue Version.
+**Deinstallieren:** Im Disk-Image liegt **Tonwerk deinstallieren.command** (Doppelklick öffnet das Terminal), im Zip `uninstall.sh` (`zsh uninstall.sh`), beides `scripts/uninstall-release.sh`. Es findet alle Tonwerk-Plugins und -Apps an ihrer Kennung, egal ob vom Disk-Image, vom Zip oder von `scripts/install-macos.sh`, zeigt sie, fragt nach und entfernt sie (für `/Library` mit `sudo`), samt den Belegen des Installationspakets. Die App **Tonwerk** aus dem App Store, **Tonwerk-AI** sowie importierte Klänge und Einstellungen unter `~/Library/Application Support` bleiben.
+
+Ein neues Release entsteht, wenn ein Tag wie `v0.2.0` gepusht wird, oder von Hand unter Actions → Release → „Run workflow“ mit einer Versionsnummer. Die Action `release.yml` baut dann, testet, prüft mit `auval` und hängt Disk-Image und Zip an. Die Versionsnummer des Plugins kommt aus dem Tag, so erkennt Logic eine neue Version.
 
 ## Selbst bauen auf dem Mac
 
@@ -836,6 +845,10 @@ Für Releases das Zertifikat im Schlüsselbund mit privatem Schlüssel als `.p12
 | `APPLE_ID` | die Apple-ID des Kontos |
 | `APPLE_TEAM_ID` | die Team-ID |
 | `APPLE_APP_PASSWORD` | das app-spezifische Passwort |
+| `MACOS_INSTALLER_CERTIFICATE_P12` | optional: das Zertifikat **Developer ID Installer** als `.p12` in Base64, für das Installationspaket im Disk-Image (es darf auch mit in der ersten `.p12` stecken) |
+| `MACOS_INSTALLER_CERTIFICATE_PASSWORD` | dessen Passwort, wenn es ein anderes ist |
+
+Das Installer-Zertifikat legt man wie das erste an (developer.apple.com → Certificates → **Developer ID Installer**); `security find-identity -v` zeigt es als `Developer ID Installer: Vorname Nachname (TEAMID)`. Lokal signiert `scripts/make-macos-installer.sh` damit, wenn `TONWERK_INSTALLER_IDENTITY` es nennt.
 
 Fehlen die Secrets, signiert `release.yml` wie bisher ad hoc; fehlen nur die drei für die Notarisierung, signiert es mit Developer ID, ohne zu notarisieren. `build.yml` signiert immer ad hoc.
 
