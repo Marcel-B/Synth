@@ -386,6 +386,60 @@ jobs:
           auval -strict -v aufx TwRe Bvlp
           auval -strict -v aufx TwPm Bvlp
           auval -strict -v aumu TwRg Bvlp
+      # The release's disk image, unsigned: built, mounted, its package installed into /Library, which must replace the
+      # user's copies from the auval step above, and checked with auval again.
+      - name: Installer
+        run: |
+          mkdir release
+          cp -R build/*_artefacts/Release/AU/*.component build/*_artefacts/Release/VST3/*.vst3 \
+            build/*_artefacts/Release/Standalone/*.app release/
+          cp LICENSE NOTICE release/
+          scripts/make-macos-installer.sh release 0.0.0 Tonwerk-Synth-macOS.dmg
+          ls -lh Tonwerk-Synth-macOS.dmg
+          hdiutil attach -nobrowse -readonly -mountpoint /tmp/tonwerk-dmg Tonwerk-Synth-macOS.dmg
+          ls -la /tmp/tonwerk-dmg
+          apps=$(ls -d /tmp/tonwerk-dmg/Tonwerk/*.app | wc -l)
+          components=$(ls -d release/*.component | wc -l)
+          [ "$apps" -eq "$components" ] || { echo "::error::$apps apps, $components Audio Units"; exit 1; }
+          [ "$(readlink /tmp/tonwerk-dmg/Applications)" = /Applications ] || { echo "::error::no Applications link"; exit 1; }
+          pkgutil --payload-files "/tmp/tonwerk-dmg/Tonwerk Plugins.pkg" | grep -c '\.component$' || true
+          sudo installer -pkg "/tmp/tonwerk-dmg/Tonwerk Plugins.pkg" -target / -verbose
+          hdiutil detach /tmp/tonwerk-dmg
+          for bundle in release/*.component release/*.vst3; do
+            name="$(basename "$bundle")"
+            case "$name" in *.component) folder=Components ;; *) folder=VST3 ;; esac
+            [ -f "/Library/Audio/Plug-Ins/$folder/$name/Contents/Info.plist" ] || { echo "::error::$name not installed"; exit 1; }
+          done
+          console="$(stat -f %Su /dev/console)"
+          echo "console user: $console"
+          if [ "$console" = "$(id -un)" ] && ls -d ~/Library/Audio/Plug-Ins/Components/Tonwerk*.component 2>/dev/null; then
+            echo "::error::the package left the copies in ~/Library"
+            exit 1
+          fi
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -a | grep -i b-velop || true
+          auval -strict -v aumu TwAn Bvlp
+          auval -strict -v aufx TwPm Bvlp
+          auval -strict -v aumi TwAr Bvlp
+          # And away again, with what install.sh would have put into the user's folders.
+          mkdir -p ~/Applications
+          cp -R "release/Tonwerk Analog.app" ~/Applications/
+          scripts/uninstall-release.sh --ja
+          if ls -d /Library/Audio/Plug-Ins/Components/Tonwerk*.component /Library/Audio/Plug-Ins/VST3/Tonwerk*.vst3 \
+            ~/Applications/Tonwerk*.app 2>/dev/null; then
+            echo "::error::uninstall-release.sh left these"
+            exit 1
+          fi
+          if pkgutil --pkgs | grep de.bvelop.tonwerk.plugins; then
+            echo "::error::package receipts left"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tonwerk-synth-macos-dmg
+          path: Tonwerk-Synth-macOS.dmg
+          retention-days: 7
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"

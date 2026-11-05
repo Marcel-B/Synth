@@ -2,7 +2,7 @@
 # Lässt signierte Bundles von Apple notarisieren und heftet das Ticket an (stapler), damit Gatekeeper sie nach dem
 # Download ohne Rückfrage und ohne Netz öffnet.
 #
-#   scripts/notarize-macos.sh BUNDLE...
+#   scripts/notarize-macos.sh BUNDLE... (auch .dmg und .pkg)
 #
 # Die Bundles müssen vorher mit Developer ID signiert sein (scripts/sign-macos.sh mit TONWERK_SIGN_IDENTITY).
 # Zugang zu Apples Notardienst, eins von beiden:
@@ -20,24 +20,39 @@ else
   exit 1
 fi
 
-# Alle Bundles in einem Zip, also eine Einreichung statt einer pro Plugin.
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-mkdir "$work/bundles"
-for bundle in "$@"; do
-  ditto "$bundle" "$work/bundles/$(basename "$bundle")"
-done
-ditto -c -k --keepParent "$work/bundles" "$work/notarize.zip"
 
-if ! xcrun notarytool submit "$work/notarize.zip" "${auth[@]}" --wait --timeout 1h --output-format json >"$work/result.json"; then
-  cat "$work/result.json" >&2 || true
-fi
-status="$(plutil -extract status raw -o - "$work/result.json" 2>/dev/null || echo unbekannt)"
-if [[ "$status" != "Accepted" ]]; then
-  id="$(plutil -extract id raw -o - "$work/result.json" 2>/dev/null || true)"
-  echo "Notarisierung: $status" >&2
-  [[ -n "$id" ]] && xcrun notarytool log "$id" "${auth[@]}" >&2 || true
-  exit 1
+# Reicht eine Datei ein und wartet auf Apples Urteil; bricht ab, wenn es nicht „Accepted“ ist.
+submit() {
+  if ! xcrun notarytool submit "$1" "${auth[@]}" --wait --timeout 1h --output-format json >"$work/result.json"; then
+    cat "$work/result.json" >&2 || true
+  fi
+  status="$(plutil -extract status raw -o - "$work/result.json" 2>/dev/null || echo unbekannt)"
+  if [[ "$status" != "Accepted" ]]; then
+    id="$(plutil -extract id raw -o - "$work/result.json" 2>/dev/null || true)"
+    echo "Notarisierung: $status" >&2
+    [[ -n "$id" ]] && xcrun notarytool log "$id" "${auth[@]}" >&2 || true
+    exit 1
+  fi
+}
+
+# Disk-Images und Pakete gehen, wie sie sind, zu Apple; alle Bundles zusammen in einem Zip, also eine Einreichung statt
+# einer pro Plugin.
+mkdir "$work/bundles"
+bundles=0
+for item in "$@"; do
+  case "$item" in
+    *.dmg | *.pkg) submit "$item" ;;
+    *)
+      ditto "$item" "$work/bundles/$(basename "$item")"
+      bundles=$((bundles + 1))
+      ;;
+  esac
+done
+if [[ $bundles -gt 0 ]]; then
+  ditto -c -k --keepParent "$work/bundles" "$work/notarize.zip"
+  submit "$work/notarize.zip"
 fi
 echo "Notarisierung: angenommen."
 

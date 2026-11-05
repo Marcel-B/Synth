@@ -29,6 +29,7 @@ jobs:
     runs-on: macos-15
     outputs:
       notarized: ${{ steps.handover.outputs.notarized }}
+      image: ${{ steps.handover.outputs.image }}
     # With these secrets the release is signed with Developer ID and notarized; without them it stays ad hoc, as before.
     env:
       MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
@@ -36,6 +37,9 @@ jobs:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      # A second certificate, Developer ID Installer, signs the plugins' installer package; it may also sit in the first .p12.
+      MACOS_INSTALLER_CERTIFICATE_P12: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_P12 }}
+      MACOS_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Import the Developer ID certificate
@@ -49,6 +53,12 @@ jobs:
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
           rm "$RUNNER_TEMP/certificate.p12"
+          if [ -n "$MACOS_INSTALLER_CERTIFICATE_P12" ]; then
+            echo "$MACOS_INSTALLER_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+            security import "$RUNNER_TEMP/installer.p12" -P "${MACOS_INSTALLER_CERTIFICATE_PASSWORD:-$MACOS_CERTIFICATE_PASSWORD}" \
+              -A -t cert -f pkcs12 -k "$KEYCHAIN"
+            rm "$RUNNER_TEMP/installer.p12"
+          fi
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
@@ -57,6 +67,13 @@ jobs:
             exit 1
           fi
           echo "TONWERK_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          # Installer identities are no code signing identities, so they are looked for without a policy.
+          INSTALLER="$(security find-identity -v "$KEYCHAIN" | grep -o '"Developer ID Installer: [^"]*"' | head -1 | tr -d '"')"
+          if [ -n "$INSTALLER" ]; then
+            echo "TONWERK_INSTALLER_IDENTITY=$INSTALLER" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Kein Zertifikat 'Developer ID Installer': das Installationspaket im Disk-Image bleibt unsigniert."
+          fi
       - name: Version from the tag
         env:
           TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
@@ -100,10 +117,28 @@ jobs:
             echo "NOTARIZED=1" >> "$GITHUB_ENV"
           fi
           cp scripts/install-release.sh "$DIR/install.sh"
+          cp scripts/uninstall-release.sh "$DIR/uninstall.sh"
           # The licence asks for its terms and the Required Notice to travel with the binaries.
           cp LICENSE NOTICE "$DIR/"
           ditto -c -k --keepParent "$DIR" "$DIR.zip"
           echo "ZIP=$DIR.zip" >> "$GITHUB_ENV"
+      # The disk image: the apps to drag into Applications, the plugins as an installer package (scripts/make-macos-installer.sh).
+      - name: Disk image
+        run: |
+          DMG="Tonwerk-Synth-$VERSION-macOS.dmg"
+          scripts/make-macos-installer.sh "Tonwerk-Synth-$VERSION-macOS" "$VERSION" "$DMG"
+          if [ -n "${NOTARIZED:-}" ]; then
+            if [ -n "${TONWERK_INSTALLER_IDENTITY:-}" ]; then
+              scripts/notarize-macos.sh "$DMG"
+              echo "DMG_NOTARIZED=1" >> "$GITHUB_ENV"
+            # Apple may refuse an image whose package is unsigned; the zip stays the way that always works then.
+            elif scripts/notarize-macos.sh "$DMG"; then
+              echo "DMG_NOTARIZED=1" >> "$GITHUB_ENV"
+            else
+              echo "::warning::Disk-Image nicht notarisiert (Paket ohne Developer ID Installer)."
+            fi
+          fi
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
       - name: Validate with auval
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
@@ -186,10 +221,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: release-macos
-          path: ${{ env.ZIP }}
+          path: |
+            ${{ env.ZIP }}
+            ${{ env.DMG }}
       - name: Hand over
         id: handover
-        run: echo "notarized=${NOTARIZED:-}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "notarized=${NOTARIZED:-}" >> "$GITHUB_OUTPUT"
+          echo "image=${DMG_NOTARIZED:-}" >> "$GITHUB_OUTPUT"
 
   # Audio Units exist only on the Mac; Linux and Windows get the VST3 and the standalone apps. The tests run on Linux in
   # build.yml and on the Mac above, so these jobs only build.
@@ -257,6 +296,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
           NOTARIZED: ${{ needs.macos.outputs.notarized }}
+          IMAGE_NOTARIZED: ${{ needs.macos.outputs.image }}
           CHANGES: ${{ inputs.notes }}
         run: |
           VERSION="${TAG#v}"
@@ -267,10 +307,17 @@ jobs:
           else
             SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
           fi
+          if [ -n "${IMAGE_NOTARIZED:-}" ]; then
+            IMAGE="Signiert und notarisiert, macOS öffnet beides ohne Rückfrage."
+          else
+            IMAGE="Das Installationspaket ist noch nicht signiert: macOS lässt es erst nach Rechtsklick → Öffnen (oder Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen) laufen. Wer das nicht mag, nimmt das Zip."
+          fi
           gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Tonwerk Synth $VERSION" --notes "$CHANGES$(cat <<NOTES
           Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, der Reese- und Neuro-Bass Tonwerk Neuro, der achtstimmige Analog-Synth Tonwerk Expander, die Drum-Machine Tonwerk Groovebox, das Drum-Instrument Tonwerk Drums (die Groovebox ohne Sequencer, 16 Pads auf den General-MIDI-Noten), Tonwerk Rig (ein Instrument mit Effekten dahinter als ein Klang) und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Rumble (Rumble für die Kick), Tonwerk Reverb (Raum, Saal, Platte und Kathedrale), Tonwerk Pump (Sidechain-Pumpen) und Tonwerk Freeze, dazu der MIDI-Effekte Tonwerk Arp (Arpeggiator und Step-Sequencer) und Tonwerk LFO (bewegt per MIDI-Controller jeden Regler eines Instruments).
 
-          **macOS** (\`Tonwerk-Synth-$VERSION-macOS.zip\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Zip laden, im Terminal
+          **macOS** (\`Tonwerk-Synth-$VERSION-macOS.dmg\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Disk-Image öffnen, den Ordner „Tonwerk“ auf „Applications“ ziehen (die Apps) und „Tonwerk Plugins.pkg“ doppelklicken (Audio Units und VST3 nach /Library/Audio/Plug-Ins, für alle Benutzer; ältere Kopien von \`install.sh\` in der eigenen Library ersetzt es). „Tonwerk deinstallieren.command“ im Disk-Image (oder \`zsh uninstall.sh\` im Zip) entfernt alles wieder. $IMAGE
+
+          Oder wie bisher das Zip (\`Tonwerk-Synth-$VERSION-macOS.zip\`) laden und im Terminal
           \`cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh\`
           $SIGNING
 
