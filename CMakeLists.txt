@@ -35,6 +35,24 @@ else()
     set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
 endif()
+# A build folder configured before these lines existed keeps CMake's empty entries, and set(CACHE) never replaces
+# an entry: such a build ran only on the Mac's own chip and macOS version, and after a macOS update the objects
+# compiled again named the new version while the rest kept the old one, so ar wrote an archive per version into one
+# file that ld refused ("linking with album file, but -target option was not specified"). Fill them in once.
+if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "" FORCE)
+    else()
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "" FORCE)
+    endif()
+endif()
+if(APPLE AND NOT CMAKE_OSX_ARCHITECTURES)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
+    else()
+        set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "" FORCE)
+    endif()
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
