@@ -25,8 +25,12 @@ set(KOMPONIST_DEFINITIONS
     JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:JUCE_PRODUCT_NAME>"
     JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:JUCE_VERSION>")
 
+# A release (komponist.yml started by hand with a version) passes its version here.
+set(KOMPONIST_VERSION "${PROJECT_VERSION}" CACHE STRING "Version of the app")
+
 juce_add_gui_app(TonwerkKomponist
     PRODUCT_NAME "Tonwerk Komponist"
+    VERSION "${KOMPONIST_VERSION}"
     ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/../icons/TonwerkKomponist.png"
     COMPANY_NAME "b-velop"
     COMPANY_WEBSITE "https://tonwerk.studio"

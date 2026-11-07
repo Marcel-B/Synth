@@ -6,7 +6,14 @@ on:
     paths:
       - "komponist/**"
       - ".github/workflows/komponist.yml"
+  # Started by hand with a version, the run also publishes the Mac app as a GitHub release komponist-v<version>,
+  # a pre-release that never becomes "latest", so the plugins' releases and the nightly plan (tags v*) stay as they are.
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version for a release (e.g. 0.1.0); empty builds only"
+        required: false
+        default: ""
 
 jobs:
   linux:
@@ -37,7 +44,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S komponist -B build -DCMAKE_BUILD_TYPE=Release
+        env:
+          VERSION: ${{ inputs.version }}
+        run: cmake -S komponist -B build -DCMAKE_BUILD_TYPE=Release ${VERSION:+-DKOMPONIST_VERSION=$VERSION}
       - name: Build
         run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
       - name: Test
@@ -55,3 +64,29 @@ jobs:
           name: Tonwerk-Komponist-macOS
           path: Tonwerk-Komponist.zip
           retention-days: 30
+
+  release:
+    name: Release
+    if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+    needs: [linux, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Tonwerk-Komponist-macOS
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          NOTES: |
+            Tonwerk Komponist: Du beschreibst ein Stück in ein paar Worten, Claude schreibt es als MIDI-Datei mit einer Spur je Instrument, zum Ziehen in Logic Pro oder Ableton Live. Ein Prototyp für macOS 11 oder neuer (Apple Silicon und Intel); er braucht einen eigenen Anthropic-API-Schlüssel.
+
+            Die App ist nur ad hoc signiert: nach dem Entpacken einmal Rechtsklick auf „Tonwerk Komponist“ → Öffnen, oder im Terminal `xattr -dr com.apple.quarantine "Tonwerk Komponist.app"`.
+        run: |
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must be x.y.z, got $VERSION" >&2; exit 1; }
+          mv Tonwerk-Komponist.zip "Tonwerk-Komponist-$VERSION-macOS.zip"
+          gh release create "komponist-v$VERSION" "Tonwerk-Komponist-$VERSION-macOS.zip" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Tonwerk Komponist $VERSION (Prototyp)" --notes "$NOTES"
