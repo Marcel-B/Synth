@@ -6,6 +6,7 @@
 # before it (tags v<major>.<minor>.* on origin with a smaller patch): 1.3.0, then 1.3.1, 1.3.2 ... per night, so Logic
 # still sees every release as newer than the last. A patch up to 255 (1.3.0 by hand) stays as it is.
 set -euo pipefail
+# Counted by awk, not wc -l: macOS's wc pads its number with spaces, which made CMake refuse "1.3.       1".
 
 version="${1:?Usage: $0 <x.y.z>}"
 IFS=. read -r major minor patch <<<"$version"
@@ -15,6 +16,6 @@ if (( patch <= 255 )); then
 fi
 
 count=$(git ls-remote --tags --refs origin "v$major.$minor.*" | sed 's#.*refs/tags/v##' \
-    | awk -F. -v p="$patch" '$3 ~ /^[0-9]+$/ && $3 + 0 < p + 0' | wc -l)
+    | awk -F. -v p="$patch" '$3 ~ /^[0-9]+$/ && $3 + 0 < p + 0 { n++ } END { print n + 0 }')
 (( count > 255 )) && count=255
 echo "$major.$minor.$count"
