@@ -30,7 +30,7 @@ cmake --build build-komponist --target TonwerkKomponist
 open "build-komponist/TonwerkKomponist_artefacts/Release/Tonwerk Komponist.app"
 ```
 
-Jeder Lauf von CI (`.github/workflows/komponist.yml`) legt die Mac-App als Artefakt `Tonwerk-Komponist-macOS` ab. Von Hand mit einer Version gestartet (Actions → Komponist → Run workflow), veröffentlicht der Lauf sie außerdem als Vorabversion `komponist-v<Version>` unter den Releases, getrennt von den Plugin-Releases. Sie ist nur ad hoc signiert; nach dem Herunterladen einmal `xattr -dr com.apple.quarantine "Tonwerk Komponist.app"` oder Rechtsklick → Öffnen.
+Jeder Lauf von CI (`.github/workflows/komponist.yml`) legt die Mac-App als Artefakt `Tonwerk-Komponist-macOS` ab. Von Hand mit einer Version gestartet (Actions → Komponist → Run workflow), veröffentlicht der Lauf sie außerdem als Vorabversion `komponist-v<Version>` unter den Releases, getrennt von den Plugin-Releases. Von Hand gestartete Läufe signieren die App mit Developer ID und lassen sie von Apple notarisieren (dieselben Geheimnisse wie die Plugin-Releases), sie öffnet sich dann ohne Rückfrage. Das Artefakt gewöhnlicher Läufe bleibt ad hoc signiert; dafür nach dem Herunterladen einmal `xattr -dr com.apple.quarantine "Tonwerk Komponist.app"` oder Rechtsklick → Öffnen.
 
 Tests: `cmake --build build-komponist --target TonwerkKomponistTests && ctest --test-dir build-komponist`. Mit `python3 komponist/tests/fake-api.py 8765 &` und `KOMPONIST_API_URL=http://127.0.0.1:8765/v1/messages` gehen sie auch den ganzen Weg über HTTP. `KOMPONIST_OPEN=komponist/examples/walzer.json` zeigt ein Stück im Format, das Claude schreibt, ohne Schlüssel (ein von Hand geschriebenes Beispiel).
 

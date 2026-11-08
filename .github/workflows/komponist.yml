@@ -41,8 +41,38 @@ jobs:
   macos:
     name: App (macOS)
     runs-on: macos-15
+    # A run started by hand (with a version a release, without one a try of the signing) is signed with Developer ID and
+    # notarized like the plugins' releases (same secrets, scripts/sign-macos.sh and notarize-macos.sh); pushes stay ad hoc.
+    env:
+      RELEASE: ${{ github.event_name == 'workflow_dispatch' }}
+      MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+    outputs:
+      notarized: ${{ steps.pack.outputs.notarized }}
     steps:
       - uses: actions/checkout@v4
+      - name: Import the Developer ID certificate
+        if: env.RELEASE == 'true' && env.MACOS_CERTIFICATE_P12 != ''
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          rm "$RUNNER_TEMP/certificate.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
+          if [ -z "$IDENTITY" ]; then
+            echo "Im Zertifikat steckt keine Identität 'Developer ID Application'." >&2
+            exit 1
+          fi
+          echo "TONWERK_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
       - name: Configure
         env:
           VERSION: ${{ inputs.version }}
@@ -54,11 +84,24 @@ jobs:
           python3 komponist/tests/fake-api.py 8765 &
           sleep 1
           KOMPONIST_API_URL=http://127.0.0.1:8765/v1/messages ctest --test-dir build --output-on-failure
-      - name: Sign ad hoc and pack
+      # sign-macos.sh signs with the Developer ID (hardened runtime, timestamp) when the import found one, else ad hoc.
+      # The app only talks HTTPS to Anthropic, which the hardened runtime allows without an entitlement (sign-macos.sh still
+      # gives every app scripts/app.entitlements' audio input, which the app never asks for).
+      - name: Sign, notarize and pack
+        id: pack
         run: |
-          cd "build/TonwerkKomponist_artefacts/Release"
-          codesign --force --deep --sign - "Tonwerk Komponist.app"
-          ditto -c -k --keepParent "Tonwerk Komponist.app" "$GITHUB_WORKSPACE/Tonwerk-Komponist.zip"
+          app="build/TonwerkKomponist_artefacts/Release/Tonwerk Komponist.app"
+          scripts/sign-macos.sh "$app"
+          notarized=false
+          if [ -n "${TONWERK_SIGN_IDENTITY:-}" ] && [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
+            scripts/notarize-macos.sh "$app"
+            spctl --assess --type execute --verbose "$app"
+            notarized=true
+          elif [ "$RELEASE" = true ]; then
+            echo "::warning::Ohne Developer-ID-Zertifikat und Apple-Zugang bleibt die Komponist-App ad hoc signiert."
+          fi
+          echo "notarized=$notarized" >> "$GITHUB_OUTPUT"
+          ditto -c -k --keepParent "$app" "$GITHUB_WORKSPACE/Tonwerk-Komponist.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: Tonwerk-Komponist-macOS
@@ -80,12 +123,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
           NOTES: |
             Tonwerk Komponist: Du beschreibst ein Stück in ein paar Worten, Claude schreibt es als MIDI-Datei mit einer Spur je Instrument, zum Ziehen in Logic Pro oder Ableton Live. Ein Prototyp für macOS 11 oder neuer (Apple Silicon und Intel); er braucht einen eigenen Anthropic-API-Schlüssel.
-
+          SIGNED: |
+            Die App ist mit Developer ID signiert und von Apple notarisiert: entpacken, in den Programme-Ordner ziehen und öffnen.
+          AD_HOC: |
             Die App ist nur ad hoc signiert: nach dem Entpacken einmal Rechtsklick auf „Tonwerk Komponist“ → Öffnen, oder im Terminal `xattr -dr com.apple.quarantine "Tonwerk Komponist.app"`.
         run: |
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must be x.y.z, got $VERSION" >&2; exit 1; }
+          if [ "$NOTARIZED" = true ]; then NOTES="$NOTES"$'\n'"$SIGNED"; else NOTES="$NOTES"$'\n'"$AD_HOC"; fi
           mv Tonwerk-Komponist.zip "Tonwerk-Komponist-$VERSION-macOS.zip"
           gh release create "komponist-v$VERSION" "Tonwerk-Komponist-$VERSION-macOS.zip" \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false \
