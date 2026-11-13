@@ -30,7 +30,7 @@ MidiLearn::MidiLearn(juce::AudioProcessorValueTreeState& s) : state(s)
         if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter))
         {
             parameters.push_back(ranged);
-            ids.add(ranged->getParameterID());
+            ids.add(ranged->paramID); // the processor's id, as the saved map names it; the host may see another (Parameters.cpp)
         }
     for (auto& t : target)
         t.store(-1);

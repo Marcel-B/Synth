@@ -233,6 +233,25 @@ const std::vector<ParameterDescriptor>& descriptors()
     return list;
 }
 
+namespace
+{
+/**
+ * A parameter under the id the host sees. Apple's AUv3 parameter tree joins identifiers with dots into key paths, so a
+ * dotted id ("analog.cutoff") is no identifier there, and Tonwerk Analog, FM and Synth failed to load as AUv3s (a
+ * user's report, 2026-11-13). The AUv3-only builds (iPad, Mac App Store) give the host the id with underscores; the
+ * processor, its state, presets and MIDI learn keep the dotted one (`paramID`), and the desktop formats, whose saved
+ * projects know the dotted ids, are left alone.
+ */
+template <typename Base>
+struct HostParameter final : Base
+{
+    using Base::Base;
+#if JUCE_IOS || TONWERK_SANDBOX
+    juce::String getParameterID() const override { return hostParameterId(Base::paramID); }
+#endif
+};
+} // namespace
+
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Edition edition)
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -255,24 +274,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout(Editio
                 if (d.id.endsWith(".ratio"))
                     range.interval = 0.5f;
                 const auto text = textFor(d);
-                layout.add(std::make_unique<juce::AudioParameterFloat>(
+                layout.add(std::make_unique<HostParameter<juce::AudioParameterFloat>>(
                     id, d.name, range, value,
                     juce::AudioParameterFloatAttributes().withStringFromValueFunction(text.toText).withValueFromStringFunction(text.fromText)));
                 break;
             }
             case Type::integer:
                 // The oscillators' octaves, the only whole numbers.
-                layout.add(std::make_unique<juce::AudioParameterInt>(
+                layout.add(std::make_unique<HostParameter<juce::AudioParameterInt>>(
                     id, d.name, (int) d.min, (int) d.max, (int) value,
                     juce::AudioParameterIntAttributes()
                         .withStringFromValueFunction([](int v, int) { return juce::String(v) + " " + tr("Okt"); })
                         .withValueFromStringFunction([](const juce::String& text) { return text.getIntValue(); })));
                 break;
             case Type::choice:
-                layout.add(std::make_unique<juce::AudioParameterChoice>(id, d.name, d.choices, (int) value));
+                layout.add(std::make_unique<HostParameter<juce::AudioParameterChoice>>(id, d.name, d.choices, (int) value));
                 break;
             case Type::toggle:
-                layout.add(std::make_unique<juce::AudioParameterBool>(id, d.name, value > 0.5f));
+                layout.add(std::make_unique<HostParameter<juce::AudioParameterBool>>(id, d.name, value > 0.5f));
                 break;
         }
     }

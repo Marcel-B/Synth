@@ -568,7 +568,7 @@ void DxEditor::setMessage(const juce::String& text, bool error)
 
 void DxEditor::importSysex()
 {
-    chooser = std::make_unique<juce::FileChooser>(tr("SysEx laden"), juce::File(), "*.syx;*.SYX");
+    chooser = tonwerkui::makeChooser(*this, tr("SysEx laden"), juce::File(), "*.syx;*.SYX");
     juce::Component::SafePointer<DxEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {

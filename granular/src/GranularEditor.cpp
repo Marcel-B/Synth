@@ -119,7 +119,7 @@ void SourceSection::resized()
 
 void SourceSection::choose()
 {
-    chooser = std::make_unique<juce::FileChooser>(tr("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
+    chooser = tonwerkui::makeChooser(*this, tr("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [this](const juce::FileChooser& c) {
                              const auto file = tonwerkui::keepChosen(c, tonwerkui::keptFilesFolder("Tonwerk Granular"));

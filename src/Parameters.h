@@ -47,6 +47,9 @@ bool hasPart(Edition edition, Part part);
 
 const std::vector<ParameterDescriptor>& descriptors();
 
+/** The id an AUv3 host sees for parameter `id`: AUv3 identifiers take no dots (see `HostParameter` in Parameters.cpp). */
+inline juce::String hostParameterId(const juce::String& id) { return id.replaceCharacter('.', '_'); }
+
 /**
  * The edition's parameters, shown as whole numbers with their units (times in ms, levels in %, the filter envelope in
  * semitones); the values themselves keep Tonwerk's units.
