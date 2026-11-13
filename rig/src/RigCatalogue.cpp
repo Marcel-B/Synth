@@ -23,6 +23,7 @@
 #include "RumbleProcessor.h"
 #include "PumpProcessor.h"
 #include "SamplerProcessor.h"
+#include "SpreadProcessor.h"
 #include "ScopeProcessor.h"
 #include "ShimmerProcessor.h"
 #include "StutterProcessor.h"
@@ -88,6 +89,7 @@ const std::vector<Kind>& effects()
         kind<tonwerkzone::ZoneProcessor>("zone", "Tonwerk Zone"),
         kind<tonwerkscope::ScopeProcessor>("scope", "Tonwerk Scope"),
         kind<tonwerkpump::PumpProcessor>("pump", "Tonwerk Pump"),
+        kind<tonwerkspread::SpreadProcessor>("spread", "Tonwerk Spread"),
     };
     return kinds;
 }
