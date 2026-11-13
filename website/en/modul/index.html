@@ -227,6 +227,7 @@
       <dt>Changed your mind</dt><dd>Press the left button again. After 15 minutes without an upload the instrument starts again by itself.</dd>
       <dt>Blinking red</dt><dd>The image does not fit or the transfer broke off; the page says why. If the instrument had already been overwritten, the updater stays on, even after switching off and on, until an image has arrived completely. The module is never left without firmware.</dd>
       <dt>Both steady red</dt><dd>The flash layout does not know the updater: flash once over USB.</dd>
+      <dt>Wi-Fi keeps dropping</dt><dd>The module restarts, usually because transmitting briefly draws more current than the supply gives. So the updater transmits at low power and says on the page when it restarted. If that does not help, also power the module over USB for the update. An updater from 13 November 2026 or earlier still transmits at full power; only USB rewrites the updater itself.</dd>
     </dl>
     <p class="note">Only the firmwares from 1 November 2026 on bring the updater, and they change the flash layout: flash once over USB, after that Wi-Fi works. The updater refuses older images. The Wi-Fi network is only open while the updater runs; the instrument itself has no Wi-Fi. Not yet tried on a module; USB always works.</p>
 
