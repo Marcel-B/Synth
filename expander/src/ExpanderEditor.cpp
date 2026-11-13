@@ -244,7 +244,7 @@ void ExpanderEditor::exportHardwareSheet()
     const auto name = synth.presetName().isNotEmpty() ? synth.presetName() : juce::String("Klang");
     const auto start = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
                            .getChildFile(juce::File::createLegalFileName(name + " Hardware") + ".png");
-    chooser = std::make_unique<juce::FileChooser>(tr("Hardware-Blatt speichern"), start, "*.png");
+    chooser = tonwerkui::makeChooser(*this, tr("Hardware-Blatt speichern"), start, "*.png");
     juce::Component::SafePointer<ExpanderEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                              | juce::FileBrowserComponent::warnAboutOverwriting,

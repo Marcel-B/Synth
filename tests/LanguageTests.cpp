@@ -235,6 +235,26 @@ public:
                     expect(word.isEmpty(), juce::String(plugin) + ": \"" + word + "\" untranslated in " + text);
                 }
         }
+
+        for (const auto& [plugin, make] : plugins())
+        {
+            beginTest(juce::String("An AUv3 host can name every parameter of ") + plugin);
+            // AUv3 identifiers are joined with dots into key paths; a dotted one kept Tonwerk Analog, FM and Synth from
+            // loading on the iPad. Only those three map their ids (hostParameterId); every other plugin's ids must be
+            // plain already, and no two may meet after the mapping.
+            const bool maps = juce::String(plugin) == "Tonwerk Synth";
+            const auto processor = make();
+            juce::StringArray seen;
+            for (auto* parameter : processor->getParameters())
+                if (auto* withId = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
+                {
+                    const auto id = maps ? tonwerk::hostParameterId(withId->paramID) : withId->paramID;
+                    expect(id.isNotEmpty() && id.containsOnly("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"),
+                           juce::String(plugin) + ": no AUv3 identifier: " + id);
+                    expect(! seen.contains(id), juce::String(plugin) + ": AUv3 identifier twice: " + id);
+                    seen.add(id);
+                }
+        }
     }
 };
 

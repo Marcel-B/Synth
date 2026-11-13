@@ -656,7 +656,7 @@ void TonwerkSynthEditor::fetchFromTonwerk()
 
 void TonwerkSynthEditor::importFile()
 {
-    chooser = std::make_unique<juce::FileChooser>(tr("Klang laden"), juce::File(), "*.json");
+    chooser = tonwerkui::makeChooser(*this, tr("Klang laden"), juce::File(), "*.json");
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                          [safe](const juce::FileChooser& fc) {
@@ -697,7 +697,7 @@ void TonwerkSynthEditor::exportFile()
     const auto name = processor.presetName().isNotEmpty() ? processor.presetName() : tr("Klang");
     const auto start = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
                            .getChildFile(juce::File::createLegalFileName(name) + ".json");
-    chooser = std::make_unique<juce::FileChooser>(tr("Klang speichern"), start, "*.json");
+    chooser = tonwerkui::makeChooser(*this, tr("Klang speichern"), start, "*.json");
     juce::Component::SafePointer<TonwerkSynthEditor> safe(this);
     chooser->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
                              | juce::FileBrowserComponent::warnAboutOverwriting,

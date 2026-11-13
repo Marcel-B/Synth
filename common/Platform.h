@@ -259,6 +259,23 @@ inline juce::Component* menuParentFor(const juce::PopupMenu::Options& options)
     return options.getParentComponent();
 }
 
+/**
+ * A file chooser opened from `from`. In an AUv3 on the iPad JUCE may not open a window of its own for the picker; without
+ * a parent it shows nothing but still makes itself modal, so the editor took no touch any more (a user's Granular and
+ * Sampler froze on "Laden"). The parent is the editor's top level, which the picker covers.
+ */
+inline std::unique_ptr<juce::FileChooser> makeChooser(juce::Component& from, const juce::String& title,
+                                                      const juce::File& start, const juce::String& patterns)
+{
+#if JUCE_IOS
+    juce::Component* parent = from.getTopLevelComponent();
+#else
+    juce::Component* parent = nullptr;
+    juce::ignoreUnused(from);
+#endif
+    return std::make_unique<juce::FileChooser>(title, start, patterns, true, false, parent);
+}
+
 /** Whether the chooser came back without a file. */
 inline bool nothingChosen(const juce::FileChooser& chooser) { return chooser.getURLResult().isEmpty(); }
 
