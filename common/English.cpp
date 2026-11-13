@@ -800,6 +800,18 @@ const std::vector<Entry>& entries()
         { "TIEFEN", "LOWS" },
         { "Trennung", "Split" },
         { "Voll", "Full" },
+        // Tonwerk Spread.
+        { "Bass Mono", nullptr },
+        { "BASS MONO", nullptr },
+        { "Breit", "Wide" },
+        { "Diffus", "Diffuse" },
+        { "Instrumente", "Instruments" },
+        { "Mono-Check", "Mono check" },
+        { "MONO-CHECK", "MONO CHECK" },
+        { "Stereobild", "Stereo image" },
+        { "Tiefen & Höhen", "Lows & highs" },
+        { "Verbreiterung", "Widening" },
+        { "Werkzeuge", "Tools" },
         // Tonwerk Shimmer.
         { "Oktave + Quinte", "Octave + fifth" },
         { "Quarte", "Fourth" },

@@ -450,6 +450,16 @@ def pump(p):
     p.line(pts, 30)
 
 
+def spread(p):
+    # A sound in the middle, its waves running out to both sides, wider with each ring.
+    p.dot(0.0, 0.0, 0.13)
+    for i, r in enumerate((0.38, 0.62, 0.86)):
+        span = 0.5 + 0.12 * i
+        for side in (-1, 1):
+            p.line([(side * r * math.cos(a), r * math.sin(a))
+                    for a in (span * (k / 30 - 0.5) * 2 for k in range(31))], 30)
+
+
 def komponist(p):
     # Lines of text on the left become notes of a piano roll on the right.
     for i, w in enumerate((0.7, 0.55, 0.65)):
@@ -498,6 +508,7 @@ ICONS = {
     "TonwerkRumble": (rumble, EFFECT),
     "TonwerkReverb": (reverb, EFFECT),
     "TonwerkPump": (pump, EFFECT),
+    "TonwerkSpread": (spread, EFFECT),
     "TonwerkRig": (rig, INSTRUMENT),
     "TonwerkKomponist": (komponist, MIDI),
 }

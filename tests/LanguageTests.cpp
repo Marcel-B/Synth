@@ -28,6 +28,7 @@
 #include "RumbleProcessor.h"
 #include "ReverbProcessor.h"
 #include "PumpProcessor.h"
+#include "SpreadProcessor.h"
 #include "ArpProcessor.h"
 #include "LfoProcessor.h"
 #include "GlitchProcessor.h"
@@ -113,6 +114,7 @@ std::vector<std::pair<const char*, Make>> plugins()
         { "Tonwerk Rumble", [] { return std::make_unique<tonwerkrumble::RumbleProcessor>(); } },
         { "Tonwerk Reverb", [] { return std::make_unique<tonwerkreverb::ReverbProcessor>(); } },
         { "Tonwerk Pump", [] { return std::make_unique<tonwerkpump::PumpProcessor>(); } },
+        { "Tonwerk Spread", [] { return std::make_unique<tonwerkspread::SpreadProcessor>(); } },
         { "Tonwerk Arp", [] { return std::make_unique<tonwerkarp::ArpProcessor>(); } },
         { "Tonwerk LFO", [] { return std::make_unique<tonwerklfo::LfoProcessor>(); } },
         { "Chrome Glitch", [] { return std::make_unique<chromeglitch::ChromeGlitchProcessor>(); } },
