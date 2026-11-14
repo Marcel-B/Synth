@@ -39,6 +39,9 @@ bool loadTables(void* block, std::size_t bytes, uint32_t version);
 /** Reads `bytes` from the partition "tables" when its header says it holds `magic` at `version`: another firmware's
  *  data flashed there with its image (Tonwerk Granular's sources). */
 bool loadBlock(void* block, std::size_t bytes, uint32_t magic, uint32_t version);
+/** Reads `bytes` from offset `at` of the partition "tables", as they are (Tonwerk Granular reads its header itself,
+ *  since the user's own sources name their lengths there). */
+bool readTables(std::size_t at, void* out, std::size_t bytes);
 /** Keeps the computed tables in the flash partition "tables" (takes some 20 s, once after flashing). */
 void storeTables(const void* block, std::size_t bytes, uint32_t version);
 } // namespace hw

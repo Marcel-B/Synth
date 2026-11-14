@@ -40,7 +40,7 @@
     </figure>
     <ul>
       <li><b>Dieselbe Kornwolke wie das Plugin</b>: wann ein Korn beginnt, wie lang es ist und wie hoch es klingt, rechnet das Modul genau wie das Plugin. Ein Test auf dem Rechner vergleicht jede Quelle, jedes Fenster, die Raster, die Filter und den LFO mit dem Plugin.</li>
-      <li><b>Neun Quellen</b> aus dem Plugin, je 4 Sekunden: Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus. Sie kommen beim Flashen mit ins Modul; eigene Dateien lädt es nicht.</li>
+      <li><b>Neun Quellen</b> aus dem Plugin, je 4 Sekunden: Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus. Sie kommen beim Flashen mit ins Modul; über WLAN lassen sie sich durch <a href="#eigene-klaenge">eigene Klänge</a> ersetzen, zusammen bis 36 Sekunden.</li>
       <li><b>Stereo</b>: die Körner verteilen sich über das Stereobild, die Ausgänge sind <b>L</b> und <b>R</b>.</li>
       <li><b>Eine Stimme</b>: V/OCT, GATE und CV für Korngröße, Position, Dichte und Streuung.</li>
       <li>Eine eigene <a href="#frontplatte">Frontplatte</a>; die Vorschau zeigt sie gelb mit schwarzer Schrift, die Farben sind frei.</li>
@@ -99,6 +99,9 @@
       <dt>Tonhöhe</dt>
       <dd>0 V spielt die Quellen in ihrer eigenen Tonhöhe (C4), 1 V pro Oktave. Jedes neue Korn nimmt die Tonhöhe, die gerade an V/OCT anliegt. Ein Korn, das schneller läuft als die Quelle, liest eine vorher gefilterte Kopie, so faltet nichts zurück.</dd>
     </dl>
+
+    <h3 id="eigene-klaenge">Eigene Klänge</h3>
+    <p>Jede der neun Quellen lässt sich durch eine eigene Aufnahme ersetzen, über die Seite des <a href="index.html#wlan-update">Updates über WLAN</a> (linke Taste beim Einschalten halten, <code>http://192.168.4.1</code>): <b>Quellen vom Modul lesen</b>, eine Quelle wählen, eine Datei (WAV, MP3, M4A …) wählen, Start und Länge des Ausschnitts setzen, anhören, <b>Übernehmen</b>, zum Schluss <b>Aufs Modul schreiben</b>. Der Browser macht daraus Mono mit 48 kHz und gleicht den Pegel an; das Modul startet danach mit den neuen Klängen. Zusammen haben die Quellen 36 s Platz, jede mindestens 0,5 s: für eine lange Quelle erst andere kürzen (die Zahl neben dem Namen). Eine Quelle spielt bei 0 V in ihrer eigenen Tonhöhe, so wie sie aufgenommen ist. Einstellungen und Kalibrierung bleiben; die Werksklänge kommen mit <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a> über dieselbe Seite zurück.</p>
 
     <h2 id="buchsen">Buchsen</h2>
     <div class="table-scroll">

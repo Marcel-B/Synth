@@ -610,6 +610,65 @@ void writeExamples(const std::string& dir)
         std::printf("info  %s: peak %.2f\n", e.name, std::max(peakOf(left), peakOf(right)));
     }
 }
+
+/** Own sources of other lengths (the updater's page): the header is checked as the module checks it, and the copies
+ *  are built where the module builds them, within the PSRAM the firmware reserves. */
+void testOwnSources()
+{
+    namespace layout = twm::grain::layout;
+    layout::Header h {};
+    h.lengths = { 1200000, 24000, 24000, 24000, 24000, 24000, 24000, 24000, 340000 };
+    uint64_t total = 0;
+    for (const auto n : h.lengths)
+        total += n;
+    h.bytes = (uint32_t) (total * 2);
+    std::array<uint32_t, layout::kCount> lengths {};
+    check(total <= layout::kBudget && layout::lengthsOf(h, lengths) && lengths == h.lengths, "own lengths are taken");
+
+    std::vector<uint8_t> sector(layout::kHeaderBytes, 0xff);
+    std::memcpy(sector.data(), &h, sizeof h);
+    check(layout::readHeader(sector.data()).lengths == h.lengths, "own header reads back");
+    const uint32_t fixed[3] = { layout::kMagic, layout::kVersionFixed, layout::kBudget * 2 };
+    std::memcpy(sector.data(), fixed, sizeof fixed);
+    check(layout::lengthsOf(layout::readHeader(sector.data()), lengths) && lengths[0] == Sources::kSamples,
+          "the image's header (rest of the sector 0xff) reads as nine of 4 s");
+
+    auto bad = h;
+    bad.lengths[1] = layout::kMinSamples - 1;
+    check(! layout::lengthsOf(bad, lengths), "a source under half a second is refused");
+    bad = h;
+    bad.lengths[0] += layout::kBudget - (uint32_t) total + 1;
+    bad.bytes += (layout::kBudget - (uint32_t) total + 1) * 2;
+    check(! layout::lengthsOf(bad, lengths), "more than 36 s together is refused");
+    bad = h;
+    bad.bytes += 2;
+    check(! layout::lengthsOf(bad, lengths), "a size that does not match the lengths is refused");
+
+    // Fill the whole budget with a sine in odd lengths and build: every copy inside the block, the voice plays.
+    layout::Header full {};
+    full.lengths = { 300001, 24001, 24000, 500003, 99999, 24000, 300000, 200000, 255996 };
+    uint64_t sum = 0;
+    for (const auto n : full.lengths)
+        sum += n;
+    check(sum == layout::kBudget, "test lengths fill the budget");
+    std::vector<int16_t> memory(Sources::bytes() / sizeof(int16_t) + 1, 0);
+    const int16_t guard = 12345;
+    memory.back() = guard;
+    for (uint64_t n = 0; n < sum; ++n)
+        memory[n] = (int16_t) std::lround(16000.0 * std::sin(2.0 * 3.141592653589793 * 261.63 * (double) n / 48000.0));
+    Sources own;
+    own.build(memory.data(), full.lengths);
+    check(memory.back() == guard, "copies of own sources stay inside the reserved PSRAM");
+    const int16_t* end = memory.data() + memory.size() - 1;
+    bool inside = true;
+    for (int i = 0; i < Sources::kCount; ++i)
+        for (int k = 0; k < twm::grain::Source::kLevels; ++k)
+        {
+            const auto& src = own.source(i);
+            inside = inside && src.level[(std::size_t) k] + src.length[(std::size_t) k] <= end;
+        }
+    check(inside && own.source(3).length[0] == 500003 && own.source(3).length[4] == 500003 / 16, "own sources point where built");
+}
 } // namespace
 
 int main(int argc, char** argv)
@@ -625,6 +684,7 @@ int main(int argc, char** argv)
         return 0;
     }
     testSourceFile("../data/grain-sources.bin");
+    testOwnSources();
     testAgainstPlugin();
     testTuning();
     testPlayer();

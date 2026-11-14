@@ -91,7 +91,7 @@ Buchsen: **V/OCT**, **GATE** wie oben; **LINIE 2** (1 V pro Oktave auf das Inter
 
 ## Vierte Firmware: Tonwerk Granular
 
-Eine vierte Firmware für dieselben Platinen: **Tonwerk Granular** (Plugin in diesem Repo, `granular/src/`). Aus einer **Quelle** werden laufend kurze **Körner** geschnitten, jedes mit eigenem Fenster, eigener Tonhöhe, Richtung und Stelle im Stereobild, bis zu 40 zugleich: Wolken, Flächen, Glitzern, stotternde Rhythmen. Die neun Quellen sind die des Plugins (Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus, je 4 s, aus Formeln berechnet), dazu Filter, Hüllkurve und ein LFO, in Stereo an den beiden Ausgängen. Eine Stimme; eigene Dateien lädt das Modul nicht. Eine eigene Frontplatte gehört dazu.
+Eine vierte Firmware für dieselben Platinen: **Tonwerk Granular** (Plugin in diesem Repo, `granular/src/`). Aus einer **Quelle** werden laufend kurze **Körner** geschnitten, jedes mit eigenem Fenster, eigener Tonhöhe, Richtung und Stelle im Stereobild, bis zu 40 zugleich: Wolken, Flächen, Glitzern, stotternde Rhythmen. Die neun Quellen sind die des Plugins (Chor, Glas, Streicher, Zupfen, Orgel, Wind, Metall, Sinus, Rhythmus, je 4 s, aus Formeln berechnet), dazu Filter, Hüllkurve und ein LFO, in Stereo an den beiden Ausgängen. Eine Stimme. Über die Seite des [Updates über WLAN](#update-über-wlan) lassen sich die Quellen durch eigene Aufnahmen ersetzen (zusammen bis 36 s, jede mindestens 0,5 s; siehe dort). Eine eigene Frontplatte gehört dazu.
 
 ![Frontplatte Granular](hardware/frontplatte-granular-vorschau.png)
 
@@ -157,6 +157,7 @@ Neben dem Instrument liegt im Flash ein kleiner **Updater**. Mit ihm kommt eine 
 - Beide LEDs dauerhaft rot: Die Aufteilung im Flash kennt den Updater nicht. Dann einmal über USB flashen.
 - Die Verbindung zum WLAN bricht immer wieder ab: Das Modul startet neu, meist weil das Senden kurz mehr Strom zieht, als die Versorgung im Rack hergibt. Der Updater sendet darum mit 11 dBm und nach einem Neustart durch einen Spannungseinbruch mit 2 dBm, und die Seite sagt, wenn er neu gestartet ist. Hilft das nicht, das Modul fürs Update zusätzlich über USB versorgen. Ein Updater vom 13.11.2026 oder früher sendet noch mit voller Leistung; der Updater selbst wird nur über USB neu geschrieben, also dafür einmal über USB flashen.
 - Den Updater bringt erst eine Firmware vom 1.11.2026 oder später mit, und sie ändert die Aufteilung des Flashs: **einmal über USB flashen** ([BAUANLEITUNG.md](BAUANLEITUNG.md), Schritt 8), danach geht es über WLAN. Ältere Images nimmt der Updater nicht an.
+- **Eigene Klänge für Tonwerk Granular:** Auf derselben Seite **Quellen vom Modul lesen**, eine der neun Quellen wählen, eine Audiodatei wählen (WAV, MP3, M4A …; der Browser macht Mono mit 48 kHz daraus), Start und Länge des Ausschnitts setzen, anhören, **Übernehmen** und am Ende **Aufs Modul schreiben**. Zusammen haben die Quellen 36 s Platz (so viel fasst das PSRAM mit den tieferen Kopien), jede mindestens 0,5 s; für eine lange Quelle erst andere kürzen. Der Updater schreibt die Quellen mit ihren Längen und Namen in die Partition `tables` (Format in `main/dsp/GrainLayout.h`, Version 2), den Kopf zuletzt; bricht es ab, blinkt das Instrument rot, bis es noch einmal geklappt hat. Die Werksklänge kommen mit `tonwerk-granular.bin` zurück. Braucht einen Updater vom 14.11.2026 oder später, also einmal über USB flashen.
 - Das WLAN ist nur offen, solange der Updater läuft; das Instrument selbst hat kein WLAN, ihm bleiben Speicher und Rechenzeit wie vorher.
 
 ## Hardware
@@ -205,6 +206,7 @@ firmware/
   main/dsp/PhysicalVoice.h   Tonwerk Physical: Erreger, Resonatoren, Filter, Korpus, bis 4 Stimmen
   main/dsp/PdVoice.h  Tonwerk PD: zwei Linien mit DCW und DCA, Ring, Rauschen, Chorus
   main/dsp/GrainVoice.h  Tonwerk Granular: Kornwolke, Fenster, Filter, LFO; die Quellen aus data/
+  main/dsp/GrainLayout.h wie die Quellen in der Partition tables liegen (Werksklänge oder eigene, auch im Updater)
   main/dsp/AdditiveVoice.h  Tonwerk Additiv: 64 Teiltöne, Spektren, Formung, Hüllkurve je Teilton
   main/app/Panel.h    Bedienlogik aller Firmwares ohne Hardware: Ebenen, Pick-up, Tasten, Kalibrierung
   main/app/Module.h   Regler, Modi und LEDs der Wavetable-Firmware

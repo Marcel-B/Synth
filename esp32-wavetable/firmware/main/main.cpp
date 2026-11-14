@@ -294,10 +294,15 @@ extern "C" void app_main()
     // The sources' full-rate samples were flashed with the firmware into the partition "tables"; the lower copies are
     // computed from them in PSRAM at every start (well under a second).
     const int64_t start = esp_timer_get_time();
+    // The header says how long each source is: the image's nine of 4 s, or the user's own from the updater's page.
+    namespace layout = twm::grain::layout;
     auto* block = static_cast<int16_t*>(hw::allocateTables(twm::grain::Sources::bytes()));
-    if (block == nullptr
-        || ! hw::loadBlock(block, twm::grain::Sources::flashedBytes(), twm::grain::Sources::kMagic,
-                           twm::grain::Sources::kVersion))
+    static uint8_t sector[layout::kHeaderBytes];
+    twm::grain::Sources::Lengths lengths {};
+    const bool found = block != nullptr && hw::readTables(0, sector, sizeof sector)
+                       && layout::lengthsOf(layout::readHeader(sector), lengths)
+                       && hw::readTables(layout::kHeaderBytes, block, layout::readHeader(sector).bytes);
+    if (! found)
     {
         // Without its sources the firmware has nothing to play: flash the whole image (tonwerk-granular.bin at 0x0).
         ESP_LOGE(kTag, "%s",
@@ -311,7 +316,7 @@ extern "C" void app_main()
             vTaskDelay(pdMS_TO_TICKS(500));
         }
     }
-    sources.build(block);
+    sources.build(block, lengths);
     twm::grain::Windows::instance();
     voice.use(&sources);
     ESP_LOGI(kTag, "grain sources ready in %lld ms", (esp_timer_get_time() - start) / 1000);
