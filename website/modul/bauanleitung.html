@@ -220,10 +220,14 @@
         </tbody>
       </table>
     </div>
-    <p>Manche Module kommen schon so oder ganz ohne Brücken. SCK braucht keinen Draht, die Platine legt ihn an Masse. Die Stiftleiste so einlöten, dass die Beschriftung des Moduls zu der auf der Hauptplatine passt (VIN GND LCK DIN BCK SCK). Dann drei kurze Drähte von den Pads L, G, R neben der Klinke des Moduls (oder deren Lötfahnen) zu J13: L, Masse, R. Am eckigen Pad von J13 liegt L, Masse ist der mittlere Stift.</p>
     <figure>
-      <a href="img/haupt-j13.png"><img src="img/haupt-j13.png" alt="Verdrahtung vom DAC-Modul zu J13, von oben und von der Seite" width="2024" height="1005"></a>
-      <figcaption>Drei Drähte vom Modul zu J13, links von oben (Bestückungsseite), rechts von der Seite.</figcaption>
+      <a href="img/dac-loetbruecken.png"><img src="img/dac-loetbruecken.png" alt="Die vier Lötbrücken des GY-PCM5102: 1, 2 und 4 auf L, 3 auf H" width="1100" height="900" class="narrow"></a>
+      <figcaption>Der Zinnklecks verbindet das mittlere Pad mit H oder L. Welche Seite H ist, steht als Buchstabe auf dem Modul; die Lage kann von der Zeichnung abweichen.</figcaption>
+    </figure>
+    <p>Manche Module kommen schon so oder ganz ohne Brücken. SCK braucht keinen Draht, die Platine legt ihn an Masse. Die Stiftleiste so einlöten, dass die Beschriftung des Moduls zu der auf der Hauptplatine passt (VIN GND LCK DIN BCK SCK). Dann drei kurze Drähte von den Pads L, G, R neben der Klinke des Moduls (oder deren Lötfahnen) zu J13: L, Masse, R. Am eckigen Pad von J13 liegt L, Masse ist der mittlere Stift. Sind L und R vertauscht, wirkt der Filter am OSC-Ausgang statt an VOICE.</p>
+    <figure>
+      <a href="img/haupt-j13.png"><img src="img/haupt-j13.png" alt="Verdrahtung vom DAC-Modul zu J13 von der Bestückungsseite: R oben, Masse in der Mitte, L am eckigen Pad unten" width="2000" height="1000"></a>
+      <figcaption>Drei Drähte vom Modul zu J13, von der Bestückungsseite gesehen, J1 rechts unten wie in den anderen Plänen. Rechts J13 vergrößert: L gehört an das eckige Pad.</figcaption>
     </figure>
 
     <h2 id="bedienplatine">5. Bedienplatine löten</h2>
@@ -373,6 +377,8 @@
     <dl class="tools">
       <dt>Kein Ton, LEDs leuchten normal</dt>
       <dd>Lötbrücken auf dem DAC-Modul (Schritt 4, besonders 3 XSMT auf H), die drei Drähte zu J13, sitzt der TL072 richtig herum? An der Klinke des DAC-Moduls hören (Kopfhörer nur leise und nicht aufsetzen): klingt es dort, liegt der Fehler zwischen J13 und den Ausgangsbuchsen (U6, R9–R14).</dd>
+      <dt>Filter wirkt an OSC statt an VOICE</dt>
+      <dd>L und R an J13 sind vertauscht (Schritt 4): L gehört an das eckige Pad. Die beiden äußeren Drähte tauschen.</dd>
       <dt>Kein Ton beim ersten Start</dt>
       <dd>Die Tabellen werden noch berechnet (Schritt 8). Warten, bis die LEDs die Farben der Modi zeigen.</dd>
       <dt>LEDs dunkel</dt>

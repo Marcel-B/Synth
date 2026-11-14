@@ -220,10 +220,14 @@
         </tbody>
       </table>
     </div>
-    <p>Some modules come set this way already or without jumpers at all. SCK needs no wire, the board ties it to ground. Solder the pin header so that the module's labels match those on the main board (VIN GND LCK DIN BCK SCK). Then three short wires from the pads L, G, R next to the module's jack (or its solder lugs) to J13: L, ground, R. L is at J13's square pad, ground is the middle pin.</p>
     <figure>
-      <a href="../../modul/img/haupt-j13.png"><img src="../../modul/img/haupt-j13.png" alt="Wiring from the DAC module to J13, from above and from the side" width="2024" height="1005"></a>
-      <figcaption>Three wires from the module to J13, on the left from above (component side), on the right from the side.</figcaption>
+      <a href="../../modul/img/dac-loetbruecken-en.png"><img src="../../modul/img/dac-loetbruecken-en.png" alt="The four solder jumpers of the GY-PCM5102: 1, 2 and 4 to L, 3 to H" width="1100" height="900" class="narrow"></a>
+      <figcaption>The blob of solder joins the middle pad to H or L. Which side is H is printed as a letter on the module; the layout may differ from the drawing.</figcaption>
+    </figure>
+    <p>Some modules come set this way already or without jumpers at all. SCK needs no wire, the board ties it to ground. Solder the pin header so that the module's labels match those on the main board (VIN GND LCK DIN BCK SCK). Then three short wires from the pads L, G, R next to the module's jack (or its solder lugs) to J13: L, ground, R. L is at J13's square pad, ground is the middle pin. With L and R swapped, the filter acts on the OSC output instead of VOICE.</p>
+    <figure>
+      <a href="../../modul/img/haupt-j13-en.png"><img src="../../modul/img/haupt-j13-en.png" alt="Wiring from the DAC module to J13 from the component side: R on top, ground in the middle, L at the square pad below" width="2000" height="1000"></a>
+      <figcaption>Three wires from the module to J13, seen from the component side, J1 at the bottom right as in the other plans. On the right J13 enlarged: L belongs on the square pad.</figcaption>
     </figure>
 
     <h2 id="bedienplatine">5. Soldering the control board</h2>
@@ -373,6 +377,8 @@
     <dl class="tools">
       <dt>No sound, LEDs light normally</dt>
       <dd>Solder jumpers on the DAC module (step 4, especially 3 XSMT on H), the three wires to J13, is the TL072 the right way round? Listen at the DAC module's jack (headphones only quietly and not on your ears): if it sounds there, the fault lies between J13 and the output jacks (U6, R9–R14).</dd>
+      <dt>The filter acts on OSC instead of VOICE</dt>
+      <dd>L and R at J13 are swapped (step 4): L belongs on the square pad. Swap the two outer wires.</dd>
       <dt>No sound on the first start</dt>
       <dd>The tables are still being computed (step 8). Wait until the LEDs show the colours of the modes.</dd>
       <dt>LEDs dark</dt>

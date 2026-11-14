@@ -77,9 +77,15 @@ Auf der Rückseite des GY-PCM5102 sind vier Lötbrücken. Jede hat drei Pads; mi
 | 3 XSMT | Stummschaltung | **H** (Ton an) |
 | 4 FMT | Datenformat | **L** (I2S) |
 
+![Die vier Lötbrücken des GY-PCM5102](../website/modul/img/dac-loetbruecken.png)
+
+Welche Seite H und welche L ist, steht als Buchstabe neben den Pads des Moduls; die Lage kann von der Zeichnung abweichen. Zur Probe den Durchgang vom mittleren Pad zu GND des Moduls messen: bei 1, 2 und 4 piept es, bei 3 nicht.
+
 Manche Module kommen schon so oder ganz ohne Brücken. Den Pin SCK braucht man nicht extra zu verbinden: Die Platine legt ihn an Masse.
 
-Die Stiftleiste so einlöten, dass die Beschriftung des Moduls zu der auf der Hauptplatine passt (VIN GND LCK DIN BCK SCK). Dann drei kurze Drähte vom Ausgang des Moduls (die Lötfahnen der Klinkenbuchse oder die Pads L, G, R) zu J13: L, Masse, R.
+Die Stiftleiste so einlöten, dass die Beschriftung des Moduls zu der auf der Hauptplatine passt (VIN GND LCK DIN BCK SCK). Dann drei kurze Drähte vom Ausgang des Moduls (die Lötfahnen der Klinkenbuchse oder die Pads L, G, R) zu J13: L, Masse, R. **L gehört an das eckige Pad**, Masse in die Mitte. Sind L und R vertauscht, wirkt der Filter am OSC-Ausgang statt an VOICE.
+
+![J13 von der Bestückungsseite](../website/modul/img/haupt-j13.png)
 
 ## 5. Bedienplatine löten
 
@@ -163,6 +169,7 @@ Von Hand bleiben J1, U1, vorn J3 und J4 (wie Schritt 3, Punkt 11) und auf Wunsch
 ## Fehlersuche
 
 - **Kein Ton, LEDs leuchten normal:** Lötbrücken auf dem DAC-Modul (Schritt 4, besonders 3 XSMT auf H), die drei Drähte zu J13, sitzt der TL072 richtig herum? An der Klinkenbuchse des DAC-Moduls hören (Kopfhörer nur leise und nicht aufsetzen, dort kommen 2 Veff): Klingt es dort, liegt der Fehler zwischen J13 und den Ausgangsbuchsen (U6, R9–R14).
+- **Filter wirkt an OSC statt an VOICE:** L und R an J13 vertauscht (Schritt 4). L gehört an das eckige Pad; die beiden äußeren Drähte tauschen.
 - **Kein Ton beim ersten Start:** Die Tabellen werden noch berechnet (Schritt 8). Abwarten, bis die LEDs die Farben der Modi zeigen.
 - **LEDs dunkel:** U10 ein 74HC125 statt HCT? Pinfolge der LEDs (Schritt 1)? R48 (330 Ω) gelötet?
 - **LEDs in falschen Farben** (cyan erscheint lila, magenta türkis, grün rot): Die fertigen Images schicken Rot-Grün-Blau, wie es die APA106 (und PL9823) erwarten, die oft als WS2812D-F5 verkauft werden. Echte WS2812D-F5 von Worldsemi wollen Grün-Rot-Blau: die Firmware selbst bauen mit `-DTONWERK_LED_GRB=1` (z. B. `idf.py -DTONWERK_LED_GRB=1 build flash`).
