@@ -237,6 +237,12 @@ bool loadBlock(void* block, std::size_t bytes, uint32_t magic, uint32_t version)
     return esp_partition_read(part, kTablesData, block, bytes) == ESP_OK;
 }
 
+bool readTables(std::size_t at, void* out, std::size_t bytes)
+{
+    const esp_partition_t* part = tablesPartition();
+    return part != nullptr && at + bytes <= part->size && esp_partition_read(part, at, out, bytes) == ESP_OK;
+}
+
 bool loadTables(void* block, std::size_t bytes, uint32_t version) { return loadBlock(block, bytes, kTablesMagic, version); }
 
 void storeTables(const void* block, std::size_t bytes, uint32_t version)

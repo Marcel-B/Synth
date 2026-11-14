@@ -40,7 +40,7 @@
     </figure>
     <ul>
       <li><b>The same grain cloud as the plugin</b>: when a grain starts, how long it lasts and how high it sounds is computed exactly as in the plugin. A test on the computer compares every source, every window, the grids, the filters and the LFO with the plugin.</li>
-      <li><b>Nine sources</b> from the plugin, 4 seconds each: choir, glass, strings, plucks, organ, wind, metal, sine, rhythm. They are flashed into the module with the firmware; it does not load files of your own.</li>
+      <li><b>Nine sources</b> from the plugin, 4 seconds each: choir, glass, strings, plucks, organ, wind, metal, sine, rhythm. They are flashed into the module with the firmware; over Wi-Fi they can be replaced by <a href="#eigene-klaenge">sounds of your own</a>, up to 36 seconds together.</li>
       <li><b>Stereo</b>: the grains spread across the stereo field, the outputs are <b>L</b> and <b>R</b>.</li>
       <li><b>One voice</b>: V/OCT, GATE and CV for grain size, position, density and spray.</li>
       <li>A <a href="#frontplatte">front panel</a> of its own; the preview shows it yellow with black lettering, the colours are up to you.</li>
@@ -99,6 +99,9 @@
       <dt>Pitch</dt>
       <dd>0 V plays the sources at their own pitch (C4), 1 V per octave. Every new grain takes the pitch present at V/OCT. A grain running faster than the source reads a copy filtered beforehand, so nothing folds back.</dd>
     </dl>
+
+    <h3 id="eigene-klaenge">Sounds of your own</h3>
+    <p>Each of the nine sources can be replaced by a recording of your own, on the page of the <a href="index.html#wlan-update">update over Wi-Fi</a> (hold the left button while switching on, <code>http://192.168.4.1</code>): <b>read sources</b>, choose a source, choose a file (WAV, MP3, M4A …), set start and length of the cut, listen, <b>use</b> it, and finally <b>write to the module</b>. The browser turns it into mono at 48 kHz and evens out the level; the module then starts with the new sounds. The sources have 36 s together, each at least 0.5 s: for a long one, shorten others first (the number next to the name). A source plays at 0 V at its own pitch, as recorded. Settings and calibration stay; the factory sounds come back with <a href="https://github.com/Marcel-B/Synth/raw/main/esp32-wavetable/firmware/modul-granular/tonwerk-granular.bin">tonwerk-granular.bin</a> through the same page.</p>
 
     <h2 id="buchsen">Jacks</h2>
     <div class="table-scroll">

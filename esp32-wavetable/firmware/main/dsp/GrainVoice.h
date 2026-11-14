@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GrainLayout.h"
 #include "Voice.h" // Adsr, SvfStage
 
 #include <algorithm>
@@ -77,48 +78,66 @@ struct Source
 };
 
 /**
- * The plugin's nine built-in sources (choir, glass, strings, plucks, organ, wind, metal, sine, rhythm), 4 s each at
- * 48 kHz with the root C4. Their full-rate samples come from the flash (the host test writes them from the plugin,
- * `make grain-sources`); `build` makes the lower copies in PSRAM at start, in well under a second.
+ * The nine sources: as flashed, the plugin's built-in ones (choir, glass, strings, plucks, organ, wind, metal, sine,
+ * rhythm), 4 s each at 48 kHz with the root C4, written from the plugin by the host test (`make grain-sources`); or the
+ * user's own sounds of any length up to 36 s together, written by the updater's page (GrainLayout.h). Their full-rate
+ * samples come from the flash; `build` makes the lower copies in PSRAM at start, in well under a second.
  */
 class Sources
 {
 public:
-    static constexpr int kCount = 9;
-    static constexpr uint32_t kSamples = 192000;
+    static constexpr int kCount = layout::kCount;
+    static constexpr uint32_t kSamples = layout::kFixedSamples;
     static constexpr int kRoot = 60;
     /** What the flashed block's header says it holds; a new layout or new sources need a new version. */
-    static constexpr uint32_t kMagic = 0x52475754; // "TWGR"
-    static constexpr uint32_t kVersion = 1;
+    static constexpr uint32_t kMagic = layout::kMagic;
+    static constexpr uint32_t kVersion = layout::kVersionFixed;
     static constexpr float kScale = 1.0f / 32767.0f;
+    using Lengths = std::array<uint32_t, kCount>;
 
-    /** Samples of one source with all its copies. */
-    static constexpr uint32_t perSource()
+    /** Samples of one source of `length` with all its copies. */
+    static constexpr uint32_t perSource(uint32_t length = kSamples)
     {
         uint32_t total = 0;
         for (int k = 0; k < Source::kLevels; ++k)
-            total += kSamples >> k;
+            total += length >> k;
         return total;
     }
-    /** The full-rate samples of all sources, as flashed. */
-    static constexpr std::size_t flashedBytes() { return (std::size_t) kCount * kSamples * sizeof(int16_t); }
-    /** Everything in PSRAM: the full-rate samples first (as flashed), then the copies of each source. */
-    static constexpr std::size_t bytes() { return (std::size_t) kCount * perSource() * sizeof(int16_t); }
-
-    /** Points the sources into `block` (bytes() long, the full-rate samples already in its first flashedBytes()) and
-     *  computes the lower copies. */
-    void build(int16_t* block)
+    /** The full-rate samples of the built-in sources, as flashed. */
+    static constexpr std::size_t flashedBytes() { return (std::size_t) layout::kBudget * sizeof(int16_t); }
+    /** Everything in PSRAM for any set of lengths within the budget: the full-rate samples first (as flashed), then
+     *  the copies of each source. A source's copies never take more than its share of the budget's, plus one sample
+     *  per copy for the halving's rounding. */
+    static constexpr std::size_t bytes()
     {
-        int16_t* copies = block + (std::size_t) kCount * kSamples;
+        return ((std::size_t) perSource(layout::kBudget) + (std::size_t) kCount * Source::kLevels) * sizeof(int16_t);
+    }
+    static constexpr Lengths fixedLengths()
+    {
+        Lengths l {};
+        l.fill(kSamples);
+        return l;
+    }
+
+    /** Points the sources into `block` (bytes() long, the full-rate samples already at its start, one source after the
+     *  other) and computes the lower copies. */
+    void build(int16_t* block, const Lengths& lengths = fixedLengths())
+    {
+        std::size_t full = 0;
+        for (const uint32_t n : lengths)
+            full += n;
+        int16_t* copies = block + full;
+        int16_t* at = block;
         for (int i = 0; i < kCount; ++i)
         {
             auto& s = sources[(std::size_t) i];
             s.rootNote = kRoot;
-            s.level[0] = block + (std::size_t) i * kSamples;
-            s.length[0] = kSamples;
+            s.level[0] = at;
+            s.length[0] = lengths[(std::size_t) i];
+            at += lengths[(std::size_t) i];
             for (int k = 1; k < Source::kLevels; ++k)
             {
-                s.length[(std::size_t) k] = kSamples >> k;
+                s.length[(std::size_t) k] = s.length[(std::size_t) k - 1] / 2;
                 decimate(s.level[(std::size_t) k - 1], s.length[(std::size_t) k - 1], copies);
                 s.level[(std::size_t) k] = copies;
                 copies += s.length[(std::size_t) k];

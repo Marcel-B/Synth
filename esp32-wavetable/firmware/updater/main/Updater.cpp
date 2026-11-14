@@ -1,7 +1,8 @@
 // The updater: holding WARP while switching the module on starts it (hw::startUpdater). It opens an open Wi-Fi
 // network "Tonwerk-Modul", serves a page at http://192.168.4.1 that takes a whole image (the same .bin flashed at 0x0
 // over USB), writes the instrument into the partition "factory" (and the data an image carries into "tables"), checks
-// it and starts it. The radio is on only here; the instruments never start it.
+// it and starts it. For Tonwerk Granular the page also reads the sources from "tables" and writes back a set with the
+// user's own sounds (dsp/GrainLayout.h). The radio is on only here; the instruments never start it.
 //
 // LEDs: blue blinking, waiting for an image; cyan, receiving; green, done (restarts into the instrument); red, the
 // image was refused (the page says why) or the instrument's slot holds nothing that starts. WARP pressed while
@@ -9,6 +10,7 @@
 
 #include "hw/Hardware.h"
 #include "hw/Pins.h"
+#include "dsp/GrainLayout.h"
 #include "hw/UpdateImage.h"
 
 #include "driver/gpio.h"
@@ -27,7 +29,9 @@
 #include "nvs_flash.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <cstdio>
 #include <cstring>
 
 namespace
@@ -54,13 +58,14 @@ std::atomic<int64_t> lastActivity { 0 };
 const esp_partition_t* factory = nullptr;
 const esp_partition_t* tables = nullptr;
 
-const char kPage[] = R"(<!doctype html>
+const char kPage[] = R"page(<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tonwerk Modul</title>
 <style>
 body{font-family:system-ui,sans-serif;background:#0b0b10;color:#e8e8e8;max-width:34rem;margin:2rem auto;padding:0 1rem}
 h1{color:#fcee0a;font-size:1.6rem}button{background:#fcee0a;color:#0b0b10;border:0;padding:.7rem 1.4rem;font-size:1rem}
 input{margin:1rem 0}progress{width:100%;height:1.2rem}p.en{color:#9a9aa8}
+h2{color:#00f0ff;font-size:1.2rem;margin-top:2.5rem}canvas{width:100%;height:6rem}td{padding:.2rem .4rem}td input{margin:0}
 </style></head><body>
 <h1>Tonwerk Modul</h1>
 <p>Image wählen, dieselbe .bin wie für USB (z.&nbsp;B. tonwerk-modul.bin, tonwerk-granular.bin), und hochladen. Danach startet das Modul neu.</p>
@@ -80,7 +85,137 @@ $('go').onclick=()=>{
   $('state').textContent='Lädt hoch und schreibt … / Uploading and writing …';
   x.send(f);
 };
-</script></body></html>)";
+</script>
+<h2>Eigene Klänge für Tonwerk Granular / Own sounds</h2>
+<p>Ersetzt Quellen von Tonwerk Granular durch eigene Aufnahmen (WAV, MP3, M4A …), zusammen bis 36&nbsp;s; für eine längere erst andere Quellen kürzen (Zahl neben dem Namen). Das Modul spielt sie bei 0&nbsp;V in ihrer Tonhöhe (C4). Die Werksklänge kommen mit tonwerk-granular.bin (oben) zurück.</p>
+<p class="en">Replaces Tonwerk Granular's sources with recordings of your own, up to 36 s together; shorten others first for a longer one. The factory sounds come back with tonwerk-granular.bin (above).</p>
+<button id="load">Quellen vom Modul lesen / Read sources</button>
+<p><progress id="lbar" max="1" value="0"></progress></p><p id="lstate"></p>
+<div id="editor" hidden>
+<table id="slots"></table>
+<p id="budget"></p>
+<p>Datei für die gewählte Quelle / File for the chosen source:<br><input type="file" id="audio" accept="audio/*,.wav,.mp3,.m4a,.aif,.aiff,.flac,.ogg"></p>
+<div id="cut" hidden>
+<canvas id="wave" width="1000" height="120"></canvas>
+<p>Start <input type="range" id="start" min="0" max="1" step="0.001" value="0"> <span id="startS"></span><br>
+Länge / length <input type="number" id="len" min="0.5" step="0.1" value="4"> s (max <span id="maxS"></span> s)<br>
+<label><input type="checkbox" id="norm" checked> Pegel angleichen / normalise</label></p>
+<button id="listen">Anhören / Listen</button> <button id="take">Übernehmen / Use</button>
+</div>
+<p><button id="write">Aufs Modul schreiben / Write to the module</button></p>
+<p><progress id="wbar" max="1" value="0"></progress></p><p id="wstate"></p>
+</div>
+<script>
+const RATE=48000,COUNT=9,BUDGET=9*192000,MIN=24000,HEAD=4096,MAGIC=0x52475754;
+const FACTORY=['Chor','Glas','Streicher','Zupfen','Orgel','Wind','Metall','Sinus','Rhythmus'];
+let slots=null,chosen=0,clip=null,ctx=null;
+const sec=n=>(n/RATE).toFixed(1);
+const used=except=>slots.reduce((a,s,i)=>a+(i===except?0:s.data.length),0);
+function audio(){if(!ctx)ctx=new (window.AudioContext||window.webkitAudioContext)();return ctx}
+function show(){
+  const t=$('slots');t.innerHTML='';
+  slots.forEach((s,i)=>{
+    const r=t.insertRow();
+    r.innerHTML='<td><input type="radio" name="slot"'+(i===chosen?' checked':'')+'></td><td>'+(i+1)+'</td><td></td><td></td>';
+    r.cells[2].textContent=s.name;
+    const n=document.createElement('input');n.type='number';n.min='0.5';n.step='0.1';n.style.width='4.5rem';
+    n.value=sec(s.data.length);
+    n.onchange=()=>{const k=Math.max(MIN,Math.min(s.data.length,Math.round(+n.value*RATE)));s.data=s.data.slice(0,k);show()};
+    r.cells[3].append(n,' s');
+    r.cells[0].firstChild.onchange=()=>{chosen=i;limits()};
+  });
+  $('budget').textContent='Belegt / used: '+sec(used(-1))+' von / of 36 s';
+  limits();
+}
+function limits(){
+  if(!clip)return;
+  const room=BUDGET-used(chosen);
+  const from=Math.round(+$('start').value*clip.length);
+  const max=Math.min(room,clip.length-from);
+  $('maxS').textContent=sec(max);
+  $('startS').textContent=sec(from)+' s';
+  $('len').max=(max/RATE).toFixed(1);
+  if(+$('len').value>max/RATE)$('len').value=(max/RATE).toFixed(1);
+  draw(from,Math.round(+$('len').value*RATE));
+}
+function draw(from,n){
+  const c=$('wave'),g=c.getContext('2d'),w=c.width,h=c.height,per=clip.length/w;
+  g.fillStyle='#16161e';g.fillRect(0,0,w,h);
+  g.fillStyle='rgba(252,238,10,.18)';g.fillRect(from/per,0,n/per,h);
+  g.fillStyle='#00f0ff';
+  for(let x=0;x<w;x++){let m=0;const a=Math.floor(x*per),b=Math.min(clip.length,Math.floor((x+1)*per));
+    for(let i=a;i<b;i++)m=Math.max(m,Math.abs(clip[i]));g.fillRect(x,h/2-m*h/2,1,Math.max(1,m*h))}
+}
+function selection(){
+  const from=Math.round(+$('start').value*clip.length);
+  const n=Math.max(MIN,Math.min(Math.round(+$('len').value*RATE),clip.length-from,BUDGET-used(chosen)));
+  const out=clip.slice(from,from+n);
+  let peak=0;for(const v of out)peak=Math.max(peak,Math.abs(v));
+  const gain=$('norm').checked&&peak>0?0.9/peak:1,fade=240;
+  for(let i=0;i<out.length;i++){let f=1;if(i<fade)f=i/fade;else if(i>=out.length-fade)f=(out.length-1-i)/fade;out[i]*=gain*f}
+  return out;
+}
+$('load').onclick=()=>{
+  const x=new XMLHttpRequest();x.open('GET','/sources');x.responseType='arraybuffer';
+  x.onprogress=e=>{const t=+x.getResponseHeader('X-Total');if(t)$('lbar').value=e.loaded/t};
+  x.onload=()=>{
+    if(x.status!==200){$('lstate').textContent=new TextDecoder().decode(x.response);return}
+    const b=x.response,v=new DataView(b);
+    if(v.getUint32(0,true)!==MAGIC){$('lstate').textContent='Unbekannte Daten. / Unknown data.';return}
+    const version=v.getUint32(4,true);let at=HEAD;slots=[];
+    for(let i=0;i<COUNT;i++){
+      const n=version===1?192000:v.getUint32(12+4*i,true);
+      let name=FACTORY[i];
+      if(version===2){const raw=new Uint8Array(b,48+32*i,32);const z=raw.indexOf(0);name=new TextDecoder().decode(raw.slice(0,z<0?32:z))||name}
+      slots.push({name,data:new Int16Array(b.slice(at,at+2*n))});at+=2*n;
+    }
+    $('lstate').textContent='Gelesen. Quelle wählen, Datei wählen, Ausschnitt übernehmen, dann schreiben. / Read.';
+    $('editor').hidden=false;show();
+  };
+  x.onerror=()=>{$('lstate').textContent='Verbindung abgebrochen. / Connection lost.'};
+  $('lstate').textContent='Liest … / Reading …';x.send();
+};
+$('audio').onchange=async()=>{
+  const f=$('audio').files[0];if(!f)return;
+  $('wstate').textContent='Dekodiert … / Decoding …';
+  try{
+    const d=await audio().decodeAudioData(await f.arrayBuffer());
+    const off=new OfflineAudioContext(1,Math.ceil(d.duration*RATE),RATE);
+    const src=off.createBufferSource();src.buffer=d;src.connect(off.destination);src.start();
+    clip=(await off.startRendering()).getChannelData(0);
+    clip.fileName=f.name.replace(/\.[^.]*$/,'');
+    $('cut').hidden=false;$('start').value=0;$('len').value=Math.min(4,clip.length/RATE).toFixed(1);
+    $('wstate').textContent='';limits();
+  }catch(e){$('wstate').textContent='Die Datei lässt sich nicht lesen. / Cannot decode the file.'}
+};
+$('start').oninput=limits;$('len').oninput=limits;
+$('wave').onclick=e=>{const r=$('wave').getBoundingClientRect();$('start').value=(e.clientX-r.left)/r.width;limits()};
+$('listen').onclick=()=>{
+  const s=selection(),a=audio(),b=a.createBuffer(1,s.length,RATE);b.copyToChannel(s,0);
+  const p=a.createBufferSource();p.buffer=b;p.connect(a.destination);p.start();
+};
+$('take').onclick=()=>{
+  const s=selection(),d=new Int16Array(s.length);
+  for(let i=0;i<s.length;i++)d[i]=Math.max(-32767,Math.min(32767,Math.round(s[i]*32767)));
+  slots[chosen]={name:clip.fileName,data:d};show();
+};
+$('write').onclick=()=>{
+  const total=used(-1),block=new Uint8Array(HEAD+2*total).fill(0xff,0,HEAD),v=new DataView(block.buffer);
+  v.setUint32(0,MAGIC,true);v.setUint32(4,2,true);v.setUint32(8,2*total,true);
+  let at=HEAD;const enc=new TextEncoder();
+  slots.forEach((s,i)=>{
+    v.setUint32(12+4*i,s.data.length,true);
+    const name=new Uint8Array(32);name.set(enc.encode(s.name).slice(0,31));block.set(name,48+32*i);
+    block.set(new Uint8Array(s.data.buffer,s.data.byteOffset,2*s.data.length),at);at+=2*s.data.length;
+  });
+  const x=new XMLHttpRequest();x.open('POST','/sources');
+  x.upload.onprogress=e=>{if(e.lengthComputable)$('wbar').value=e.loaded/e.total};
+  x.onload=()=>{$('wstate').textContent=x.responseText};
+  x.onerror=()=>{$('wstate').textContent='Verbindung abgebrochen. / Connection lost.'};
+  $('wstate').textContent='Schreibt … / Writing …';x.send(block);
+};
+</script>
+</body></html>)page";
 
 /** Writes a whole image as it streams in, by twm::update::spanAt. */
 class Writer
@@ -273,6 +408,129 @@ esp_err_t receiveImage(httpd_req_t* req)
     return httpd_resp_send(req, done, HTTPD_RESP_USE_STRLEN);
 }
 
+namespace layout = twm::grain::layout;
+
+/** The header sector of the partition "tables", or false when it holds no Tonwerk Granular sources. */
+bool currentSources(uint8_t* sector, layout::Header& header)
+{
+    if (esp_partition_read(tables, 0, sector, layout::kHeaderBytes) != ESP_OK)
+        return false;
+    header = layout::readHeader(sector);
+    std::array<uint32_t, layout::kCount> lengths {};
+    return layout::lengthsOf(header, lengths) && layout::kHeaderBytes + header.bytes <= tables->size;
+}
+
+const char kNotGranular[] = "Auf dem Modul liegen keine Klänge von Tonwerk Granular: erst tonwerk-granular.bin "
+                            "hochladen. / No Tonwerk Granular sources on the module: upload tonwerk-granular.bin first.";
+
+/** The sources as they lie in the flash (header sector, then the samples), for the page to edit. */
+esp_err_t sendSources(httpd_req_t* req)
+{
+    lastActivity = esp_timer_get_time();
+    static uint8_t buffer[layout::kHeaderBytes];
+    layout::Header header;
+    if (! currentSources(buffer, header))
+    {
+        httpd_resp_set_status(req, "404 Not Found");
+        httpd_resp_set_type(req, "text/plain; charset=utf-8");
+        return httpd_resp_send(req, kNotGranular, HTTPD_RESP_USE_STRLEN);
+    }
+    const uint32_t total = layout::kHeaderBytes + header.bytes;
+    char length[16];
+    std::snprintf(length, sizeof length, "%u", (unsigned) total);
+    httpd_resp_set_type(req, "application/octet-stream");
+    // Chunked, so the page learns the size from here for its progress bar.
+    httpd_resp_set_hdr(req, "X-Total", length);
+    for (uint32_t at = 0; at < total; at += sizeof buffer)
+    {
+        const uint32_t n = std::min<uint32_t>(sizeof buffer, total - at);
+        if (esp_partition_read(tables, at, buffer, n) != ESP_OK || httpd_resp_send_chunk(req, (const char*) buffer, n) != ESP_OK)
+            return ESP_FAIL;
+        lastActivity = esp_timer_get_time();
+    }
+    return httpd_resp_send_chunk(req, nullptr, 0);
+}
+
+/** A whole new set of sources from the page: checked by its header, written behind it, the header written last so a
+ *  write cut short leaves no sources (the instrument then blinks red until the next upload) rather than wrong ones. */
+esp_err_t receiveSources(httpd_req_t* req)
+{
+    lastActivity = esp_timer_get_time();
+    static uint8_t sector[layout::kHeaderBytes];
+    static uint8_t buffer[4096];
+    layout::Header current;
+    if (! currentSources(buffer, current))
+        return refuse(req, kNotGranular);
+    std::size_t remaining = req->content_len;
+    if (remaining < layout::kHeaderBytes)
+        return refuse(req, "Zu wenig Daten. / Too little data.");
+    phase = Phase::receiving;
+
+    int timeouts = 0;
+    auto read = [&](uint8_t* into, std::size_t want) -> int {
+        for (;;)
+        {
+            const int got = httpd_req_recv(req, (char*) into, want);
+            if (got == HTTPD_SOCK_ERR_TIMEOUT && ++timeouts < 5)
+                continue;
+            timeouts = 0;
+            lastActivity = esp_timer_get_time();
+            return got;
+        }
+    };
+    for (std::size_t have = 0; have < layout::kHeaderBytes;)
+    {
+        const int got = read(sector + have, layout::kHeaderBytes - have);
+        if (got <= 0)
+            return refuse(req, "Verbindung abgebrochen, bitte noch einmal. / Connection lost, please try again.");
+        have += (std::size_t) got;
+    }
+    remaining -= layout::kHeaderBytes;
+    const layout::Header header = layout::readHeader(sector);
+    std::array<uint32_t, layout::kCount> lengths {};
+    if (! layout::lengthsOf(header, lengths) || header.bytes != remaining
+        || layout::kHeaderBytes + header.bytes > tables->size)
+        return refuse(req, "Die Klänge passen nicht (zusammen höchstens 36 s, jeder mindestens 0,5 s). / The sounds "
+                           "do not fit (36 s together at most, 0.5 s each at least).");
+
+    // The old header goes first, then the flash is erased a block at a time just ahead of the bytes, as for an image,
+    // so no single erase holds the upload back for long.
+    uint32_t erased = layout::kHeaderBytes;
+    if (esp_partition_erase_range(tables, 0, erased) != ESP_OK)
+        return refuse(req, "Löschen im Flash fehlgeschlagen. / Erasing the flash failed.");
+    uint32_t at = layout::kHeaderBytes;
+    while (remaining > 0)
+    {
+        const int got = read(buffer, std::min(remaining, sizeof buffer));
+        if (got <= 0)
+            return refuse(req, "Verbindung abgebrochen, bitte noch einmal. / Connection lost, please try again.");
+        const uint32_t end = at + (uint32_t) got;
+        if (end > erased)
+        {
+            const uint32_t to = std::min<uint32_t>((uint32_t) tables->size, (end + kBlock - 1) / kBlock * kBlock);
+            if (esp_partition_erase_range(tables, erased, to - erased) != ESP_OK)
+                return refuse(req, "Löschen im Flash fehlgeschlagen. / Erasing the flash failed.");
+            erased = to;
+        }
+        if (esp_partition_write(tables, at, buffer, (std::size_t) got) != ESP_OK)
+            return refuse(req, "Schreiben in den Flash fehlgeschlagen. / Writing the flash failed.");
+        at += (uint32_t) got;
+        remaining -= (std::size_t) got;
+    }
+    if (esp_partition_write(tables, 0, sector, sizeof sector) != ESP_OK)
+        return refuse(req, "Schreiben in den Flash fehlgeschlagen. / Writing the flash failed.");
+    if (esp_ota_set_boot_partition(factory) != ESP_OK)
+        return refuse(req, "Kein Instrument auf dem Modul: tonwerk-granular.bin hochladen. / No instrument on the "
+                           "module: upload tonwerk-granular.bin.");
+
+    ESP_LOGI(kTag, "own sources written (%u bytes); restarting into the instrument", (unsigned) header.bytes);
+    phase = Phase::done;
+    const char done[] = "Fertig, das Modul startet mit den neuen Klängen. / Done, the module restarts with the new "
+                        "sounds.";
+    httpd_resp_set_type(req, "text/plain; charset=utf-8");
+    return httpd_resp_send(req, done, HTTPD_RESP_USE_STRLEN);
+}
+
 void startNetwork()
 {
     esp_err_t result = nvs_flash_init();
@@ -318,6 +576,16 @@ void startNetwork()
     update.method = HTTP_POST;
     update.handler = receiveImage;
     ESP_ERROR_CHECK(httpd_register_uri_handler(handle, &update));
+    httpd_uri_t readSources {};
+    readSources.uri = "/sources";
+    readSources.method = HTTP_GET;
+    readSources.handler = sendSources;
+    ESP_ERROR_CHECK(httpd_register_uri_handler(handle, &readSources));
+    httpd_uri_t writeSources {};
+    writeSources.uri = "/sources";
+    writeSources.method = HTTP_POST;
+    writeSources.handler = receiveSources;
+    ESP_ERROR_CHECK(httpd_register_uri_handler(handle, &writeSources));
     ESP_LOGI(kTag, "network \"%s\" open, page at http://192.168.4.1", kNetwork);
 }
 
