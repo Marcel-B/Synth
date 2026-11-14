@@ -38,7 +38,15 @@ constexpr char kNetwork[] = "Tonwerk-Modul";
 constexpr uint32_t kBlock = 0x10000;
 /** Nobody uploads for this long: back to the instrument. */
 constexpr int64_t kIdleMicros = 15LL * 60 * 1000000;
+/** Transmit power in quarter dBm. The computer stands next to the module, and the ESP32's full 20 dBm draws current
+ *  peaks of a few hundred mA that the instruments (which never use the radio) never ask of the module's 5 V and the
+ *  DevKit's regulator; a dip there restarts the updater and the network drops. 11 dBm reaches across a room. */
+constexpr int8_t kTxPower = 44;
+/** After a restart by a voltage dip: 2 dBm, still enough for a computer a metre away. */
+constexpr int8_t kTxPowerLow = 8;
 
+/** Why this start happened; a restart by a voltage dip, a crash or a watchdog is said on the page. */
+esp_reset_reason_t startReason = ESP_RST_UNKNOWN;
 enum class Phase { waiting, receiving, done, failed };
 std::atomic<Phase> phase { Phase::waiting };
 std::atomic<int64_t> lastActivity { 0 };
@@ -57,7 +65,7 @@ input{margin:1rem 0}progress{width:100%;height:1.2rem}p.en{color:#9a9aa8}
 <h1>Tonwerk Modul</h1>
 <p>Image wählen, dieselbe .bin wie für USB (z.&nbsp;B. tonwerk-modul.bin, tonwerk-granular.bin), und hochladen. Danach startet das Modul neu.</p>
 <p class="en">Choose an image, the same .bin as for USB, and upload it. The module restarts afterwards.</p>
-<input type="file" id="file" accept=".bin"><br><button id="go">Hochladen / Upload</button>
+%NOTE%<input type="file" id="file" accept=".bin"><br><button id="go">Hochladen / Upload</button>
 <p><progress id="bar" max="1" value="0"></progress></p><p id="state"></p>
 <script>
 const $=id=>document.getElementById(id);
@@ -188,11 +196,35 @@ private:
     uint32_t appErased = 0, tablesErased = 0;
 };
 
+/** What the page says about the last restart, empty after a plain power-on. */
+const char* restartNote()
+{
+    switch (startReason)
+    {
+        case ESP_RST_BROWNOUT:
+            return "<p style=\"color:#ff5050\">Das Modul ist wegen eines Spannungseinbruchs neu gestartet (das WLAN "
+                   "zieht mehr Strom als das Instrument); es sendet jetzt mit wenig Leistung. Bleibt die Verbindung "
+                   "nicht, das Modul zum Update über USB versorgen. / The module restarted after a voltage dip; it now "
+                   "transmits at low power. If the connection still drops, power it over USB for the update.</p>";
+        case ESP_RST_PANIC:
+        case ESP_RST_INT_WDT:
+        case ESP_RST_TASK_WDT:
+        case ESP_RST_WDT:
+            return "<p style=\"color:#ff5050\">Der Updater ist abgestürzt und neu gestartet. / The updater crashed "
+                   "and restarted.</p>";
+        default: return "";
+    }
+}
+
 esp_err_t sendPage(httpd_req_t* req)
 {
     lastActivity = esp_timer_get_time();
     httpd_resp_set_type(req, "text/html; charset=utf-8");
-    return httpd_resp_send(req, kPage, HTTPD_RESP_USE_STRLEN);
+    const char* note = std::strstr(kPage, "%NOTE%");
+    httpd_resp_send_chunk(req, kPage, note - kPage);
+    httpd_resp_send_chunk(req, restartNote(), HTTPD_RESP_USE_STRLEN);
+    httpd_resp_send_chunk(req, note + 6, HTTPD_RESP_USE_STRLEN);
+    return httpd_resp_send_chunk(req, nullptr, 0);
 }
 
 esp_err_t refuse(httpd_req_t* req, const char* why)
@@ -266,6 +298,8 @@ void startNetwork()
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &config));
     ESP_ERROR_CHECK(esp_wifi_start());
+    const int8_t power = startReason == ESP_RST_BROWNOUT ? kTxPowerLow : kTxPower;
+    ESP_ERROR_CHECK(esp_wifi_set_max_tx_power(power));
 
     httpd_config_t server = HTTPD_DEFAULT_CONFIG();
     // Room for the writer and its two copies of the partition table.
@@ -302,6 +336,8 @@ bool warpPressed() { return gpio_get_level(pins::kWarpButton) == 0; }
 
 extern "C" void app_main()
 {
+    startReason = esp_reset_reason();
+    ESP_LOGI(kTag, "start, reason %d", (int) startReason);
     hw::startLeds();
     hw::showLeds({ 0, 80, 255 }, { 0, 80, 255 });
     gpio_config_t buttons {};
