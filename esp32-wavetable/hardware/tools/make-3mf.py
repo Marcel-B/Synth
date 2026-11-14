@@ -23,11 +23,11 @@ def read_stl(path):
             if len(set(cur)) == 3: tris.append(tuple(cur))
             cur = []
     return verts, tris
-def mesh(oid, name, path):
+def mesh(oid, name, path, material=""):
     v, t = read_stl(path)
     vs = "".join(f'<vertex x="{a}" y="{b}" z="{c}"/>' for a, b, c in v)
     ts = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in t)
-    return f'<object id="{oid}" name="{name}" type="model"><mesh><vertices>{vs}</vertices><triangles>{ts}</triangles></mesh></object>'
+    return f'<object id="{oid}" name="{name}" type="model"{material}><mesh><vertices>{vs}</vertices><triangles>{ts}</triangles></mesh></object>'
 HEAD = ('<?xml version="1.0" encoding="UTF-8"?>'
         '<model unit="millimeter" xml:lang="de-DE" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">')
 if sys.argv[1] == "--knoepfe":
@@ -40,10 +40,18 @@ if sys.argv[1] == "--knoepfe":
     model = (HEAD + '<resources>' + mesh(1, "Körper", body) + mesh(2, "Zeiger", marks) + objects +
              '</resources><build>' + items + '</build></model>')
 else:
-    # plate.stl text.stl out.3mf [name], the name "Tonwerk Wavetable" unless another firmware's panel is given
+    # plate.stl text.stl out.3mf [name [plate colour text colour]], the name "Tonwerk Wavetable" unless another
+    # firmware's panel is given; with colours (#rrggbb) both parts carry them, so the slicer shows the print's colours.
     plate, text, out = sys.argv[1:4]
     name = sys.argv[4] if len(sys.argv) > 4 else "Tonwerk Wavetable"
-    model = (HEAD + '<resources>' + mesh(1, "Platte", plate) + mesh(2, "Schrift", text) +
+    colours = sys.argv[5:7] if len(sys.argv) > 6 else None
+    materials = ""
+    if colours:
+        materials = ('<basematerials id="10">' + "".join(
+            f'<base name="{n}" displaycolor="{c.upper()}FF"/>' for n, c in zip(("Platte", "Schrift"), colours)) +
+            '</basematerials>')
+    tag = (lambda i: f' pid="10" pindex="{i}"') if colours else (lambda i: "")
+    model = (HEAD + '<resources>' + materials + mesh(1, "Platte", plate, tag(0)) + mesh(2, "Schrift", text, tag(1)) +
              f'<object id="3" name="{name} Frontplatte" type="model"><components>'
              '<component objectid="1"/><component objectid="2"/></components></object>'
              '</resources><build><item objectid="3" transform="1 0 0 0 1 0 0 0 1 70 70 0"/></build></model>')
