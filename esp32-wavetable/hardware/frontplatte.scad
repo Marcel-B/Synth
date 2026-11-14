@@ -151,8 +151,9 @@ if (mode == "2d") {
         holes();
     }
 } else if (mode == "vorschau") {
-    // Für Bilder, in den Farben des Drucks: Wavetable schwarz mit gelber Schrift, die anderen umgekehrt.
-    color(physical || pd || granular || additiv ? "#fcee0a" : "#141414") difference() {
+    // Für Bilder, in den Farben des Drucks: Wavetable schwarz mit gelber Schrift, Granular magenta mit schwarzer, die
+    // anderen gelb mit schwarzer.
+    color(granular ? "#ec008c" : physical || pd || additiv ? "#fcee0a" : "#141414") difference() {
         cube([width, height, thickness]);
         translate([0, 0, -1]) linear_extrude(thickness + 2) holes();
     }
