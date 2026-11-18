@@ -1,6 +1,7 @@
 #include "Catalogue.h"
 #include "Language.h"
 #include "NightCity.h"
+#include "Platform.h"
 #include "ScopeBuffer.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -126,9 +127,26 @@ private:
 
     void fit()
     {
-        if (editor == nullptr || editor->getWidth() <= 0 || editor->getHeight() <= 0 || getWidth() <= 0
+        if (fitting || editor == nullptr || editor->getWidth() <= 0 || editor->getHeight() <= 0 || getWidth() <= 0
             || getHeight() <= 0)
             return;
+        const juce::ScopedValueSetter<bool> guard(fitting, true);
+        // An editor with pages for small screens shows them unscaled where its full self would get too small.
+        if (auto* host = dynamic_cast<tonwerkui::HostFrame*>(editor.get()); host != nullptr && host->hasCompact())
+        {
+            const auto full = host->fullEditorSize();
+            const bool compact = tonwerkui::HostFrame::tooSmallAt(
+                std::min((float) getWidth() / (float) full.x, (float) getHeight() / (float) full.y));
+            host->setCompact(compact);
+            if (compact)
+            {
+                window.setBounds(getLocalBounds());
+                editor->setTransform({});
+                editor->setBounds(window.getLocalBounds());
+                return;
+            }
+            editor->setSize(full.x, full.y);
+        }
         const auto w = (float) editor->getWidth();
         const auto h = (float) shownHeight();
         const float scale = std::min((float) getWidth() / w, (float) getHeight() / h);
@@ -141,6 +159,7 @@ private:
 
     juce::Component window;
     std::unique_ptr<juce::AudioProcessorEditor> editor;
+    bool fitting = false;
 };
 
 /** The instruments as large tiles over the app, for a finger rather than a drop-down's narrow lines. */
@@ -353,10 +372,21 @@ public:
         showKeyboard.setClickingTogglesState(true);
         showKeyboard.setToggleState(settings->getBoolValue("keyboard", true), juce::dontSendNotification);
         showKeyboard.onClick = [this] {
-            settings->setValue("keyboard", showKeyboard.getToggleState());
+            if (phone)
+                phoneStrip = showKeyboard.getToggleState() ? Strip::keys : Strip::none;
+            else
+                settings->setValue("keyboard", showKeyboard.getToggleState());
             resized();
         };
         addAndMakeVisible(showKeyboard);
+
+        // On a phone the strip under the editor shows the keys, the scope or nothing, chosen in a rail at the side.
+        showScope.setClickingTogglesState(true);
+        showScope.onClick = [this] {
+            phoneStrip = showScope.getToggleState() ? Strip::scope : Strip::none;
+            resized();
+        };
+        addChildComponent(showScope);
 
         input.onClick = [this] { chooseInput(); };
         addChildComponent(input);
@@ -503,12 +533,22 @@ public:
         title = bar.removeFromLeft(150);
         picker.setBounds(bar.removeFromLeft(280));
         bar.removeFromLeft(tonwerkui::kGap);
-        if (showKeyboard.isVisible())
+        // A phone in landscape: too low for keys and scope side by side under an editor.
+        phone = area.getHeight() < 520;
+        if (showKeyboard.isVisible() && ! phone)
             showKeyboard.setBounds(bar.removeFromLeft(90));
         if (input.isVisible())
             input.setBounds(bar.removeFromLeft(110));
         if (bluetooth.isVisible())
             bluetooth.setBounds(bar.removeFromRight(150));
+
+        showScope.setVisible(phone && showKeyboard.isVisible());
+        if (phone)
+        {
+            layoutPhone(area);
+            return;
+        }
+        showKeyboard.setToggleState(settings->getBoolValue("keyboard", true), juce::dontSendNotification);
 
         const bool keysShown = showKeyboard.isVisible() && showKeyboard.getToggleState();
         for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown, &scope })
@@ -538,6 +578,48 @@ public:
     }
 
 private:
+    enum class Strip { none, keys, scope };
+
+    /**
+     * A phone's screen: a rail on the right under the thumb switches the strip below the editor between the keys,
+     * the oscilloscope and nothing (the start: on a phone a MIDI keyboard plays, and the knobs need the room).
+     */
+    void layoutPhone(juce::Rectangle<int> area)
+    {
+        const bool plays = showKeyboard.isVisible();
+        const auto strip = plays ? phoneStrip : Strip::none;
+        showKeyboard.setToggleState(strip == Strip::keys, juce::dontSendNotification);
+        showScope.setToggleState(strip == Strip::scope, juce::dontSendNotification);
+        if (plays)
+        {
+            auto rail = area.removeFromRight(kRail).withTrimmedLeft(tonwerkui::kGap).withTrimmedBottom(tonwerkui::kGap);
+            showKeyboard.setBounds(rail.removeFromTop(rail.getHeight() / 2).reduced(0, 2));
+            showScope.setBounds(rail.reduced(0, 2));
+        }
+        for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown })
+            component->setVisible(strip == Strip::keys);
+        scope.setVisible(strip == Strip::scope);
+        if (strip != Strip::none)
+        {
+            auto below = area.removeFromBottom(kPhoneStrip);
+            area.removeFromBottom(tonwerkui::kGap);
+            if (strip == Strip::scope)
+                scope.setBounds(below);
+            else
+            {
+                auto octave = below.removeFromLeft(56).reduced(tonwerkui::kGap, 0);
+                octaveUp.setBounds(octave.removeFromTop(octave.getHeight() * 2 / 5));
+                octaveDown.setBounds(octave.removeFromBottom(octave.getHeight() * 2 / 3));
+                octaveLabel = octave;
+                keyboard.setBounds(below);
+                keyboard.setKeyWidth((float) below.getWidth() / 15.0f);
+                showKeys();
+            }
+        }
+        frame.setBounds(area);
+        repaint();
+    }
+
     void choose(int index)
     {
         if (index < 0 || index >= (int) catalogue().size() || index == current)
@@ -633,6 +715,7 @@ private:
         shownLanguage = tonwerkui::language();
         showKeyboard.setButtonText(tonwerkui::tr("Tasten"));
         input.setButtonText(tonwerkui::tr("Eingang"));
+        showScope.setButtonText(tonwerkui::tr("Anzeige"));
         scope.setCaption(tonwerkui::tr("Oszilloskop"));
         scope.repaint();
     }
@@ -670,7 +753,11 @@ private:
     bool inputsOpen = false;
 
     juce::Rectangle<int> title, octaveLabel;
-    juce::TextButton picker, showKeyboard, input;
+    static constexpr int kRail = 62;
+    static constexpr int kPhoneStrip = 100;
+    bool phone = false;
+    Strip phoneStrip = Strip::none;
+    juce::TextButton picker, showKeyboard, showScope, input;
     juce::TextButton bluetooth;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard { keys, juce::MidiKeyboardComponent::horizontalKeyboard };

@@ -255,6 +255,72 @@ void AlgorithmSection::resized()
     view.setBounds(displayArea().reduced(0, 4));
 }
 
+std::vector<tonwerkui::CompactPage> analogPages()
+{
+    using Row = Section::Row;
+    auto oscillator = [](const juce::String& p, const char* name) {
+        return tonwerkui::CompactPage::Panel { name, Row { { p + ".wave", "Welle", 2 },
+                                                           { p + ".octave", "Oktave" },
+                                                           { p + ".detune", "Verstimm." },
+                                                           { p + ".level", "Pegel" },
+                                                           { p + ".width", "Pulsbreite" },
+                                                           { p + ".pwm", "PWM LFO" },
+                                                           { p + ".pwmLfo", "LFO" },
+                                                           { p + ".pwmAmpEnv", "PWM Amp" },
+                                                           { p + ".pwmFilterEnv", "PWM Filt." } } };
+    };
+    auto envelope = [](const char* title, const juce::String& p) {
+        return tonwerkui::CompactPage::Panel { utf8(title), Row { { p + ".attack", "Attack" },
+                                                                  { p + ".decay", "Decay" },
+                                                                  { p + ".sustain", "Sustain" },
+                                                                  { p + ".release", "Release" } } };
+    };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "filter.cutoff", "Cutoff" },
+                             { "filter.resonance", "Resonanz" },
+                             { "filter.envAmount", utf8("Hüllkurve") },
+                             { "filterEnv.decay", "Decay" },
+                             { "ampEnv.attack", "Attack" },
+                             { "ampEnv.release", "Release" },
+                             { "lfo.depth", "LFO" },
+                             { "fx.delay.mix", "Delay" },
+                             { "fx.reverb.mix", "Hall" },
+                             { "volume", utf8("Lautstärke") } } } } },
+        { "Oszillatoren", { oscillator("osc1", "Oszillator 1"), oscillator("osc2", "Oszillator 2") } },
+        { "Filter",
+          { { "Filter", Row { { "filter.type", "Typ", 2 },
+                              { "filter.cutoff", "Cutoff" },
+                              { "filter.resonance", "Resonanz" },
+                              { "filter.envAmount", utf8("Hüllkurve") },
+                              { "filter.keyTrack", "Keytrack" } } },
+            { "Wavefolder", Row { { "fold.amount", "Menge" }, { "fold.symmetry", "Symmetrie" }, { "fold.env", utf8("Hüllkurve") } } },
+            { "Mischung", Row { { "noise", "Rauschen" }, { "volume", utf8("Lautstärke") } } } } },
+        { utf8("Hüllkurven"), { envelope("FILTER-HÜLLKURVE", "filterEnv"), envelope("LAUTSTÄRKE-HÜLLKURVE", "ampEnv") } },
+        { "Bewegung",
+          { { "LFO", Row { { "lfo.wave", "Welle", 2 },
+                           { "lfo.sync", "Sync" },
+                           { "lfo.rate", "Rate", 1, "lfo.sync", false },
+                           { "lfo.division", "Notenwert", 2, "lfo.sync", true },
+                           { "lfo.target", "Ziel", 2 },
+                           { "lfo.depth", "Tiefe" } } },
+            { "Sample & Hold", Row { { "sh.sync", "Sync" },
+                                     { "sh.rate", "Rate", 1, "sh.sync", false },
+                                     { "sh.division", "Notenwert", 2, "sh.sync", true },
+                                     { "sh.filter", "Filter" },
+                                     { "sh.pitch", utf8("Tonhöhe") } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fx.delay.mix", "Delay" },
+                               { "fx.delay.sync", "Sync" },
+                               { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
+                               { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true },
+                               { "fx.delay.feedback", "Feedback" },
+                               { "fx.delay.tone", "Ton" },
+                               { "fx.reverb.mix", "Hall" },
+                               { "fx.reverb.decay", utf8("Länge") } } } } },
+    };
+}
+
 template <typename SectionType, typename... Args>
 SectionType& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, Args&&... args)
 {

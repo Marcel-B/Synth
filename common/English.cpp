@@ -1008,6 +1008,10 @@ const std::vector<Entry>& entries()
         // The app Tonwerk.
         { "Eingänge (höchstens zwei)", "Inputs (two at most)" },
         { "Oszilloskop", "Oscilloscope" },
+        // The editors' pages on a phone.
+        { "Haupt", "Main" },
+        { "Oszillatoren", "Oscillators" },
+        { "Hüllkurven", "Envelopes" },
     };
     return list;
 }
