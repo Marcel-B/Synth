@@ -2,6 +2,7 @@
 
 #include "NeuroEngine.h"
 #include "EffectsChain.h"
+#include "NightCity.h"
 #include "ScopeBuffer.h"
 
 #include "MidiLearn.h"
@@ -19,7 +20,7 @@ namespace tonwerkneuro
  * and hall and the master level. Parameter ids are part of saved Logic projects: never rename or remove one, and
  * append new ones with the version hint of the release they first appear in.
  */
-class NeuroProcessor : public juce::AudioProcessor, private juce::Timer
+class NeuroProcessor : public juce::AudioProcessor, public tonwerkui::ScopeNotes, private juce::Timer
 {
 public:
     NeuroProcessor();
@@ -57,6 +58,8 @@ public:
     bool roomPlaying() const { return effects.roomPlaying(); }
     /** A MIDI note's name as Logic writes it (C3 = 60). */
     static juce::String noteName(int note);
+    /** The note that sounds and what goes with it, for the scope's caption (the editor's, or the app's). */
+    juce::String scopeNote() const override;
 
     juce::AudioProcessorValueTreeState state;
     /** CC to knob, learnt in the editor (right click on a knob), kept in the state. */

@@ -587,6 +587,13 @@ public:
         octaveUp.onClick = [this] { shiftOctave(1); };
         addAndMakeVisible(octaveUp);
         addAndMakeVisible(scope);
+        // Asked with every frame: its name in the current language and, where the instrument says it, the note.
+        scope.setCaptionSource([this] {
+            juce::String caption = tonwerkui::tr("Oszilloskop");
+            if (auto* notes = dynamic_cast<tonwerkui::ScopeNotes*>(processor.get()))
+                caption << notes->scopeNote();
+            return caption;
+        });
         label();
 
         addAndMakeVisible(frame);
@@ -974,7 +981,6 @@ private:
         shownLanguage = tonwerkui::language();
         showKeyboard.setButtonText(tonwerkui::tr("Tasten"));
         input.setButtonText(tonwerkui::tr("Eingang"));
-        scope.setCaption(tonwerkui::tr("Oszilloskop"));
         scope.repaint();
     }
 
@@ -1064,7 +1070,15 @@ public:
     const juce::String getApplicationVersion() override { return JUCE_APPLICATION_VERSION_STRING; }
     bool moreThanOneInstanceAllowed() override { return false; }
 
-    void initialise(const juce::String&) override { window = std::make_unique<MainWindow>(); }
+    void initialise(const juce::String&) override
+    {
+#if JUCE_IOS
+        // The scope beside the keys is every instrument's: an editor with its own above the knobs showed two. On
+        // the Mac the app stays as it was for now (Marcel, 2026-11-19).
+        tonwerkui::editorsHaveScope() = false;
+#endif
+        window = std::make_unique<MainWindow>();
+    }
     void shutdown() override { window.reset(); }
     void suspended() override
     {

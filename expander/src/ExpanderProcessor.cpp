@@ -142,6 +142,17 @@ juce::String ExpanderProcessor::noteName(int note)
     return juce::String(names[((note % 12) + 12) % 12]) + juce::String(note / 12 - 2);
 }
 
+juce::String ExpanderProcessor::scopeNote() const
+{
+    const int note = shownNote.load();
+    if (note < 0)
+        return {};
+    const auto dot = juce::String::fromUTF8("  \xc2\xb7  ");
+    const int count = shownVoices.load();
+    return dot + noteName(note) + dot + juce::String(count) + " "
+           + (count == 1 ? tonwerkui::tr("STIMME") : tonwerkui::tr("STIMMEN"));
+}
+
 Layout ExpanderProcessor::createParameterLayout()
 {
     const Settings d;

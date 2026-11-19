@@ -385,6 +385,45 @@ public:
             }
         }
 
+        beginTest("Inside the iPad app the editor leaves its scope to the app's");
+        {
+            BassProcessor p;
+            std::unique_ptr<juce::AudioProcessorEditor> with(p.createEditor());
+            auto scopes = [](juce::Component* editor) {
+                int count = 0;
+                for (auto* child : editor->getChildren())
+                    count += dynamic_cast<tonwerkui::ScopeView*>(child) != nullptr && child->isVisible() ? 1 : 0;
+                return count;
+            };
+            expectEquals(scopes(tonwerkui::innerEditor<BassEditor>(with.get())), 1);
+            tonwerkui::editorsHaveScope() = false;
+            std::unique_ptr<juce::AudioProcessorEditor> without(p.createEditor());
+            tonwerkui::editorsHaveScope() = true;
+            auto* inner = tonwerkui::innerEditor<BassEditor>(without.get());
+            expectEquals(scopes(inner), 0);
+            // The room goes back to the knobs: the editor is lower, and nothing is left where the scope was.
+            expectLessThan(without->getHeight(), with->getHeight() - 100);
+            expectEquals(without->getWidth(), with->getWidth());
+            for (auto* child : inner->getChildren())
+                if (child->isVisible())
+                    expect(inner->getLocalBounds().contains(child->getBounds()));
+            // What the scope's caption says of the note comes from the processor, so the app's scope can say it.
+            expect(p.scopeNote().isEmpty());
+            p.shownNote = 36;
+            p.shownAccent = true;
+            p.shownSlide = true;
+            expect(p.scopeNote().endsWith("C1  ACCENT  SLIDE"), p.scopeNote());
+            const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+            if (dir.isNotEmpty())
+            {
+                const auto image = without->createComponentSnapshot(without->getLocalBounds(), true, 1.0f);
+                juce::File file = juce::File(dir).getChildFile("bass-ipad.png");
+                file.deleteFile();
+                juce::FileOutputStream stream(file);
+                juce::PNGImageFormat().writeImageToStream(image, stream);
+            }
+        }
+
         beginTest("Pages for a phone's screen, the knobs as large as Tonwerk Analog's");
         {
             BassProcessor p;

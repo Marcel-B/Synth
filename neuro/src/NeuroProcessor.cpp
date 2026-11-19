@@ -115,6 +115,15 @@ juce::String NeuroProcessor::noteName(int note)
     return juce::String(names[((note % 12) + 12) % 12]) + juce::String(note / 12 - 2);
 }
 
+juce::String NeuroProcessor::scopeNote() const
+{
+    const int note = shownNote.load();
+    if (note < 0)
+        return {};
+    const auto dot = juce::String::fromUTF8("  \xc2\xb7  ");
+    return dot + noteName(note) + dot + "CUTOFF " + juce::String(juce::roundToInt(shownCutoff.load())) + " Hz";
+}
+
 Layout NeuroProcessor::createParameterLayout()
 {
     const Settings d;

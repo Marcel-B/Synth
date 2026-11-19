@@ -412,6 +412,18 @@ inline bool& soundFilesInHeader()
     return shown;
 }
 
+/**
+ * Whether an editor draws its own oscilloscope. Not inside the iPad app, which has one beside its keys for every
+ * instrument: editors with theirs above the knobs (Tonwerk Bass, Expander, Neuro) showed two there, since the app
+ * can only cut an editor off above its keyboard. The app clears this before it builds an editor; an AUv3 in a host
+ * is its own process and keeps its scope.
+ */
+inline bool& editorsHaveScope()
+{
+    static bool shown = true;
+    return shown;
+}
+
 /** Whether the chooser came back without a file. */
 inline bool nothingChosen(const juce::FileChooser& chooser) { return chooser.getURLResult().isEmpty(); }
 

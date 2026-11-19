@@ -202,6 +202,8 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
                                                             &filterEnvelope, &ampEnvelope, &lfo, &voices, &effects,
                                                             &keyboard })
         addAndMakeVisible(*c);
+    // Inside the iPad app the scope beside its keys stands in for this one.
+    scope.setVisible(tonwerkui::editorsHaveScope());
 
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffcfccc0));
     keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, panel);
@@ -222,8 +224,8 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &osc1, &osc2 }), rowWidth({ &filter, &filterEnvelope, &ampEnvelope }),
                                    rowWidth({ &lfo, &voices }), rowWidth({ &effects }) });
-    const int height = kMargin * 2 + kHeader + kScope + osc1.preferredHeight() + filter.preferredHeight()
-                       + lfo.preferredHeight() + effects.preferredHeight() + kKeyboard + 5 * kGap;
+    const int height = kMargin * 2 + kHeader + (scope.isVisible() ? kScope + kGap : 0) + osc1.preferredHeight() + filter.preferredHeight()
+                       + lfo.preferredHeight() + effects.preferredHeight() + kKeyboard + 4 * kGap;
     setSize(width, height);
     timerCallback();
     startTimerHz(30);
@@ -298,8 +300,11 @@ void ExpanderEditor::resized()
     keyboard.setKeyWidth((float) keyboard.getWidth() / 35.0f);
     area.removeFromBottom(kGap);
 
-    scope.setBounds(area.removeFromTop(kScope));
-    area.removeFromTop(kGap);
+    if (scope.isVisible())
+    {
+        scope.setBounds(area.removeFromTop(kScope));
+        area.removeFromTop(kGap);
+    }
     layoutRow(area, { &osc1, &osc2 });
     layoutRow(area, { &filter, &filterEnvelope, &ampEnvelope });
     layoutRow(area, { &lfo, &voices });
@@ -308,13 +313,7 @@ void ExpanderEditor::resized()
 
 void ExpanderEditor::timerCallback()
 {
-    juce::String caption = tr("OSZILLOSKOP");
-    if (const int note = synth.shownNote.load(); note >= 0)
-    {
-        caption << juce::String::fromUTF8("  ·  ") << ExpanderProcessor::noteName(note);
-        const int count = synth.shownVoices.load();
-        caption << juce::String::fromUTF8("  ·  ") << count << " " << (count == 1 ? tr("STIMME") : tr("STIMMEN"));
-    }
+    const juce::String caption = tr("OSZILLOSKOP") + synth.scopeNote();
     if (caption != shownCaption)
     {
         shownCaption = caption;
