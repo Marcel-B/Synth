@@ -8,14 +8,15 @@
 # firmware/steckbrett-test/);
 # images already tested on a module stay as they are unless named. A dispatch only works
 # once this file is on main, hence the commit message for branches.
+# Runs in our own Gitea on the Linux runner on nuc (the firmware job in Espressif's container).
 name: Modul
 
 on:
   push:
     branches: [main]
-    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .github/workflows/modul.yml]
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .gitea/workflows/modul.yml]
   pull_request:
-    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .github/workflows/modul.yml]
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .gitea/workflows/modul.yml]
   workflow_dispatch:
     inputs:
       uebernehmen:

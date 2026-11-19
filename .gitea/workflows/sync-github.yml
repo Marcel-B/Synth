@@ -1,0 +1,33 @@
+# The code lives in our own Gitea, GitHub shows it: every push to main and every tag goes on to GitHub, where the
+# Windows build, the website (website.yml) and the download counts (release-stats.yml) still run. Nothing is forced and
+# nothing is deleted there: a main that has commits Gitea does not know makes this run fail instead of overwriting them.
+# Needs the secret GH_PUSH_TOKEN, a GitHub token that may write the repository's contents and workflows (the latter
+# because pushed commits may change files under .github/workflows).
+name: GitHub-Abgleich
+
+on:
+  push:
+    branches: [main]
+    tags: ["**"]
+  workflow_dispatch:
+
+env:
+  RELEASE_REPO: Marcel-B/Synth
+
+concurrency:
+  group: sync-github
+  cancel-in-progress: false
+
+jobs:
+  push:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::secret GH_PUSH_TOKEN is missing"; exit 1; }
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${RELEASE_REPO}.git" "$GITHUB_SHA:$GITHUB_REF"
