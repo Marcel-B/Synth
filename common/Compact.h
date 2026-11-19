@@ -69,7 +69,7 @@ public:
             for (auto& layout : page.layouts)
                 canvas.addChildComponent(layout.holder);
 
-            auto* tab = tabs.add(new juce::TextButton(tr(described.title)));
+            auto* tab = tabs.add(new Tab(tr(described.title)));
             const int index = tabs.size() - 1;
             tab->setClickingTogglesState(true);
             tab->setRadioGroupId(1);
@@ -135,14 +135,42 @@ public:
 
         auto row = area.removeFromTop(kTabs);
         const int each = tabs.isEmpty() ? 0 : (row.getWidth() + kGap) / tabs.size();
+        // One size of letters for all tabs, the largest at which the longest name fits: left to itself each button
+        // shrank its own, and on a narrow screen cut it short (Oszillato...).
+        float size = 16.0f;
         for (auto* tab : tabs)
+        {
+            const float wide = juce::GlyphArrangement::getStringWidth(juce::Font(juce::FontOptions(16.0f)),
+                                                                      tab->getButtonText());
+            size = juce::jmin(size, 16.0f * (float) (each - kGap - 8) / juce::jmax(1.0f, wide));
+        }
+        for (auto* tab : tabs)
+        {
+            tab->letters = juce::jmax(9.0f, size);
             tab->setBounds(row.removeFromLeft(each).withTrimmedRight(kGap));
+        }
         area.removeFromTop(kGap);
         view.setBounds(area);
         layoutPage();
     }
 
 private:
+    /** A page's tab, its name in the size the editor gives all of them. */
+    struct Tab : juce::TextButton
+    {
+        using juce::TextButton::TextButton;
+        void paintButton(juce::Graphics& g, bool over, bool down) override
+        {
+            getLookAndFeel().drawButtonBackground(g, *this,
+                                                  findColour(getToggleState() ? buttonOnColourId : buttonColourId),
+                                                  over, down);
+            g.setColour(findColour(getToggleState() ? textColourOnId : textColourOffId));
+            g.setFont(juce::FontOptions(letters));
+            g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred, false);
+        }
+        float letters = 14.0f;
+    };
+
     /** A page's panels in one arrangement. */
     struct Layout
     {
@@ -344,7 +372,7 @@ private:
     LookAndFeel look;
     juce::String title;
     juce::Rectangle<int> titleArea;
-    juce::OwnedArray<juce::TextButton> tabs;
+    juce::OwnedArray<Tab> tabs;
     juce::ComboBox presets;
     juce::TextButton previous { "<" }, next { ">" };
     juce::Viewport view;
