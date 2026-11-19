@@ -372,7 +372,9 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
     deleteButton.setButtonText(tr("Löschen"));
     deleteButton.onClick = [this] { deletePreset(); };
     for (auto* button : { &tonwerkButton, &importButton, &exportButton, &deleteButton })
-        addAndMakeVisible(*button);
+        addChildComponent(*button);
+    for (auto* button : { &tonwerkButton, &importButton, &exportButton, &deleteButton })
+        button->setVisible(tonwerkui::soundFilesInHeader());
 
     message.setFont(mono(11.0f));
     message.setColour(juce::Label::textColourId, cyan.withAlpha(0.8f));
@@ -554,14 +556,18 @@ void TonwerkSynthEditor::resized()
         fmButton.setBounds(header.removeFromLeft(64));
         header.removeFromLeft(12);
     }
-    deleteButton.setBounds(header.removeFromRight(70));
-    header.removeFromRight(4);
-    exportButton.setBounds(header.removeFromRight(84));
-    header.removeFromRight(4);
-    importButton.setBounds(header.removeFromRight(90));
-    header.removeFromRight(4);
-    tonwerkButton.setBounds(header.removeFromRight(130));
-    header.removeFromRight(8);
+    // On the iPad and iPhone the header has only the sounds: nothing is loaded from or saved to files there.
+    if (deleteButton.isVisible())
+    {
+        deleteButton.setBounds(header.removeFromRight(70));
+        header.removeFromRight(4);
+        exportButton.setBounds(header.removeFromRight(84));
+        header.removeFromRight(4);
+        importButton.setBounds(header.removeFromRight(90));
+        header.removeFromRight(4);
+        tonwerkButton.setBounds(header.removeFromRight(130));
+        header.removeFromRight(8);
+    }
     presets.setBounds(header.removeFromRight(220));
     header.removeFromRight(8);
     message.setBounds(header);

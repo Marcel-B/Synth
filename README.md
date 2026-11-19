@@ -799,7 +799,7 @@ Was auf dem iPad anders ist (`common/Platform.h`):
 
 - **Größe**: Der Host bestimmt, wie groß die Oberfläche ist. Sie wird darin ganz gezeigt, mit ihren Proportionen vergrößert oder verkleinert, und Menüs öffnen sich in ihr.
 - **MIDI-Lernen**: Ein Finger, der etwa eine halbe Sekunde ruhig auf einem Regler liegt, öffnet das Menü, das am Mac der Rechtsklick öffnet.
-- **Dateien**: Klänge laden und speichern (Tonwerk Analog, FM, Synth), SysEx (Tonwerk DX) und eigene Samples (Tonwerk Granular, Tonwerk Sampler) gehen über die Dateien-App. Ein Sample wird dabei in den Speicher des Plugins kopiert, damit ein Projekt es beim nächsten Öffnen wiederfindet.
+- **Dateien**: SysEx (Tonwerk DX) und eigene Samples (Tonwerk Granular, Tonwerk Sampler) gehen über die Dateien-App. Tonwerk Analog, FM und Synth haben auf iPad und iPhone keine Knöpfe mehr, um Klänge aus Tonwerk oder einer Datei zu laden, zu speichern oder zu löschen; die Werksklänge und schon übernommene Klänge bleiben im Menü. Laden, Speichern und Exportieren soll die App später für alle Instrumente einheitlich bekommen. Ein Sample wird dabei in den Speicher des Plugins kopiert, damit ein Projekt es beim nächsten Öffnen wiederfindet.
 
 Bauen braucht hier das volle Xcode, denn nur darin steckt das iOS-SDK; für den Mac bleibt es bei den Command Line Tools.
 
