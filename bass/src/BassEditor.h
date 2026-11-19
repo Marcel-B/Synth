@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BassProcessor.h"
+#include "Compact.h"
 #include "NightCity.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -38,4 +39,10 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BassEditor)
 };
+
+/**
+ * The same controls cut into pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page so
+ * the knobs come out as large as Tonwerk Analog's. The first holds what a hand is on while an acid line plays.
+ */
+std::vector<tonwerkui::CompactPage> bassPages();
 } // namespace tonwerkbass
