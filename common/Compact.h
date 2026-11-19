@@ -269,8 +269,8 @@ private:
     }
 
     /**
-     * One knob size for all pages: the largest at which every page fits, never under the least. A little of it (up
-     * to a tenth) is given away where that puts more pages' panels side by side: two envelopes next to each other
+     * One knob size for all pages: the largest at which every page fits, never under the least. A little of it (a
+     * few hundredths, more made every knob visibly smaller) is given away where that puts more pages' panels side by side: two envelopes next to each other
      * are worth more than knobs a few points larger.
      */
     float commonScale() const
@@ -291,7 +291,7 @@ private:
         };
         float best = largest;
         auto most = beside(largest);
-        for (float s = largest - 0.025f; s >= std::max(kSmallest, largest * 0.9f); s -= 0.025f)
+        for (float s = largest - 0.025f; s >= std::max(kSmallest, largest * 0.97f); s -= 0.025f)
             if (const auto count = beside(s); count > most)
             {
                 most = count;
