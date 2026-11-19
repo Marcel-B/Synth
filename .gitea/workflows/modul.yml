@@ -8,14 +8,15 @@
 # firmware/steckbrett-test/);
 # images already tested on a module stay as they are unless named. A dispatch only works
 # once this file is on main, hence the commit message for branches.
+# Runs in our own Gitea on the Linux runner on nuc (the firmware job in Espressif's container).
 name: Modul
 
 on:
   push:
     branches: [main]
-    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .github/workflows/modul.yml]
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .gitea/workflows/modul.yml]
   pull_request:
-    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .github/workflows/modul.yml]
+    paths: [esp32-wavetable/firmware/**, wavetable/src/**, physical/src/**, pd/src/**, granular/src/**, additive/src/**, src/dsp/**, .gitea/workflows/modul.yml]
   workflow_dispatch:
     inputs:
       uebernehmen:
@@ -44,6 +45,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Gitea's runner starts the actions with the container's own Node (GitHub brings one along); Espressif's image
+      # has none.
+      - name: Node for the actions
+        run: |
+          command -v node >/dev/null && exit 0
+          curl -fsSL https://nodejs.org/dist/v20.18.1/node-v20.18.1-linux-x64.tar.gz | tar xz -C /usr/local --strip-components=1
+          node --version
       # The branch itself rather than the merge commit, so built images can be committed back to it.
       - uses: actions/checkout@v4
         with:
