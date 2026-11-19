@@ -168,11 +168,12 @@ private:
 
     /**
      * A row of controls cut into `rows` of about the same width, never between two controls that take turns in one
-     * place (`Item::when`); a row too short for it (under three controls a row) stays whole.
+     * place (`Item::when`); a row too short for it (four controls stay one row: an envelope reads left to right) stays
+     * whole.
      */
     static std::vector<Section::Row> inRows(const Section::Row& row, std::size_t rows)
     {
-        if (rows < 2 || row.size() < 3 * rows)
+        if (rows < 2 || row.size() < 2 * rows + 1)
             return { row };
         const auto slotsOf = [](const Section::Item& item) { return std::max(1, item.slots); };
         int total = 0;
@@ -254,13 +255,49 @@ private:
         return false;
     }
 
-    /** One knob size for all pages: the largest at which every page fits, never under the least. */
+    /** The arrangement a page takes at this scale, see `layoutPage`; null when none fits without scrolling. */
+    Layout* fitting(Page& page, float s) const
+    {
+        const int inner = (int) ((float) view.getWidth() / s);
+        const int room = (int) ((float) view.getHeight() / s);
+        Layout* chosen = nullptr;
+        for (auto& layout : page.layouts)
+            if (flow(layout, inner, false) <= room && (chosen == nullptr || ! sideBySide(*chosen, inner))
+                && (chosen == nullptr || sideBySide(layout, inner)))
+                chosen = &layout;
+        return chosen;
+    }
+
+    /**
+     * One knob size for all pages: the largest at which every page fits, never under the least. A little of it (up
+     * to a tenth) is given away where that puts more pages' panels side by side: two envelopes next to each other
+     * are worth more than knobs a few points larger.
+     */
     float commonScale() const
     {
+        float largest = kSmallest;
         for (float s = kLargest; s > kSmallest; s -= 0.025f)
             if (std::all_of(pages.begin(), pages.end(), [&](const auto& page) { return fits(*page, s); }))
-                return s;
-        return kSmallest;
+            {
+                largest = s;
+                break;
+            }
+        const auto beside = [this](float s) {
+            const int inner = (int) ((float) view.getWidth() / s);
+            return std::count_if(pages.begin(), pages.end(), [&](const auto& page) {
+                auto* layout = fitting(*page, s);
+                return layout != nullptr && sideBySide(*layout, inner);
+            });
+        };
+        float best = largest;
+        auto most = beside(largest);
+        for (float s = largest - 0.025f; s >= std::max(kSmallest, largest * 0.9f); s -= 0.025f)
+            if (const auto count = beside(s); count > most)
+            {
+                most = count;
+                best = s;
+            }
+        return best;
     }
 
     void layoutPage()
@@ -277,12 +314,7 @@ private:
         auto& page = *pages[(std::size_t) current];
         const auto w = (float) view.getWidth();
         const int inner = (int) (w / scale);
-        const int room = (int) ((float) view.getHeight() / scale);
-        Layout* chosen = nullptr;
-        for (auto& layout : page.layouts)
-            if (flow(layout, inner, false) <= room && (chosen == nullptr || ! sideBySide(*chosen, inner))
-                && (chosen == nullptr || sideBySide(layout, inner)))
-                chosen = &layout;
+        Layout* chosen = fitting(page, scale);
         if (chosen == nullptr)
         {
             int least = 1 << 30;
