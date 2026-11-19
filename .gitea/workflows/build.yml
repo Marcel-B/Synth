@@ -402,7 +402,12 @@ jobs:
           components=$(ls -d release/*.component | wc -l)
           [ "$apps" -eq "$components" ] || { echo "::error::$apps apps, $components Audio Units"; exit 1; }
           [ "$(readlink "$mount/Applications")" = /Applications ] || { echo "::error::no Applications link"; exit 1; }
-          pkgutil --payload-files "$mount/Tonwerk Plugins.pkg" > "$RUNNER_TEMP/payload.txt"
+          # The package holds one package for the Audio Units and one for the VST3s; pkgutil --payload-files lists only
+          # the first, so the files are read from each one's bill of materials.
+          rm -rf "$RUNNER_TEMP/pkg"
+          pkgutil --expand "$mount/Tonwerk Plugins.pkg" "$RUNNER_TEMP/pkg"
+          for bom in "$RUNNER_TEMP/pkg"/*.pkg/Bom; do lsbom -s "$bom"; done > "$RUNNER_TEMP/payload.txt"
+          rm -rf "$RUNNER_TEMP/pkg"
           grep -c '\.component$' "$RUNNER_TEMP/payload.txt" || true
           if ! sudo -n true 2>/dev/null; then
             echo "::notice::no sudo on this runner: the package's payload is checked, it is not installed"
