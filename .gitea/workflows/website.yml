@@ -1,0 +1,16 @@
+# Checks in our own Gitea that the website builds, so a pull request shows a broken page before it is merged. The page
+# itself is still published by GitHub (.github/workflows/website.yml) once sync-github.yml has pushed main there.
+name: Website
+
+on:
+  pull_request:
+    paths: [website/**, docs/*.png, scripts/build-website.sh, CMakeLists.txt, .gitea/workflows/website.yml]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seite zusammenstellen und prüfen
+        run: scripts/build-website.sh _site

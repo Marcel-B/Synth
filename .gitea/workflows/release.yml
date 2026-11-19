@@ -1,0 +1,316 @@
+name: Release
+
+# A tag like v0.2.0 builds the plugins on macOS and attaches them to a GitHub release of that name.
+# Started by hand with a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed);
+# the nightly auto-release.yml calls it that way too, with the notes of what changed.
+# Runs in our own Gitea (the build on the Mac runner, publishing on the Linux runner on nuc), but the release is
+# published on GitHub, with the secret GH_PUSH_TOKEN (a GitHub token that may write the contents of $RELEASE_REPO).
+# GitHub then builds the Linux and Windows packages itself and adds them (.github/workflows/release.yml, started by
+# the published release).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version ohne v, z. B. 0.2.0"
+        required: true
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      notes:
+        description: "What is new, put above the installation notes"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_REPO: Marcel-B/Synth
+
+jobs:
+  macos:
+    runs-on: macos-15
+    outputs:
+      notarized: ${{ steps.handover.outputs.notarized }}
+      image: ${{ steps.handover.outputs.image }}
+    # With these secrets the release is signed with Developer ID and notarized; without them it stays ad hoc, as before.
+    env:
+      MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      # A second certificate, Developer ID Installer, signs the plugins' installer package; it may also sit in the first .p12.
+      MACOS_INSTALLER_CERTIFICATE_P12: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_P12 }}
+      MACOS_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_INSTALLER_CERTIFICATE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import the Developer ID certificate
+        if: env.MACOS_CERTIFICATE_P12 != ''
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          # The runner keeps its disk: a keychain a broken run left behind goes first.
+          security delete-keychain "$KEYCHAIN" 2>/dev/null || true
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          rm "$RUNNER_TEMP/certificate.p12"
+          if [ -n "$MACOS_INSTALLER_CERTIFICATE_P12" ]; then
+            echo "$MACOS_INSTALLER_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+            security import "$RUNNER_TEMP/installer.p12" -P "${MACOS_INSTALLER_CERTIFICATE_PASSWORD:-$MACOS_CERTIFICATE_PASSWORD}" \
+              -A -t cert -f pkcs12 -k "$KEYCHAIN"
+            rm "$RUNNER_TEMP/installer.p12"
+          fi
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep -o '"Developer ID Application: [^"]*"' | head -1 | tr -d '"')"
+          if [ -z "$IDENTITY" ]; then
+            echo "Im Zertifikat steckt keine Identität 'Developer ID Application'." >&2
+            exit 1
+          fi
+          echo "TONWERK_SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          # Installer identities are no code signing identities, so they are looked for without a policy.
+          INSTALLER="$(security find-identity -v "$KEYCHAIN" | grep -o '"Developer ID Installer: [^"]*"' | head -1 | tr -d '"')"
+          if [ -n "$INSTALLER" ]; then
+            echo "TONWERK_INSTALLER_IDENTITY=$INSTALLER" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Kein Zertifikat 'Developer ID Installer': das Installationspaket im Disk-Image bleibt unsigniert."
+          fi
+      - name: Version from the tag
+        env:
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
+        run: |
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
+      # The plugin's version comes from the tag (a nightly's date as a count, scripts/plugin-version.sh), so Logic sees each
+      # release as a new one.
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTONWERK_VERSION="$PLUGIN_VERSION"
+      - name: Build
+        run: cmake --build build --parallel "$(sysctl -n hw.ncpu)"
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package
+        run: |
+          ARTEFACTS="build/TonwerkSynth_artefacts/Release"
+          DIR="Tonwerk-Synth-$VERSION-macOS"
+          mkdir "$DIR"
+          cp -R "$ARTEFACTS/AU/Tonwerk Synth.component" "$ARTEFACTS/VST3/Tonwerk Synth.vst3" \
+            "$ARTEFACTS/Standalone/Tonwerk Synth.app" "$DIR/"
+          for synth in "TonwerkAnalog:Tonwerk Analog" "TonwerkFM:Tonwerk FM" "TonwerkDX:Tonwerk DX" "TonwerkGranular:Tonwerk Granular" "TonwerkPhysical:Tonwerk Physical" "TonwerkAdditiv:Tonwerk Additiv" "TonwerkGroovebox:Tonwerk Groovebox" "TonwerkDrums:Tonwerk Drums" "TonwerkRobovox:Tonwerk Robovox" "TonwerkWobble:Tonwerk Wobble" "TonwerkPD:Tonwerk PD" "TonwerkTape:Tonwerk Tape" "TonwerkFreeze:Tonwerk Freeze" "TonwerkArp:Tonwerk Arp" "TonwerkSampler:Tonwerk Sampler" "TonwerkBass:Tonwerk Bass" "TonwerkVocoder:Tonwerk Vocoder" "TonwerkDelay:Tonwerk Delay" "TonwerkChorus:Tonwerk Chorus" "TonwerkGlue:Tonwerk Glue" "TonwerkShimmer:Tonwerk Shimmer" "TonwerkFilter:Tonwerk Filter" "TonwerkNeuro:Tonwerk Neuro" "TonwerkStutter:Tonwerk Stutter" "TonwerkMultiband:Tonwerk Multiband" "TonwerkZone:Tonwerk Zone" "TonwerkScope:Tonwerk Scope" "TonwerkExpander:Tonwerk Expander" "TonwerkLFO:Tonwerk LFO" "TonwerkRumble:Tonwerk Rumble" "TonwerkReverb:Tonwerk Reverb" "TonwerkPump:Tonwerk Pump" "TonwerkSpread:Tonwerk Spread" "TonwerkRig:Tonwerk Rig"; do
+            FROM="build/${synth%%:*}_artefacts/Release"
+            PRODUCT="${synth#*:}"
+            cp -R "$FROM/AU/$PRODUCT.component" "$FROM/VST3/$PRODUCT.vst3" "$FROM/Standalone/$PRODUCT.app" "$DIR/"
+          done
+          GLITCH="build/ChromeGlitch_artefacts/Release"
+          cp -R "$GLITCH/AU/Chrome Glitch.component" "$GLITCH/VST3/Chrome Glitch.vst3" \
+            "$GLITCH/Standalone/Chrome Glitch.app" "$DIR/"
+          DISTORTION="build/TonwerkDistortion_artefacts/Release"
+          cp -R "$DISTORTION/AU/Tonwerk Distortion.component" "$DISTORTION/VST3/Tonwerk Distortion.vst3" \
+            "$DISTORTION/Standalone/Tonwerk Distortion.app" "$DIR/"
+          WAVETABLE="build/TonwerkWavetable_artefacts/Release"
+          cp -R "$WAVETABLE/AU/Tonwerk Wavetable.component" "$WAVETABLE/VST3/Tonwerk Wavetable.vst3" \
+            "$WAVETABLE/Standalone/Tonwerk Wavetable.app" "$DIR/"
+          # Ad hoc, or with Developer ID when the certificate step set TONWERK_SIGN_IDENTITY.
+          scripts/sign-macos.sh "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app
+          if [ -n "${TONWERK_SIGN_IDENTITY:-}" ] && [ -n "$APPLE_ID" ] && [ -n "$APPLE_TEAM_ID" ] && [ -n "$APPLE_APP_PASSWORD" ]; then
+            scripts/notarize-macos.sh "$DIR"/*.component "$DIR"/*.vst3 "$DIR"/*.app
+            echo "NOTARIZED=1" >> "$GITHUB_ENV"
+          fi
+          cp scripts/install-release.sh "$DIR/install.sh"
+          cp scripts/uninstall-release.sh "$DIR/uninstall.sh"
+          # The licence asks for its terms and the Required Notice to travel with the binaries.
+          cp LICENSE NOTICE "$DIR/"
+          ditto -c -k --keepParent "$DIR" "$DIR.zip"
+          echo "ZIP=$DIR.zip" >> "$GITHUB_ENV"
+      # The disk image: the apps to drag into Applications, the plugins as an installer package (scripts/make-macos-installer.sh).
+      - name: Disk image
+        run: |
+          DMG="Tonwerk-Synth-$VERSION-macOS.dmg"
+          scripts/make-macos-installer.sh "Tonwerk-Synth-$VERSION-macOS" "$VERSION" "$DMG"
+          if [ -n "${NOTARIZED:-}" ]; then
+            if [ -n "${TONWERK_INSTALLER_IDENTITY:-}" ]; then
+              scripts/notarize-macos.sh "$DMG"
+              echo "DMG_NOTARIZED=1" >> "$GITHUB_ENV"
+            # Apple may refuse an image whose package is unsigned; the zip stays the way that always works then.
+            elif scripts/notarize-macos.sh "$DMG"; then
+              echo "DMG_NOTARIZED=1" >> "$GITHUB_ENV"
+            else
+              echo "::warning::Disk-Image nicht notarisiert (Paket ohne Developer ID Installer)."
+            fi
+          fi
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+      - name: Validate with auval
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Analog.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk FM.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Synth.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Chrome Glitch.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Distortion.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Wavetable.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk DX.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Granular.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Physical.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Additiv.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Groovebox.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Drums.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Robovox.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Wobble.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk PD.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Tape.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Freeze.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Arp.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Sampler.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Bass.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Vocoder.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Delay.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Chorus.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Glue.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Shimmer.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Filter.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Neuro.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Stutter.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Multiband.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Zone.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Scope.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Expander.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk LFO.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Rumble.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Reverb.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Pump.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Spread.component" ~/Library/Audio/Plug-Ins/Components/
+          cp -R "Tonwerk-Synth-$VERSION-macOS/Tonwerk Rig.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          sleep 3
+          auval -strict -v aumu TwAn Bvlp
+          auval -strict -v aumu TwFm Bvlp
+          auval -strict -v aumu Twsy Bvlp
+          auval -strict -v aufx ChGl Bvlp
+          auval -strict -v aufx TwDs Bvlp
+          auval -strict -v aumu TwWt Bvlp
+          auval -strict -v aumu TwDx Bvlp
+          auval -strict -v aumu TwGr Bvlp
+          auval -strict -v aumu TwPh Bvlp
+          auval -strict -v aumu TwAd Bvlp
+          auval -strict -v aumu TwGb Bvlp
+          auval -strict -v aumu TwDr Bvlp
+          auval -strict -v aumf TwRv Bvlp
+          auval -strict -v aufx TwWb Bvlp
+          auval -strict -v aumu TwPd Bvlp
+          auval -strict -v aufx TwTp Bvlp
+          auval -strict -v aufx TwFz Bvlp
+          auval -strict -v aumi TwAr Bvlp
+          auval -strict -v aumi TwLf Bvlp
+          auval -strict -v aumu TwSm Bvlp
+          auval -strict -v aumu TwBs Bvlp
+          auval -strict -v aumf TwVc Bvlp
+          auval -strict -v aufx TwDl Bvlp
+          auval -strict -v aufx TwCh Bvlp
+          auval -strict -v aufx TwGl Bvlp
+          auval -strict -v aufx TwSh Bvlp
+          auval -strict -v aufx TwFl Bvlp
+          auval -strict -v aumu TwNr Bvlp
+          auval -strict -v aumu TwEx Bvlp
+          auval -strict -v aufx TwSt Bvlp
+          auval -strict -v aufx TwMb Bvlp
+          auval -strict -v aufx TwZn Bvlp
+          auval -strict -v aufx TwSc Bvlp
+          auval -strict -v aufx TwRb Bvlp
+          auval -strict -v aufx TwRe Bvlp
+          auval -strict -v aufx TwPm Bvlp
+          auval -strict -v aufx TwSp Bvlp
+          auval -strict -v aumu TwRg Bvlp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: |
+            ${{ env.ZIP }}
+            ${{ env.DMG }}
+      - name: Hand over
+        id: handover
+        run: |
+          echo "notarized=${NOTARIZED:-}" >> "$GITHUB_OUTPUT"
+          echo "image=${DMG_NOTARIZED:-}" >> "$GITHUB_OUTPUT"
+      # The runner is no throwaway machine: the keychain with the certificates is deleted, which also takes it out of
+      # the user's search list.
+      - name: Remove the keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
+      # The Audio Units copied for auval leave the runner's library again.
+      - name: Clear away
+        if: always()
+        run: |
+          for component in "Tonwerk-Synth-$VERSION-macOS"/*.component; do
+            rm -rf ~/Library/Audio/Plug-Ins/Components/"$(basename "$component")"
+          done
+          killall -9 AudioComponentRegistrar || true
+
+  publish:
+    needs: macos
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: GitHub CLI
+        run: command -v gh >/dev/null || { sudo apt-get update && sudo apt-get install -y gh; }
+      # The tag goes to Gitea (where the nightly plan counts from it) and to GitHub, which gets the commit with it
+      # should main not be there yet; the release itself exists only on GitHub.
+      - name: Tag
+        env:
+          GH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::secret GH_PUSH_TOKEN is missing"; exit 1; }
+          git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null || git push origin "$GITHUB_SHA:refs/tags/$TAG"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${RELEASE_REPO}.git" "$GITHUB_SHA:refs/tags/$TAG"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
+          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
+          IMAGE_NOTARIZED: ${{ needs.macos.outputs.image }}
+          CHANGES: ${{ inputs.notes }}
+        run: |
+          VERSION="${TAG#v}"
+          # What is new (the nightly run's notes) goes above the installation notes, a blank line between.
+          [ -z "${CHANGES:-}" ] || CHANGES="$CHANGES"$'\n\n'
+          if [ -n "${NOTARIZED:-}" ]; then
+            SIGNING="Die Plugins sind mit Developer ID signiert und von Apple notarisiert; macOS öffnet sie nach dem Download ohne Rückfrage."
+          else
+            SIGNING="Die Plugins sind nur ad hoc signiert. Das Skript entfernt deshalb die Quarantäne-Markierung, die macOS nach dem Download setzt; ohne das lädt Logic sie nicht. Mehr im README."
+          fi
+          if [ -n "${IMAGE_NOTARIZED:-}" ]; then
+            IMAGE="Signiert und notarisiert, macOS öffnet beides ohne Rückfrage."
+          else
+            IMAGE="Das Installationspaket ist noch nicht signiert: macOS lässt es erst nach Rechtsklick → Öffnen (oder Systemeinstellungen → Datenschutz & Sicherheit → Dennoch öffnen) laufen. Wer das nicht mag, nimmt das Zip."
+          fi
+          gh release create "$TAG" dist/* --repo "$RELEASE_REPO" --verify-tag --title "Tonwerk Synth $VERSION" --notes "$CHANGES$(cat <<NOTES
+          Synths: Tonwerk Analog, Tonwerk FM, Tonwerk DX, Tonwerk Wavetable, Tonwerk Granular, Tonwerk Physical, Tonwerk Additiv und Tonwerk PD, der Sampler Tonwerk Sampler, der Acid-Bass Tonwerk Bass, der Reese- und Neuro-Bass Tonwerk Neuro, der achtstimmige Analog-Synth Tonwerk Expander, die Drum-Machine Tonwerk Groovebox, das Drum-Instrument Tonwerk Drums (die Groovebox ohne Sequencer, 16 Pads auf den General-MIDI-Noten), Tonwerk Rig (ein Instrument mit Effekten dahinter als ein Klang) und das bisherige Tonwerk Synth für ältere Projekte. Effekte: Chrome Glitch, Tonwerk Distortion, Tonwerk Robovox, Tonwerk Vocoder, Tonwerk Wobble, Tonwerk Tape, Tonwerk Delay, Tonwerk Chorus, Tonwerk Glue, Tonwerk Shimmer, Tonwerk Filter, Tonwerk Stutter, Tonwerk Multiband, Tonwerk Zone, Tonwerk Scope, Tonwerk Rumble (Rumble für die Kick), Tonwerk Reverb (Raum, Saal, Platte und Kathedrale), Tonwerk Pump (Sidechain-Pumpen), Tonwerk Spread (Stereobreite, monokompatibel) und Tonwerk Freeze, dazu der MIDI-Effekte Tonwerk Arp (Arpeggiator und Step-Sequencer) und Tonwerk LFO (bewegt per MIDI-Controller jeden Regler eines Instruments).
+
+          **macOS** (\`Tonwerk-Synth-$VERSION-macOS.dmg\`): Audio Unit (für Logic), VST3 und App für macOS 11 und neuer, Apple Silicon und Intel. Disk-Image öffnen, den Ordner „Tonwerk“ auf „Applications“ ziehen (die Apps) und „Tonwerk Plugins.pkg“ doppelklicken (Audio Units und VST3 nach /Library/Audio/Plug-Ins, für alle Benutzer; ältere Kopien von \`install.sh\` in der eigenen Library ersetzt es). „Tonwerk deinstallieren.command“ im Disk-Image (oder \`zsh uninstall.sh\` im Zip) entfernt alles wieder. $IMAGE
+
+          Oder wie bisher das Zip (\`Tonwerk-Synth-$VERSION-macOS.zip\`) laden und im Terminal
+          \`cd ~/Downloads/Tonwerk-Synth-*-macOS && zsh install.sh\`
+          $SIGNING
+
+          **Linux** (\`Tonwerk-Synth-$VERSION-Linux-x64.tar.gz\`): VST3 und Apps für x86-64. Entpacken und \`./install.sh\` aufrufen; die Plugins landen in \`~/.vst3\`, die Apps in \`~/.local/bin\`.
+
+          **Windows** (\`Tonwerk-Synth-$VERSION-Windows-x64.zip\`): VST3 und Apps für 64-Bit-Windows. Die Ordner aus \`VST3\` nach \`C:\\Program Files\\Common Files\\VST3\` kopieren, die Apps liegen unter \`Apps\`. Sie sind nicht signiert, Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
+
+          Die Pakete für Linux und Windows baut GitHub selbst und hängt sie etwas später an dieses Release an. Linux und Windows sind gebaut, aber noch nicht in einem Host ausprobiert.
+          NOTES
+          )"
