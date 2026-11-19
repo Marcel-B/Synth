@@ -167,4 +167,49 @@ void BassEditor::timerCallback()
             presets.setText(shownPreset, juce::dontSendNotification);
     }
 }
+
+std::vector<tonwerkui::CompactPage> bassPages()
+{
+    using Row = Section::Row;
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "cutoff", "Cutoff" },
+                             { "resonance", "Resonanz" },
+                             { "envMod", "Env Mod" },
+                             { "decay", "Decay" },
+                             { "accent", "Accent" },
+                             { "slide", "Slide" },
+                             { "drive", "Drive" },
+                             { "fxDelayMix", "Delay" },
+                             { "fxReverbMix", "Hall" },
+                             { "master", "Master" } } } } },
+        { "Klang",
+          { { "Oszillator", Row { { "wave", "Welle" }, { "tune", "Tune" }, { "fine", "Fein" }, { "sub", "Sub" } } },
+            { "Filter", Row { { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "envMod", "Env Mod" },
+                              { "decay", "Decay" },
+                              { "keytrack", "Keytrack" } } } } },
+        { "Spiel",
+          { { "Accent", Row { { "accent", "Accent" }, { "accentThreshold", "Ab Anschlag" }, { "sweep", "Sweep" } } },
+            { "Slide & Ausklang", Row { { "slide", "Slide" }, { "ampDecay", "Ausklang" }, { "release", "Release" } } },
+            { "Ausgang", Row { { "drive", "Drive" }, { "bendRange", "Bend" }, { "master", "Master" } } } } },
+        { "LFO",
+          { { "LFO", Row { { "lfoShape", "Form" },
+                           { "lfoSync", "Sync" },
+                           { "lfoRate", "Rate", 0, "lfoSync", false },
+                           { "lfoDivision", "Raster", 0, "lfoSync", true },
+                           { "lfoTarget", "Ziel" },
+                           { "lfoAmount", "Menge" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } } } },
+    };
+}
 } // namespace tonwerkbass

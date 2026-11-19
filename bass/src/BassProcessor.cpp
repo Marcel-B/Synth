@@ -309,7 +309,12 @@ void BassProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* BassProcessor::createEditor() { return tonwerkui::forHost<BassEditor>(*this); }
+juce::AudioProcessorEditor* BassProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog has them.
+    return tonwerkui::forHost<BassEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK BASS", bassPages()); });
+}
 
 int BassProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 
