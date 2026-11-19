@@ -1,3 +1,4 @@
+#include "Compact.h"
 #include "Platform.h"
 #include "PatchJson.h"
 #include "PluginEditor.h"
@@ -165,19 +166,19 @@ public:
             processor.releaseResources();
         }
 
+        const auto shots = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+        auto snapshot = [&shots](juce::Component& editor, const juce::String& file) {
+            // For a look at them: TONWERK_EDITOR_PNG_DIR=/path writes one PNG per editor.
+            if (shots.isEmpty())
+                return;
+            const auto image = editor.createComponentSnapshot(editor.getLocalBounds(), true, 1.0f);
+            juce::FileOutputStream out { juce::File(shots).getChildFile(file + ".png") };
+            out.setPosition(0);
+            out.truncate();
+            juce::PNGImageFormat().writeImageToStream(image, out);
+        };
         beginTest("The editors fit their panels; Tonwerk Synth's follows the engine");
         {
-            const auto shots = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
-            auto snapshot = [&shots](juce::Component& editor, const juce::String& file) {
-                // For a look at them: TONWERK_EDITOR_PNG_DIR=/path writes one PNG per editor.
-                if (shots.isEmpty())
-                    return;
-                const auto image = editor.createComponentSnapshot(editor.getLocalBounds(), true, 1.0f);
-                juce::FileOutputStream out { juce::File(shots).getChildFile(file + ".png") };
-                out.setPosition(0);
-                out.truncate();
-                juce::PNGImageFormat().writeImageToStream(image, out);
-            };
             for (const auto edition : { Edition::analog, Edition::fm })
             {
                 TonwerkSynthProcessor processor(edition);
@@ -217,6 +218,72 @@ public:
             combined.state.getParameter("engine")->setValueNotifyingHost(1.0f);
             expectEquals(editor->getHeight(), synthEditor->heightFor(Engine::fm));
             snapshot(*editor, "Tonwerk Synth FM");
+        }
+
+        beginTest("Tonwerk Analog has pages for a phone's screen, every knob the same size");
+        {
+            TonwerkSynthProcessor analog(Edition::analog), fm(Edition::fm);
+            // A page names its parameters by id; one the plugin lacks would be a knob that moves nothing.
+            int knobs = 0;
+            for (const auto& page : analogPages())
+                for (const auto& panel : page.panels)
+                    for (const auto& item : panel.row)
+                    {
+                        ++knobs;
+                        expect(analog.state.getParameter(item.id) != nullptr, "no parameter " + item.id);
+                        if (item.when.isNotEmpty())
+                            expect(analog.state.getParameter(item.when) != nullptr, "no parameter " + item.when);
+                    }
+            expect(knobs > 40);
+
+            std::unique_ptr<juce::AudioProcessorEditor> editor(analog.createEditor());
+            auto* frame = dynamic_cast<tonwerkui::HostFrame*>(editor.get());
+            expect(frame != nullptr && frame->hasCompact() && ! frame->isCompact());
+            // Only Tonwerk Analog has pages so far; the others keep their one editor at any size.
+            std::unique_ptr<juce::AudioProcessorEditor> other(fm.createEditor());
+            expect(! dynamic_cast<tonwerkui::HostFrame&>(*other).hasCompact());
+
+            // An iPhone in landscape beside the app's rail, without the keys: the size the pages were cut for.
+            frame->setCompact(true);
+            frame->setBare(true);
+            frame->setSize(666, 381);
+            auto* compact = tonwerkui::innerEditor<tonwerkui::CompactEditor>(editor.get());
+            expect(compact != nullptr);
+            if (compact == nullptr)
+                return;
+            expect(tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get()) == nullptr);
+            juce::Array<juce::TextButton*> tabs;
+            for (auto* child : compact->getChildren())
+            {
+                if (auto* tab = dynamic_cast<juce::TextButton*>(child); tab != nullptr && tab->getRadioGroupId() != 0)
+                    tabs.add(tab);
+                // Bare, the app has the sounds in its own list: the header's menu is gone.
+                if (dynamic_cast<juce::ComboBox*>(child) != nullptr)
+                    expect(! child->isVisible());
+            }
+            expectEquals(tabs.size(), (int) analogPages().size());
+            float smallest = 1.0e9f, largest = 0.0f;
+            for (auto* tab : tabs)
+            {
+                tab->onClick();
+                smallest = std::min(smallest, compact->slotWidth());
+                largest = std::max(largest, compact->slotWidth());
+                snapshot(*editor, "Tonwerk Analog Seite " + tab->getButtonText());
+            }
+            logMessage("A knob's place on the pages: " + juce::String(smallest, 1) + " points");
+            // Marcel's least on his iPhone, and one size on every page.
+            expectGreaterOrEqual(smallest, 60.0f * tonwerkui::CompactEditor::kSmallest);
+            expectWithinAbsoluteError(largest, smallest, 0.01f);
+
+            // With its header (an AUv3 in a small host view) the sounds are back.
+            frame->setBare(false);
+            int menus = 0;
+            for (auto* child : tonwerkui::innerEditor<tonwerkui::CompactEditor>(editor.get())->getChildren())
+                menus += dynamic_cast<juce::ComboBox*>(child) != nullptr && child->isVisible() ? 1 : 0;
+            expectEquals(menus, 1);
+
+            frame->setCompact(false);
+            expect(tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get()) != nullptr);
         }
     }
 };

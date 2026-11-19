@@ -93,7 +93,10 @@ public:
     void resized() override { fit(); }
     ~EditorFrame() override { show(nullptr); }
 
-    /** On a phone the app has the sounds and the language itself, so an editor of pages comes without its header. */
+    /**
+     * The phone's layout: an editor with pages shows them, and without its header, since the app has the sounds and
+     * the language itself there.
+     */
     void setBare(bool on)
     {
         bare = on;
@@ -144,14 +147,15 @@ private:
             || getHeight() <= 0)
             return;
         const juce::ScopedValueSetter<bool> guard(fitting, true);
-        // An editor with pages for small screens shows them unscaled where its full self would get too small.
+        // An editor with pages for small screens shows them unscaled in the phone's layout, and only there: by the
+        // size of a knob alone an 11 inch iPad took Tonwerk Analog's pages too (its knobs are 37 points there), and
+        // the iPad's editors stay as they are.
         if (auto* host = dynamic_cast<tonwerkui::HostFrame*>(editor.get()); host != nullptr && host->hasCompact())
         {
             const auto full = host->fullEditorSize();
-            const bool compact = tonwerkui::HostFrame::tooSmallAt(
-                std::min((float) getWidth() / (float) full.x, (float) getHeight() / (float) full.y));
+            const bool compact = bare;
             host->setCompact(compact);
-            host->setBare(bare && compact);
+            host->setBare(compact);
             if (compact)
             {
                 window.setBounds(getLocalBounds());

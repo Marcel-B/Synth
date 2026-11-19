@@ -105,7 +105,8 @@ public:
 
     /**
      * An editor of pages for a screen too small for the full one (`CompactEditor`). With one, the frame shows it
-     * whenever the full editor, scaled to the room it gets, would leave a knob smaller than a finger needs.
+     * on an iPhone whenever the full editor, scaled to the room it gets, would leave a knob smaller than a finger
+     * needs.
      */
     void setCompactFactory(Factory makeCompactEditor)
     {
@@ -126,6 +127,17 @@ public:
     bool isCompact() const { return compact; }
     /** The full editor's own size, whichever editor shows. */
     juce::Point<int> fullEditorSize() const { return fullSize; }
+
+    /** Whether this is an iPhone (the simulator names its model the same way). */
+    static bool onPhone()
+    {
+#if JUCE_IOS
+        static const bool phone = juce::SystemStats::getDeviceDescription().startsWithIgnoreCase("iPhone");
+        return phone;
+#else
+        return false;
+#endif
+    }
 
     /** One knob's place in the full editors, and the least a finger needs (Apple's 44 points). */
     static constexpr float kFullSlot = 60.0f;
@@ -256,7 +268,8 @@ private:
         const auto h = (float) inner->getHeight();
         if (w <= 0.0f || h <= 0.0f)
             return;
-        if (makeCompact && ! forced && fullSize.x > 0)
+        // Only on a phone: an iPad's hosts show the full editor scaled, as they did before there were pages.
+        if (makeCompact && ! forced && onPhone() && fullSize.x > 0)
         {
             const bool wanted = tooSmallAt(std::min((float) getWidth() / (float) fullSize.x,
                                                     (float) getHeight() / (float) fullSize.y));
