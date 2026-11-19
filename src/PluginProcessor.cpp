@@ -198,6 +198,11 @@ void TonwerkSynthProcessor::timerCallback()
 
 juce::AudioProcessorEditor* TonwerkSynthProcessor::createEditor()
 {
+    // Tonwerk Analog has pages for a phone; the other editions are still only scaled down there.
+    if (edition == Edition::analog)
+        return tonwerkui::forHost<TonwerkSynthEditor>(*this, [this] {
+            return new tonwerkui::CompactEditor(*this, state, editionName(edition).toUpperCase(), analogPages());
+        });
     return tonwerkui::forHost<TonwerkSynthEditor>(*this);
 }
 

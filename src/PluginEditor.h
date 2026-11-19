@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "NightCity.h"
 #include "PluginProcessor.h"
 
@@ -61,6 +62,12 @@ public:
     void resized() override;
     AlgorithmView view;
 };
+
+/**
+ * Tonwerk Analog's panels on pages for a phone (`tonwerkui::CompactEditor`): the knobs that shape a sound most first,
+ * then the signal's way from the oscillators to the effects. A panel is never split, and keeps its name.
+ */
+std::vector<tonwerkui::CompactPage> analogPages();
 
 class TonwerkSynthEditor : public juce::AudioProcessorEditor, private juce::Timer
 {

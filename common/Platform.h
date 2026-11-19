@@ -103,6 +103,81 @@ public:
 
     juce::AudioProcessorEditor* editor() const { return inner.get(); }
 
+    /**
+     * An editor of pages for a screen too small for the full one (`CompactEditor`). With one, the frame shows it
+     * on an iPhone whenever the full editor, scaled to the room it gets, would leave a knob smaller than a finger
+     * needs.
+     */
+    void setCompactFactory(Factory makeCompactEditor)
+    {
+        makeCompact = std::move(makeCompactEditor);
+#if ! JUCE_IOS
+        // TONWERK_COMPACT=<width>x<height> shows the compact editor at that size on the desktop, to look at it.
+        const auto wanted = juce::StringArray::fromTokens(
+            juce::SystemStats::getEnvironmentVariable("TONWERK_COMPACT", {}), "x", {});
+        if (wanted.size() == 2 && makeCompact)
+        {
+            forced = compact = true;
+            build();
+            setSize(wanted[0].getIntValue(), wanted[1].getIntValue());
+        }
+#endif
+    }
+    bool hasCompact() const { return makeCompact != nullptr; }
+    bool isCompact() const { return compact; }
+    /** The full editor's own size, whichever editor shows. */
+    juce::Point<int> fullEditorSize() const { return fullSize; }
+
+    /** Whether this is an iPhone (the simulator names its model the same way). */
+    static bool onPhone()
+    {
+#if JUCE_IOS
+        static const bool phone = juce::SystemStats::getDeviceDescription().startsWithIgnoreCase("iPhone");
+        return phone;
+#else
+        return false;
+#endif
+    }
+
+    /** One knob's place in the full editors, and the least a finger needs (Apple's 44 points). */
+    static constexpr float kFullSlot = 60.0f;
+    static constexpr float kFinger = 44.0f;
+    static bool tooSmallAt(float scale) { return kFullSlot * scale < kFinger; }
+
+    /** For a host that scales the frame itself (the app): it decides, and the frame no longer does. */
+    void setCompact(bool on)
+    {
+        forced = true;
+        if (on == compact || ! makeCompact)
+            return;
+        compact = on;
+        build();
+    }
+
+    /**
+     * For a host with the language and the sounds in menus of its own (the app on a phone): no language switch, and
+     * the compact editor without its header.
+     */
+    void setBare(bool on)
+    {
+        if (on == bare)
+            return;
+        bare = on;
+        parentHierarchyChanged();
+        if (inner != nullptr)
+        {
+            inner->getProperties().set("tonwerkBare", bare);
+            inner->resized();
+        }
+    }
+
+    /** The host changed the language itself (`chooseLanguage`): the editor is built again in it. */
+    void languageChanged()
+    {
+        languageSwitch.repaint();
+        rebuildSoon();
+    }
+
     // The Night City background, so the bands beside a scaled editor look like part of it.
     void paint(juce::Graphics& g) override { g.fillAll(juce::Colour(0xff0a0b10)); }
     void resized() override { fit(); }
@@ -110,7 +185,7 @@ public:
     void parentHierarchyChanged() override
     {
         // Inside another plugin's frame (Tonwerk Rig) that one's switch is enough.
-        languageSwitch.setVisible(findParentComponentOfClass<HostFrame>() == nullptr);
+        languageSwitch.setVisible(! bare && findParentComponentOfClass<HostFrame>() == nullptr);
     }
 
 private:
@@ -120,11 +195,24 @@ private:
             inner->removeComponentListener(this);
         removeChildComponent(&languageSwitch);
         inner.reset();
-        inner.reset(make());
+        inner.reset(compact ? makeCompact() : make());
+        inner->getProperties().set("tonwerkBare", bare);
+        if (! compact)
+            fullSize = { inner->getWidth(), inner->getHeight() };
         addAndMakeVisible(*inner);
         addChildComponent(languageSwitch);
         parentHierarchyChanged();
         inner->addComponentListener(this);
+        // The compact editor takes the room there is, and so does any editor built again on the iPad.
+        bool keepsSize = compact;
+#if JUCE_IOS
+        keepsSize = keepsSize || getWidth() > 0;
+#endif
+        if (keepsSize)
+        {
+            fit();
+            return;
+        }
 #if ! JUCE_IOS
         if (inner->isResizable())
         {
@@ -161,7 +249,7 @@ private:
 
     void componentMovedOrResized(juce::Component&, bool, bool wasResized) override
     {
-        if (! wasResized || fitting)
+        if (! wasResized || fitting || compact)
             return;
 #if JUCE_IOS
         fit();
@@ -180,6 +268,25 @@ private:
         const auto h = (float) inner->getHeight();
         if (w <= 0.0f || h <= 0.0f)
             return;
+        // Only on a phone: an iPad's hosts show the full editor scaled, as they did before there were pages.
+        if (makeCompact && ! forced && onPhone() && fullSize.x > 0)
+        {
+            const bool wanted = tooSmallAt(std::min((float) getWidth() / (float) fullSize.x,
+                                                    (float) getHeight() / (float) fullSize.y));
+            if (wanted != compact)
+            {
+                compact = wanted;
+                rebuildSoon();
+                return;
+            }
+        }
+        if (compact)
+        {
+            inner->setTransform({});
+            inner->setBounds(getLocalBounds());
+            languageSwitch.setBounds(switchPlace());
+            return;
+        }
         const float scale = std::min((float) getWidth() / w, (float) getHeight() / h);
         inner->setTopLeftPosition(0, 0);
         const auto placed = juce::AffineTransform::scale(scale).translated(((float) getWidth() - w * scale) * 0.5f,
@@ -223,7 +330,12 @@ private:
                  LanguageSwitch::kWidth, LanguageSwitch::kHeight };
     }
 
-    Factory make;
+    Factory make, makeCompact;
+    bool compact = false;
+    bool bare = false;
+    // Whether someone else chooses between the full and the compact editor.
+    bool forced = false;
+    juce::Point<int> fullSize;
     std::unique_ptr<juce::AudioProcessorEditor> inner;
     LanguageSwitch languageSwitch;
     bool fitting = false;
@@ -234,6 +346,15 @@ template <typename Editor, typename Processor>
 juce::AudioProcessorEditor* forHost(Processor& processor)
 {
     return new HostFrame(processor, [&processor] { return new Editor(processor); });
+}
+
+/** The same with an editor of pages for small screens, made by `makeCompact`. */
+template <typename Editor, typename Processor>
+juce::AudioProcessorEditor* forHost(Processor& processor, HostFrame::Factory makeCompact)
+{
+    auto* frame = new HostFrame(processor, [&processor] { return new Editor(processor); });
+    frame->setCompactFactory(std::move(makeCompact));
+    return frame;
 }
 
 /** The editor inside what `createEditor` returned, as `Editor` (nullptr when it is another). */

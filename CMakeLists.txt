@@ -89,10 +89,12 @@ else()
     set(TONWERK_FORMATS VST3 Standalone)
 endif()
 
-# The iPad apps: iPad only (the editors are too wide for a phone), landscape, full screen, playing on in the background
-# so a key on a MIDI keyboard still sounds when another app is in front. Elsewhere JUCE ignores these.
+# The iPad and iPhone apps: landscape, full screen, playing on in the background so a key on a MIDI keyboard still
+# sounds when another app is in front. Elsewhere JUCE ignores these. On the iPhone only Tonwerk Analog has
+# pages for its screen so far (common/Compact.h); the other editors are scaled down and too small for a finger.
 set(TONWERK_IOS_OPTIONS
-    TARGETED_DEVICE_FAMILY 2
+    TARGETED_DEVICE_FAMILY "1,2"
+    IPHONE_SCREEN_ORIENTATIONS UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     IPAD_SCREEN_ORIENTATIONS UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
     REQUIRES_FULL_SCREEN TRUE
     STATUS_BAR_HIDDEN TRUE

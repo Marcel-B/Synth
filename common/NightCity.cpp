@@ -135,9 +135,13 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, i
     g.fillRect(position - 1.0f, bar.getY() - 3.0f, 2.0f, bar.getHeight() + 6.0f);
 }
 
-juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox&) { return juce::Font(juce::FontOptions(13.0f)); }
+juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox& box)
+{
+    // A menu made taller for a finger gets text to match.
+    return juce::Font(juce::FontOptions(box.getHeight() > 30 ? (float) box.getHeight() * 0.42f : 13.0f));
+}
 
-juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(14.0f)); }
+juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(popupFontSize)); }
 
 juce::Component* LookAndFeel::getParentComponentForMenuOptions(const juce::PopupMenu::Options& options)
 {
@@ -305,7 +309,7 @@ void Control::resized()
     if (slider)
         slider->setBounds(area.withSizeKeepingCentre(std::min(area.getWidth(), kSlot), area.getHeight()));
     else if (menu)
-        menu->setBounds(area.withSizeKeepingCentre(area.getWidth() - 8, 24));
+        menu->setBounds(area.withSizeKeepingCentre(area.getWidth() - 8, std::min(area.getHeight(), menuHeight)));
     else if (toggle)
         toggle->setBounds(area.withSizeKeepingCentre(52, 24));
 }
