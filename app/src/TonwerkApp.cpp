@@ -537,7 +537,8 @@ public:
         addAndMakeVisible(showKeyboard);
         railKeys.setClickingTogglesState(true);
         railKeys.onClick = [this] {
-            phoneStrip = railKeys.getToggleState() ? Strip::keys : Strip::none;
+            phoneKeys = railKeys.getToggleState();
+            phoneScope = phoneScope && roomy;
             resized();
         };
         addChildComponent(railKeys);
@@ -545,7 +546,8 @@ public:
         // On a phone the strip under the editor shows the keys, the scope or nothing, chosen in a rail at the side.
         showScope.setClickingTogglesState(true);
         showScope.onClick = [this] {
-            phoneStrip = showScope.getToggleState() ? Strip::scope : Strip::none;
+            phoneScope = showScope.getToggleState();
+            phoneKeys = phoneKeys && roomy;
             resized();
         };
         addChildComponent(showScope);
@@ -700,8 +702,18 @@ public:
             area = display->safeAreaInsets.subtractedFrom(area);
         chooser.setBounds(area);
 
-        // A phone in landscape: too low for a bar above the editor and for keys and scope side by side under it.
-        phone = area.getHeight() - tonwerkui::kHeader < 520;
+        // A phone in landscape: too low for a bar above the editor. An iPhone always, also one that unfolds to a
+        // larger screen: the iPad's editors would be smaller there than a finger needs, the pages just grow.
+        phone = tonwerkui::HostFrame::onPhone() || area.getHeight() - tonwerkui::kHeader < 520;
+        if (phone)
+        {
+            // A phone's screen has round corners, and the unfolded one keeps no room free at its sides: without
+            // this the rail's first and last button and the last key lost a corner to them.
+            const auto bounds = getLocalBounds();
+            area = area.getIntersection(bounds.reduced(kCorner, 0).withTrimmedTop(kGapAtEdge).withTrimmedBottom(kGapAtEdge));
+        }
+        // Keys and scope side by side under the editor only where the pages keep enough height above them.
+        roomy = phone && area.getHeight() >= 500 && area.getWidth() >= 800;
         const bool listens = current >= 0 && catalogue()[(size_t) current].listens;
         setup.setVisible(phone);
         showSounds.setVisible(phone && processor != nullptr && processor->getNumPrograms() > 1);
@@ -767,7 +779,9 @@ public:
     }
 
 private:
-    enum class Strip { none, keys, scope };
+    /** The least room at a phone's sides, clear of its screen's round corners, and at its top and bottom. */
+    static constexpr int kCorner = 14;
+    static constexpr int kGapAtEdge = 6;
 
     /**
      * A phone's screen: no bar at the top, so the editor gets the height. A rail at the side, under the thumb, holds
@@ -777,9 +791,11 @@ private:
      */
     void layoutPhone(juce::Rectangle<int> area)
     {
-        const auto strip = plays ? phoneStrip : Strip::none;
-        railKeys.setToggleState(strip == Strip::keys, juce::dontSendNotification);
-        showScope.setToggleState(strip == Strip::scope, juce::dontSendNotification);
+        // Both at once only on a roomy screen; elsewhere the keys win.
+        const bool withKeys = plays && phoneKeys;
+        const bool withScope = plays && phoneScope && (roomy || ! withKeys);
+        railKeys.setToggleState(withKeys, juce::dontSendNotification);
+        showScope.setToggleState(withScope, juce::dontSendNotification);
 
         const bool railLeft = settings->getBoolValue("railLeft", false);
         auto rail = railLeft ? area.removeFromLeft(kRail) : area.removeFromRight(kRail);
@@ -801,15 +817,19 @@ private:
             button->setBounds(rail.removeFromTop(each).reduced(0, 3));
 
         for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown })
-            component->setVisible(strip == Strip::keys);
-        scope.setVisible(strip == Strip::scope);
-        if (strip != Strip::none)
+            component->setVisible(withKeys);
+        scope.setVisible(withScope);
+        if (withKeys || withScope)
         {
             auto below = area.removeFromBottom(kPhoneStrip);
             area.removeFromBottom(tonwerkui::kGap);
-            if (strip == Strip::scope)
-                scope.setBounds(below);
-            else
+            if (withScope)
+            {
+                scope.setBounds(withKeys ? below.removeFromRight(below.getWidth() / 3) : below);
+                if (withKeys)
+                    below.removeFromRight(tonwerkui::kGap);
+            }
+            if (withKeys)
             {
                 auto octave = below.removeFromLeft(56).reduced(tonwerkui::kGap, 0);
                 octaveUp.setBounds(octave.removeFromTop(octave.getHeight() * 2 / 5));
@@ -995,7 +1015,8 @@ private:
     static constexpr int kSounds = 280;
     static constexpr int kPhoneStrip = 100;
     bool phone = false;
-    Strip phoneStrip = Strip::none;
+    bool phoneKeys = false, phoneScope = false;
+    bool roomy = false;
     juce::TextButton picker, showKeyboard, input;
     IconButton railPicker { IconButton::Icon::plugins }, showSounds { IconButton::Icon::sounds },
         railKeys { IconButton::Icon::keys }, showScope { IconButton::Icon::wave }, setup { IconButton::Icon::gear };
