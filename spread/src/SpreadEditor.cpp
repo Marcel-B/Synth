@@ -219,7 +219,7 @@ SpreadEditor::SpreadEditor(SpreadProcessor& p)
         addAndMakeVisible(*c);
     const int width = 2 * kMargin
                       + std::max(stereo.preferredWidth() + 260, tone.preferredWidth() + output.preferredWidth() + kGap);
-    setSize(width, 2 * kMargin + kHeader + stereo.preferredHeight() + kGap + tone.preferredHeight());
+    setSize(width, 2 * kMargin + headerHeight() + stereo.preferredHeight() + kGap + tone.preferredHeight());
 }
 
 SpreadEditor::~SpreadEditor() { setLookAndFeel(nullptr); }
@@ -227,14 +227,15 @@ SpreadEditor::~SpreadEditor() { setLookAndFeel(nullptr); }
 void SpreadEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK SPREAD");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK SPREAD");
 }
 
 void SpreadEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     layoutRow(area, { &stereo });
     layoutRow(area, { &tone, &output });
 }

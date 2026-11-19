@@ -124,7 +124,7 @@ LfoEditor::LfoEditor(LfoProcessor& p)
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &wave, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin + std::max(wave.preferredWidth() + 160, output.preferredWidth());
-    setSize(width, 2 * kMargin + kHeader + wave.preferredHeight() + kGap + output.preferredHeight());
+    setSize(width, 2 * kMargin + headerHeight() + wave.preferredHeight() + kGap + output.preferredHeight());
 }
 
 LfoEditor::~LfoEditor() { setLookAndFeel(nullptr); }
@@ -132,14 +132,15 @@ LfoEditor::~LfoEditor() { setLookAndFeel(nullptr); }
 void LfoEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK LFO");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK LFO");
 }
 
 void LfoEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     layoutRow(area, { &wave });
     layoutRow(area, { &output });
 }

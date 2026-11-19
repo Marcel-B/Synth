@@ -182,7 +182,7 @@ ZoneEditor::ZoneEditor(ZoneProcessor& p)
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &zone, &scope, &compressor, &lfo, &output })
         addAndMakeVisible(*c);
     const int width = 2 * kMargin + std::max(zone.preferredWidth() + 260, compressor.preferredWidth() + lfo.preferredWidth() + output.preferredWidth() + 2 * kGap);
-    setSize(width, 2 * kMargin + kHeader + zone.preferredHeight() + kGap + compressor.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + zone.preferredHeight() + kGap + compressor.preferredHeight() + kGap + kScope);
 }
 
 ZoneEditor::~ZoneEditor() { setLookAndFeel(nullptr); }
@@ -190,14 +190,15 @@ ZoneEditor::~ZoneEditor() { setLookAndFeel(nullptr); }
 void ZoneEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK ZONE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK ZONE");
 }
 
 void ZoneEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &zone });

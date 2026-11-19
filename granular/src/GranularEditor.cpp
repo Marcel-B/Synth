@@ -226,7 +226,7 @@ GranularEditor::GranularEditor(GranularProcessor& p)
     keyboard.setAvailableRange(24, 96);
     keyboard.setLowestVisibleKey(24);
 
-    const int height = kMargin * 2 + kHeader + std::max(source.preferredHeight(), grains.preferredHeight())
+    const int height = kMargin * 2 + headerHeight() + std::max(source.preferredHeight(), grains.preferredHeight())
                        + std::max({ filter.preferredHeight(), env1.preferredHeight(), env2.preferredHeight() })
                        + lfo1.preferredHeight() + voice.preferredHeight() + kKeyboard + 5 * kGap;
     setSize(kWidth, height);
@@ -247,14 +247,15 @@ void GranularEditor::choosePreset(int index)
 void GranularEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK GRANULAR");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK GRANULAR");
 }
 
 void GranularEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

@@ -117,7 +117,7 @@ VocoderEditor::VocoderEditor(VocoderProcessor& p)
         addAndMakeVisible(*c);
     const int width = 2 * kMargin + std::max(bank.preferredWidth() + 200,
                                              carrier.preferredWidth() + kGap + output.preferredWidth());
-    setSize(width, 2 * kMargin + kHeader + bank.preferredHeight() + kGap + carrier.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + bank.preferredHeight() + kGap + carrier.preferredHeight() + kGap + kScope);
 }
 
 VocoderEditor::~VocoderEditor() { setLookAndFeel(nullptr); }
@@ -125,14 +125,15 @@ VocoderEditor::~VocoderEditor() { setLookAndFeel(nullptr); }
 void VocoderEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK VOCODER");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK VOCODER");
 }
 
 void VocoderEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &bank });

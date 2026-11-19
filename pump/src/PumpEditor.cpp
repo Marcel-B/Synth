@@ -211,7 +211,7 @@ PumpEditor::PumpEditor(PumpProcessor& p)
                       + std::max(meter.preferredWidth() + 200,
                                  curve.preferredWidth() + key.preferredWidth() + band.preferredWidth()
                                      + output.preferredWidth() + 3 * kGap);
-    setSize(width, 2 * kMargin + kHeader + meter.preferredHeight() + kGap + curve.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + meter.preferredHeight() + kGap + curve.preferredHeight() + kGap + kScope);
 }
 
 PumpEditor::~PumpEditor() { setLookAndFeel(nullptr); }
@@ -219,14 +219,15 @@ PumpEditor::~PumpEditor() { setLookAndFeel(nullptr); }
 void PumpEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK PUMP");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK PUMP");
 }
 
 void PumpEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &meter });

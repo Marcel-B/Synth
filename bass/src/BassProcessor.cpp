@@ -313,6 +313,7 @@ void BassProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuf
     scope.write(buffer.getReadPointer(0), count);
     shownNote.store(engine.sounding(), std::memory_order_relaxed);
     shownAccent.store(engine.isAccented(), std::memory_order_relaxed);
+    shownCutoff.store(engine.movedCutoff(), std::memory_order_relaxed);
     shownSlide.store(engine.isSliding(), std::memory_order_relaxed);
 }
 

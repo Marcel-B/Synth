@@ -385,6 +385,66 @@ public:
             }
         }
 
+        beginTest("The filter's picture: flat below the cutoff, a peak at it with resonance, 24 dB an octave above");
+        {
+            using tonwerkbass::ResponseView;
+            expectWithinAbsoluteError(ResponseView::responseDb(0.0f, 1000.0f, 50.0f), 0.0f, 0.1f);
+            expectWithinAbsoluteError(ResponseView::responseDb(0.0f, 1000.0f, 16000.0f)
+                                          - ResponseView::responseDb(0.0f, 1000.0f, 8000.0f),
+                                      -24.0f, 1.0f);
+            // With resonance the gain at the cutoff stands well over the gain an octave either side.
+            const float peak = ResponseView::responseDb(0.9f, 1000.0f, 1000.0f);
+            expectGreaterThan(peak, ResponseView::responseDb(0.9f, 1000.0f, 500.0f) + 6.0f);
+            expectGreaterThan(peak, ResponseView::responseDb(0.9f, 1000.0f, 2000.0f) + 6.0f);
+            // The oscillator's picture: the sub an octave under the wave, a square under two of its cycles.
+            tonwerkbass::Settings s;
+            s.wave = tonwerkbass::Wave::saw;
+            s.sub = 0.0f;
+            expectWithinAbsoluteError(tonwerkbass::WaveView::valueAt(s, 0.125f), -0.5f, 0.001f);
+            s.sub = 1.0f;
+            expectWithinAbsoluteError(tonwerkbass::WaveView::valueAt(s, 0.125f), 0.5f, 0.001f);
+            expectWithinAbsoluteError(tonwerkbass::WaveView::valueAt(s, 0.625f), -1.5f, 0.001f);
+
+            // While a note sounds the processor says where envelope and accent have the cutoff: above its knob.
+            BassProcessor p;
+            p.setPlayConfigDetails(0, 2, 48000.0, 256);
+            p.prepareToPlay(48000.0, 256);
+            juce::AudioBuffer<float> buffer(2, 256);
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::noteOn(1, 36, (juce::uint8) 127), 0);
+            p.processBlock(buffer, midi);
+            expectGreaterThan(p.shownCutoff.load(), p.readSettings().cutoff * 1.5f);
+        }
+
+        beginTest("A switch is a lit key without a word, and a menu of waveforms shows them drawn");
+        {
+            expect(! tonwerkui::waveIcon("Sinus").isEmpty());
+            expect(! tonwerkui::waveIcon("Sawtooth").isEmpty());
+            expect(! tonwerkui::waveIcon(juce::String::fromUTF8("Sägezahn")).isEmpty());
+            expect(tonwerkui::waveIcon("Cutoff").isEmpty());
+            expect(tonwerkui::waveIcon("Sine Bass").isEmpty());
+            BassProcessor p;
+            std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
+            int keys = 0, waves = 0, words = 0;
+            std::function<void(juce::Component&)> walk = [&](juce::Component& c) {
+                if (auto* toggle = dynamic_cast<juce::ToggleButton*>(&c))
+                {
+                    ++keys;
+                    expect(toggle->getButtonText().isEmpty());
+                    expect(toggle->getTitle().isNotEmpty());
+                }
+                if (auto* box = dynamic_cast<juce::ComboBox*>(&c))
+                    (box->getProperties()["waves"] ? waves : words) += 1;
+                for (auto* child : c.getChildren())
+                    walk(*child);
+            };
+            walk(*editor);
+            // Sync of the LFO and of the delay; wave and LFO shape drawn, the LFO's target and the note values in words.
+            expectEquals(keys, 2);
+            expectEquals(waves, 2);
+            expectGreaterThan(words, 1);
+        }
+
         beginTest("Inside the iPad app the editor leaves its scope to the app's");
         {
             BassProcessor p;

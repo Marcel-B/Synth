@@ -224,7 +224,7 @@ ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &osc1, &osc2 }), rowWidth({ &filter, &filterEnvelope, &ampEnvelope }),
                                    rowWidth({ &lfo, &voices }), rowWidth({ &effects }) });
-    const int height = kMargin * 2 + kHeader + (scope.isVisible() ? kScope + kGap : 0) + osc1.preferredHeight() + filter.preferredHeight()
+    const int height = kMargin * 2 + headerHeight() + (scope.isVisible() ? kScope + kGap : 0) + osc1.preferredHeight() + filter.preferredHeight()
                        + lfo.preferredHeight() + effects.preferredHeight() + kKeyboard + 4 * kGap;
     setSize(width, height);
     timerCallback();
@@ -280,14 +280,15 @@ void ExpanderEditor::exportHardwareSheet()
 void ExpanderEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK EXPANDER");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK EXPANDER");
 }
 
 void ExpanderEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

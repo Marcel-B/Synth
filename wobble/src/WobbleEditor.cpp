@@ -375,7 +375,7 @@ WobbleEditor::WobbleEditor(WobbleProcessor& p)
     setLookAndFeel(&lookAndFeel);
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &filter, &volume, &output })
         addAndMakeVisible(*c);
-    setSize(kWidth, 2 * kMargin + kHeader + filter.preferredHeight() + kGap + volume.preferredHeight());
+    setSize(kWidth, 2 * kMargin + headerHeight() + filter.preferredHeight() + kGap + volume.preferredHeight());
 }
 
 WobbleEditor::~WobbleEditor() { setLookAndFeel(nullptr); }
@@ -383,14 +383,15 @@ WobbleEditor::~WobbleEditor() { setLookAndFeel(nullptr); }
 void WobbleEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK WOBBLE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK WOBBLE");
 }
 
 void WobbleEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(240));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(240));
     layoutRow(area, { &filter });
     layoutRow(area, { &volume, &output });
 }

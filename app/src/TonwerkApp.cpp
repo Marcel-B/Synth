@@ -188,13 +188,28 @@ private:
 class IconButton : public juce::Button
 {
 public:
-    enum class Icon { plugins, sounds, keys, wave, gear };
+    enum class Icon { plugins, sounds, keys, wave, gear, previous, next, plus, minus };
 
     explicit IconButton(Icon shown) : juce::Button({}), icon(shown) {}
 
     void paintButton(juce::Graphics& g, bool, bool down) override
     {
         const auto area = getLocalBounds().toFloat().reduced(1.0f);
+        if (icon == Icon::previous || icon == Icon::next)
+        {
+            // The arrows beside the sound's name: no frame, so they read as part of the name.
+            const float size = std::min(18.0f, std::min(area.getWidth(), area.getHeight()) - 8.0f);
+            const auto box = juce::Rectangle<float>(size * 0.8f, size).withCentre(area.getCentre());
+            juce::Path arrow;
+            if (icon == Icon::previous)
+                arrow.addTriangle(box.getRight(), box.getY(), box.getRight(), box.getBottom(), box.getX(), box.getCentreY());
+            else
+                arrow.addTriangle(box.getX(), box.getY(), box.getX(), box.getBottom(), box.getRight(), box.getCentreY());
+            g.setColour(colours::yellow.withAlpha(down ? 0.5f : 1.0f));
+            g.fillPath(arrow);
+            g.strokePath(arrow, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            return;
+        }
         const auto colour = getToggleState() ? colours::yellow : colours::cyan;
         g.setColour(down ? colours::border : colours::panel);
         g.fillRoundedRectangle(area, 6.0f);
@@ -249,6 +264,16 @@ public:
                 g.fillPath(path);
                 g.setColour(down ? colours::border : colours::panel);
                 g.fillEllipse(box.withSizeKeepingCentre(3.4f * u, 3.4f * u));
+                break;
+            case Icon::plus:
+                // The keyboard's octave up and down, framed like the bar's buttons.
+                g.fillRoundedRectangle(box.getCentreX() - 0.7f * u, y + u, 1.4f * u, 8.0f * u, 0.7f * u);
+                [[fallthrough]];
+            case Icon::minus:
+                g.fillRoundedRectangle(x + u, box.getCentreY() - 0.7f * u, 8.0f * u, 1.4f * u, 0.7f * u);
+                break;
+            case Icon::previous:
+            case Icon::next:
                 break;
         }
     }
@@ -572,6 +597,10 @@ public:
         showSounds.onClick = [this] { resized(); };
         addChildComponent(showSounds);
         addChildComponent(sounds);
+        previousSound.onClick = [this] { stepSound(-1); };
+        nextSound.onClick = [this] { stepSound(1); };
+        addChildComponent(previousSound);
+        addChildComponent(nextSound);
 
 #if JUCE_IOS
         bluetooth.setButtonText("Bluetooth-MIDI");
@@ -590,10 +619,8 @@ public:
         addAndMakeVisible(keyboard);
         keys.addListener(this);
 
-        octaveDown.setButtonText("-");
         octaveDown.onClick = [this] { shiftOctave(-1); };
         addAndMakeVisible(octaveDown);
-        octaveUp.setButtonText("+");
         octaveUp.onClick = [this] { shiftOctave(1); };
         addAndMakeVisible(octaveUp);
         addAndMakeVisible(scope);
@@ -706,9 +733,10 @@ public:
                                                                      : juce::String("TONWERK"));
         if (! soundArea.isEmpty() && soundName.isNotEmpty())
         {
+            // A plain name between its arrows; the whole list is behind the list button.
             g.setColour(colours::cyan);
-            g.setFont(tonwerkui::mono(15.0f));
-            g.drawText(soundName, soundArea, juce::Justification::centredLeft);
+            g.setFont(tonwerkui::mono(17.0f));
+            g.drawFittedText(soundName, soundArea, juce::Justification::centred, 1, 0.8f);
         }
         if (! keyboard.isVisible())
             return;
@@ -722,8 +750,8 @@ public:
     {
         auto area = getLocalBounds();
         // The room iPadOS keeps free: the home bar at the bottom, the camera's edge.
-        if (auto* display = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds()))
-            area = display->safeAreaInsets.subtractedFrom(area);
+        insets = safeInsets();
+        area = insets.subtractedFrom(area);
         chooser.setBounds(area);
 
         // A phone in landscape: too low for a bar above the editor. An iPhone always, also one that unfolds to a
@@ -755,6 +783,8 @@ public:
         bluetooth.setVisible(! signs);
 #endif
         soundArea = {};
+        previousSound.setVisible(false);
+        nextSound.setVisible(false);
         look.setPopupFontSize(phone ? 18.0f : 14.0f);
         if (current >= 0)
             picker.setButtonText(catalogue()[(size_t) current].name + utf8(" \xe2\x96\xbe"));
@@ -951,9 +981,18 @@ private:
      * sound, and holds on the right the phone's rail laid across, the same signs for the same things. Keys and scope
      * have a switch each, so an instrument whose own scope the app took still shows one with the keys put away.
      */
+    juce::BorderSize<int> safeInsets() const
+    {
+        if (auto* display = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds()))
+            return display->safeAreaInsets;
+        return {};
+    }
+
     void layoutTouch(juce::Rectangle<int> area)
     {
         auto bar = area.removeFromTop(kTouchBar).reduced(tonwerkui::kMargin, 3);
+        // iPadOS draws a window's three buttons in the top left corner; the name starts clear of them.
+        bar.removeFromLeft(kWindowButtons);
         std::vector<juce::Component*> buttons { &railPicker };
         if (showSounds.isVisible())
             buttons.push_back(&showSounds);
@@ -973,7 +1012,16 @@ private:
                                              + 6);
         title = bar.removeFromLeft(nameWidth);
         bar.removeFromLeft(3 * tonwerkui::kGap);
-        soundArea = bar.getWidth() >= 80 ? bar : juce::Rectangle<int>();
+        // The sound beside the buttons, an arrow either side to step through the list.
+        if (showSounds.isVisible() && bar.getWidth() >= 2 * kArrow + 80)
+        {
+            auto sound = bar.removeFromRight(juce::jmin(kSoundName + 2 * kArrow, bar.getWidth()));
+            previousSound.setBounds(sound.removeFromLeft(kArrow));
+            nextSound.setBounds(sound.removeFromRight(kArrow));
+            previousSound.setVisible(true);
+            nextSound.setVisible(true);
+            soundArea = sound;
+        }
         readSound();
 
         const bool withKeys = plays && settings->getBoolValue("keyboard", true);
@@ -1018,6 +1066,17 @@ private:
         }
         frame.setBounds(area);
         repaint();
+    }
+
+    /** The arrows beside the sound's name: the list's neighbour, around its ends. */
+    void stepSound(int by)
+    {
+        if (processor == nullptr || processor->getNumPrograms() < 2)
+            return;
+        const int count = processor->getNumPrograms();
+        processor->setCurrentProgram((processor->getCurrentProgram() + by + count) % count);
+        sounds.show(processor.get());
+        readSound();
     }
 
     /** The sound the instrument plays, for the bar: the host program's name, where there is more than one. */
@@ -1101,6 +1160,10 @@ private:
 
     void timerCallback() override
     {
+        // iPadOS settles what it keeps free only after the first layout (seen in the simulator: the bar sat lower
+        // until something else laid the window out again), and changes it when the window is resized or moved.
+        if (safeInsets() != insets)
+            resized();
         // The bar's sound follows a choice in the editor soon; looking for new MIDI devices can wait as before.
         if (! soundArea.isEmpty())
             readSound();
@@ -1140,6 +1203,7 @@ private:
     juce::String soundName;
     static constexpr int kTick = 400;
     int ticks = 0;
+    juce::BorderSize<int> insets;
     // The iPad's bar, a finger high. The desktop keeps its bar of words for now (Marcel, 2026-11-19);
     // TONWERK_TOUCH_BAR=1 shows the iPad's there, to look at it without one.
 #if JUCE_IOS
@@ -1149,6 +1213,10 @@ private:
 #endif
     static constexpr int kTouchBar = 52;
     static constexpr int kTouchButton = 56;
+    static constexpr int kWindowButtons = 76;
+    static constexpr int kArrow = 44;
+    static constexpr int kSoundName = 260;
+    IconButton previousSound { IconButton::Icon::previous }, nextSound { IconButton::Icon::next };
     static constexpr int kRail = 64;
     static constexpr int kSounds = 280;
     static constexpr int kPhoneStrip = 100;
@@ -1163,7 +1231,7 @@ private:
     juce::TextButton bluetooth;
     juce::MidiKeyboardState keys;
     juce::MidiKeyboardComponent keyboard { keys, juce::MidiKeyboardComponent::horizontalKeyboard };
-    juce::TextButton octaveDown, octaveUp;
+    IconButton octaveDown { IconButton::Icon::minus }, octaveUp { IconButton::Icon::plus };
     tonwerkui::ScopeView scope { audio.scope };
     EditorFrame frame;
     SoundList sounds;
@@ -1208,6 +1276,12 @@ public:
         // The scope beside the keys is every instrument's: an editor with its own above the knobs showed two. On
         // the Mac the app stays as it was for now (Marcel, 2026-11-19).
         tonwerkui::editorsHaveScope() = false;
+        // And the bar at the top names the instrument and its sound; a phone's pages have no header anyway.
+        tonwerkui::editorsHaveHeader() = false;
+#else
+        // TONWERK_TOUCH_BAR=1 shows the iPad's layout on the desktop, to look at it without one.
+        if (juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) == "1")
+            tonwerkui::editorsHaveScope() = tonwerkui::editorsHaveHeader() = false;
 #endif
         window = std::make_unique<MainWindow>();
     }

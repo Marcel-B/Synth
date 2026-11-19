@@ -194,7 +194,7 @@ ChorusEditor::ChorusEditor(ChorusProcessor& p)
     const int lower = std::max(line.preferredWidth(), phaser.preferredWidth()) + tone.preferredWidth()
                       + output.preferredWidth() + 2 * kGap;
     const int width = 2 * kMargin + std::max(sweep.preferredWidth() + 120, lower);
-    setSize(width, 2 * kMargin + kHeader + sweep.preferredHeight() + kGap + line.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + sweep.preferredHeight() + kGap + line.preferredHeight() + kGap + kScope);
     modeAttachment.sendInitialUpdate();
 }
 
@@ -211,14 +211,15 @@ void ChorusEditor::modeChanged(float value)
 void ChorusEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK CHORUS");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK CHORUS");
 }
 
 void ChorusEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &sweep });

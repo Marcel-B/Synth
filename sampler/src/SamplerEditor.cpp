@@ -256,7 +256,7 @@ SamplerEditor::SamplerEditor(SamplerProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &sample }), rowWidth({ &loop, &slices, &voice }),
                                    rowWidth({ &filter, &amp }), rowWidth({ &lfo, &effects }) });
-    const int height = kMargin * 2 + kHeader + sample.preferredHeight() + loop.preferredHeight()
+    const int height = kMargin * 2 + headerHeight() + sample.preferredHeight() + loop.preferredHeight()
                        + filter.preferredHeight() + lfo.preferredHeight() + kKeyboard + 4 * kGap;
     setSize(width, height);
     timerCallback();
@@ -276,14 +276,15 @@ void SamplerEditor::choosePreset(int index)
 void SamplerEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK SAMPLER");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK SAMPLER");
 }
 
 void SamplerEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

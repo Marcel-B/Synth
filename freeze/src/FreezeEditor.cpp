@@ -144,7 +144,7 @@ FreezeEditor::FreezeEditor(FreezeProcessor& p)
     setLookAndFeel(&lookAndFeel);
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &spectrum, &freeze, &sound, &motion, &output })
         addAndMakeVisible(*c);
-    setSize(kWidth, 2 * kMargin + kHeader + kSpectrum + kGap + freeze.preferredHeight());
+    setSize(kWidth, 2 * kMargin + headerHeight() + kSpectrum + kGap + freeze.preferredHeight());
 }
 
 FreezeEditor::~FreezeEditor() { setLookAndFeel(nullptr); }
@@ -152,14 +152,15 @@ FreezeEditor::~FreezeEditor() { setLookAndFeel(nullptr); }
 void FreezeEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK FREEZE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK FREEZE");
 }
 
 void FreezeEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     spectrum.setBounds(area.removeFromTop(kSpectrum));
     area.removeFromTop(kGap);
     layoutRow(area, { &freeze, &sound, &motion, &output });

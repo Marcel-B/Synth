@@ -147,7 +147,7 @@ DelayEditor::DelayEditor(DelayProcessor& p)
     const int width = 2 * kMargin
                       + std::max(echo.preferredWidth() + 160, tone.preferredWidth() + ducking.preferredWidth()
                                                                   + output.preferredWidth() + 2 * kGap);
-    setSize(width, 2 * kMargin + kHeader + echo.preferredHeight() + kGap + tone.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + echo.preferredHeight() + kGap + tone.preferredHeight() + kGap + kScope);
 }
 
 DelayEditor::~DelayEditor() { setLookAndFeel(nullptr); }
@@ -155,14 +155,15 @@ DelayEditor::~DelayEditor() { setLookAndFeel(nullptr); }
 void DelayEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK DELAY");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK DELAY");
 }
 
 void DelayEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &echo });

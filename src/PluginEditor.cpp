@@ -14,6 +14,10 @@ constexpr int kEnvelopeDisplay = 130;
 constexpr int kAlgorithmDisplay = 200;
 constexpr int kBottom = 72;
 constexpr int kScopeWidth = 300;
+// The analog panels have height to spare on an iPad and in a host's window (Marcel, 2026-11-19): air around each row
+// of knobs and between the rows of panels.
+constexpr int kAnalogAir = 22;
+constexpr int kAnalogRowGap = 14;
 
 /** Room for the steps an envelope takes, so a short attack still shows. */
 float shareOf(float seconds, float longest) { return std::sqrt(std::max(0.0f, seconds) / longest); }
@@ -444,7 +448,10 @@ TonwerkSynthEditor::TonwerkSynthEditor(TonwerkSynthProcessor& owner)
                                                               { "fx.delay.tone", "Ton" },
                                                               { "fx.reverb.mix", "Hall" },
                                                               { "fx.reverb.decay", utf8("Länge") } } });
-        analogRows = { { &osc1, &osc2, &filter, &sampleHold }, { &filterEnv, &ampEnv, &fold, &mix }, { &lfo, &fx } };
+        // The mix ends the last row, so the envelopes' drawings get its width.
+        analogRows = { { &osc1, &osc2, &filter, &sampleHold }, { &filterEnv, &ampEnv, &fold }, { &lfo, &fx, &mix } };
+        for (auto& section : analogSections)
+            section->setAir(kAnalogAir);
     }
 
     if (hasPart(processor.edition, Part::fm))
@@ -509,13 +516,13 @@ TonwerkSynthEditor::~TonwerkSynthEditor() { setLookAndFeel(nullptr); }
 
 int TonwerkSynthEditor::heightFor(Engine which) const
 {
-    int height = 2 * kMargin + kHeader + kBottom;
+    int height = 2 * kMargin + (hasHeader() ? kHeader : 0) + kBottom;
     for (const auto& row : which == Engine::fm ? fmRows : analogRows)
     {
         int tallest = 0;
         for (auto* section : row)
             tallest = std::max(tallest, section->preferredHeight());
-        height += tallest + kGap;
+        height += tallest + kGap + (which == Engine::fm ? 0 : kAnalogRowGap - kGap);
     }
     return height;
 }
@@ -537,9 +544,17 @@ void TonwerkSynthEditor::showEngine(Engine which)
         setSize(kWidth, heightFor(which));
 }
 
+bool TonwerkSynthEditor::hasHeader() const
+{
+    // Tonwerk Synth's header holds the switch between its engines, which the app's bar does not have.
+    return headerHeight() > 0 || processor.edition == Edition::combined;
+}
+
 void TonwerkSynthEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
+    if (! hasHeader())
+        return;
     const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
     paintTitle(g, header, TonwerkSynthProcessor::editionName(processor.edition).toUpperCase());
 }
@@ -547,7 +562,9 @@ void TonwerkSynthEditor::paint(juce::Graphics& g)
 void TonwerkSynthEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    presets.setVisible(hasHeader());
+    message.setVisible(hasHeader());
+    auto header = hasHeader() ? area.removeFromTop(kHeader).reduced(0, 7) : juce::Rectangle<int>();
     // The title is painted; the room after it is the switch (Tonwerk Synth only) and the message.
     header.removeFromLeft(processor.edition == Edition::combined ? 215 : 230);
     if (processor.edition == Edition::combined)
@@ -557,6 +574,8 @@ void TonwerkSynthEditor::resized()
         header.removeFromLeft(12);
     }
     // On the iPad and iPhone the header has only the sounds: nothing is loaded from or saved to files there.
+    for (auto* button : { &tonwerkButton, &importButton, &exportButton, &deleteButton })
+        button->setVisible(hasHeader() && tonwerkui::soundFilesInHeader());
     if (deleteButton.isVisible())
     {
         deleteButton.setBounds(header.removeFromRight(70));
@@ -589,6 +608,8 @@ void TonwerkSynthEditor::resized()
             case 4: layoutRow(area, { row[0], row[1], row[2], row[3] }); break;
             default: jassertfalse; break;
         }
+        if (engine != Engine::fm)
+            area.removeFromTop(kAnalogRowGap - kGap);
     }
 }
 

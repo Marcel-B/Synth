@@ -243,7 +243,7 @@ PdEditor::PdEditor(PdProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &lines, &controllers }) + 120, rowWidth({ &line1, &line2 }),
                                    rowWidth({ &lfo1, &lfo2 }), rowWidth({ &voice, &chorus, &effects }) });
-    const int height = kMargin * 2 + kHeader + std::max(lines.preferredHeight(), controllers.preferredHeight())
+    const int height = kMargin * 2 + headerHeight() + std::max(lines.preferredHeight(), controllers.preferredHeight())
                        + line1.preferredHeight()
                        + lfo1.preferredHeight() + voice.preferredHeight() + kKeyboard + 5 * kGap;
     setSize(width, height);
@@ -264,14 +264,15 @@ void PdEditor::choosePreset(int index)
 void PdEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK PD");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK PD");
 }
 
 void PdEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

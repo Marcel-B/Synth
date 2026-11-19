@@ -382,7 +382,7 @@ GrooveEditor::GrooveEditor(GrooveProcessor& p)
                       + std::max({ grid.preferredWidth(), machines.preferredWidth(),
                                    sequencer.preferredWidth() + master.preferredWidth() + kGap,
                                    tracks.front()->preferredWidth() + effects.preferredWidth() + kGap });
-    const int height = 2 * kMargin + kHeader + sequencer.preferredHeight() + grid.preferredHeight()
+    const int height = 2 * kMargin + headerHeight() + sequencer.preferredHeight() + grid.preferredHeight()
                        + machines.preferredHeight()
                        + std::max(tracks.front()->preferredHeight(), effects.preferredHeight()) + 3 * kGap;
     setSize(width, height);
@@ -415,14 +415,15 @@ void GrooveEditor::choosePreset(int index)
 void GrooveEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK GROOVEBOX");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK GROOVEBOX");
 }
 
 void GrooveEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

@@ -238,6 +238,31 @@ public:
 
         for (const auto& [plugin, make] : plugins())
         {
+            beginTest(juce::String("In the app on the iPad ") + plugin + " leaves its header to the app's bar");
+            // The bar has name and sounds for every plugin alike (Marcel, 2026-11-19). Tonwerk Synth keeps its
+            // header for the switch between its engines.
+            const auto processor = make();
+            if (! processor->hasEditor())
+                continue;
+            std::unique_ptr<juce::AudioProcessorEditor> with(processor->createEditor());
+            tonwerkui::editorsHaveHeader() = false;
+            std::unique_ptr<juce::AudioProcessorEditor> without(processor->createEditor());
+            tonwerkui::editorsHaveHeader() = true;
+            const bool keeps = juce::String(plugin) == "Tonwerk Synth";
+            expectEquals(without->getWidth(), with->getWidth());
+            // Chrome Glitch has a look and a header of its own, Tonwerk Scope's editor a least height.
+            if (keeps)
+                expectEquals(without->getHeight(), with->getHeight());
+            else if (juce::String(plugin) == "Tonwerk Scope")
+                expect(without->getHeight() <= with->getHeight());
+            else if (juce::String(plugin) == "Chrome Glitch")
+                expectLessThan(without->getHeight(), with->getHeight() - 30);
+            else
+                expectEquals(without->getHeight(), with->getHeight() - tonwerkui::kHeader);
+        }
+
+        for (const auto& [plugin, make] : plugins())
+        {
             beginTest(juce::String("An AUv3 host can name every parameter of ") + plugin);
             // AUv3 identifiers are joined with dots into key paths; a dotted one kept Tonwerk Analog, FM and Synth from
             // loading on the iPad. Only those three map their ids (hostParameterId); every other plugin's ids must be

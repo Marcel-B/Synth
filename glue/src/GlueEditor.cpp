@@ -172,7 +172,7 @@ GlueEditor::GlueEditor(GlueProcessor& p)
     const int width = 2 * kMargin
                       + std::max(meter.preferredWidth() + 160,
                                  key.preferredWidth() + pump.preferredWidth() + output.preferredWidth() + 2 * kGap);
-    setSize(width, 2 * kMargin + kHeader + meter.preferredHeight() + kGap + key.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + meter.preferredHeight() + kGap + key.preferredHeight() + kGap + kScope);
 }
 
 GlueEditor::~GlueEditor() { setLookAndFeel(nullptr); }
@@ -180,14 +180,15 @@ GlueEditor::~GlueEditor() { setLookAndFeel(nullptr); }
 void GlueEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK GLUE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK GLUE");
 }
 
 void GlueEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &meter });

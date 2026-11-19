@@ -141,6 +141,172 @@ juce::Font LookAndFeel::getComboBoxFont(juce::ComboBox& box)
     return juce::Font(juce::FontOptions(box.getHeight() > 30 ? (float) box.getHeight() * 0.42f : 13.0f));
 }
 
+juce::Path waveIcon(const juce::String& name)
+{
+    enum class Wave { none, sine, triangle, sawUp, sawDown, square, pulse, random, noise };
+    static const std::pair<const char*, Wave> names[] = {
+        { "sinus", Wave::sine },       { "sine", Wave::sine },         { "dreieck", Wave::triangle },
+        { "triangle", Wave::triangle }, { "sägezahn", Wave::sawUp },   { "säge", Wave::sawUp },
+        { "sawtooth", Wave::sawUp },   { "saw", Wave::sawUp },         { "säge auf", Wave::sawUp },
+        { "saw up", Wave::sawUp },     { "säge ab", Wave::sawDown },   { "saw down", Wave::sawDown },
+        { "rechteck", Wave::square },  { "square", Wave::square },     { "puls", Wave::pulse },
+        { "pulse", Wave::pulse },      { "rechteck/puls", Wave::pulse }, { "square/pulse", Wave::pulse },
+        { "zufall", Wave::random },    { "random", Wave::random },     { "s&h", Wave::random },
+        { "rauschen", Wave::noise },   { "noise", Wave::noise },
+    };
+    auto wave = Wave::none;
+    const auto lower = name.trim().toLowerCase();
+    for (const auto& [label, which] : names)
+        if (lower == juce::String::fromUTF8(label))
+            wave = which;
+    juce::Path p;
+    auto line = [&p](std::initializer_list<juce::Point<float>> points) {
+        bool first = true;
+        for (const auto& point : points)
+        {
+            if (first)
+                p.startNewSubPath(point);
+            else
+                p.lineTo(point);
+            first = false;
+        }
+    };
+    switch (wave)
+    {
+        case Wave::none: break;
+        case Wave::sine:
+            for (int i = 0; i <= 32; ++i)
+            {
+                const float x = (float) i / 32.0f;
+                const juce::Point<float> at(x, 0.5f - 0.45f * std::sin(x * juce::MathConstants<float>::twoPi));
+                if (i == 0)
+                    p.startNewSubPath(at);
+                else
+                    p.lineTo(at);
+            }
+            break;
+        case Wave::triangle: line({ { 0.0f, 0.5f }, { 0.25f, 0.05f }, { 0.75f, 0.95f }, { 1.0f, 0.5f } }); break;
+        case Wave::sawUp: line({ { 0.0f, 0.95f }, { 0.5f, 0.05f }, { 0.5f, 0.95f }, { 1.0f, 0.05f }, { 1.0f, 0.95f } }); break;
+        case Wave::sawDown: line({ { 0.0f, 0.95f }, { 0.0f, 0.05f }, { 0.5f, 0.95f }, { 0.5f, 0.05f }, { 1.0f, 0.95f } }); break;
+        case Wave::square:
+            line({ { 0.0f, 0.95f }, { 0.0f, 0.05f }, { 0.5f, 0.05f }, { 0.5f, 0.95f }, { 1.0f, 0.95f }, { 1.0f, 0.05f } });
+            break;
+        case Wave::pulse:
+            line({ { 0.0f, 0.95f }, { 0.0f, 0.05f }, { 0.25f, 0.05f }, { 0.25f, 0.95f }, { 1.0f, 0.95f }, { 1.0f, 0.05f } });
+            break;
+        case Wave::random:
+            line({ { 0.0f, 0.6f }, { 0.2f, 0.6f }, { 0.2f, 0.15f }, { 0.4f, 0.15f }, { 0.4f, 0.8f }, { 0.6f, 0.8f },
+                   { 0.6f, 0.35f }, { 0.8f, 0.35f }, { 0.8f, 0.9f }, { 1.0f, 0.9f } });
+            break;
+        case Wave::noise:
+            line({ { 0.0f, 0.5f }, { 0.08f, 0.2f }, { 0.16f, 0.75f }, { 0.24f, 0.4f }, { 0.32f, 0.9f }, { 0.4f, 0.1f },
+                   { 0.5f, 0.65f }, { 0.58f, 0.3f }, { 0.66f, 0.85f }, { 0.76f, 0.15f }, { 0.84f, 0.6f }, { 0.92f, 0.35f },
+                   { 1.0f, 0.5f } });
+            break;
+    }
+    return p;
+}
+
+namespace
+{
+/** `icon` stroked into `area`, a little wider than high as a scope shows a wave. */
+void strokeWave(juce::Graphics& g, const juce::Path& icon, juce::Rectangle<float> area, juce::Colour colour)
+{
+    const float height = std::min(area.getHeight(), 14.0f), width = std::min(area.getWidth(), height * 2.4f);
+    const auto box = juce::Rectangle<float>(width, height).withCentre(area.getCentre());
+    g.setColour(colour);
+    g.strokePath(icon, juce::PathStrokeType(1.6f, juce::PathStrokeType::mitered),
+                 juce::AffineTransform::scale(box.getWidth(), box.getHeight()).translated(box.getX(), box.getY()));
+}
+} // namespace
+
+void LookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool highlighted, bool)
+{
+    using namespace colours;
+    const bool on = button.getToggleState();
+    const auto caption = button.getButtonText();
+    auto area = button.getLocalBounds().toFloat();
+    const float height = std::min(18.0f, area.getHeight() - 2.0f), width = std::min(34.0f, area.getWidth() - 2.0f);
+    auto key = juce::Rectangle<float>(width, height).withCentre(area.getCentre());
+    if (caption.isNotEmpty())
+        key.setX(area.getX() + 1.0f);
+    const float alpha = button.isEnabled() ? 1.0f : 0.4f;
+    if (on)
+    {
+        // The glow around a lit key, then the key itself with a lighter stripe as its lamp.
+        for (int i = 3; i >= 1; --i)
+        {
+            g.setColour(yellow.withAlpha(0.07f * alpha));
+            g.fillRoundedRectangle(key.expanded((float) i * 1.5f), 3.0f + (float) i * 1.5f);
+        }
+        g.setColour(yellow.withAlpha(alpha));
+        g.fillRoundedRectangle(key, 3.0f);
+        g.setColour(juce::Colours::white.withAlpha(0.35f * alpha));
+        g.fillRoundedRectangle(key.reduced(4.0f, 0.0f).withHeight(2.0f).translated(0.0f, 3.0f), 1.0f);
+    }
+    else
+    {
+        g.setColour(background.withAlpha(alpha));
+        g.fillRoundedRectangle(key, 3.0f);
+        g.setColour((highlighted ? cyan : border).withAlpha(alpha));
+        g.drawRoundedRectangle(key.reduced(0.5f), 3.0f, 1.0f);
+        g.setColour(muted.withAlpha(0.5f * alpha));
+        g.fillRoundedRectangle(key.reduced(4.0f, 0.0f).withHeight(2.0f).translated(0.0f, 3.0f), 1.0f);
+    }
+    if (caption.isNotEmpty())
+    {
+        g.setColour(colours::text.withAlpha(alpha));
+        g.setFont(juce::FontOptions(std::min(15.0f, area.getHeight() * 0.75f)));
+        g.drawFittedText(caption, area.withTrimmedLeft(key.getRight() + 6.0f - area.getX()).toNearestInt(),
+                         juce::Justification::centredLeft, 1);
+    }
+}
+
+void LookAndFeel::drawComboBox(juce::Graphics& g, int width, int height, bool down, int buttonX, int buttonY, int buttonW,
+                               int buttonH, juce::ComboBox& box)
+{
+    LookAndFeel_V4::drawComboBox(g, width, height, down, buttonX, buttonY, buttonW, buttonH, box);
+    if (! box.getProperties()["waves"])
+        return;
+    const auto icon = waveIcon(box.getText());
+    // The arrow takes the right end, as in LookAndFeel_V4.
+    if (! icon.isEmpty())
+        strokeWave(g, icon, juce::Rectangle<float>(8.0f, 3.0f, (float) width - 38.0f, (float) height - 6.0f),
+                   colours::yellow.withAlpha(box.isEnabled() ? 1.0f : 0.4f));
+}
+
+void LookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& label)
+{
+    LookAndFeel_V4::positionComboBoxText(box, label);
+    // The wave is drawn in the name's place; the name stays the box's text for screen readers and tests.
+    if (box.getProperties()["waves"])
+        label.setBounds(0, 0, 0, 0);
+}
+
+void LookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool isSeparator, bool isActive,
+                                    bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& name,
+                                    const juce::String& shortcutKeyText, const juce::Drawable* icon,
+                                    const juce::Colour* textColour)
+{
+    const auto wave = icon == nullptr && ! isSeparator ? waveIcon(name) : juce::Path();
+    if (wave.isEmpty())
+    {
+        LookAndFeel_V4::drawPopupMenuItem(g, area, isSeparator, isActive, isHighlighted, isTicked, hasSubMenu, name,
+                                          shortcutKeyText, icon, textColour);
+        return;
+    }
+    // In the list the wave stands before its name.
+    juce::DrawablePath drawn;
+    juce::Path sized = wave;
+    sized.applyTransform(juce::AffineTransform::scale(24.0f, 12.0f));
+    drawn.setPath(sized);
+    drawn.setFill(juce::Colours::transparentBlack);
+    drawn.setStrokeFill(isHighlighted ? colours::background : colours::yellow);
+    drawn.setStrokeType(juce::PathStrokeType(1.6f));
+    LookAndFeel_V4::drawPopupMenuItem(g, area, isSeparator, isActive, isHighlighted, isTicked, hasSubMenu, name,
+                                      shortcutKeyText, &drawn, textColour);
+}
+
 juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(popupFontSize)); }
 
 juce::Component* LookAndFeel::getParentComponentForMenuOptions(const juce::PopupMenu::Options& options)
@@ -213,7 +379,9 @@ Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& para
     jassert(parameter != nullptr);
     if (dynamic_cast<juce::AudioParameterBool*>(parameter) != nullptr)
     {
-        toggle = std::make_unique<juce::ToggleButton>(tr("an"));
+        // A lit key says on or off by itself; the word stays for screen readers.
+        toggle = std::make_unique<juce::ToggleButton>();
+        toggle->setTitle(label + " " + tr("an"));
         addAndMakeVisible(*toggle);
         toggleAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(state, parameterId, *toggle);
     }
@@ -223,6 +391,12 @@ Control::Control(juce::AudioProcessorValueTreeState& s, const juce::String& para
         // The parameter keeps the language it was made in; the menu speaks the current one.
         for (int i = 0; i < choice->choices.size(); ++i)
             menu->addItem(retranslate(choice->choices[i]), i + 1);
+        // A menu of nothing but waveforms shows them drawn.
+        bool waves = choice->choices.size() > 0;
+        for (int i = 0; i < choice->choices.size(); ++i)
+            waves = waves && ! waveIcon(menu->getItemText(i)).isEmpty();
+        if (waves)
+            menu->getProperties().set("waves", true);
         addAndMakeVisible(*menu);
         menuAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(state, parameterId, *menu);
     }
@@ -394,7 +568,7 @@ int Section::preferredWidth() const
     return display.inset + widest * kSlot + 2 * kPad;
 }
 
-int Section::preferredHeight() const { return kTitle + display.top + (int) items.size() * kRow + kPad; }
+int Section::preferredHeight() const { return kTitle + display.top + (int) items.size() * (kRow + air) + kPad; }
 
 juce::Rectangle<int> Section::displayArea() const
 {
@@ -416,7 +590,7 @@ void Section::resized()
         area = area.withTrimmedLeft(displayArea().getRight());
     for (std::size_t r = 0; r < items.size(); ++r)
     {
-        auto line = area.removeFromTop(kRow);
+        auto line = area.removeFromTop(kRow + air).withSizeKeepingCentre(area.getWidth(), kRow);
         // A panel wider than its controls keeps them together in the middle.
         line = line.withSizeKeepingCentre(rowSlots(r) * kSlot, line.getHeight());
         const auto where = places(r);

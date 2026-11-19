@@ -136,7 +136,7 @@ ShimmerEditor::ShimmerEditor(ShimmerProcessor& p)
         addAndMakeVisible(*c);
     const int width = 2 * kMargin
                       + std::max(tail.preferredWidth() + 120, shimmer.preferredWidth() + output.preferredWidth() + kGap);
-    setSize(width, 2 * kMargin + kHeader + tail.preferredHeight() + kGap + shimmer.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + tail.preferredHeight() + kGap + shimmer.preferredHeight() + kGap + kScope);
 }
 
 ShimmerEditor::~ShimmerEditor() { setLookAndFeel(nullptr); }
@@ -144,14 +144,15 @@ ShimmerEditor::~ShimmerEditor() { setLookAndFeel(nullptr); }
 void ShimmerEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK SHIMMER");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK SHIMMER");
 }
 
 void ShimmerEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &tail });
