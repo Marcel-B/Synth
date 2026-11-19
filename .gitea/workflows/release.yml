@@ -1,11 +1,12 @@
 name: Release
 
-# A tag like v0.2.0 builds the plugins on macOS and Linux and attaches them to a GitHub release of that name.
+# A tag like v0.2.0 builds the plugins on macOS and attaches them to a GitHub release of that name.
 # Started by hand with a version instead, it makes that tag itself on the commit it ran on (for when no tag can be pushed);
 # the nightly auto-release.yml calls it that way too, with the notes of what changed.
-# Runs in our own Gitea (macOS on the Mac runner, Linux on nuc), but the release is published on GitHub, with the
-# secret GH_PUSH_TOKEN (a GitHub token that may write the contents of $RELEASE_REPO). GitHub then builds the Windows
-# package itself and adds it (.github/workflows/release.yml, started by the published release).
+# Runs in our own Gitea (the build on the Mac runner, publishing on the Linux runner on nuc), but the release is
+# published on GitHub, with the secret GH_PUSH_TOKEN (a GitHub token that may write the contents of $RELEASE_REPO).
+# GitHub then builds the Linux and Windows packages itself and adds them (.github/workflows/release.yml, started by
+# the published release).
 on:
   push:
     tags: ["v*"]
@@ -253,36 +254,8 @@ jobs:
           done
           killall -9 AudioComponentRegistrar || true
 
-  # Audio Units exist only on the Mac; Linux and Windows get the VST3 and the standalone apps. The tests run on Linux in
-  # build.yml and on the Mac above, so this job only builds.
-  linux:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Version from the tag
-        env:
-          TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
-        run: |
-          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
-          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
-            libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$PLUGIN_VERSION"
-      - name: Build
-        run: cmake --build build --parallel "$(nproc)"
-      - name: Package
-        run: scripts/package-release.sh linux "$VERSION" build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-linux
-          path: Tonwerk-Synth-*-Linux-x64.tar.gz
-
   publish:
-    needs: [macos, linux]
+    needs: macos
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -338,6 +311,6 @@ jobs:
 
           **Windows** (\`Tonwerk-Synth-$VERSION-Windows-x64.zip\`): VST3 und Apps für 64-Bit-Windows. Die Ordner aus \`VST3\` nach \`C:\\Program Files\\Common Files\\VST3\` kopieren, die Apps liegen unter \`Apps\`. Sie sind nicht signiert, Windows SmartScreen fragt deshalb beim ersten Start nach („Weitere Informationen“ → „Trotzdem ausführen“).
 
-          Das Windows-Paket baut GitHub selbst und hängt es etwas später an dieses Release an. Linux und Windows sind gebaut, aber noch nicht in einem Host ausprobiert.
+          Die Pakete für Linux und Windows baut GitHub selbst und hängt sie etwas später an dieses Release an. Linux und Windows sind gebaut, aber noch nicht in einem Host ausprobiert.
           NOTES
           )"

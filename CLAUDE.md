@@ -8,9 +8,9 @@ Tonwerk Synth: the two browser synthesizers of Tonwerk (repository `Marcel-B/Ton
 
 ## Commands
 
-Requires CMake 3.22+ and a C++20 compiler; JUCE 8 comes through `FetchContent` (pinned tag in `CMakeLists.txt`). On Linux, JUCE needs the packages listed in `.gitea/workflows/build.yml`.
+Requires CMake 3.22+ and a C++20 compiler; JUCE 8 comes through `FetchContent` (pinned tag in `CMakeLists.txt`). On Linux, JUCE needs the packages listed in `.github/workflows/build.yml`.
 
-CI runs in two places. The repository lives in Marcel's own Gitea (`Marcel/Tonwerk`, pull requests there), whose workflows are in `.gitea/workflows`: everything for Apple on his Mac runner (label `macos-15`, host mode, no sudo, no Homebrew, the disk stays between runs, so every job clears away what it leaves outside its work folder), Linux on a Docker runner (`ubuntu-24.04`). `sync-github.yml` pushes main and the tags on to GitHub (`Marcel-B/Synth`), where `.github/workflows` holds only what stays there: the Windows build, the Windows package of a release, the website and the download counts. Releases are published on GitHub from Gitea with the secret `GH_PUSH_TOKEN`; `scripts/setup-gitea-secrets.sh` sets the secrets.
+CI runs in two places. The repository lives in Marcel's own Gitea (`Marcel/Tonwerk`, pull requests there), whose workflows are in `.gitea/workflows`: everything for Apple on his Mac runner (label `macos-15`, host mode, no sudo, no Homebrew, the disk stays between runs, so every job clears away what it leaves outside its work folder), the light Linux jobs (publishing, the nightly plan, the module, Komponist, the website check) on a slow Docker runner (`ubuntu-24.04`). `sync-github.yml` pushes main and the tags on to GitHub (`Marcel-B/Synth`), where `.github/workflows` holds only what stays there: the plugins' tests on Linux and the Windows build (for main only), the Linux and Windows packages of a release, the website and the download counts. The Mac App Store app is built for macOS 12 or later, because the runner's Xcode 27 builds for nothing older. Releases are published on GitHub from Gitea with the secret `GH_PUSH_TOKEN`; `scripts/setup-gitea-secrets.sh` sets the secrets.
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug     # add -DFETCHCONTENT_SOURCE_DIR_JUCE=<clone> to reuse a local JUCE

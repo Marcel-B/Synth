@@ -56,7 +56,8 @@ jobs:
             # Unsigned; the bundles carry no entitlements on the iPad that the export would have to keep.
             echo "TONWERK_ARCHIVE_SIGNING=CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO" >> "$GITHUB_ENV"
           else
-            echo "TONWERK_CMAKE_PLATFORM=-DTONWERK_MAC_STORE=ON" >> "$GITHUB_ENV"
+            # macOS 12 instead of the plugins' 11: Xcode 27 builds for nothing older.
+            echo "TONWERK_CMAKE_PLATFORM=-DTONWERK_MAC_STORE=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0" >> "$GITHUB_ENV"
             echo "TONWERK_DESTINATION=generic/platform=macOS" >> "$GITHUB_ENV"
             echo "TONWERK_PLUGINS=Tonwerk.app/Contents/PlugIns" >> "$GITHUB_ENV"
             # Ad hoc, which needs no certificate: the export re-signs every bundle with the entitlements it finds in

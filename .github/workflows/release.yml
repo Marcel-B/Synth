@@ -1,8 +1,8 @@
 name: Release
 
-# The release itself is made in our own Gitea (.gitea/workflows/release.yml: macOS and Linux, tag, notes) and published
-# here. That starts this run, which builds the Windows package and adds it to the release. Started by hand with a
-# version, it does the same for a release that is there already.
+# The release itself is made in our own Gitea (.gitea/workflows/release.yml: macOS, tag, notes) and published here.
+# That starts this run, which builds the Linux and Windows packages and adds them to the release. Started by hand with
+# a version, it does the same for a release that is there already.
 on:
   release:
     types: [published]
@@ -15,16 +15,46 @@ on:
 permissions:
   contents: write
 
+env:
+  TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.event.release.tag_name }}
+
 jobs:
+  # Audio Units exist only on the Mac; Linux and Windows get the VST3 and the standalone apps. The tests run on Linux in
+  # build.yml and on the Mac in Gitea, so these jobs only build.
+  # The plugins' releases are tagged v*; Tonwerk Komponist's (komponist-v*) have no Linux or Windows package.
+  linux:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Version from the tag
+        run: |
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+          echo "PLUGIN_VERSION=$(scripts/plugin-version.sh "${TAG#v}")" >> "$GITHUB_ENV"
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxcomposite-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libgl1-mesa-dev
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DTONWERK_TESTS=OFF -DTONWERK_VERSION="$PLUGIN_VERSION"
+      - name: Build
+        run: cmake --build build --parallel "$(nproc)"
+      - name: Package
+        run: scripts/package-release.sh linux "$VERSION" build
+      - name: Add to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" Tonwerk-Synth-*-Linux-x64.tar.gz --repo "$GITHUB_REPOSITORY" --clobber
+
   windows:
-    # The plugins' releases are tagged v*; Tonwerk Komponist's (komponist-v*) have no Windows package.
     if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
     runs-on: windows-2022
     defaults:
       run:
         shell: bash
-    env:
-      TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.event.release.tag_name }}
     steps:
       - uses: actions/checkout@v4
         with:
