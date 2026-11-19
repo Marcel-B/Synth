@@ -188,11 +188,24 @@ void layoutRow(juce::Rectangle<int>& area, std::initializer_list<Section*> secti
  * crossing so a held note stands still, quiet sounds scaled up to be seen. An optional second buffer is drawn faint
  * behind, `lag` samples back (an effect's input under its output).
  */
+/**
+ * A processor that has something to say beside its scope's name: the note that sounds, an accent, a slide. Its own
+ * editor shows it, and so does the app's scope where that stands in for the editor's (`editorsHaveScope`).
+ */
+struct ScopeNotes
+{
+    virtual ~ScopeNotes() = default;
+    /** What follows the caption, starting with its separator, or nothing while no note sounds. */
+    virtual juce::String scopeNote() const = 0;
+};
+
 class ScopeView : public juce::Component, private juce::Timer
 {
 public:
     explicit ScopeView(const ScopeBuffer& source, const ScopeBuffer* behind = nullptr, std::function<int()> lag = {});
     void setCaption(const juce::String& text) { caption = text; }
+    /** A caption that changes while it plays, asked with every frame; it replaces the fixed one. */
+    void setCaptionSource(std::function<juce::String()> text) { captionSource = std::move(text); }
     /** Names for the two traces, in their colours in the top right corner. */
     void setLegend(const juce::String& mainName, const juce::String& behindName)
     {
@@ -209,6 +222,7 @@ private:
     const ScopeBuffer* behind;
     std::function<int()> lag;
     juce::String caption;
+    std::function<juce::String()> captionSource;
     std::pair<juce::String, juce::String> legend;
     std::array<float, 2048> samples {};
     std::array<float, 2048> behindSamples {};

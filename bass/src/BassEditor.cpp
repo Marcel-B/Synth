@@ -1,6 +1,7 @@
 #include "BassEditor.h"
 
 #include "BassPresets.h"
+#include "Platform.h"
 #include "PresetCategories.h"
 
 namespace tonwerkbass
@@ -74,6 +75,8 @@ BassEditor::BassEditor(BassProcessor& p)
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &scope, &oscillator, &filter,
                                                             &accent, &envelope, &output, &lfo, &effects, &keyboard })
         addAndMakeVisible(*c);
+    // Inside the iPad app the scope beside its keys stands in for this one.
+    scope.setVisible(tonwerkui::editorsHaveScope());
 
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffcfccc0));
     keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, panel);
@@ -95,8 +98,8 @@ BassEditor::BassEditor(BassProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &oscillator, &filter }), rowWidth({ &accent, &envelope, &output }),
                                    rowWidth({ &lfo, &effects }) });
-    const int height = kMargin * 2 + kHeader + kScope + oscillator.preferredHeight() + accent.preferredHeight()
-                       + lfo.preferredHeight() + kKeyboard + 4 * kGap;
+    const int height = kMargin * 2 + kHeader + (scope.isVisible() ? kScope + kGap : 0) + oscillator.preferredHeight() + accent.preferredHeight()
+                       + lfo.preferredHeight() + kKeyboard + 3 * kGap;
     setSize(width, height);
     timerCallback();
     startTimerHz(30);
@@ -133,8 +136,11 @@ void BassEditor::resized()
     keyboard.setKeyWidth((float) keyboard.getWidth() / 28.0f);
     area.removeFromBottom(kGap);
 
-    scope.setBounds(area.removeFromTop(kScope));
-    area.removeFromTop(kGap);
+    if (scope.isVisible())
+    {
+        scope.setBounds(area.removeFromTop(kScope));
+        area.removeFromTop(kGap);
+    }
     layoutRow(area, { &oscillator, &filter });
     layoutRow(area, { &accent, &envelope, &output });
     layoutRow(area, { &lfo, &effects });
@@ -142,15 +148,7 @@ void BassEditor::resized()
 
 void BassEditor::timerCallback()
 {
-    juce::String caption = tr("OSZILLOSKOP");
-    if (const int note = synth.shownNote.load(); note >= 0)
-    {
-        caption << juce::String::fromUTF8("  ·  ") << BassProcessor::noteName(note);
-        if (synth.shownAccent.load())
-            caption << "  ACCENT";
-        if (synth.shownSlide.load())
-            caption << "  SLIDE";
-    }
+    const juce::String caption = tr("OSZILLOSKOP") + synth.scopeNote();
     if (caption != shownCaption)
     {
         shownCaption = caption;

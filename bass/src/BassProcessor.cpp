@@ -97,6 +97,19 @@ juce::String BassProcessor::noteName(int note)
     return juce::String(names[((note % 12) + 12) % 12]) + juce::String(note / 12 - 2);
 }
 
+juce::String BassProcessor::scopeNote() const
+{
+    const int note = shownNote.load();
+    if (note < 0)
+        return {};
+    juce::String text = juce::String::fromUTF8("  \xc2\xb7  ") + noteName(note);
+    if (shownAccent.load())
+        text << "  ACCENT";
+    if (shownSlide.load())
+        text << "  SLIDE";
+    return text;
+}
+
 Layout BassProcessor::createParameterLayout()
 {
     const Settings d;

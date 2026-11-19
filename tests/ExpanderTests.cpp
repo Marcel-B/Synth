@@ -671,6 +671,34 @@ public:
             }
         }
 
+        beginTest("Inside the iPad app the editor leaves its scope to the app's");
+        {
+            ExpanderProcessor p;
+            std::unique_ptr<juce::AudioProcessorEditor> with(p.createEditor());
+            auto scopes = [](juce::Component* editor) {
+                int count = 0;
+                for (auto* child : editor->getChildren())
+                    count += dynamic_cast<tonwerkui::ScopeView*>(child) != nullptr && child->isVisible() ? 1 : 0;
+                return count;
+            };
+            expectEquals(scopes(tonwerkui::innerEditor<ExpanderEditor>(with.get())), 1);
+            tonwerkui::editorsHaveScope() = false;
+            std::unique_ptr<juce::AudioProcessorEditor> without(p.createEditor());
+            tonwerkui::editorsHaveScope() = true;
+            auto* inner = tonwerkui::innerEditor<ExpanderEditor>(without.get());
+            expectEquals(scopes(inner), 0);
+            // The room goes back to the knobs: the editor is lower, and nothing is left where the scope was.
+            expectLessThan(without->getHeight(), with->getHeight() - 100);
+            expectEquals(without->getWidth(), with->getWidth());
+            for (auto* child : inner->getChildren())
+                if (child->isVisible())
+                    expect(inner->getLocalBounds().contains(child->getBounds()));
+            expect(p.scopeNote().isEmpty());
+            p.shownNote = 60;
+            p.shownVoices = 3;
+            expect(p.scopeNote().contains("C3") && p.scopeNote().endsWith("3 STIMMEN"), p.scopeNote());
+        }
+
         beginTest("The editor shows the scope, the filter's curve and the voices");
         {
             ExpanderProcessor p;

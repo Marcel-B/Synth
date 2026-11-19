@@ -469,6 +469,8 @@ void ScopeView::timerCallback()
 
 void ScopeView::refresh()
 {
+    if (captionSource)
+        caption = captionSource();
     source.read(samples.data(), (int) samples.size());
     if (behind != nullptr)
         behind->read(behindSamples.data(), (int) behindSamples.size(), lag ? lag() : 0);

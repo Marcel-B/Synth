@@ -1,6 +1,7 @@
 #include "NeuroEditor.h"
 
 #include "NeuroPresets.h"
+#include "Platform.h"
 #include "PresetCategories.h"
 
 namespace tonwerkneuro
@@ -82,6 +83,8 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next, &scope, &oscillator, &fm, &filter,
                                                             &ampEnvelope, &modEnvelope, &output, &lfo, &effects, &keyboard })
         addAndMakeVisible(*c);
+    // Inside the iPad app the scope beside its keys stands in for this one.
+    scope.setVisible(tonwerkui::editorsHaveScope());
 
     keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffcfccc0));
     keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, panel);
@@ -104,8 +107,8 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
                       + std::max({ rowWidth({ &oscillator, &fm, &filter }),
                                    rowWidth({ &ampEnvelope, &modEnvelope, &output }),
                                    rowWidth({ &lfo, &effects }) });
-    const int height = kMargin * 2 + kHeader + kScope + oscillator.preferredHeight() + ampEnvelope.preferredHeight()
-                       + lfo.preferredHeight() + kKeyboard + 4 * kGap;
+    const int height = kMargin * 2 + kHeader + (scope.isVisible() ? kScope + kGap : 0) + oscillator.preferredHeight() + ampEnvelope.preferredHeight()
+                       + lfo.preferredHeight() + kKeyboard + 3 * kGap;
     setSize(width, height);
     timerCallback();
     startTimerHz(30);
@@ -142,8 +145,11 @@ void NeuroEditor::resized()
     keyboard.setKeyWidth((float) keyboard.getWidth() / 28.0f);
     area.removeFromBottom(kGap);
 
-    scope.setBounds(area.removeFromTop(kScope));
-    area.removeFromTop(kGap);
+    if (scope.isVisible())
+    {
+        scope.setBounds(area.removeFromTop(kScope));
+        area.removeFromTop(kGap);
+    }
     layoutRow(area, { &oscillator, &fm, &filter });
     layoutRow(area, { &ampEnvelope, &modEnvelope, &output });
     layoutRow(area, { &lfo, &effects });
@@ -151,12 +157,7 @@ void NeuroEditor::resized()
 
 void NeuroEditor::timerCallback()
 {
-    juce::String caption = tr("OSZILLOSKOP");
-    if (const int note = synth.shownNote.load(); note >= 0)
-    {
-        caption << juce::String::fromUTF8("  ·  ") << NeuroProcessor::noteName(note);
-        caption << utf8("  ·  CUTOFF ") << juce::String(juce::roundToInt(synth.shownCutoff.load())) << " Hz";
-    }
+    const juce::String caption = tr("OSZILLOSKOP") + synth.scopeNote();
     if (caption != shownCaption)
     {
         shownCaption = caption;
