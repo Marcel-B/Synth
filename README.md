@@ -750,6 +750,8 @@ Zum Aktualisieren mit dem Zip lädst du das neue und rufst dessen `install.sh` g
 
 **Deinstallieren:** Im Disk-Image liegt **Tonwerk deinstallieren.command** (Doppelklick öffnet das Terminal), im Zip `uninstall.sh` (`zsh uninstall.sh`), beides `scripts/uninstall-release.sh`. Es findet alle Tonwerk-Plugins und -Apps an ihrer Kennung, egal ob vom Disk-Image, vom Zip oder von `scripts/install-macos.sh`, zeigt sie, fragt nach und entfernt sie (für `/Library` mit `sudo`), samt den Belegen des Installationspakets. Die App **Tonwerk** aus dem App Store, **Tonwerk-AI** sowie importierte Klänge und Einstellungen unter `~/Library/Application Support` bleiben.
 
+Die Actions laufen an zwei Orten: alles für macOS, iPad und Linux im eigenen Gitea (`.gitea/workflows`, auf eigenen Runnern), bei GitHub (`.github/workflows`) nur noch der Windows-Build, die Website und die Downloadzahlen. „Actions → …“ meint bei Build, Release, TestFlight, Komponist und Modul also die Actions in Gitea; `sync-github.yml` schiebt main und die Tags danach zu GitHub, und ein Release wird von dort aus bei GitHub veröffentlicht (das Windows-Paket hängt GitHub selbst etwas später an).
+
 Ein neues Release entsteht, wenn ein Tag wie `v0.2.0` gepusht wird, oder von Hand unter Actions → Release → „Run workflow“ mit einer Versionsnummer. Die Action `release.yml` baut dann, testet, prüft mit `auval` und hängt Disk-Image und Zip an. Die Versionsnummer des Plugins kommt aus dem Tag, so erkennt Logic eine neue Version.
 
 ## Selbst bauen auf dem Mac
@@ -826,7 +828,7 @@ Gebaut wird sie mit `-G Xcode -DTONWERK_MAC_STORE=ON` (volles Xcode). `build.yml
 
 ### TestFlight
 
-Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App, signiert sie für den App Store und lädt sie zu TestFlight hoch; die Version ist die des letzten Tags, die Build-Nummer die Nummer des Laufs. Einmal einzurichten:
+Die Action **TestFlight** (Actions → TestFlight → Run workflow) baut die App, signiert sie für den App Store und lädt sie zu TestFlight hoch; die Version ist die des letzten Tags, die Build-Nummer die Nummer des Laufs plus 1000 (Gitea zählt die Läufe seit dem Umzug von GitHub neu). Einmal einzurichten:
 
 1. In App Store Connect eine App mit der Bundle-ID `de.bvelop.tonwerk` anlegen (die ID vorher unter developer.apple.com → Identifiers registrieren). Die IDs der Plugins (`de.bvelop.tonwerk.<plugin>`) legt der Build selbst an.
 2. Unter Benutzer und Zugriff → Integrationen einen API-Schlüssel mit der Rolle **Admin** erzeugen und die `.p8`-Datei laden (geht nur einmal).
