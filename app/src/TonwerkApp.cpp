@@ -537,8 +537,13 @@ public:
         addAndMakeVisible(showKeyboard);
         railKeys.setClickingTogglesState(true);
         railKeys.onClick = [this] {
-            phoneKeys = railKeys.getToggleState();
-            phoneScope = phoneScope && roomy;
+            if (phone)
+            {
+                phoneKeys = railKeys.getToggleState();
+                phoneScope = phoneScope && roomy;
+            }
+            else
+                settings->setValue("keyboard", railKeys.getToggleState());
             resized();
         };
         addChildComponent(railKeys);
@@ -546,8 +551,13 @@ public:
         // On a phone the strip under the editor shows the keys, the scope or nothing, chosen in a rail at the side.
         showScope.setClickingTogglesState(true);
         showScope.onClick = [this] {
-            phoneScope = showScope.getToggleState();
-            phoneKeys = phoneKeys && roomy;
+            if (phone)
+            {
+                phoneScope = showScope.getToggleState();
+                phoneKeys = phoneKeys && roomy;
+            }
+            else
+                settings->setValue("scope", showScope.getToggleState());
             resized();
         };
         addChildComponent(showScope);
@@ -610,7 +620,7 @@ public:
             safe->devices.addAudioCallback(&safe->audio);
             safe->devices.addMidiInputDeviceCallback({}, &safe->audio.player);
             safe->enableMidiInputs();
-            safe->startTimer(2000);
+            safe->startTimer(kTick);
             safe->audioOpen = true;
             if (safe->current >= 0)
                 safe->listen(catalogue()[(size_t) safe->current].listens);
@@ -692,7 +702,14 @@ public:
     {
         g.fillAll(colours::background);
         if (! title.isEmpty())
-            tonwerkui::paintTitle(g, title, "TONWERK");
+            tonwerkui::paintTitle(g, title, touchBar && current >= 0 ? catalogue()[(size_t) current].name.toUpperCase()
+                                                                     : juce::String("TONWERK"));
+        if (! soundArea.isEmpty() && soundName.isNotEmpty())
+        {
+            g.setColour(colours::cyan);
+            g.setFont(tonwerkui::mono(15.0f));
+            g.drawText(soundName, soundArea, juce::Justification::centredLeft);
+        }
         if (! keyboard.isVisible())
             return;
         g.setColour(colours::muted);
@@ -722,19 +739,22 @@ public:
         // Keys and scope side by side under the editor only where the pages keep enough height above them.
         roomy = phone && area.getHeight() >= 500 && area.getWidth() >= 800;
         const bool listens = current >= 0 && catalogue()[(size_t) current].listens;
-        setup.setVisible(phone);
-        showSounds.setVisible(phone && processor != nullptr && processor->getNumPrograms() > 1);
+        // Signs instead of words: the phone's rail, and the iPad's bar.
+        const bool signs = phone || touchBar;
+        setup.setVisible(signs);
+        showSounds.setVisible(signs && processor != nullptr && processor->getNumPrograms() > 1);
         sounds.setVisible(showSounds.isVisible() && showSounds.getToggleState());
         frame.setBare(phone);
-        input.setVisible(listens && ! phone);
-        picker.setVisible(! phone);
-        railPicker.setVisible(phone);
-        showKeyboard.setVisible(plays && ! phone);
-        railKeys.setVisible(plays && phone);
-        showScope.setVisible(plays && phone);
+        input.setVisible(listens && ! signs);
+        picker.setVisible(! signs);
+        railPicker.setVisible(signs);
+        showKeyboard.setVisible(plays && ! signs);
+        railKeys.setVisible(plays && signs);
+        showScope.setVisible(plays && signs);
 #if JUCE_IOS
-        bluetooth.setVisible(! phone);
+        bluetooth.setVisible(! signs);
 #endif
+        soundArea = {};
         look.setPopupFontSize(phone ? 18.0f : 14.0f);
         if (current >= 0)
             picker.setButtonText(catalogue()[(size_t) current].name + utf8(" \xe2\x96\xbe"));
@@ -742,6 +762,11 @@ public:
         {
             title = {};
             layoutPhone(area);
+            return;
+        }
+        if (touchBar)
+        {
+            layoutTouch(area);
             return;
         }
 
@@ -921,14 +946,101 @@ private:
         });
     }
 
+    /**
+     * The iPad's screen (Marcel, 2026-11-19): the bar at the top says on the left what plays, the instrument and its
+     * sound, and holds on the right the phone's rail laid across, the same signs for the same things. Keys and scope
+     * have a switch each, so an instrument whose own scope the app took still shows one with the keys put away.
+     */
+    void layoutTouch(juce::Rectangle<int> area)
+    {
+        auto bar = area.removeFromTop(kTouchBar).reduced(tonwerkui::kMargin, 3);
+        std::vector<juce::Component*> buttons { &railPicker };
+        if (showSounds.isVisible())
+            buttons.push_back(&showSounds);
+        if (plays)
+            buttons.insert(buttons.end(), { &railKeys, &showScope });
+        buttons.push_back(&setup);
+        for (auto it = buttons.rbegin(); it != buttons.rend(); ++it)
+        {
+            (*it)->setBounds(bar.removeFromRight(kTouchButton));
+            bar.removeFromRight(tonwerkui::kGap);
+        }
+        // The name as wide as it is written, the sound in what is left.
+        const auto name = current >= 0 ? catalogue()[(size_t) current].name.toUpperCase() : juce::String();
+        const int nameWidth = juce::jmin(bar.getWidth(),
+                                         juce::roundToInt(juce::GlyphArrangement::getStringWidth(
+                                             juce::Font(juce::FontOptions(22.0f, juce::Font::bold)), name))
+                                             + 6);
+        title = bar.removeFromLeft(nameWidth);
+        bar.removeFromLeft(3 * tonwerkui::kGap);
+        soundArea = bar.getWidth() >= 80 ? bar : juce::Rectangle<int>();
+        readSound();
+
+        const bool withKeys = plays && settings->getBoolValue("keyboard", true);
+        const bool withScope = plays && settings->getBoolValue("scope", true);
+        railKeys.setToggleState(withKeys, juce::dontSendNotification);
+        showScope.setToggleState(withScope, juce::dontSendNotification);
+        for (auto* component : std::initializer_list<juce::Component*> { &keyboard, &octaveUp, &octaveDown })
+            component->setVisible(withKeys);
+        scope.setVisible(withScope);
+
+        // The sounds come in over the editor's left, clear of the buttons that open them.
+        if (sounds.isVisible())
+        {
+            sounds.setBounds(area.withWidth(kSounds));
+            sounds.toFront(false);
+        }
+        if (withKeys || withScope)
+        {
+            // Large enough to play with a finger, the same height for every instrument.
+            auto below = area.removeFromBottom(juce::jlimit(130, 220, area.getHeight() / 4));
+            area.removeFromBottom(tonwerkui::kGap);
+            if (withKeys)
+            {
+                auto octave = below.removeFromLeft(64).reduced(tonwerkui::kGap, 0);
+                octaveUp.setBounds(octave.removeFromTop(octave.getHeight() * 2 / 5));
+                octaveDown.setBounds(octave.removeFromBottom(octave.getHeight() * 2 / 3));
+                octaveLabel = octave;
+            }
+            if (withScope)
+            {
+                scope.setBounds((withKeys ? below.removeFromRight(juce::jmin(320, below.getWidth() / 4)) : below)
+                                    .reduced(tonwerkui::kGap, 0));
+                if (withKeys)
+                    below.removeFromRight(tonwerkui::kGap);
+            }
+            if (withKeys)
+            {
+                keyboard.setBounds(below);
+                keyboard.setKeyWidth((float) below.getWidth() / 15.0f);
+                showKeys();
+            }
+        }
+        frame.setBounds(area);
+        repaint();
+    }
+
+    /** The sound the instrument plays, for the bar: the host program's name, where there is more than one. */
+    void readSound()
+    {
+        juce::String name;
+        if (processor != nullptr && processor->getNumPrograms() > 1)
+            name = processor->getProgramName(processor->getCurrentProgram());
+        if (name != soundName)
+        {
+            soundName = name;
+            repaint(soundArea);
+        }
+    }
+
     /** The device and its input channels: the iPad's microphone or a plugged-in interface's inputs. */
     void chooseInput()
     {
         juce::CallOutBox::launchAsynchronously(std::make_unique<InputChooser>(devices),
-                                               phone ? setup.getBounds() : input.getBounds(), this);
+                                               setup.isVisible() ? setup.getBounds() : input.getBounds(), this);
     }
 
-    /** The phone's setup menu: what the bar at the top holds on a larger screen, and the rail's side. */
+    /** The setup menu: what the bar at the top holds in words on the desktop, and on a phone the rail's side. */
     void openSetup()
     {
         juce::PopupMenu menu;
@@ -946,12 +1058,15 @@ private:
         const bool german = tonwerkui::language() == tonwerkui::Language::german;
         menu.addItem("Deutsch", true, german, [speak] { speak(tonwerkui::Language::german); });
         menu.addItem("English", true, ! german, [speak] { speak(tonwerkui::Language::english); });
-        menu.addSeparator();
-        const bool left = settings->getBoolValue("railLeft", false);
-        menu.addItem(tonwerkui::tr("Leiste links"), true, left, [this, left] {
-            settings->setValue("railLeft", ! left);
-            resized();
-        });
+        if (phone)
+        {
+            menu.addSeparator();
+            const bool left = settings->getBoolValue("railLeft", false);
+            menu.addItem(tonwerkui::tr("Leiste links"), true, left, [this, left] {
+                settings->setValue("railLeft", ! left);
+                resized();
+            });
+        }
         // Lines a finger high.
         menu.setLookAndFeel(&look);
         menu.showMenuAsync(juce::PopupMenu::Options()
@@ -986,6 +1101,11 @@ private:
 
     void timerCallback() override
     {
+        // The bar's sound follows a choice in the editor soon; looking for new MIDI devices can wait as before.
+        if (! soundArea.isEmpty())
+            readSound();
+        if (++ticks % (2000 / kTick) != 0)
+            return;
         enableMidiInputs();
         if (tonwerkui::language() != shownLanguage)
             label();
@@ -1016,7 +1136,19 @@ private:
     tonwerkui::Language shownLanguage = tonwerkui::Language::german;
     bool inputsOpen = false;
 
-    juce::Rectangle<int> title, octaveLabel;
+    juce::Rectangle<int> title, soundArea, octaveLabel;
+    juce::String soundName;
+    static constexpr int kTick = 400;
+    int ticks = 0;
+    // The iPad's bar, a finger high. The desktop keeps its bar of words for now (Marcel, 2026-11-19);
+    // TONWERK_TOUCH_BAR=1 shows the iPad's there, to look at it without one.
+#if JUCE_IOS
+    const bool touchBar = true;
+#else
+    const bool touchBar = juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) == "1";
+#endif
+    static constexpr int kTouchBar = 52;
+    static constexpr int kTouchButton = 56;
     static constexpr int kRail = 64;
     static constexpr int kSounds = 280;
     static constexpr int kPhoneStrip = 100;
