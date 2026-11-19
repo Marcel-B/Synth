@@ -220,6 +220,32 @@ public:
             snapshot(*editor, "Tonwerk Synth FM");
         }
 
+        beginTest("On the iPad the header has the sounds, but no buttons to load, save or delete them");
+        {
+            auto buttons = [this, &snapshot](bool withFiles) {
+                tonwerkui::soundFilesInHeader() = withFiles;
+                TonwerkSynthProcessor analog(Edition::analog);
+                std::unique_ptr<juce::AudioProcessorEditor> editor(analog.createEditor());
+                auto* synthEditor = tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get());
+                int shown = 0, menus = 0;
+                for (auto* child : synthEditor->getChildren())
+                {
+                    // The header's buttons carry a text; the keyboard's and the sections' are not direct children.
+                    if (auto* button = dynamic_cast<juce::TextButton*>(child))
+                        shown += button->isVisible() && button->getButtonText().isNotEmpty() ? 1 : 0;
+                    menus += dynamic_cast<juce::ComboBox*>(child) != nullptr && child->isVisible() ? 1 : 0;
+                }
+                expectEquals(menus, 1);
+                if (! withFiles)
+                    snapshot(*editor, "Tonwerk Analog iPad");
+                return shown;
+            };
+            const bool before = tonwerkui::soundFilesInHeader();
+            expectEquals(buttons(true), 4);
+            expectEquals(buttons(false), 0);
+            tonwerkui::soundFilesInHeader() = before;
+        }
+
         beginTest("Tonwerk Analog has pages for a phone's screen, every knob the same size");
         {
             TonwerkSynthProcessor analog(Edition::analog), fm(Edition::fm);

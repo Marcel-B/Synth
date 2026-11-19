@@ -397,6 +397,21 @@ inline std::unique_ptr<juce::FileChooser> makeChooser(juce::Component& from, con
     return std::make_unique<juce::FileChooser>(title, start, patterns, true, false, parent);
 }
 
+/**
+ * Whether sounds are loaded from and saved to files in the editor's header. Not on the iPad or iPhone (Marcel,
+ * 2026-11-19): the buttons crowd the header there, and the app is to get one way to load, save and export sounds
+ * for all its instruments. A test sets it to see the other header on any system.
+ */
+inline bool& soundFilesInHeader()
+{
+#if JUCE_IOS
+    static bool shown = false;
+#else
+    static bool shown = true;
+#endif
+    return shown;
+}
+
 /** Whether the chooser came back without a file. */
 inline bool nothingChosen(const juce::FileChooser& chooser) { return chooser.getURLResult().isEmpty(); }
 
