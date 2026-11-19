@@ -4,6 +4,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <algorithm>
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -11,7 +13,10 @@
  * An editor for a screen too small for the full one (a phone): the plugin's panels sorted onto pages, one page at a
  * time, its knobs as large as the room allows. A plugin names its pages (`CompactPage`); the panels are the same
  * `Section`s as in the full editor, laid out at their own size and then scaled up as far as the page still fits, so a
- * page with few knobs gets large ones. Displays that only decorate (envelope curves, the oscilloscope, the keyboard)
+ * page with few knobs gets large ones. Each page exists three times, its panels as one row of knobs, as two and as
+ * three: a wide, low screen is filled better by rows of large knobs than by one row with half the height left empty.
+ * Every page has the same knob size, the largest at which all of them fit (within limits; below the least a page
+ * scrolls), and each page takes the arrangement that fits at it, first one that puts its panels side by side. Displays that only decorate (envelope curves, the oscilloscope, the keyboard)
  * are left out; the app puts keys and scope under the editor on demand.
  */
 namespace tonwerkui
@@ -32,27 +37,37 @@ struct CompactPage
 class CompactEditor : public juce::AudioProcessorEditor
 {
 public:
-    /** A knob below this scale would be smaller than a finger needs (60 points wide at scale 1). */
-    static constexpr float kSmallest = 0.75f;
-    static constexpr float kLargest = 1.6f;
+    /**
+     * As small as a knob gets (60 points a place at scale 1): the size of the first prototype's oscillator page,
+     * which Marcel set as the least on his iPhone. A page that does not fit at it scrolls.
+     */
+    static constexpr float kSmallest = 1.05f;
+    /**
+     * As large as a knob gets: 80 points a place, the size Marcel found best on his iPhone (the envelopes' page of
+     * the first prototype). Pages aim for it and only go below when their knobs would not fit otherwise.
+     */
+    static constexpr float kLargest = 1.35f;
     static constexpr int kTabs = 36;
+    /** The component property a host sets to take the header (name, sounds) away. */
+    static constexpr const char* kBare = "tonwerkBare";
+    /** A menu's height before the page's scale: a finger's 44 points at the scales a phone gets. */
+    static constexpr int kMenu = 40;
 
     CompactEditor(juce::AudioProcessor& owner, juce::AudioProcessorValueTreeState& state, const juce::String& name,
                   const std::vector<CompactPage>& pageList)
         : juce::AudioProcessorEditor(owner), title(name)
     {
         setLookAndFeel(&look);
+        look.setPopupFontSize(18.0f);
         setOpaque(true);
         for (const auto& described : pageList)
         {
             auto& page = *pages.emplace_back(std::make_unique<Page>());
             for (const auto& panel : described.panels)
-            {
-                page.sections.push_back(
-                    std::make_unique<Section>(state, panel.title, std::vector<Section::Row> { panel.row }));
-                page.holder.addAndMakeVisible(*page.sections.back());
-            }
-            canvas.addChildComponent(page.holder);
+                for (std::size_t rows = 1; rows <= page.layouts.size(); ++rows)
+                    page.layouts[rows - 1].add(state, panel.title, inRows(panel.row, rows));
+            for (auto& layout : page.layouts)
+                canvas.addChildComponent(layout.holder);
 
             auto* tab = tabs.add(new juce::TextButton(tr(described.title)));
             const int index = tabs.size() - 1;
@@ -94,17 +109,29 @@ public:
     void paint(juce::Graphics& g) override
     {
         g.fillAll(colours::background);
-        paintTitle(g, titleArea, title);
+        if (! titleArea.isEmpty())
+            paintTitle(g, titleArea, title);
     }
 
     void resized() override
     {
         auto area = getLocalBounds().reduced(kMargin, 0);
-        auto header = area.removeFromTop(kHeader).reduced(0, 4);
-        next.setBounds(header.removeFromRight(40));
-        presets.setBounds(header.removeFromRight(juce::jmin(220, header.getWidth() / 3)).reduced(kGap / 2, 0));
-        previous.setBounds(header.removeFromRight(40));
-        titleArea = header;
+        // The app has the sounds in a list of its own and the language in its setup (`HostFrame::setBare`): there the
+        // header only cost a row of the phone's height.
+        const bool bare = getProperties()[kBare];
+        for (auto* c : std::initializer_list<juce::Component*> { &presets, &previous, &next })
+            c->setVisible(! bare);
+        titleArea = {};
+        if (bare)
+            area.removeFromTop(kGap);
+        else
+        {
+            auto header = area.removeFromTop(kHeader).reduced(0, 4);
+            next.setBounds(header.removeFromRight(40));
+            presets.setBounds(header.removeFromRight(juce::jmin(220, header.getWidth() / 3)).reduced(kGap / 2, 0));
+            previous.setBounds(header.removeFromRight(40));
+            titleArea = header;
+        }
 
         auto row = area.removeFromTop(kTabs);
         const int each = tabs.isEmpty() ? 0 : (row.getWidth() + kGap) / tabs.size();
@@ -116,17 +143,63 @@ public:
     }
 
 private:
-    struct Page
+    /** A page's panels in one arrangement. */
+    struct Layout
     {
+        void add(juce::AudioProcessorValueTreeState& state, const juce::String& panelTitle,
+                 std::vector<Section::Row> rows)
+        {
+            sections.push_back(std::make_unique<Section>(state, panelTitle, std::move(rows)));
+            for (auto* child : sections.back()->getChildren())
+                if (auto* control = dynamic_cast<Control*>(child))
+                    control->setMenuHeight(kMenu);
+            holder.addAndMakeVisible(*sections.back());
+        }
+
         juce::Component holder;
         std::vector<std::unique_ptr<Section>> sections;
     };
 
+    struct Page
+    {
+        /** The panels with one, two and three rows of controls each. */
+        std::array<Layout, 3> layouts;
+    };
+
+    /**
+     * A row of controls cut into `rows` of about the same width, never between two controls that take turns in one
+     * place (`Item::when`); a row too short for it (under three controls a row) stays whole.
+     */
+    static std::vector<Section::Row> inRows(const Section::Row& row, std::size_t rows)
+    {
+        if (rows < 2 || row.size() < 3 * rows)
+            return { row };
+        const auto slotsOf = [](const Section::Item& item) { return std::max(1, item.slots); };
+        int total = 0;
+        for (const auto& item : row)
+            total += slotsOf(item);
+        const int perRow = (total + (int) rows - 1) / (int) rows;
+
+        std::vector<Section::Row> result(1);
+        int filled = 0;
+        for (std::size_t i = 0; i < row.size(); ++i)
+        {
+            const bool pair = i > 0 && row[i - 1].when.isNotEmpty() && row[i - 1].when == row[i].when;
+            if (filled >= perRow && ! pair && result.size() < rows)
+            {
+                result.emplace_back();
+                filled = 0;
+            }
+            result.back().push_back(row[i]);
+            // A pair shares one place, so its second control takes no room of its own.
+            filled += pair ? 0 : slotsOf(row[i]);
+        }
+        return result;
+    }
+
     void show(int index)
     {
         current = juce::jlimit(0, juce::jmax(0, (int) pages.size() - 1), index);
-        for (std::size_t i = 0; i < pages.size(); ++i)
-            pages[i]->holder.setVisible((int) i == current);
         layoutPage();
     }
 
@@ -141,7 +214,7 @@ private:
      * The panels left to right at their own size, a new line when one does not fit; returns the height they take, or
      * a height no page has when a panel is wider than the line.
      */
-    static int flow(Page& page, int width, bool place)
+    static int flow(Layout& page, int width, bool place)
     {
         int x = 0, y = 0, lineHeight = 0;
         for (auto& section : page.sections)
@@ -163,26 +236,77 @@ private:
         return y + lineHeight;
     }
 
+    /** Whether the panels sit in one line at this width. */
+    static bool sideBySide(const Layout& layout, int width)
+    {
+        int needed = -kGap;
+        for (const auto& section : layout.sections)
+            needed += section->preferredWidth() + kGap;
+        return needed <= width;
+    }
+
+    /** Whether some arrangement of the page fits the view at this scale without scrolling. */
+    bool fits(Page& page, float s) const
+    {
+        for (auto& layout : page.layouts)
+            if ((float) flow(layout, (int) ((float) view.getWidth() / s), false) <= (float) view.getHeight() / s)
+                return true;
+        return false;
+    }
+
+    /** One knob size for all pages: the largest at which every page fits, never under the least. */
+    float commonScale() const
+    {
+        for (float s = kLargest; s > kSmallest; s -= 0.025f)
+            if (std::all_of(pages.begin(), pages.end(), [&](const auto& page) { return fits(*page, s); }))
+                return s;
+        return kSmallest;
+    }
+
     void layoutPage()
     {
         if (pages.empty() || view.getWidth() <= 0 || view.getHeight() <= 0)
             return;
+        for (auto& page : pages)
+            for (auto& layout : page->layouts)
+                layout.holder.setVisible(false);
+
+        scale = commonScale();
+        // Of the arrangements that fit, the first with the panels side by side (two oscillators to compare), else the
+        // one with the fewest rows; when none fits, the one that scrolls least.
         auto& page = *pages[(std::size_t) current];
-        const auto w = (float) view.getWidth(), h = (float) view.getHeight();
-        // The largest scale at which the page still fits; below the smallest it scrolls instead.
-        scale = kSmallest;
-        for (float s = kLargest; s >= kSmallest; s -= 0.025f)
-            if ((float) flow(page, (int) (w / s), false) <= h / s)
-            {
-                scale = s;
-                break;
-            }
+        const auto w = (float) view.getWidth();
         const int inner = (int) (w / scale);
-        const int height = flow(page, inner, true);
-        page.holder.setTransform({});
-        page.holder.setBounds(0, 0, inner, height);
-        page.holder.setTransform(juce::AffineTransform::scale(scale));
-        canvas.setSize(view.getWidth(), juce::jmax(1, (int) std::ceil((float) height * scale)));
+        const int room = (int) ((float) view.getHeight() / scale);
+        Layout* chosen = nullptr;
+        for (auto& layout : page.layouts)
+            if (flow(layout, inner, false) <= room && (chosen == nullptr || ! sideBySide(*chosen, inner))
+                && (chosen == nullptr || sideBySide(layout, inner)))
+                chosen = &layout;
+        if (chosen == nullptr)
+        {
+            int least = 1 << 30;
+            for (auto& layout : page.layouts)
+                if (const int needs = flow(layout, inner, false); needs < least)
+                {
+                    least = needs;
+                    chosen = &layout;
+                }
+        }
+
+        const int width = (int) (w / scale);
+        const int height = flow(*chosen, width, true);
+        int used = 0;
+        for (const auto& section : chosen->sections)
+            used = std::max(used, section->getRight());
+        // In the middle of the room, so a page with few knobs does not sit in a corner.
+        const float dx = std::max(0.0f, (w - (float) used * scale) * 0.5f);
+        const float dy = std::max(0.0f, ((float) view.getHeight() - (float) height * scale) * 0.5f);
+        chosen->holder.setTransform({});
+        chosen->holder.setBounds(0, 0, width, height);
+        chosen->holder.setTransform(juce::AffineTransform::scale(scale).translated(dx, dy));
+        chosen->holder.setVisible(true);
+        canvas.setSize(view.getWidth(), juce::jmax(view.getHeight(), (int) std::ceil((float) height * scale)));
     }
 
     LookAndFeel look;

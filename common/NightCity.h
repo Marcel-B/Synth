@@ -59,7 +59,12 @@ public:
                           float maxPosition, juce::Slider::SliderStyle, juce::Slider&) override;
     juce::Font getComboBoxFont(juce::ComboBox&) override;
     juce::Font getPopupMenuFont() override;
+    /** The size of the menus' entries; larger where a finger chooses them. */
+    void setPopupFontSize(float size) { popupFontSize = size; }
     juce::Component* getParentComponentForMenuOptions(const juce::PopupMenu::Options&) override;
+
+private:
+    float popupFontSize = 14.0f;
 };
 
 /** A knob, menu or switch with its name above, tied to a parameter; the knob shows the parameter's own text. */
@@ -72,6 +77,12 @@ public:
     ~Control() override;
     void resized() override;
     int slots() const { return width; }
+    /** A menu's height; the compact editor makes it a finger high. */
+    void setMenuHeight(int height)
+    {
+        menuHeight = height;
+        resized();
+    }
 
     /**
      * In a plugin with MIDI learn (`MidiLearn`), a right click on a knob offers to learn a controller or forget it;
@@ -94,6 +105,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> menuAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> toggleAttachment;
     int width;
+    int menuHeight = 24;
 };
 
 /** Room for a display in a section: `inset` pixels on the left or `top` pixels above the controls. */

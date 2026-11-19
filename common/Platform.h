@@ -142,6 +142,30 @@ public:
         build();
     }
 
+    /**
+     * For a host with the language and the sounds in menus of its own (the app on a phone): no language switch, and
+     * the compact editor without its header.
+     */
+    void setBare(bool on)
+    {
+        if (on == bare)
+            return;
+        bare = on;
+        parentHierarchyChanged();
+        if (inner != nullptr)
+        {
+            inner->getProperties().set("tonwerkBare", bare);
+            inner->resized();
+        }
+    }
+
+    /** The host changed the language itself (`chooseLanguage`): the editor is built again in it. */
+    void languageChanged()
+    {
+        languageSwitch.repaint();
+        rebuildSoon();
+    }
+
     // The Night City background, so the bands beside a scaled editor look like part of it.
     void paint(juce::Graphics& g) override { g.fillAll(juce::Colour(0xff0a0b10)); }
     void resized() override { fit(); }
@@ -149,7 +173,7 @@ public:
     void parentHierarchyChanged() override
     {
         // Inside another plugin's frame (Tonwerk Rig) that one's switch is enough.
-        languageSwitch.setVisible(findParentComponentOfClass<HostFrame>() == nullptr);
+        languageSwitch.setVisible(! bare && findParentComponentOfClass<HostFrame>() == nullptr);
     }
 
 private:
@@ -160,6 +184,7 @@ private:
         removeChildComponent(&languageSwitch);
         inner.reset();
         inner.reset(compact ? makeCompact() : make());
+        inner->getProperties().set("tonwerkBare", bare);
         if (! compact)
             fullSize = { inner->getWidth(), inner->getHeight() };
         addAndMakeVisible(*inner);
@@ -294,6 +319,7 @@ private:
 
     Factory make, makeCompact;
     bool compact = false;
+    bool bare = false;
     // Whether someone else chooses between the full and the compact editor.
     bool forced = false;
     juce::Point<int> fullSize;

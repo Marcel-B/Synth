@@ -1010,6 +1010,7 @@ const std::vector<Entry>& entries()
         { "Oszilloskop", "Oscilloscope" },
         // The editors' pages on a phone.
         { "Haupt", "Main" },
+        { "Leiste links", "Rail on the left" },
         { "Oszillatoren", "Oscillators" },
         { "Hüllkurven", "Envelopes" },
     };
