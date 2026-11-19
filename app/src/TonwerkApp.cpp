@@ -921,7 +921,12 @@ private:
             settings->setValue("railLeft", ! left);
             resized();
         });
-        menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&setup).withParentComponent(this));
+        // Lines a finger high.
+        menu.setLookAndFeel(&look);
+        menu.showMenuAsync(juce::PopupMenu::Options()
+                               .withTargetComponent(&setup)
+                               .withParentComponent(this)
+                               .withStandardItemHeight(44));
     }
 
     /** Without its scroll buttons the keyboard always starts at its range's bottom, so the range is what it shows. */

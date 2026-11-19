@@ -263,8 +263,12 @@ std::vector<tonwerkui::CompactPage> analogPages()
                                                            { p + ".octave", "Oktave" },
                                                            { p + ".detune", "Verstimm." },
                                                            { p + ".level", "Pegel" },
-                                                           { p + ".width", "Pulsbreite" },
-                                                           { p + ".pwm", "PWM LFO" },
+                                                           { p + ".width", "Pulsbreite" } } };
+    };
+    // The pulse width's modulation has a page of its own: with it, an oscillator's nine controls set the knob size
+    // of every page, and that was smaller than a phone's screen allows.
+    auto pulse = [](const juce::String& p, const char* name) {
+        return tonwerkui::CompactPage::Panel { name, Row { { p + ".pwm", "PWM LFO" },
                                                            { p + ".pwmLfo", "LFO" },
                                                            { p + ".pwmAmpEnv", "PWM Amp" },
                                                            { p + ".pwmFilterEnv", "PWM Filt." } } };
@@ -288,6 +292,7 @@ std::vector<tonwerkui::CompactPage> analogPages()
                              { "fx.reverb.mix", "Hall" },
                              { "volume", utf8("Lautstärke") } } } } },
         { "Oszillatoren", { oscillator("osc1", "Oszillator 1"), oscillator("osc2", "Oszillator 2") } },
+        { "PWM", { pulse("osc1", "Oszillator 1"), pulse("osc2", "Oszillator 2") } },
         { "Filter",
           { { "Filter", Row { { "filter.type", "Typ", 2 },
                               { "filter.cutoff", "Cutoff" },

@@ -43,10 +43,10 @@ public:
      */
     static constexpr float kSmallest = 1.05f;
     /**
-     * As large as a knob gets: 80 points a place, the size Marcel found best on his iPhone (the envelopes' page of
-     * the first prototype). Pages aim for it and only go below when their knobs would not fit otherwise.
+     * As large as a knob gets: 90 points a place. Marcel found 80 best on the first prototype and then asked for
+     * more where the keys are put away; the pages are cut so that all of them reach about 85 on a phone.
      */
-    static constexpr float kLargest = 1.35f;
+    static constexpr float kLargest = 1.5f;
     static constexpr int kTabs = 36;
     /** The component property a host sets to take the header (name, sounds) away. */
     static constexpr const char* kBare = "tonwerkBare";
