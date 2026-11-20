@@ -445,6 +445,35 @@ public:
             expectGreaterThan(words, 1);
         }
 
+        beginTest("Where a finger chooses, the menus are higher and their lists' rows as high as the box");
+        {
+            BassProcessor p;
+            auto heights = [&](bool touch) {
+                const juce::ScopedValueSetter<bool> set(tonwerkui::touchMenus(), touch);
+                std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
+                int box = 0, row = 0;
+                std::function<void(juce::Component&)> walk = [&](juce::Component& c) {
+                    auto* menu = dynamic_cast<juce::ComboBox*>(&c);
+                    if (menu != nullptr && menu->getProperties()["waves"])
+                    {
+                        juce::Label label;
+                        menu->getLookAndFeel().positionComboBoxText(*menu, label);
+                        box = menu->getHeight();
+                        row = menu->getLookAndFeel().getOptionsForComboBoxPopupMenu(*menu, label).getStandardItemHeight();
+                    }
+                    for (auto* child : c.getChildren())
+                        walk(*child);
+                };
+                walk(*editor);
+                return std::pair { box, row };
+            };
+            const auto mouse = heights(false), finger = heights(true);
+            expectEquals(mouse.first, 24);
+            expectEquals(mouse.second, 24);
+            expectEquals(finger.first, tonwerkui::kTouchMenu);
+            expectEquals(finger.second, tonwerkui::kTouchMenu);
+        }
+
         beginTest("Inside the iPad app the editor leaves its scope to the app's");
         {
             BassProcessor p;

@@ -439,6 +439,21 @@ inline bool& soundFilesInHeader()
 }
 
 /**
+ * Whether menus are made for a finger: the boxes higher and their lists' rows as high as the box (Marcel, 2026-11-20:
+ * the entries of the wave menus were too small on the iPad and the iPhone). True on iOS, in the app and in a host;
+ * the desktop app sets it with its iPad bar, a test to see the larger menus on any system.
+ */
+inline bool& touchMenus()
+{
+#if JUCE_IOS
+    static bool touch = true;
+#else
+    static bool touch = false;
+#endif
+    return touch;
+}
+
+/**
  * Whether an editor draws its own oscilloscope. Not inside the iPad app, which has one beside its keys for every
  * instrument: editors with theirs above the knobs (Tonwerk Bass, Expander, Neuro) showed two there, since the app
  * can only cut an editor off above its keyboard. The app clears this before it builds an editor; an AUv3 in a host
