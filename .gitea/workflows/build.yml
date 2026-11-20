@@ -602,7 +602,7 @@ jobs:
           rm -f "$RUNNER_TEMP/$zip"
           zip -0 -q -j "$RUNNER_TEMP/$zip" Tonwerk-Synth-*.zip
           call() { curl -fsS -H "Authorization: token $TOKEN" "$@"; }
-          body=$(jq -n --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_NUMBER" \
+          body=$(jq -n --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             '"Der neueste Build von `\($ref)`: Stand \($sha), [Lauf](\($run)). Unsigniert und ohne Notarisierung, jeder Lauf auf main ersetzt die beiden Dateien. Bitte nicht veröffentlichen: als Entwurf hat dieses Release keinen Tag."')
           id=$(call "$api/releases?draft=true&limit=50" | jq -r --arg tag "$TAG" 'map(select(.draft and .tag_name == $tag)) | first | .id // empty')
           if [[ -z "$id" ]]; then
