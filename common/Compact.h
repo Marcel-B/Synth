@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -17,7 +18,8 @@
  * three: a wide, low screen is filled better by rows of large knobs than by one row with half the height left empty.
  * Every page has the same knob size, the largest at which all of them fit (within limits; below the least a page
  * scrolls), and each page takes the arrangement that fits at it, first one that puts its panels side by side. Displays that only decorate (envelope curves, the oscilloscope, the keyboard)
- * are left out; the app puts keys and scope under the editor on demand.
+ * are left out; the app puts keys and scope under the editor on demand. A display that is part of playing (Tonwerk
+ * Granular's grains) goes above a page's panels (`CompactPage::display`).
  */
 namespace tonwerkui
 {
@@ -32,6 +34,13 @@ struct CompactPage
 
     juce::String title;
     std::vector<Panel> panels;
+    /**
+     * A display above the panels, across the page's whole width, for a plugin whose picture is part of playing it
+     * (Tonwerk Granular's source and grains). It takes the height the panels leave, at least `displayLeast` points;
+     * it is made once and kept while the editor lives, shown only with its page.
+     */
+    std::function<std::unique_ptr<juce::Component>()> display {};
+    int displayLeast = 0;
 };
 
 class CompactEditor : public juce::AudioProcessorEditor
@@ -68,6 +77,12 @@ public:
                     page.layouts[rows - 1].add(state, panel.title, inRows(panel.row, rows));
             for (auto& layout : page.layouts)
                 canvas.addChildComponent(layout.holder);
+            if (described.display)
+            {
+                page.display = described.display();
+                page.displayLeast = described.displayLeast;
+                canvas.addChildComponent(*page.display);
+            }
 
             auto* tab = tabs.add(new Tab(tr(described.title)));
             const int index = tabs.size() - 1;
@@ -192,7 +207,12 @@ private:
     {
         /** The panels with one, two and three rows of controls each. */
         std::array<Layout, 3> layouts;
+        std::unique_ptr<juce::Component> display;
+        int displayLeast = 0;
     };
+
+    /** The height the page's display keeps from its panels, in points of the screen. */
+    static int reserved(const Page& page) { return page.display != nullptr ? page.displayLeast + kGap : 0; }
 
     /**
      * A row of controls cut into `rows` of about the same width, never between two controls that take turns in one
@@ -278,7 +298,8 @@ private:
     bool fits(Page& page, float s) const
     {
         for (auto& layout : page.layouts)
-            if ((float) flow(layout, (int) ((float) view.getWidth() / s), false) <= (float) view.getHeight() / s)
+            if ((float) flow(layout, (int) ((float) view.getWidth() / s), false)
+                <= (float) (view.getHeight() - reserved(page)) / s)
                 return true;
         return false;
     }
@@ -287,7 +308,7 @@ private:
     Layout* fitting(Page& page, float s) const
     {
         const int inner = (int) ((float) view.getWidth() / s);
-        const int room = (int) ((float) view.getHeight() / s);
+        const int room = (int) ((float) (view.getHeight() - reserved(page)) / s);
         Layout* chosen = nullptr;
         for (auto& layout : page.layouts)
             if (flow(layout, inner, false) <= room && (chosen == nullptr || ! sideBySide(*chosen, inner))
@@ -333,8 +354,12 @@ private:
         if (pages.empty() || view.getWidth() <= 0 || view.getHeight() <= 0)
             return;
         for (auto& page : pages)
+        {
             for (auto& layout : page->layouts)
                 layout.holder.setVisible(false);
+            if (page->display != nullptr)
+                page->display->setVisible(false);
+        }
 
         scale = commonScale();
         // Of the arrangements that fit, the first with the panels side by side (two oscillators to compare), else the
@@ -359,14 +384,23 @@ private:
         int used = 0;
         for (const auto& section : chosen->sections)
             used = std::max(used, section->getRight());
-        // In the middle of the room, so a page with few knobs does not sit in a corner.
+        // The display takes what the panels leave, the panels sit under it; without one they are in the middle of
+        // the room, so a page with few knobs does not sit in a corner.
         const float dx = std::max(0.0f, (w - (float) used * scale) * 0.5f);
-        const float dy = std::max(0.0f, ((float) view.getHeight() - (float) height * scale) * 0.5f);
+        float dy = std::max(0.0f, ((float) view.getHeight() - (float) height * scale) * 0.5f);
+        if (page.display != nullptr)
+        {
+            const int shown = std::max(page.displayLeast,
+                                       view.getHeight() - (int) std::ceil((float) height * scale) - kGap);
+            page.display->setBounds(0, 0, view.getWidth(), shown);
+            page.display->setVisible(true);
+            dy = (float) (shown + kGap);
+        }
         chosen->holder.setTransform({});
         chosen->holder.setBounds(0, 0, width, height);
         chosen->holder.setTransform(juce::AffineTransform::scale(scale).translated(dx, dy));
         chosen->holder.setVisible(true);
-        canvas.setSize(view.getWidth(), juce::jmax(view.getHeight(), (int) std::ceil((float) height * scale)));
+        canvas.setSize(view.getWidth(), juce::jmax(view.getHeight(), (int) std::ceil(dy + (float) height * scale)));
     }
 
     LookAndFeel look;

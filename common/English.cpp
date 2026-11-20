@@ -1014,6 +1014,8 @@ const std::vector<Entry>& entries()
         { "Leiste links", "Rail on the left" },
         { "Oszillatoren", "Oscillators" },
         { "Hüllkurven", "Envelopes" },
+        { "Körner", "Grains" },
+        { "Hüllkurve 1 · Amp", "Envelope 1 · Amp" },
     };
     return list;
 }
