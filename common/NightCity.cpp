@@ -295,16 +295,33 @@ void LookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int
                                           shortcutKeyText, icon, textColour);
         return;
     }
-    // In the list the wave stands before its name.
-    juce::DrawablePath drawn;
-    juce::Path sized = wave;
-    sized.applyTransform(juce::AffineTransform::scale(24.0f, 12.0f));
-    drawn.setPath(sized);
-    drawn.setFill(juce::Colours::transparentBlack);
-    drawn.setStrokeFill(isHighlighted ? colours::background : colours::yellow);
-    drawn.setStrokeType(juce::PathStrokeType(1.6f));
-    LookAndFeel_V4::drawPopupMenuItem(g, area, isSeparator, isActive, isHighlighted, isTicked, hasSubMenu, name,
-                                      shortcutKeyText, &drawn, textColour);
+    // In the list the wave stands before its name, as large as the row lets it be.
+    using namespace colours;
+    auto row = area.reduced(1).toFloat();
+    if (isHighlighted && isActive)
+    {
+        g.setColour(findColour(juce::PopupMenu::highlightedBackgroundColourId));
+        g.fillRect(row);
+    }
+    const auto colour = (isTicked || isHighlighted ? yellow : textColour != nullptr ? *textColour : colours::text)
+                            .withAlpha(isActive ? 1.0f : 0.4f);
+    row.removeFromLeft(8.0f);
+    const float high = std::min(row.getHeight() - 8.0f, 22.0f);
+    strokeWave(g, wave, row.removeFromLeft(high * 2.0f).withSizeKeepingCentre(high * 2.0f, high),
+               yellow.withAlpha(isActive ? 1.0f : 0.4f));
+    row.removeFromLeft(10.0f);
+    auto font = getPopupMenuFont();
+    font.setHeight(std::min(font.getHeight(), row.getHeight() / 1.3f));
+    g.setFont(font);
+    g.setColour(colour);
+    g.drawFittedText(name, row.toNearestInt(), juce::Justification::centredLeft, 1);
+    juce::ignoreUnused(hasSubMenu, shortcutKeyText);
+}
+
+juce::PopupMenu::Options LookAndFeel::getOptionsForComboBoxPopupMenu(juce::ComboBox& box, juce::Label& label)
+{
+    // The label of a wave menu has no height; the box itself says how high a row is.
+    return LookAndFeel_V4::getOptionsForComboBoxPopupMenu(box, label).withStandardItemHeight(box.getHeight());
 }
 
 juce::Font LookAndFeel::getPopupMenuFont() { return juce::Font(juce::FontOptions(popupFontSize)); }

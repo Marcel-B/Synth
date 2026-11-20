@@ -785,7 +785,7 @@ public:
         soundArea = {};
         previousSound.setVisible(false);
         nextSound.setVisible(false);
-        look.setPopupFontSize(phone ? 18.0f : 14.0f);
+        look.setPopupFontSize(phone ? 18.0f : touchBar ? tonwerkui::kTouchPopupFont : 14.0f);
         if (current >= 0)
             picker.setButtonText(catalogue()[(size_t) current].name + utf8(" \xe2\x96\xbe"));
         if (phone)
@@ -1281,7 +1281,10 @@ public:
 #else
         // TONWERK_TOUCH_BAR=1 shows the iPad's layout on the desktop, to look at it without one.
         if (juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) == "1")
+        {
             tonwerkui::editorsHaveScope() = tonwerkui::editorsHaveHeader() = false;
+            tonwerkui::touchMenus() = true;
+        }
 #endif
         window = std::make_unique<MainWindow>();
     }

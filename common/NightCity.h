@@ -58,6 +58,9 @@ void paintTitle(juce::Graphics&, juce::Rectangle<int> area, const juce::String& 
 
 /** An editor's header height: `kHeader`, or 0 in the app on the iPad, whose bar has name and sounds (`editorsHaveHeader`). */
 inline int headerHeight() { return headerHeight(kHeader); }
+/** A menu's height and its list's font where a finger chooses (`touchMenus`), before the editor's scale. */
+inline constexpr int kTouchMenu = 36;
+inline constexpr float kTouchPopupFont = 17.0f;
 
 class LookAndFeel : public juce::LookAndFeel_V4
 {
@@ -78,13 +81,15 @@ public:
     void drawComboBox(juce::Graphics&, int width, int height, bool down, int buttonX, int buttonY, int buttonW,
                       int buttonH, juce::ComboBox&) override;
     void positionComboBoxText(juce::ComboBox&, juce::Label&) override;
+    /** A menu's list has rows as high as its box, so a higher box brings a list a finger can choose from. */
+    juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox&, juce::Label&) override;
     void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area, bool isSeparator, bool isActive,
                            bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text,
                            const juce::String& shortcutKeyText, const juce::Drawable* icon,
                            const juce::Colour* textColour) override;
 
 private:
-    float popupFontSize = 14.0f;
+    float popupFontSize = touchMenus() ? kTouchPopupFont : 14.0f;
 };
 
 /** A knob, menu or switch with its name above, tied to a parameter; the knob shows the parameter's own text. */
@@ -125,7 +130,7 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> menuAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> toggleAttachment;
     int width;
-    int menuHeight = 24;
+    int menuHeight = touchMenus() ? kTouchMenu : 24;
 };
 
 /** Room for a display in a section: `inset` pixels on the left or `top` pixels above the controls. */
