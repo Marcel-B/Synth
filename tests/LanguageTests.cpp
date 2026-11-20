@@ -263,6 +263,50 @@ public:
 
         for (const auto& [plugin, make] : plugins())
         {
+            beginTest(juce::String("In a host ") + plugin + " has the bar above its editor and keeps its size when zoomed");
+            // The bar has the name and the sounds (Marcel, 2026-11-20), so the editor leaves its header out as in the
+            // iPad app; Tonwerk DX and Expander keep their one button there.
+            const auto processor = make();
+            if (! processor->hasEditor())
+                continue;
+            tonwerkui::editorsHaveHeader() = false;
+            std::unique_ptr<juce::AudioProcessorEditor> bare(processor->createEditor());
+            tonwerkui::editorsHaveHeader() = true;
+            tonwerkui::pluginBarForced() = true;
+            std::unique_ptr<juce::AudioProcessorEditor> created(processor->createEditor());
+            tonwerkui::pluginBarForced() = false;
+            tonwerkui::editorsHaveHeader() = true;
+            tonwerkui::soundFilesInHeader() = true;
+            auto* frame = dynamic_cast<tonwerkui::HostFrame*>(created.get());
+            expect(frame != nullptr && frame->pluginBar() != nullptr);
+            if (frame == nullptr || frame->pluginBar() == nullptr)
+                continue;
+            auto* inner = frame->editor();
+            const juce::String shown(plugin);
+            expectEquals(inner->getWidth(), bare->getWidth());
+            expectEquals(inner->getHeight(), bare->getHeight());
+            expectEquals(frame->getWidth(), inner->getWidth());
+            expectEquals(frame->getHeight(), inner->getHeight() + tonwerkui::PluginBar::kHeight);
+            const bool keepsButton = shown == "Tonwerk DX" || shown == "Tonwerk Expander";
+            expectEquals(frame->pluginBar()->actionCount(), keepsButton ? 1 : 0);
+
+            // Logic zooms an AUv3's window when it is dragged: the editor is scaled whole, never laid out again
+            // (Marcel's video: panels cut off). Tonwerk Scope's editor is made to be resized.
+            if (inner->isResizable())
+                continue;
+            const int width = inner->getWidth(), height = inner->getHeight();
+            frame->setSize(width * 7 / 10, frame->getHeight() * 7 / 10);
+            expectEquals(inner->getWidth(), width);
+            expectEquals(inner->getHeight(), height);
+            expectWithinAbsoluteError(inner->getTransform().mat00, 0.7f, 0.01f);
+            expectWithinAbsoluteError(inner->getTransform().mat11, 0.7f, 0.01f);
+            frame->setSize(width * 3 / 2, frame->getHeight());
+            expectEquals(inner->getWidth(), width);
+            expectEquals(inner->getHeight(), height);
+        }
+
+        for (const auto& [plugin, make] : plugins())
+        {
             beginTest(juce::String("An AUv3 host can name every parameter of ") + plugin);
             // AUv3 identifiers are joined with dots into key paths; a dotted one kept Tonwerk Analog, FM and Synth from
             // loading on the iPad. Only those three map their ids (hostParameterId); every other plugin's ids must be

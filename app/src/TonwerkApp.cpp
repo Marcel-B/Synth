@@ -785,7 +785,7 @@ public:
         soundArea = {};
         previousSound.setVisible(false);
         nextSound.setVisible(false);
-        look.setPopupFontSize(phone ? 18.0f : touchBar ? tonwerkui::kTouchPopupFont : 14.0f);
+        look.setPopupFontSize(phone ? 18.0f : touchBar && tonwerkui::touchMenus() ? tonwerkui::kTouchPopupFont : 14.0f);
         if (current >= 0)
             picker.setButtonText(catalogue()[(size_t) current].name + utf8(" \xe2\x96\xbe"));
         if (phone)
@@ -991,8 +991,11 @@ private:
     void layoutTouch(juce::Rectangle<int> area)
     {
         auto bar = area.removeFromTop(kTouchBar).reduced(tonwerkui::kMargin, 3);
-        // iPadOS draws a window's three buttons in the top left corner; the name starts clear of them.
+#if JUCE_IOS
+        // iPadOS draws a window's three buttons in the top left corner; the name starts clear of them. The Mac's
+        // window has its own title bar above.
         bar.removeFromLeft(kWindowButtons);
+#endif
         std::vector<juce::Component*> buttons { &railPicker };
         if (showSounds.isVisible())
             buttons.push_back(&showSounds);
@@ -1204,12 +1207,12 @@ private:
     static constexpr int kTick = 400;
     int ticks = 0;
     juce::BorderSize<int> insets;
-    // The iPad's bar, a finger high. The desktop keeps its bar of words for now (Marcel, 2026-11-19);
-    // TONWERK_TOUCH_BAR=1 shows the iPad's there, to look at it without one.
+    // The iPad's bar, a finger high, on the Mac too (Marcel, 2026-11-20). TONWERK_TOUCH_BAR=0 shows the desktop's
+    // old bar of words, which only the tests still look at.
 #if JUCE_IOS
     const bool touchBar = true;
 #else
-    const bool touchBar = juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) == "1";
+    const bool touchBar = juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) != "0";
 #endif
     static constexpr int kTouchBar = 52;
     static constexpr int kTouchButton = 56;
@@ -1279,12 +1282,10 @@ public:
         // And the bar at the top names the instrument and its sound; a phone's pages have no header anyway.
         tonwerkui::editorsHaveHeader() = false;
 #else
-        // TONWERK_TOUCH_BAR=1 shows the iPad's layout on the desktop, to look at it without one.
-        if (juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) == "1")
-        {
+        // The iPad's bar on the desktop too (Marcel, 2026-11-20), with the same scope beside the keys; the menus stay
+        // made for a mouse. TONWERK_TOUCH_BAR=0 keeps the old bar of words.
+        if (juce::SystemStats::getEnvironmentVariable("TONWERK_TOUCH_BAR", {}) != "0")
             tonwerkui::editorsHaveScope() = tonwerkui::editorsHaveHeader() = false;
-            tonwerkui::touchMenus() = true;
-        }
 #endif
         window = std::make_unique<MainWindow>();
     }

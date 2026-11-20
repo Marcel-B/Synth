@@ -74,7 +74,7 @@ public:
     DxAlgorithmView view;
 };
 
-class DxEditor : public juce::AudioProcessorEditor, private juce::Timer
+class DxEditor : public juce::AudioProcessorEditor, public tonwerkui::BarActions, private juce::Timer
 {
 public:
     static constexpr int kWidth = 1270;
@@ -91,6 +91,8 @@ public:
     /** For the tests: the sounds in the menu, by item id - 1. */
     const std::vector<NamedDxPatch>& menu() const { return menuPatches; }
     int preferredHeight() const;
+    /** In a host the frame's bar holds the SysEx import, since the header is gone. */
+    std::vector<Action> barActions() override { return { { tonwerkui::tr("SysEx laden"), {}, [this] { importSysex(); } } }; }
 
 private:
     void timerCallback() override;
