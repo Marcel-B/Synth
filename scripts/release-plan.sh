@@ -19,7 +19,7 @@ fi
 # the scripts that serve those.
 reaches() {
     local left
-    left=$(grep -vE '^(website/|esp32-wavetable/|komponist/|icons/TonwerkKomponist\.png$|docs/|app/|\.github/|\.claude/|scripts/(build-website|build-ios|release-stats|release-plan|plugin-version)\.sh$|scripts/make-icons\.py$|\.gitignore$)|\.md$' || true)
+    left=$(grep -vE '^(website/|esp32-wavetable/|komponist/|icons/TonwerkKomponist\.png$|docs/|app/|\.github/|\.gitea/|\.claude/|scripts/(build-website|build-ios|release-stats|release-plan|plugin-version|setup-gitea-secrets)\.sh$|scripts/make-icons\.py$|\.gitignore$)|\.md$' || true)
     [ -n "$left" ]
 }
 
@@ -39,17 +39,21 @@ if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
     exit 0
 fi
 
-# One line per merged pull request that changed something in the packages, oldest first; its title is the merge
-# commit's body (GitHub's default), else the subject.
+# One line per merged pull request that changed something in the packages, oldest first. Gitea, where the pull
+# requests are merged now, puts the title into the subject ("Merge pull request 'title' (#4) from branch into main") and
+# trailers such as "Reviewed-on: <its own address>" into the body; GitHub's older merges have the title as the body's
+# first line. Else the subject.
 {
     echo "Neu seit ${last#v}:"
     echo
     git log --first-parent --reverse --format='%H' "$last..$head" | while read -r commit; do
         if git rev-parse -q --verify "$commit^2" >/dev/null; then
             git diff --name-only "$commit^1" "$commit" | reaches || continue
-            number=$(git log -1 --format='%s' "$commit" | grep -oE '#[0-9]+' | head -n 1 || true)
-            title=$(git log -1 --format='%b' "$commit" | sed -n '/./{p;q}')
-            [ -n "$title" ] || title=$(git log -1 --format='%s' "$commit")
+            subject=$(git log -1 --format='%s' "$commit")
+            number=$(grep -oE '#[0-9]+' <<<"$subject" | head -n 1 || true)
+            title=$(sed -nE "s/^Merge pull request '(.*)' \(#[0-9]+\) from .*/\1/p" <<<"$subject")
+            [ -n "$title" ] || title=$(git log -1 --format='%b' "$commit" | grep -viE '^(Reviewed-on|Reviewed-by|Co-authored-by|Signed-off-by): ' | grep -m 1 . || true)
+            [ -n "$title" ] || title=$subject
         else
             git diff --name-only "$commit^" "$commit" | reaches || continue
             number=""
