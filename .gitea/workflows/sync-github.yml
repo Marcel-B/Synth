@@ -30,4 +30,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PUSH_TOKEN }}
         run: |
           [ -n "$GH_TOKEN" ] || { echo "::error::secret GH_PUSH_TOKEN is missing"; exit 1; }
+          # The draft release "aktuell" (build.yml) has no tag; should someone publish it, its tag stays in Gitea.
+          [ "$GITHUB_REF" != refs/tags/aktuell ] || { echo "tag aktuell stays in Gitea"; exit 0; }
           git push "https://x-access-token:${GH_TOKEN}@github.com/${RELEASE_REPO}.git" "$GITHUB_SHA:$GITHUB_REF"
