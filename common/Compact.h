@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -41,6 +42,13 @@ struct CompactPage
      */
     std::function<std::unique_ptr<juce::Component>()> display {};
     int displayLeast = 0;
+    /**
+     * Pages behind one tab, chosen by a row of buttons above them (their titles), for a plugin with several of the
+     * same part (Tonwerk DX's six operators). The tab's own panels and display are then unused. Tabs naming the same
+     * `choiceGroup` keep one choice: an operator chosen on one is the operator on the other.
+     */
+    std::vector<CompactPage> choices {};
+    juce::String choiceGroup {};
 };
 
 class CompactEditor : public juce::AudioProcessorEditor
@@ -61,6 +69,8 @@ public:
     static constexpr const char* kBare = "tonwerkBare";
     /** A menu's height before the page's scale: a finger's 44 points at the scales a phone gets. */
     static constexpr int kMenu = 40;
+    /** The row of a tab's choices (`CompactPage::choices`), a finger's height. */
+    static constexpr int kChoices = 34;
 
     CompactEditor(juce::AudioProcessor& owner, juce::AudioProcessorValueTreeState& state, const juce::String& name,
                   const std::vector<CompactPage>& pageList)
@@ -71,21 +81,28 @@ public:
         setOpaque(true);
         for (const auto& described : pageList)
         {
-            auto& page = *pages.emplace_back(std::make_unique<Page>());
-            for (const auto& panel : described.panels)
-                for (std::size_t rows = 1; rows <= page.layouts.size(); ++rows)
-                    page.layouts[rows - 1].add(state, panel.title, inRows(panel.row, rows));
-            for (auto& layout : page.layouts)
-                canvas.addChildComponent(layout.holder);
-            if (described.display)
+            auto& entry = *entries.emplace_back(std::make_unique<Entry>());
+            const int index = (int) entries.size() - 1;
+            entry.group = described.choiceGroup.isNotEmpty() ? described.choiceGroup : juce::String(index);
+            if (described.choices.empty())
+                entry.leaves.push_back(addPage(state, described, false));
+            for (const auto& choice : described.choices)
             {
-                page.display = described.display();
-                page.displayLeast = described.displayLeast;
-                canvas.addChildComponent(*page.display);
+                entry.leaves.push_back(addPage(state, choice, true));
+                auto* button = entry.buttons.add(new Tab(tr(choice.title)));
+                const int chosen = entry.buttons.size() - 1;
+                button->setClickingTogglesState(true);
+                button->setRadioGroupId(2 + index);
+                button->setColour(juce::TextButton::buttonOnColourId, colours::panel);
+                button->setColour(juce::TextButton::textColourOnId, colours::cyan);
+                button->onClick = [this, group = entry.group, chosen] {
+                    chosenIn[group] = chosen;
+                    layoutPage();
+                };
+                canvas.addChildComponent(button);
             }
 
             auto* tab = tabs.add(new Tab(tr(described.title)));
-            const int index = tabs.size() - 1;
             tab->setClickingTogglesState(true);
             tab->setRadioGroupId(1);
             tab->setColour(juce::TextButton::buttonOnColourId, colours::panel);
@@ -120,6 +137,16 @@ public:
 
     /** The width of one knob's place on the page shown, in points. */
     float slotWidth() const { return scale * (float) kSlot; }
+
+    /** The buttons choosing among the shown tab's pages (`CompactPage::choices`); empty for a tab without. */
+    std::vector<juce::Button*> shownChoices() const
+    {
+        std::vector<juce::Button*> list;
+        if (juce::isPositiveAndBelow(current, (int) entries.size()))
+            for (auto* button : entries[(std::size_t) current]->buttons)
+                list.push_back(button);
+        return list;
+    }
 
     void paint(juce::Graphics& g) override
     {
@@ -209,10 +236,41 @@ private:
         std::array<Layout, 3> layouts;
         std::unique_ptr<juce::Component> display;
         int displayLeast = 0;
+        /** One of a tab's choices, under the row that chooses it. */
+        bool chosen = false;
     };
 
-    /** The height the page's display keeps from its panels, in points of the screen. */
-    static int reserved(const Page& page) { return page.display != nullptr ? page.displayLeast + kGap : 0; }
+    /** A tab: its page, or its choices' pages and the buttons choosing among them. */
+    struct Entry
+    {
+        std::vector<std::size_t> leaves;
+        juce::String group;
+        juce::OwnedArray<Tab> buttons;
+    };
+
+    std::size_t addPage(juce::AudioProcessorValueTreeState& state, const CompactPage& described, bool chosen)
+    {
+        auto& page = *pages.emplace_back(std::make_unique<Page>());
+        page.chosen = chosen;
+        for (const auto& panel : described.panels)
+            for (std::size_t rows = 1; rows <= page.layouts.size(); ++rows)
+                page.layouts[rows - 1].add(state, panel.title, inRows(panel.row, rows));
+        for (auto& layout : page.layouts)
+            canvas.addChildComponent(layout.holder);
+        if (described.display)
+        {
+            page.display = described.display();
+            page.displayLeast = described.displayLeast;
+            canvas.addChildComponent(*page.display);
+        }
+        return pages.size() - 1;
+    }
+
+    /** The height above the page's panels (the choices' row, the display), in points of the screen. */
+    static int reserved(const Page& page)
+    {
+        return (page.display != nullptr ? page.displayLeast + kGap : 0) + (page.chosen ? kChoices + kGap : 0);
+    }
 
     /**
      * A row of controls cut into `rows` of about the same width, never between two controls that take turns in one
@@ -248,7 +306,7 @@ private:
 
     void show(int index)
     {
-        current = juce::jlimit(0, juce::jmax(0, (int) pages.size() - 1), index);
+        current = juce::jlimit(0, juce::jmax(0, (int) entries.size() - 1), index);
         layoutPage();
     }
 
@@ -351,7 +409,7 @@ private:
 
     void layoutPage()
     {
-        if (pages.empty() || view.getWidth() <= 0 || view.getHeight() <= 0)
+        if (entries.empty() || view.getWidth() <= 0 || view.getHeight() <= 0)
             return;
         for (auto& page : pages)
         {
@@ -360,11 +418,32 @@ private:
             if (page->display != nullptr)
                 page->display->setVisible(false);
         }
+        for (auto& each : entries)
+            for (auto* button : each->buttons)
+                button->setVisible(false);
 
         scale = commonScale();
         // Of the arrangements that fit, the first with the panels side by side (two oscillators to compare), else the
         // one with the fewest rows; when none fits, the one that scrolls least.
-        auto& page = *pages[(std::size_t) current];
+        auto& entry = *entries[(std::size_t) current];
+        const int picked = juce::jlimit(0, (int) entry.leaves.size() - 1, chosenIn[entry.group]);
+        auto& page = *pages[entry.leaves[(std::size_t) picked]];
+        // The choices' row on top, its buttons as wide as the tabs' share of the width allows.
+        int top = 0;
+        if (! entry.buttons.isEmpty())
+        {
+            auto row = juce::Rectangle<int>(0, 0, view.getWidth(), kChoices);
+            const int each = (row.getWidth() + kGap) / entry.buttons.size();
+            for (int i = 0; i < entry.buttons.size(); ++i)
+            {
+                auto* button = entry.buttons[i];
+                button->letters = 15.0f;
+                button->setBounds(row.removeFromLeft(each).withTrimmedRight(kGap));
+                button->setToggleState(i == picked, juce::dontSendNotification);
+                button->setVisible(true);
+            }
+            top = kChoices + kGap;
+        }
         const auto w = (float) view.getWidth();
         const int inner = (int) (w / scale);
         Layout* chosen = fitting(page, scale);
@@ -387,14 +466,14 @@ private:
         // The display takes what the panels leave, the panels sit under it; without one they are in the middle of
         // the room, so a page with few knobs does not sit in a corner.
         const float dx = std::max(0.0f, (w - (float) used * scale) * 0.5f);
-        float dy = std::max(0.0f, ((float) view.getHeight() - (float) height * scale) * 0.5f);
+        float dy = (float) top + std::max(0.0f, ((float) (view.getHeight() - top) - (float) height * scale) * 0.5f);
         if (page.display != nullptr)
         {
             const int shown = std::max(page.displayLeast,
-                                       view.getHeight() - (int) std::ceil((float) height * scale) - kGap);
-            page.display->setBounds(0, 0, view.getWidth(), shown);
+                                       view.getHeight() - top - (int) std::ceil((float) height * scale) - kGap);
+            page.display->setBounds(0, top, view.getWidth(), shown);
             page.display->setVisible(true);
-            dy = (float) (shown + kGap);
+            dy = (float) (top + shown + kGap);
         }
         chosen->holder.setTransform({});
         chosen->holder.setBounds(0, 0, width, height);
@@ -412,6 +491,8 @@ private:
     juce::Viewport view;
     juce::Component canvas;
     std::vector<std::unique_ptr<Page>> pages;
+    std::vector<std::unique_ptr<Entry>> entries;
+    std::map<juce::String, int> chosenIn;
     int current = 0;
     float scale = 1.0f;
 };
