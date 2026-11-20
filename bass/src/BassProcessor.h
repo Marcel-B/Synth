@@ -70,6 +70,8 @@ public:
     /** For the display: the note sounding (-1 none), and whether it is accented or sliding. */
     std::atomic<int> shownNote { -1 };
     std::atomic<bool> shownAccent { false };
+    /** The filter's cutoff as envelope, accent and LFO have moved it, for the editor's curve. */
+    std::atomic<float> shownCutoff { 500.0f };
     std::atomic<bool> shownSlide { false };
 
 private:

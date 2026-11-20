@@ -22,6 +22,7 @@ const juce::Colour kRed { 0xffff003c };
 constexpr int kSlot = 92;
 constexpr int kRowHeight = 128;
 constexpr int kGap = 10;
+constexpr int kHeaderHeight = 48;
 
 using tonwerkui::retranslate;
 using tonwerkui::tr;
@@ -201,7 +202,7 @@ ChromeGlitchEditor::ChromeGlitchEditor(ChromeGlitchProcessor& p)
         addAndMakeVisible(*section);
     addAndMakeVisible(monitor);
     // Two rows: 3 + 4 slots and the monitor, 2 + 3 + 4 slots, plus the gaps.
-    setSize(kGap * 4 + kSlot * 9 + 8 * 3, 56 + kRowHeight * 2 + kGap * 2);
+    setSize(kGap * 4 + kSlot * 9 + 8 * 3, headerRoom() + 8 + kRowHeight * 2 + kGap * 2);
     startTimerHz(30);
 }
 
@@ -210,10 +211,15 @@ ChromeGlitchEditor::~ChromeGlitchEditor()
     setLookAndFeel(nullptr);
 }
 
+// Without its header (the app's bar on the iPad has name and sounds) only a margin is left above the panels.
+int ChromeGlitchEditor::headerRoom() const { return std::max(kGap, tonwerkui::headerHeight(kHeaderHeight)); }
+
 void ChromeGlitchEditor::paint(juce::Graphics& g)
 {
     g.fillAll(kBackground);
-    const auto header = getLocalBounds().removeFromTop(48).reduced(kGap + 4, 0);
+    if (tonwerkui::headerHeight(kHeaderHeight) == 0)
+        return;
+    const auto header = getLocalBounds().removeFromTop(kHeaderHeight).reduced(kGap + 4, 0);
     // The title with the game's colour split: red and cyan ghosts either side of the yellow.
     g.setFont(juce::FontOptions(24.0f, juce::Font::bold));
     g.setColour(kRed.withAlpha(0.7f));
@@ -227,7 +233,11 @@ void ChromeGlitchEditor::paint(juce::Graphics& g)
 void ChromeGlitchEditor::resized()
 {
     auto area = getLocalBounds().reduced(kGap, 0);
-    presets.setBounds(area.removeFromTop(48).withSizeKeepingCentre(area.getWidth(), 28).removeFromRight(260));
+    const bool header = tonwerkui::headerHeight(kHeaderHeight) > 0;
+    presets.setVisible(header);
+    auto top = area.removeFromTop(headerRoom());
+    if (header)
+        presets.setBounds(top.withSizeKeepingCentre(area.getWidth(), 28).removeFromRight(260));
     auto place = [](juce::Rectangle<int>& row, Section& section) {
         section.setBounds(row.removeFromLeft(kSlot * section.count() + 8));
         row.removeFromLeft(kGap);

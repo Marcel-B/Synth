@@ -134,7 +134,7 @@ RumbleEditor::RumbleEditor(RumbleProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ room.preferredWidth(), distortion.preferredWidth() + filter.preferredWidth() + kGap,
                                    ducking.preferredWidth() + output.preferredWidth() + kGap });
-    setSize(width, 2 * kMargin + kHeader + kView + kGap + room.preferredHeight() + kGap + distortion.preferredHeight()
+    setSize(width, 2 * kMargin + headerHeight() + kView + kGap + room.preferredHeight() + kGap + distortion.preferredHeight()
                        + kGap + ducking.preferredHeight());
 }
 
@@ -143,14 +143,15 @@ RumbleEditor::~RumbleEditor() { setLookAndFeel(nullptr); }
 void RumbleEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK RUMBLE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK RUMBLE");
 }
 
 void RumbleEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     view.setBounds(area.removeFromTop(kView));
     area.removeFromTop(kGap);
     layoutRow(area, { &room });

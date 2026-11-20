@@ -284,7 +284,7 @@ WavetableEditor::WavetableEditor(WavetableProcessor& p)
     keyboard.setLowestVisibleKey(24);
 
     const int width = kMargin * 2 + oscA.preferredWidth() + kGap + oscB.preferredWidth();
-    const int height = kMargin * 2 + kHeader + oscA.preferredHeight() + 3 * sub.preferredHeight()
+    const int height = kMargin * 2 + headerHeight() + oscA.preferredHeight() + 3 * sub.preferredHeight()
                        + kTitle + 4 * kModLine + kPad + kKeyboard + 5 * kGap;
     setSize(width, height);
     timerCallback();
@@ -304,14 +304,15 @@ void WavetableEditor::choosePreset(int index)
 void WavetableEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK WAVETABLE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK WAVETABLE");
 }
 
 void WavetableEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

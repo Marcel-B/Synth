@@ -251,7 +251,7 @@ PhysicalEditor::PhysicalEditor(PhysicalProcessor& p)
     const int width = 2 * kMargin
                       + std::max({ rowWidth({ &resonator, &exciter }) + 240, rowWidth({ &body, &tone, &filter, &env2 }),
                                    rowWidth({ &lfo1, &lfo2 }), rowWidth({ &controllers, &voice, &effects }) });
-    const int height = kMargin * 2 + kHeader + std::max(resonator.preferredHeight(), exciter.preferredHeight())
+    const int height = kMargin * 2 + headerHeight() + std::max(resonator.preferredHeight(), exciter.preferredHeight())
                        + std::max({ body.preferredHeight(), filter.preferredHeight(), env2.preferredHeight() })
                        + lfo1.preferredHeight() + voice.preferredHeight() + kKeyboard + 5 * kGap;
     setSize(width, height);
@@ -272,14 +272,15 @@ void PhysicalEditor::choosePreset(int index)
 void PhysicalEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK PHYSICAL");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK PHYSICAL");
 }
 
 void PhysicalEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

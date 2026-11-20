@@ -68,6 +68,32 @@ public:
 };
 
 /**
+ * Whether the editors show their header (name, sounds, language). The app's bar on the iPad has all three itself
+ * (Marcel, 2026-11-19), so it clears this and every editor is lower by its header.
+ */
+inline bool& editorsHaveHeader()
+{
+    static bool shown = true;
+    return shown;
+}
+
+/**
+ * Held by an editor that shows other plugins' editors inside itself (Tonwerk Rig): their sounds are chosen in their
+ * own headers, which the app's bar cannot replace, so while one lives the editors inside keep theirs.
+ */
+struct InnerHeaders
+{
+    InnerHeaders() { ++count(); }
+    ~InnerHeaders() { --count(); }
+    InnerHeaders(const InnerHeaders&) = delete;
+    InnerHeaders& operator=(const InnerHeaders&) = delete;
+    static int& count() { static int held = 0; return held; }
+};
+
+/** The height an editor gives its header: `full`, or nothing where the app's bar stands in for it. */
+inline int headerHeight(int full) { return editorsHaveHeader() || InnerHeaders::count() > 0 ? full : 0; }
+
+/**
  * What every editor sits in: it carries the language switch and builds the editor again when the language changes
  * (here or in another plugin, read once a second), so names and menus follow at once. The host's own view of the
  * parameters (names in Logic's automation) keeps the language the plugin was loaded in.
@@ -185,7 +211,7 @@ public:
     void parentHierarchyChanged() override
     {
         // Inside another plugin's frame (Tonwerk Rig) that one's switch is enough.
-        languageSwitch.setVisible(! bare && findParentComponentOfClass<HostFrame>() == nullptr);
+        languageSwitch.setVisible(! bare && editorsHaveHeader() && findParentComponentOfClass<HostFrame>() == nullptr);
     }
 
 private:

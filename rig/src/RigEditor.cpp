@@ -127,11 +127,14 @@ RigEditor::~RigEditor()
     setLookAndFeel(nullptr);
 }
 
+int RigEditor::ownHeader() const { return editorsHaveHeader() ? kHeader : 0; }
+
 void RigEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK RIG");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + ownHeader());
+    if (ownHeader() > 0)
+        paintTitle(g, header, "TONWERK RIG");
 
     // Arrows between the places of the chain, the way the sound flows.
     g.setColour(colours::muted);
@@ -153,7 +156,7 @@ void RigEditor::paint(juce::Graphics& g)
 void RigEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin, 0);
-    auto header = area.removeFromTop(kMargin + kHeader).withTrimmedTop(kMargin);
+    auto header = area.removeFromTop(kMargin + ownHeader()).withTrimmedTop(kMargin);
     presets.setBounds(header.reduced(0, 7).removeFromRight(240));
 
     auto chain = area.removeFromTop(kChain);
@@ -175,7 +178,7 @@ void RigEditor::fitSize()
     const int chainWidth = 2 * kMargin + kInstrumentWidth + kSlots * (kArrow + kSlotWidth);
     const int innerWidth = inner != nullptr ? inner->getWidth() : kEmptyWidth;
     const int innerHeight = inner != nullptr ? inner->getHeight() : kEmptyHeight;
-    setSize(std::max(chainWidth, innerWidth), kMargin + kHeader + kChain + kGap + innerHeight);
+    setSize(std::max(chainWidth, innerWidth), kMargin + ownHeader() + kChain + kGap + innerHeight);
     resized();
 }
 

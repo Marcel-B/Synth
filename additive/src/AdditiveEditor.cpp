@@ -218,7 +218,7 @@ AdditiveEditor::AdditiveEditor(AdditiveProcessor& p)
                       + std::max({ rowWidth({ &spectrum, &colour, &effects }) + 120,
                                    rowWidth({ &filter, &spectralEnvelope, &amp, &tone }),
                                    rowWidth({ &env2, &lfo1, &lfo2, &controllers, &voice }) });
-    const int height = kMargin * 2 + kHeader + spectrum.preferredHeight()
+    const int height = kMargin * 2 + headerHeight() + spectrum.preferredHeight()
                        + std::max({ filter.preferredHeight(), spectralEnvelope.preferredHeight(), amp.preferredHeight() })
                        + lfo1.preferredHeight() + kKeyboard + 4 * kGap;
     setSize(width, height);
@@ -239,14 +239,15 @@ void AdditiveEditor::choosePreset(int index)
 void AdditiveEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK ADDITIV");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK ADDITIV");
 }
 
 void AdditiveEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

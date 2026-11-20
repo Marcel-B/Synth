@@ -246,6 +246,30 @@ public:
             tonwerkui::soundFilesInHeader() = before;
         }
 
+        beginTest("Tonwerk Analog's mix ends the last row, and the envelopes share the middle one");
+        {
+            TonwerkSynthProcessor analog(Edition::analog);
+            std::unique_ptr<juce::AudioProcessorEditor> editor(analog.createEditor());
+            auto* synthEditor = tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get());
+            std::vector<juce::Rectangle<int>> panels;
+            for (auto* child : synthEditor->getChildren())
+                if (dynamic_cast<tonwerkui::Section*>(child) != nullptr && child->isVisible())
+                    panels.push_back(child->getBounds());
+            expectEquals((int) panels.size(), 10);
+            std::sort(panels.begin(), panels.end(), [](const auto& a, const auto& b) {
+                return a.getY() != b.getY() ? a.getY() < b.getY() : a.getX() < b.getX();
+            });
+            // Rows of four, three and three panels; no two overlap, and the rows have air between them.
+            expectEquals(panels[3].getY(), panels[0].getY());
+            expectEquals(panels[6].getY(), panels[4].getY());
+            expectEquals(panels[9].getY(), panels[7].getY());
+            expect(panels[4].getY() > panels[0].getBottom() + tonwerkui::kGap);
+            expect(panels[7].getY() > panels[4].getBottom() + tonwerkui::kGap);
+            // The two envelopes, with their drawings, take most of the middle row.
+            expect(panels[4].getWidth() + panels[5].getWidth() > synthEditor->getWidth() * 3 / 4);
+            expectEquals(panels[9].getRight(), panels[3].getRight());
+        }
+
         beginTest("Tonwerk Analog has pages for a phone's screen, every knob the same size");
         {
             TonwerkSynthProcessor analog(Edition::analog), fm(Edition::fm);

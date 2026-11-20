@@ -47,8 +47,11 @@ private:
     void refresh();
     void showInner();
     void fitSize();
+    /** The rig's own header, which the app's bar replaces; the editors inside keep theirs (`innerHeaders`). */
+    int ownHeader() const;
 
     RigProcessor& rig;
+    tonwerkui::InnerHeaders innerHeaders;
     tonwerkui::LookAndFeel lookAndFeel;
     juce::ComboBox presets;
     ChainButton instrumentButton;

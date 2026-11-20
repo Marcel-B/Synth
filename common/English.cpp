@@ -540,6 +540,7 @@ const std::vector<Entry>& entries()
         { "SÄGE", "SAW" },
         { "SINUS", "SINE" },
         { "RECHTECK", "SQUARE" },
+        { "SÄGEZAHN", "SAWTOOTH" },
         { "DREIECK", "TRIANGLE" },
         { "PULS", "PULSE" },
         { "ORGEL", "ORGAN" },

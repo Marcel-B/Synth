@@ -73,6 +73,8 @@ class TonwerkSynthEditor : public juce::AudioProcessorEditor, private juce::Time
 {
 public:
     static constexpr int kWidth = 1270;
+    /** Whether the editor shows its own header, or leaves name and sounds to the app's bar (`editorsHaveHeader`). */
+    bool hasHeader() const;
 
     explicit TonwerkSynthEditor(TonwerkSynthProcessor&);
     ~TonwerkSynthEditor() override;

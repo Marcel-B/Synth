@@ -669,7 +669,7 @@ ScopeEditor::ScopeEditor(ScopeProcessor& p)
         addAndMakeVisible(*c);
     const int minimumWidth = 2 * kMargin + view.preferredWidth() + trigger.preferredWidth() + picture.preferredWidth()
                            + tuner.preferredWidth() + 3 * kGap;
-    const int minimumHeight = 2 * kMargin + kHeader + 260 + kGap + view.preferredHeight();
+    const int minimumHeight = 2 * kMargin + headerHeight() + 260 + kGap + view.preferredHeight();
     // The size the user left it at, kept with the project; read first, since setting the limits resizes and stores.
     const int width = (int) p.state.state.getProperty("editorWidth", minimumWidth);
     const int height = (int) p.state.state.getProperty("editorHeight", minimumHeight + 220);
@@ -683,8 +683,9 @@ ScopeEditor::~ScopeEditor() { setLookAndFeel(nullptr); }
 void ScopeEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK SCOPE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK SCOPE");
 }
 
 void ScopeEditor::resized()
@@ -692,7 +693,7 @@ void ScopeEditor::resized()
     processor.state.state.setProperty("editorWidth", getWidth(), nullptr);
     processor.state.state.setProperty("editorHeight", getHeight(), nullptr);
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     auto controls = area.removeFromBottom(view.preferredHeight());
     area.removeFromBottom(kGap);
     screen.setBounds(area);

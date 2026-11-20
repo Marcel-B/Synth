@@ -120,7 +120,7 @@ StutterEditor::StutterEditor(StutterProcessor& p)
     const int width = 2 * kMargin
                       + std::max(pattern.preferredWidth() + 240,
                                  grid.preferredWidth() + sound.preferredWidth() + output.preferredWidth() + 2 * kGap);
-    setSize(width, 2 * kMargin + kHeader + pattern.preferredHeight() + kGap + grid.preferredHeight() + kGap + kScope);
+    setSize(width, 2 * kMargin + headerHeight() + pattern.preferredHeight() + kGap + grid.preferredHeight() + kGap + kScope);
 }
 
 StutterEditor::~StutterEditor() { setLookAndFeel(nullptr); }
@@ -128,14 +128,15 @@ StutterEditor::~StutterEditor() { setLookAndFeel(nullptr); }
 void StutterEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK STUTTER");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK STUTTER");
 }
 
 void StutterEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromBottom(kScope));
     area.removeFromBottom(kGap);
     layoutRow(area, { &pattern });

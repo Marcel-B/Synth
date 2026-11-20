@@ -138,7 +138,7 @@ TapeEditor::TapeEditor(TapeProcessor& p)
     scope.setLegend(tr("BAND"), tr("EINGANG"));
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &scope, &transport, &tape, &head, &output })
         addAndMakeVisible(*c);
-    setSize(kWidth, 2 * kMargin + kHeader + kScope + kGap + transport.preferredHeight());
+    setSize(kWidth, 2 * kMargin + headerHeight() + kScope + kGap + transport.preferredHeight());
 }
 
 TapeEditor::~TapeEditor() { setLookAndFeel(nullptr); }
@@ -146,14 +146,15 @@ TapeEditor::~TapeEditor() { setLookAndFeel(nullptr); }
 void TapeEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK TAPE");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK TAPE");
 }
 
 void TapeEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(220));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(220));
     scope.setBounds(area.removeFromTop(kScope));
     area.removeFromTop(kGap);
     layoutRow(area, { &transport, &tape, &head, &output });

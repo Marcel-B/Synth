@@ -430,7 +430,7 @@ DxEditor::~DxEditor() { setLookAndFeel(nullptr); }
 
 int DxEditor::preferredHeight() const
 {
-    return 2 * kMargin + kHeader + kBottom + 3 * kGap
+    return 2 * kMargin + headerHeight() + kBottom + 3 * kGap
            + std::max({ algorithmSection->preferredHeight(), lfoSection->preferredHeight(), fxSection->preferredHeight() })
            + operators[0]->preferredHeight() + details[0]->preferredHeight();
 }
@@ -448,14 +448,15 @@ void DxEditor::selectOperator(int op)
 void DxEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK DX");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK DX");
 }
 
 void DxEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     header.removeFromLeft(200);
     sysexButton.setBounds(header.removeFromRight(110));
     header.removeFromRight(8);

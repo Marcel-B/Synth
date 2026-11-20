@@ -80,6 +80,7 @@ public:
     GlitchMonitor& getMonitor() { return monitor; }
 
 private:
+    int headerRoom() const;
     void timerCallback() override;
 
     ChromeGlitchProcessor& processor;

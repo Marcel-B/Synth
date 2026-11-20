@@ -107,7 +107,7 @@ NeuroEditor::NeuroEditor(NeuroProcessor& p)
                       + std::max({ rowWidth({ &oscillator, &fm, &filter }),
                                    rowWidth({ &ampEnvelope, &modEnvelope, &output }),
                                    rowWidth({ &lfo, &effects }) });
-    const int height = kMargin * 2 + kHeader + (scope.isVisible() ? kScope + kGap : 0) + oscillator.preferredHeight() + ampEnvelope.preferredHeight()
+    const int height = kMargin * 2 + headerHeight() + (scope.isVisible() ? kScope + kGap : 0) + oscillator.preferredHeight() + ampEnvelope.preferredHeight()
                        + lfo.preferredHeight() + kKeyboard + 3 * kGap;
     setSize(width, height);
     timerCallback();
@@ -127,14 +127,15 @@ void NeuroEditor::choosePreset(int index)
 void NeuroEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK NEURO");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK NEURO");
 }
 
 void NeuroEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

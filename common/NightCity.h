@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Language.h"
+#include "Platform.h"
 #include "ScopeBuffer.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -47,7 +48,16 @@ void paintPanel(juce::Graphics&, juce::Rectangle<int> area, const juce::String& 
 juce::Path paintScreen(juce::Graphics&, juce::Rectangle<float> area);
 
 /** The plugin's name in the header, with the game's colour split: red and cyan ghosts either side of the yellow. */
+/**
+ * The picture of a waveform by its name in a menu, German or English, in a unit square (y down); empty for a name
+ * that is none. Menus whose entries all have one show pictures (`Control`).
+ */
+juce::Path waveIcon(const juce::String& name);
+
 void paintTitle(juce::Graphics&, juce::Rectangle<int> area, const juce::String& title);
+
+/** An editor's header height: `kHeader`, or 0 in the app on the iPad, whose bar has name and sounds (`editorsHaveHeader`). */
+inline int headerHeight() { return headerHeight(kHeader); }
 
 class LookAndFeel : public juce::LookAndFeel_V4
 {
@@ -62,6 +72,16 @@ public:
     /** The size of the menus' entries; larger where a finger chooses them. */
     void setPopupFontSize(float size) { popupFontSize = size; }
     juce::Component* getParentComponentForMenuOptions(const juce::PopupMenu::Options&) override;
+    /** A switch is a lit key, dark when off (Marcel, 2026-11-19: a tick box looked like office software). */
+    void drawToggleButton(juce::Graphics&, juce::ToggleButton&, bool highlighted, bool down) override;
+    /** A menu of waveforms (`Control` marks it) shows the chosen wave drawn instead of its name. */
+    void drawComboBox(juce::Graphics&, int width, int height, bool down, int buttonX, int buttonY, int buttonW,
+                      int buttonH, juce::ComboBox&) override;
+    void positionComboBoxText(juce::ComboBox&, juce::Label&) override;
+    void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area, bool isSeparator, bool isActive,
+                           bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text,
+                           const juce::String& shortcutKeyText, const juce::Drawable* icon,
+                           const juce::Colour* textColour) override;
 
 private:
     float popupFontSize = 14.0f;
@@ -156,6 +176,12 @@ public:
     int preferredWidth() const;
     int preferredHeight() const;
     bool hasDisplay() const { return display.inset > 0 || display.top > 0; }
+    /** Points of air around each row of controls, for an editor with height to spare. */
+    void setAir(int points)
+    {
+        air = points;
+        resized();
+    }
     void paint(juce::Graphics&) override;
     void resized() override;
 
@@ -170,6 +196,7 @@ private:
 
     juce::String title;
     Display display;
+    int air = 0;
     std::vector<Row> items;
     std::vector<std::vector<std::unique_ptr<Control>>> controls;
     std::vector<std::unique_ptr<juce::ParameterAttachment>> switches;

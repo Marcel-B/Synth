@@ -331,7 +331,7 @@ ArpEditor::ArpEditor(ArpProcessor& p)
     setLookAndFeel(&lookAndFeel);
     for (auto* c : std::initializer_list<juce::Component*> { &presets, &notes, &timing, &velocity, &grid })
         addAndMakeVisible(*c);
-    setSize(kWidth, 2 * kMargin + kHeader + notes.preferredHeight() + kGap + StepGrid::kHeight);
+    setSize(kWidth, 2 * kMargin + headerHeight() + notes.preferredHeight() + kGap + StepGrid::kHeight);
 }
 
 ArpEditor::~ArpEditor() { setLookAndFeel(nullptr); }
@@ -339,14 +339,15 @@ ArpEditor::~ArpEditor() { setLookAndFeel(nullptr); }
 void ArpEditor::paint(juce::Graphics& g)
 {
     g.fillAll(colours::background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK ARP");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK ARP");
 }
 
 void ArpEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    presets.setBounds(area.removeFromTop(kHeader).reduced(0, 7).removeFromRight(240));
+    presets.setBounds(area.removeFromTop(headerHeight()).reduced(0, 7).removeFromRight(240));
     layoutRow(area, { &notes, &timing, &velocity });
     grid.setBounds(area.removeFromTop(StepGrid::kHeight));
 }

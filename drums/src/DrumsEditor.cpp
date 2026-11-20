@@ -191,7 +191,7 @@ DrumsEditor::DrumsEditor(DrumsProcessor& p)
     const int width = 2 * kMargin
                       + std::max(grid.preferredWidth() + pads.front()->preferredWidth() + kGap,
                                  effects.preferredWidth() + master.preferredWidth() + kGap);
-    const int height = 2 * kMargin + kHeader + pads.front()->preferredHeight()
+    const int height = 2 * kMargin + headerHeight() + pads.front()->preferredHeight()
                        + std::max(effects.preferredHeight(), master.preferredHeight()) + kGap;
     setSize(width, height);
     select(synth.selectedPad.load());
@@ -222,14 +222,15 @@ void DrumsEditor::choosePreset(int index)
 void DrumsEditor::paint(juce::Graphics& g)
 {
     g.fillAll(background);
-    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + kHeader);
-    paintTitle(g, header, "TONWERK DRUMS");
+    const auto header = getLocalBounds().reduced(kMargin + 4, 0).removeFromTop(kMargin + headerHeight());
+    if (headerHeight() > 0)
+        paintTitle(g, header, "TONWERK DRUMS");
 }
 
 void DrumsEditor::resized()
 {
     auto area = getLocalBounds().reduced(kMargin);
-    auto header = area.removeFromTop(kHeader).reduced(0, 7);
+    auto header = area.removeFromTop(headerHeight()).reduced(0, 7);
     next.setBounds(header.removeFromRight(28));
     header.removeFromRight(4);
     presets.setBounds(header.removeFromRight(220));

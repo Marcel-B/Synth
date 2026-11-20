@@ -271,6 +271,7 @@ public:
             if (s.lfoTarget == LfoTarget::cutoff)
                 octaves += 4.0f * lfo;
             const double cutoff = std::clamp((double) s.cutoff * std::exp2((double) octaves), 20.0, nyquistGuard);
+            cutoffNow = (float) cutoff;
             const auto g = (float) std::tan(kPi * cutoff / sampleRate);
             float y = ladder.process(0.6f * osc, g, k);
 
@@ -294,9 +295,12 @@ public:
     /** What the display shows: the note sounding (-1 none), whether it is accented or sliding. */
     int sounding() const { return gate || amp > 1.0e-3f ? rounded((float) target) : -1; }
     bool isAccented() const { return accented; }
+    /** Where envelope, accent, keytracking and LFO have the filter's cutoff right now, in Hz (for the display). */
+    float movedCutoff() const { return cutoffNow; }
     bool isSliding() const { return sliding && std::abs(target - pitch) > 0.05; }
 
 private:
+    float cutoffNow = 500.0f;
     static int rounded(float value) { return (int) std::lround(value); }
 
     float coefficient(float seconds) const { return (float) std::exp(-1.0 / (seconds * sampleRate)); }
