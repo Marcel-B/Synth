@@ -1017,6 +1017,10 @@ const std::vector<Entry>& entries()
         { "Leiste links", "Rail on the left" },
         { "Oszillatoren", "Oscillators" },
         { "Hüllkurven", "Envelopes" },
+        { "Körner", "Grains" },
+        { "Operator", nullptr },
+        { "SysEx-Klänge", "SysEx sounds" },
+        { "Hüllkurve 1 · Amp", "Envelope 1 · Amp" },
     };
     return list;
 }

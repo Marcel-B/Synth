@@ -10,6 +10,11 @@ name: Build
 on:
   push:
   workflow_dispatch:
+    inputs:
+      ablegen:
+        description: Disk image and zip of this run replace the kept ones (as a run on main does)
+        type: boolean
+        default: false
 
 jobs:
   # The iPad apps with their AUv3s, built for the simulator with Xcode (the iOS SDK comes only with it). A few apps are
@@ -455,7 +460,7 @@ jobs:
         with:
           name: tonwerk-synth-macos-dmg
           path: Tonwerk-Synth-macOS.dmg
-          retention-days: 7
+          retention-days: 2
       - name: Package
         run: |
           cd "build/TonwerkSynth_artefacts/Release"
@@ -577,7 +582,47 @@ jobs:
         with:
           name: tonwerk-synth-macos
           path: Tonwerk-Synth-*.zip
-          retention-days: 30
+          retention-days: 2
+      # The artifacts above are large (1.3 GB a run) and expire after two days, so they do not fill Gitea's disk. The
+      # newest disk image and one zip of all the plug-ins from main stay for good instead: as the two attachments of
+      # a draft release in Gitea, which every run on main replaces. A draft has no tag in the repository, so neither
+      # the push to GitHub (sync-github.yml) nor the nightly plan (which counts from the tags v*) sees it. The new
+      # files go up first and the old ones are deleted after, so a failed upload leaves the last good pair.
+      - name: Keep the newest disk image and zip
+        if: github.ref == 'refs/heads/main' || inputs.ablegen
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: aktuell
+        run: |
+          api="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY"
+          short="${GITHUB_SHA:0:7}"
+          dmg="Tonwerk-aktuell-$short.dmg"
+          zip="Tonwerk-aktuell-$short.zip"
+          cp Tonwerk-Synth-macOS.dmg "$RUNNER_TEMP/$dmg"
+          rm -f "$RUNNER_TEMP/$zip"
+          zip -0 -q -j "$RUNNER_TEMP/$zip" Tonwerk-Synth-*.zip
+          call() { curl -fsS -H "Authorization: token $TOKEN" "$@"; }
+          body=$(jq -n --arg sha "$GITHUB_SHA" --arg ref "$GITHUB_REF_NAME" --arg run "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            '"Der neueste Build von `\($ref)`: Stand \($sha), [Lauf](\($run)). Unsigniert und ohne Notarisierung, jeder Lauf auf main ersetzt die beiden Dateien. Bitte nicht veröffentlichen: als Entwurf hat dieses Release keinen Tag."')
+          id=$(call "$api/releases?draft=true&limit=50" | jq -r --arg tag "$TAG" 'map(select(.draft and .tag_name == $tag)) | first | .id // empty')
+          if [[ -z "$id" ]]; then
+            id=$(call -X POST -H 'Content-Type: application/json' "$api/releases" \
+              -d "$(jq -n --arg tag "$TAG" --arg sha "$GITHUB_SHA" --argjson body "$body" '{tag_name: $tag, name: "Aktueller Stand", target_commitish: $sha, draft: true, prerelease: true, body: $body}')" | jq -r .id)
+          else
+            call -X PATCH -H 'Content-Type: application/json' "$api/releases/$id" \
+              -d "$(jq -n --arg sha "$GITHUB_SHA" --argjson body "$body" '{target_commitish: $sha, draft: true, body: $body}')" >/dev/null
+          fi
+          [[ "$id" =~ ^[0-9]+$ ]] || { echo "::error::no release to attach to"; exit 1; }
+          keep=()
+          for file in "$dmg" "$zip"; do
+            keep+=("$(call -X POST -F "attachment=@$RUNNER_TEMP/$file" "$api/releases/$id/assets?name=$file" | jq -r .id)")
+          done
+          [[ "${keep[0]}" =~ ^[0-9]+$ && "${keep[1]}" =~ ^[0-9]+$ ]] || { echo "::error::upload failed"; exit 1; }
+          for old in $(call "$api/releases/$id/assets" | jq -r '.[].id'); do
+            [[ "$old" == "${keep[0]}" || "$old" == "${keep[1]}" ]] || call -X DELETE "$api/releases/$id/assets/$old"
+          done
+          call "$api/releases/$id/assets" | jq -r '.[] | "\(.name)  \(.size / 1048576 | floor) MB"'
+          rm -f "$RUNNER_TEMP/$dmg" "$RUNNER_TEMP/$zip"
       # The Audio Units copied for auval leave the runner's library again, and a disk image left mounted is detached.
       - name: Clear away
         if: always()

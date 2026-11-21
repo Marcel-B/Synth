@@ -6,6 +6,8 @@
 #include <juce_core/juce_core.h>
 
 #include <chrono>
+#include <functional>
+#include <set>
 
 using namespace tonwerkdx;
 
@@ -559,6 +561,126 @@ public:
                 file.truncate();
                 juce::PNGImageFormat().writeImageToStream(image, file);
             }
+        }
+
+        beginTest("Pages for a phone's screen: every parameter, operators chosen by OP 1 to 6, SysEx on Haupt");
+        {
+            DxProcessor p;
+            std::set<juce::String> named;
+            const auto count = [&](const tonwerkui::CompactPage& page) {
+                int places = 0;
+                for (const auto& panel : page.panels)
+                    for (const auto& item : panel.row)
+                    {
+                        named.insert(item.id);
+                        places += item.when.isNotEmpty() && item.whenOn ? 0 : 1;
+                        expect(p.state.getParameter(item.id) != nullptr, "no parameter " + item.id);
+                    }
+                // More than ten places made Tonwerk Analog's knobs smaller on every page.
+                expectLessOrEqual(places, 10, page.title);
+            };
+            int chosen = 0;
+            for (const auto& page : dxPages(p))
+            {
+                count(page);
+                for (const auto& choice : page.choices)
+                    count(choice);
+                chosen += (int) page.choices.size();
+            }
+            expectEquals(chosen, 2 * kOperators);
+            // Nothing of the full editor is out of reach on a phone.
+            for (auto* parameter : p.getParameters())
+                if (auto* with = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
+                    expect(named.count(with->paramID) == 1, "no page has " + with->paramID);
+
+            std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
+            auto* frame = dynamic_cast<tonwerkui::HostFrame*>(editor.get());
+            expect(frame != nullptr && frame->hasCompact() && ! frame->isCompact());
+            if (frame == nullptr)
+                return;
+            // An iPhone in landscape beside the app's rail, without the keys: the size Tonwerk Analog's pages have.
+            frame->setCompact(true);
+            frame->setBare(true);
+            frame->setSize(666, 381);
+            auto* compact = tonwerkui::innerEditor<tonwerkui::CompactEditor>(editor.get());
+            expect(compact != nullptr && tonwerkui::innerEditor<DxEditor>(editor.get()) == nullptr);
+            if (compact == nullptr)
+                return;
+            std::function<juce::Component*(juce::Component&, const std::function<bool(juce::Component&)>&)> shown =
+                [&shown](juce::Component& c, const std::function<bool(juce::Component&)>& is) -> juce::Component* {
+                if (! c.isVisible())
+                    return nullptr;
+                if (is(c))
+                    return &c;
+                for (auto* child : c.getChildren())
+                    if (auto* found = shown(*child, is))
+                        return found;
+                return nullptr;
+            };
+            const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+            const auto write = [&](const juce::String& fileName) {
+                if (dir.isEmpty())
+                    return;
+                const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 2.0f);
+                juce::File file = juce::File(dir).getChildFile("dx-seite-" + fileName + ".png");
+                file.deleteFile();
+                juce::FileOutputStream stream(file);
+                juce::PNGImageFormat().writeImageToStream(image, stream);
+            };
+            float smallest = 1.0e9f, largest = 0.0f;
+            int tabs = 0;
+            std::vector<juce::TextButton*> tabList;
+            for (auto* child : compact->getChildren())
+                if (auto* tab = dynamic_cast<juce::TextButton*>(child); tab != nullptr && tab->getRadioGroupId() != 0)
+                    tabList.push_back(tab);
+            for (auto* tab : tabList)
+            {
+                ++tabs;
+                tab->onClick();
+                const auto measure = [&] {
+                    smallest = std::min(smallest, compact->slotWidth());
+                    largest = std::max(largest, compact->slotWidth());
+                };
+                const auto choices = compact->shownChoices();
+                if (choices.empty())
+                {
+                    measure();
+                    if (auto* screen = dynamic_cast<DxAlgorithmScreen*>(
+                            shown(*compact, [](juce::Component& c) { return dynamic_cast<DxAlgorithmScreen*>(&c) != nullptr; })))
+                    {
+                        expectGreaterOrEqual(screen->getHeight(), 110);
+                        screen->update();
+                    }
+                    write(tab->getButtonText());
+                    continue;
+                }
+                expectEquals((int) choices.size(), kOperators);
+                for (std::size_t i = 0; i < choices.size(); ++i)
+                {
+                    choices[i]->onClick();
+                    measure();
+                    expect(choices[i]->getToggleState());
+                    if (auto* screen = dynamic_cast<DxOperatorScreen*>(
+                            shown(*compact, [](juce::Component& c) { return dynamic_cast<DxOperatorScreen*>(&c) != nullptr; })))
+                    {
+                        expectGreaterOrEqual(screen->getHeight(), 90);
+                        screen->refresh();
+                    }
+                    if (i == 0 || i == 3)
+                        write(tab->getButtonText() + "-" + choices[i]->getButtonText());
+                }
+            }
+            expectEquals(tabs, (int) dxPages(p).size());
+            // The operator chosen on one tab is the operator on the other.
+            tabList[1]->onClick();
+            compact->shownChoices()[4]->onClick();
+            tabList[2]->onClick();
+            expect(compact->shownChoices()[4]->getToggleState());
+            logMessage("A knob's place on the pages: " + juce::String(smallest, 1) + " points");
+            expectWithinAbsoluteError(largest, smallest, 0.01f);
+            expectGreaterOrEqual(smallest, 78.0f);
+            frame->setCompact(false);
+            expect(tonwerkui::innerEditor<DxEditor>(editor.get()) != nullptr);
         }
     }
 };

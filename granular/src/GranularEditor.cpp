@@ -95,12 +95,7 @@ void GrainView::paint(juce::Graphics& g)
                juce::Justification::topLeft);
 }
 
-SourceSection::SourceSection(GranularProcessor& processor)
-    : Section(processor.state, "Quelle",
-              { { { "source", "Quelle" }, { "position", "Position" }, { "spray", "Streuung" }, { "scan", "Scan" } } },
-              {}, { 0, kDisplay }),
-      synth(processor),
-      view(processor)
+GrainScreen::GrainScreen(GranularProcessor& processor) : synth(processor), view(processor)
 {
     addAndMakeVisible(view);
     load.setTooltip(tr("Eigene Audiodatei als Quelle laden (oder auf die Anzeige ziehen)"));
@@ -109,15 +104,15 @@ SourceSection::SourceSection(GranularProcessor& processor)
     view.update();
 }
 
-void SourceSection::resized()
+void GrainScreen::resized()
 {
-    Section::resized();
-    const auto area = displayArea().reduced(0, 4);
-    view.setBounds(area);
-    load.setBounds(area.getRight() - 78, area.getY() + 4, 72, 20);
+    view.setBounds(getLocalBounds());
+    // A finger's height where the screen has it (a phone's page), the full editor's 20 points otherwise.
+    const int high = getHeight() >= 90 ? 32 : 20;
+    load.setBounds(getWidth() - (high == 20 ? 78 : 96), 4, high == 20 ? 72 : 90, high);
 }
 
-void SourceSection::choose()
+void GrainScreen::choose()
 {
     chooser = tonwerkui::makeChooser(*this, tr("Audiodatei als Quelle"), synth.userFile(), kAudioFiles);
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
@@ -128,7 +123,7 @@ void SourceSection::choose()
                          });
 }
 
-bool SourceSection::isInterestedInFileDrag(const juce::StringArray& files)
+bool GrainScreen::isInterestedInFileDrag(const juce::StringArray& files)
 {
     for (const auto& file : files)
         if (juce::File(file).hasFileExtension(kAudioFiles))
@@ -136,11 +131,119 @@ bool SourceSection::isInterestedInFileDrag(const juce::StringArray& files)
     return false;
 }
 
-void SourceSection::filesDropped(const juce::StringArray& files, int, int)
+void GrainScreen::filesDropped(const juce::StringArray& files, int, int)
 {
     for (const auto& file : files)
         if (juce::File(file).hasFileExtension(kAudioFiles) && synth.loadFile(juce::File(file)))
             return;
+}
+
+SourceSection::SourceSection(GranularProcessor& processor)
+    : Section(processor.state, "Quelle",
+              { { { "source", "Quelle" }, { "position", "Position" }, { "spray", "Streuung" }, { "scan", "Scan" } } },
+              {}, { 0, kDisplay }),
+      screen(processor)
+{
+    addAndMakeVisible(screen);
+}
+
+void SourceSection::resized()
+{
+    Section::resized();
+    screen.setBounds(displayArea().reduced(0, 4));
+}
+
+namespace
+{
+/** A page's grain view, refreshed while it shows; the compact editor has no timer of its own. */
+struct LiveGrainScreen : GrainScreen, private juce::Timer
+{
+    explicit LiveGrainScreen(GranularProcessor& processor) : GrainScreen(processor) { startTimerHz(30); }
+    void timerCallback() override
+    {
+        if (isShowing())
+            update();
+    }
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> granularPages(GranularProcessor& processor)
+{
+    using Row = Section::Row;
+    const auto screen = [&processor] { return std::make_unique<LiveGrainScreen>(processor); };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "source", "Quelle" },
+                             { "position", "Position" },
+                             { "spray", "Streuung" },
+                             { "scan", "Scan" },
+                             { "grainSize", utf8("Größe") },
+                             { "density", "Dichte" },
+                             { "master", "Master" } } } },
+          screen,
+          100 },
+        { utf8("Körner"),
+          { { utf8("Körner"), Row { { "grainSize", utf8("Größe") },
+                                    { "density", "Dichte" },
+                                    { "jitter", "Zufall" },
+                                    { "window", "Fenster" },
+                                    { "reverse", utf8("Rückwärts") },
+                                    { "width", "Breite" } } } },
+          screen,
+          100 },
+        { utf8("Tonhöhe"),
+          { { utf8("Tonhöhe"), Row { { "octave", "Oktave" },
+                                     { "semi", "Halbton" },
+                                     { "fine", "Fein" },
+                                     { "scatter", "Streuung" },
+                                     { "scatterMode", "Raster" },
+                                     { "keyFollow", "Tastatur" } } },
+            { "Stimmen", Row { { "voiceMode", "Modus" }, { "glide", "Glide" }, { "bendRange", "Bend" } } } } },
+        { "Filter",
+          { { "Filter", Row { { "filterOn", "An" },
+                              { "filterMode", "Typ" },
+                              { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "keytrack", "Keytrack" } } },
+            { utf8("Hüllkurve 1 · Amp"), Row { { "env1Attack", "Attack" },
+                                              { "env1Decay", "Decay" },
+                                              { "env1Sustain", "Sustain" },
+                                              { "env1Release", "Release" } } } } },
+        { "Modulation",
+          { { utf8("Hüllkurve 2"), Row { { "env2Attack", "Attack" },
+                                        { "env2Decay", "Decay" },
+                                        { "env2Sustain", "Sustain" },
+                                        { "env2Release", "Release" },
+                                        { "env2Target", "Ziel" },
+                                        { "env2Amount", "Menge" } } },
+            { "Spielhilfen", Row { { "wheelTarget", "Modrad" },
+                                   { "wheelAmount", "Menge" },
+                                   { "velocityTarget", "Anschlag" },
+                                   { "velocityAmount", "Menge" } } } } },
+        { "LFO",
+          { { "LFO 1", Row { { "lfo1Shape", "Form" },
+                             { "lfo1Sync", "Sync" },
+                             { "lfo1Rate", "Rate", 0, "lfo1Sync", false },
+                             { "lfo1Division", "Raster", 0, "lfo1Sync", true },
+                             { "lfo1Target", "Ziel" },
+                             { "lfo1Amount", "Menge" } } },
+            { "LFO 2", Row { { "lfo2Shape", "Form" },
+                             { "lfo2Sync", "Sync" },
+                             { "lfo2Rate", "Rate", 0, "lfo2Sync", false },
+                             { "lfo2Division", "Raster", 0, "lfo2Sync", true },
+                             { "lfo2Target", "Ziel" },
+                             { "lfo2Amount", "Menge" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } },
+            { "Ausgang", Row { { "master", "Master" } } } } },
+    };
 }
 
 GranularEditor::GranularEditor(GranularProcessor& p)

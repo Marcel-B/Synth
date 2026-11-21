@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DxProcessor.h"
+#include "Compact.h"
 #include "NightCity.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -73,6 +74,65 @@ public:
     void resized() override;
     DxAlgorithmView view;
 };
+
+/**
+ * Asks for a DX7 SysEx file and imports it into the SysEx folder; `done` gets the bank's name and how many sounds came
+ * (0: nothing usable). The full editor's header and the phone's Haupt page both load banks this way.
+ */
+void chooseSysex(juce::Component& parent, std::unique_ptr<juce::FileChooser>& chooser,
+                 std::function<void(const juce::String& bank, int count)> done);
+/** What `chooseSysex` reports to the user. */
+juce::String sysexMessage(const juce::String& bank, int count);
+
+/**
+ * The phone's Haupt page display: the algorithm chart, with the SysEx import and the imported banks' sounds over it,
+ * since the app shows only the factory sounds (the host's programs) and the header with the SysEx button is not there.
+ */
+class DxAlgorithmScreen : public juce::Component, private juce::Timer
+{
+public:
+    explicit DxAlgorithmScreen(DxProcessor& processor);
+    void resized() override;
+    void paint(juce::Graphics&) override;
+    /** Fills the menu of imported sounds again (after an import). */
+    void refreshImported();
+    int importedCount() const { return (int) importedPatches.size(); }
+    void update() { view.update(); }
+
+private:
+    void timerCallback() override;
+
+    DxProcessor& synth;
+    DxAlgorithmView view;
+    juce::TextButton load;
+    juce::ComboBox imported;
+    juce::Label message;
+    std::vector<NamedDxPatch> importedPatches;
+    std::unique_ptr<juce::FileChooser> chooser;
+};
+
+/** The phone's Hüllkurve page display: one operator's envelope and its role in the algorithm. */
+class DxOperatorScreen : public juce::Component, private juce::Timer
+{
+public:
+    DxOperatorScreen(juce::AudioProcessorValueTreeState& state, int op);
+    void resized() override { view.setBounds(getLocalBounds()); }
+    /** Reads the envelope and the algorithm again; the timer does it while the page shows. */
+    void refresh();
+
+private:
+    void timerCallback() override;
+
+    DxEnvelopeView view;
+    std::atomic<float>* algorithm;
+    int op;
+};
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page: Haupt with
+ * the algorithm chart, one operator's tone and its envelope (with its curve) chosen by OP 1 to 6, LFO, effects.
+ */
+std::vector<tonwerkui::CompactPage> dxPages(DxProcessor& processor);
 
 class DxEditor : public juce::AudioProcessorEditor, public tonwerkui::BarActions, private juce::Timer
 {

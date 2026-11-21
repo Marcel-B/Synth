@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GranularProcessor.h"
+#include "Compact.h"
 #include "NightCity.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -29,10 +30,14 @@ private:
     std::array<float, kMaxGrains> places {}, phases {};
 };
 
-class SourceSection : public Section, public juce::FileDragAndDropTarget
+/**
+ * The grain view with its button to load a file, and a file dropped on it loaded: the full editor's source panel holds
+ * one, the phone's pages (`granularPages`) one above the knobs of each page whose knobs it shows.
+ */
+class GrainScreen : public juce::Component, public juce::FileDragAndDropTarget
 {
 public:
-    explicit SourceSection(GranularProcessor& processor);
+    explicit GrainScreen(GranularProcessor& processor);
     void resized() override;
     void update() { view.update(); }
 
@@ -47,6 +52,23 @@ private:
     juce::TextButton load { tonwerkui::tr("Datei …") };
     std::unique_ptr<juce::FileChooser> chooser;
 };
+
+class SourceSection : public Section
+{
+public:
+    explicit SourceSection(GranularProcessor& processor);
+    void resized() override;
+    void update() { screen.update(); }
+
+private:
+    GrainScreen screen;
+};
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page, the grain
+ * view above the knobs it shows (Haupt, Körner), refreshed by its own timer.
+ */
+std::vector<tonwerkui::CompactPage> granularPages(GranularProcessor& processor);
 
 class GranularEditor : public juce::AudioProcessorEditor, private juce::Timer
 {

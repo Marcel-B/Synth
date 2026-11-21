@@ -235,6 +235,8 @@ jobs:
           path: |
             ${{ env.ZIP }}
             ${{ env.DMG }}
+          # Only handed to the publish job below; the release on GitHub keeps the files.
+          retention-days: 1
       - name: Hand over
         id: handover
         run: |

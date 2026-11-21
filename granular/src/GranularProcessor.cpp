@@ -481,7 +481,12 @@ std::shared_ptr<const GrainSource> GranularProcessor::shownSource() const
     return std::shared_ptr<const GrainSource>(std::shared_ptr<const GrainSource>(), &SourceBank::instance().source(index));
 }
 
-juce::AudioProcessorEditor* GranularProcessor::createEditor() { return tonwerkui::forHost<GranularEditor>(*this); }
+juce::AudioProcessorEditor* GranularProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog and Bass have them.
+    return tonwerkui::forHost<GranularEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK GRANULAR", granularPages(*this)); });
+}
 
 int GranularProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

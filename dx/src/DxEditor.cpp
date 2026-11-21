@@ -569,41 +569,225 @@ void DxEditor::setMessage(const juce::String& text, bool error)
 
 void DxEditor::importSysex()
 {
-    chooser = tonwerkui::makeChooser(*this, tr("SysEx laden"), juce::File(), "*.syx;*.SYX");
     juce::Component::SafePointer<DxEditor> safe(this);
+    chooseSysex(*this, chooser, [safe](const juce::String& bank, int count) {
+        if (safe == nullptr)
+            return;
+        safe->setMessage(sysexMessage(bank, count), count == 0);
+        if (count == 0)
+            return;
+        safe->refreshPresets();
+        // The bank's first voice, so its sound is heard at once.
+        int first = -1;
+        int index = 0;
+        for (const auto& b : DxProcessor::banks())
+        {
+            if (b.name == bank)
+            {
+                first = (int) factoryPresets().size() + index;
+                break;
+            }
+            index += (int) b.voices.size();
+        }
+        if (first >= 0)
+            safe->choose(first);
+        safe->setMessage(sysexMessage(bank, count));
+    });
+}
+
+void chooseSysex(juce::Component& parent, std::unique_ptr<juce::FileChooser>& chooser,
+                 std::function<void(const juce::String&, int)> done)
+{
+    chooser = tonwerkui::makeChooser(parent, tr("SysEx laden"), juce::File(), "*.syx;*.SYX");
     chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
-                         [safe](const juce::FileChooser& fc) {
-                             if (safe == nullptr || tonwerkui::nothingChosen(fc))
+                         [done](const juce::FileChooser& fc) {
+                             if (tonwerkui::nothingChosen(fc))
                                  return;
                              // On the iPad a copy first: the import reads it and keeps its own in the SysEx folder.
                              const auto temp = juce::File::getSpecialLocation(juce::File::tempDirectory);
                              const auto file = tonwerkui::keepChosen(fc, temp.getChildFile("Tonwerk DX"));
-                             const int count = DxProcessor::importSysex(file);
-                             if (count == 0)
-                             {
-                                 safe->setMessage(tr("Keine passenden Klänge in der Datei (erwartet: Bank mit 32 Klängen "
-                                                       "oder ein einzelner Klang)."),
-                                                  true);
-                                 return;
-                             }
-                             safe->refreshPresets();
-                             // The bank's first voice, so its sound is heard at once.
-                             const auto bank = file.getFileNameWithoutExtension();
-                             int first = -1;
-                             int index = 0;
-                             for (const auto& b : DxProcessor::banks())
-                             {
-                                 if (b.name == bank)
-                                 {
-                                     first = (int) factoryPresets().size() + index;
-                                     break;
-                                 }
-                                 index += (int) b.voices.size();
-                             }
-                             if (first >= 0)
-                                 safe->choose(first);
-                             safe->setMessage(tr("Bank „") + bank + juce::String::fromUTF8("“: ") + juce::String(count)
-                                              + " " + (count == 1 ? tr("Klang geladen.") : tr("Klänge geladen.")));
+                             done(file.getFileNameWithoutExtension(), DxProcessor::importSysex(file));
                          });
+}
+
+juce::String sysexMessage(const juce::String& bank, int count)
+{
+    if (count == 0)
+        return tr("Keine passenden Klänge in der Datei (erwartet: Bank mit 32 Klängen oder ein einzelner Klang).");
+    return tr("Bank „") + bank + juce::String::fromUTF8("“: ") + juce::String(count) + " "
+           + (count == 1 ? tr("Klang geladen.") : tr("Klänge geladen."));
+}
+
+DxAlgorithmScreen::DxAlgorithmScreen(DxProcessor& processor) : synth(processor), view(processor.state)
+{
+    addAndMakeVisible(view);
+    load.setButtonText(tr("SysEx laden"));
+    load.onClick = [this] {
+        juce::Component::SafePointer<DxAlgorithmScreen> safe(this);
+        chooseSysex(*this, chooser, [safe](const juce::String& bank, int count) {
+            if (safe == nullptr)
+                return;
+            safe->message.setColour(juce::Label::textColourId, count == 0 ? red : cyan.withAlpha(0.8f));
+            safe->message.setText(sysexMessage(bank, count), juce::dontSendNotification);
+            if (count == 0)
+                return;
+            safe->refreshImported();
+            // The bank's first voice, so its sound is heard at once.
+            for (const auto& b : DxProcessor::banks())
+                if (b.name == bank && ! b.voices.empty())
+                {
+                    safe->synth.applyPatch(b.voices.front().patch, utf8(b.voices.front().name.c_str()));
+                    break;
+                }
+        });
+    };
+    addAndMakeVisible(load);
+    imported.setTextWhenNothingSelected(tr("SysEx-Klänge"));
+    imported.onChange = [this] {
+        const int index = imported.getSelectedId() - 1;
+        if (juce::isPositiveAndBelow(index, (int) importedPatches.size()))
+            synth.applyPatch(importedPatches[(std::size_t) index].patch,
+                             utf8(importedPatches[(std::size_t) index].name.c_str()));
+    };
+    addAndMakeVisible(imported);
+    message.setFont(mono(12.0f));
+    message.setColour(juce::Label::textColourId, cyan.withAlpha(0.8f));
+    message.setMinimumHorizontalScale(0.7f);
+    addAndMakeVisible(message);
+    refreshImported();
+    view.update();
+    startTimerHz(30);
+}
+
+void DxAlgorithmScreen::refreshImported()
+{
+    imported.clear(juce::dontSendNotification);
+    importedPatches.clear();
+    for (const auto& bank : DxProcessor::banks())
+    {
+        if (bank.voices.empty())
+            continue;
+        imported.addSectionHeading(bank.name);
+        for (const auto& sound : bank.voices)
+        {
+            importedPatches.push_back(sound);
+            imported.addItem(utf8(sound.name.c_str()), (int) importedPatches.size());
+        }
+    }
+    // Without a bank the menu would only be empty; the button says what to do.
+    imported.setVisible(! importedPatches.empty());
+    resized();
+}
+
+void DxAlgorithmScreen::paint(juce::Graphics& g)
+{
+    paintScreen(g, getLocalBounds().toFloat().reduced(1.0f));
+}
+
+void DxAlgorithmScreen::resized()
+{
+    auto area = getLocalBounds().reduced(6);
+    // A finger's height for the button and the menu, on the right where the chart leaves room.
+    auto controls = area.removeFromRight(juce::jmin(200, area.getWidth() / 3));
+    load.setBounds(controls.removeFromTop(36));
+    controls.removeFromTop(kGap);
+    if (imported.isVisible())
+        imported.setBounds(controls.removeFromTop(36));
+    message.setBounds(area.removeFromBottom(20));
+    view.setBounds(area);
+}
+
+void DxAlgorithmScreen::timerCallback()
+{
+    if (isShowing())
+        view.update();
+}
+
+DxOperatorScreen::DxOperatorScreen(juce::AudioProcessorValueTreeState& state, int which)
+    : view(state, which), algorithm(state.getRawParameterValue("algorithm")), op(which)
+{
+    addAndMakeVisible(view);
+    view.setSelected(true);
+    refresh();
+    startTimerHz(30);
+}
+
+void DxOperatorScreen::timerCallback()
+{
+    if (isShowing())
+        refresh();
+}
+
+void DxOperatorScreen::refresh()
+{
+    const auto& chosen = algorithms()[(std::size_t) std::clamp(juce::roundToInt(algorithm->load()), 0, kAlgorithms - 1)];
+    view.setCaption("OP " + juce::String(op + 1) + "  " + roleOf(chosen, op), chosen.isCarrier(op));
+    view.update();
+}
+
+std::vector<tonwerkui::CompactPage> dxPages(DxProcessor& processor)
+{
+    using Row = Section::Row;
+    auto& state = processor.state;
+    std::vector<tonwerkui::CompactPage> tones, envelopes;
+    for (int op = 0; op < kOperators; ++op)
+    {
+        const auto name = "OP " + juce::String(op + 1);
+        tones.push_back({ name,
+                          { { name, Row { { opId(op, "On"), "An" },
+                                          { opId(op, "Coarse"), "Ratio" },
+                                          { opId(op, "Fine"), "Fein" },
+                                          { opId(op, "Detune"), "Verstimm." },
+                                          { opId(op, "Level"), "Pegel" },
+                                          { opId(op, "Velocity"), "Anschlag" },
+                                          { opId(op, "RateScale"), "Tast.-Rate" },
+                                          { opId(op, "Ams"), "LFO-Pegel" } } } } });
+        envelopes.push_back({ name,
+                              { { name, Row { { opId(op, "R1"), "Rate 1" },
+                                              { opId(op, "R2"), "Rate 2" },
+                                              { opId(op, "R3"), "Rate 3" },
+                                              { opId(op, "R4"), "Rate 4" },
+                                              { opId(op, "L1"), "Pegel 1" },
+                                              { opId(op, "L2"), "Pegel 2" },
+                                              { opId(op, "L3"), "Pegel 3" },
+                                              { opId(op, "L4"), "Pegel 4" } } } },
+                              [&state, op] { return std::make_unique<DxOperatorScreen>(state, op); },
+                              90 });
+    }
+    tonwerkui::CompactPage operators { "Operator", {} };
+    operators.choices = std::move(tones);
+    operators.choiceGroup = "op";
+    tonwerkui::CompactPage envelope { utf8("Hüllkurve"), {} };
+    envelope.choices = std::move(envelopes);
+    envelope.choiceGroup = "op";
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "algorithm", "Algorithmus", 2 },
+                             { "feedback", "Feedback" },
+                             { "transpose", "Transpon." },
+                             { "volume", utf8("Lautstärke") },
+                             { "fxDelayMix", "Delay" },
+                             { "fxReverbMix", "Hall" } } } },
+          [&processor] { return std::make_unique<DxAlgorithmScreen>(processor); },
+          110 },
+        operators,
+        envelope,
+        { "LFO",
+          { { "LFO", Row { { "lfoWave", "Welle", 2 },
+                           { "lfoSpeed", "Rate" },
+                           { "lfoDelay", utf8("Verzög.") },
+                           { "lfoPitch", utf8("Tonhöhe") },
+                           { "lfoPitchSens", "Empfindl." },
+                           { "lfoAmp", "Lautst." } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } } } },
+    };
 }
 } // namespace tonwerkdx

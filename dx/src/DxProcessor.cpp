@@ -313,7 +313,12 @@ void DxProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor(readPatch())));
 }
 
-juce::AudioProcessorEditor* DxProcessor::createEditor() { return tonwerkui::forHost<DxEditor>(*this); }
+juce::AudioProcessorEditor* DxProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog, Bass and Granular have them.
+    return tonwerkui::forHost<DxEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK DX", dxPages(*this)); });
+}
 
 int DxProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 
