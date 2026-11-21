@@ -32,6 +32,12 @@ void chooseLanguage(Language chosen);
 bool refreshLanguage();
 
 /**
+ * Speaks the system's language from now on, whatever was chosen before (a plugin in a host, which has no switch;
+ * Marcel, 2026-11-20). `TONWERK_LANGUAGE` still wins.
+ */
+void followSystemLanguage();
+
+/**
  * For tests and screenshots: speak `forced` without saving it. `TONWERK_LANGUAGE=en|de` in the environment does the
  * same from the start.
  */

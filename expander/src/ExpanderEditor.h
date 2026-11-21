@@ -41,7 +41,7 @@ public:
 };
 
 /** The scope over the panels, its caption naming the newest note and how many voices sound. */
-class ExpanderEditor : public juce::AudioProcessorEditor, private juce::Timer
+class ExpanderEditor : public juce::AudioProcessorEditor, public tonwerkui::BarActions, private juce::Timer
 {
 public:
     explicit ExpanderEditor(ExpanderProcessor&);
@@ -49,6 +49,13 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    /** In a host the frame's bar holds the Hardware-Blatt, since the header is gone. */
+    std::vector<Action> barActions() override
+    {
+        return { { tonwerkui::tr("Hardware-Blatt"),
+                   tonwerkui::tr("Speichert die Reglerstellungen dieses Klangs fürs Hardware-Modul als Bild"),
+                   [this] { exportHardwareSheet(); } } };
+    }
 
 private:
     void timerCallback() override;

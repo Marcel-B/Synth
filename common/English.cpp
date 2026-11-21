@@ -9,6 +9,9 @@ const std::vector<Entry>& entries()
     static const std::vector<Entry> list {
         // Shared: the language switch, the Night City controls, MIDI learn.
         { "Sprache der Tonwerk-Plugins", "Language of the Tonwerk plugins" },
+        // Shared: the bar above an editor in a host.
+        { "Voriger Klang", "Previous sound" },
+        { "Nächster Klang", "Next sound" },
         { "CC lernen …", "Learning CC …" },
         { "Lernen abbrechen", "Cancel learning" },
         { "MIDI lernen (nächster Controller)", "MIDI learn (next controller)" },

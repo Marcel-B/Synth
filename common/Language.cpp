@@ -159,6 +159,14 @@ bool refreshLanguage()
     return state().current.exchange((int) now) != (int) now;
 }
 
+void followSystemLanguage()
+{
+    if (state().pinned)
+        return;
+    state().pinned = true;
+    state().current = (int) systemLanguage();
+}
+
 void forceLanguage(Language forced)
 {
     state().pinned = true;
