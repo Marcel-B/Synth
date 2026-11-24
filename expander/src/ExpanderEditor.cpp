@@ -131,6 +131,80 @@ void FilterSection::resized()
     view.setBounds(displayArea().reduced(0, 4));
 }
 
+std::vector<tonwerkui::CompactPage> expanderPages(ExpanderProcessor& processor)
+{
+    using Row = Section::Row;
+    tonwerkui::CompactPage oscillators { "VCO", {} };
+    oscillators.choices = {
+        { "VCO 1",
+          { { "VCO 1", Row { { "osc1Wave", "Form", 2 }, { "osc1Octave", "Oktave" }, { "osc1Width", "Breite" }, { "osc1Level", "Pegel" } } } } },
+        { "VCO 2",
+          { { "VCO 2", Row { { "osc2Wave", "Form", 2 },
+                             { "osc2Octave", "Oktave" },
+                             { "osc2Semitones", "Halbton" },
+                             { "osc2Fine", "Fein" },
+                             { "osc2Width", "Breite" },
+                             { "osc2Level", "Pegel" },
+                             { "sync", "Sync" },
+                             { "envPitch", "Env" } } } } },
+    };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "cutoff", "Cutoff" },
+                             { "resonance", "Resonanz" },
+                             { "envCutoff", "Env" },
+                             { "envPitch", "Env Pitch" },
+                             { "ampAttack", "Attack" },
+                             { "ampRelease", "Release" },
+                             { "fxReverbMix", "Hall" },
+                             { "master", "Master" } } } } },
+        oscillators,
+        // The LFO's knob for the cutoff is on the LFO page: with seven knobs the response left the knobs too small.
+        { "Filter",
+          { { "Filter", Row { { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "mode", "LP / HP" },
+                              { "bandpass", "BP" },
+                              { "envCutoff", "Env" },
+                              { "keytrack", "Key" } } } },
+          [&processor] { return std::make_unique<ResponseView>(processor); },
+          84 },
+        { utf8("Hüllkurven"),
+          { { "Filter", Row { { "filterAttack", "Attack" },
+                              { "filterDecay", "Decay" },
+                              { "filterSustain", "Sustain" },
+                              { "filterRelease", "Release" } } },
+            { "Amp", Row { { "ampAttack", "Attack" }, { "ampDecay", "Decay" }, { "ampSustain", "Sustain" }, { "ampRelease", "Release" } } } } },
+        { "LFO",
+          { { "LFO", Row { { "lfoShape", "Form", 2 },
+                           { "lfoSync", "Sync" },
+                           { "lfoRate", "Rate", 0, "lfoSync", false },
+                           { "lfoDivision", "Raster", 0, "lfoSync", true },
+                           { "lfoDelay", "Einsatz" },
+                           { "lfoPitch", "Pitch" },
+                           { "lfoPwm", "PWM" },
+                           { "lfoCutoff", "Cutoff" } } } } },
+        { "Stimmen",
+          { { "Stimmen", Row { { "voiceMode", "Modus", 2 },
+                               { "unisonDetune", "Unison" },
+                               { "drift", "Drift" },
+                               { "spread", "Breite" },
+                               { "glide", "Glide" },
+                               { "velocity", "Anschlag" },
+                               { "bendRange", "Bend" },
+                               { "master", "Master" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } } } },
+    };
+}
+
 ExpanderEditor::ExpanderEditor(ExpanderProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),

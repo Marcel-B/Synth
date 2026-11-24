@@ -8,6 +8,8 @@
 #include <juce_core/juce_core.h>
 
 #include <chrono>
+#include <functional>
+#include <set>
 
 using namespace tonwerkneuro;
 
@@ -489,6 +491,98 @@ public:
                 juce::FileOutputStream stream(file);
                 juce::PNGImageFormat().writeImageToStream(image, stream);
             }
+        }
+        beginTest("Pages for a phone's screen, every knob the same size");
+        {
+            NeuroProcessor p;
+            // A page names its parameters by id; one the plugin lacks would be a knob that moves nothing.
+            std::set<juce::String> named;
+            int withDisplay = 0, chosen = 0;
+            const auto count = [&](const tonwerkui::CompactPage& page) {
+                int places = 0;
+                for (const auto& panel : page.panels)
+                    for (const auto& item : panel.row)
+                    {
+                        named.insert(item.id);
+                        // Of two controls sharing a place (a rate or its note value) only one shows.
+                        places += item.when.isNotEmpty() && item.whenOn ? 0 : 1;
+                        expect(p.state.getParameter(item.id) != nullptr, "no parameter " + item.id);
+                        if (item.when.isNotEmpty())
+                            expect(p.state.getParameter(item.when) != nullptr, "no parameter " + item.when);
+                    }
+                // More than ten places made Tonwerk Analog's knobs smaller on every page.
+                expectLessOrEqual(places, 10, page.title);
+                withDisplay += page.display ? 1 : 0;
+            };
+            for (const auto& page : neuroPages())
+            {
+                count(page);
+                for (const auto& choice : page.choices)
+                    count(choice);
+                chosen += (int) page.choices.size();
+            }
+            expectEquals(withDisplay, 0);
+            expectEquals(chosen, 0);
+            // Nothing of the full editor is out of reach on a phone.
+            for (auto* parameter : p.getParameters())
+                if (auto* with = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
+                    expect(named.count(with->paramID) == 1, "no page has " + with->paramID);
+
+            std::unique_ptr<juce::AudioProcessorEditor> editor(p.createEditor());
+            auto* frame = dynamic_cast<tonwerkui::HostFrame*>(editor.get());
+            expect(frame != nullptr && frame->hasCompact() && ! frame->isCompact());
+            if (frame == nullptr)
+                return;
+            // An iPhone in landscape beside the app's rail, without the keys: the size Tonwerk Analog's pages have.
+            frame->setCompact(true);
+            frame->setBare(true);
+            frame->setSize(666, 381);
+            auto* compact = tonwerkui::innerEditor<tonwerkui::CompactEditor>(editor.get());
+            expect(compact != nullptr && tonwerkui::innerEditor<NeuroEditor>(editor.get()) == nullptr);
+            if (compact == nullptr)
+                return;
+            const auto dir = juce::SystemStats::getEnvironmentVariable("TONWERK_EDITOR_PNG_DIR", {});
+            const auto write = [&](const juce::String& name) {
+                if (dir.isEmpty())
+                    return;
+                const auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 2.0f);
+                juce::File file = juce::File(dir).getChildFile("neuro-seite-" + name + ".png");
+                file.deleteFile();
+                juce::FileOutputStream stream(file);
+                juce::PNGImageFormat().writeImageToStream(image, stream);
+            };
+            float smallest = 1.0e9f, largest = 0.0f;
+            int views = 0;
+            std::vector<juce::TextButton*> tabs;
+            for (auto* child : compact->getChildren())
+                if (auto* tab = dynamic_cast<juce::TextButton*>(child); tab != nullptr && tab->getRadioGroupId() != 0)
+                    tabs.push_back(tab);
+            expectEquals((int) tabs.size(), (int) (neuroPages()).size());
+            const auto look = [&](const juce::String& name) {
+                smallest = std::min(smallest, compact->slotWidth());
+                largest = std::max(largest, compact->slotWidth());
+                write(name);
+            };
+            for (auto* tab : tabs)
+            {
+                tab->onClick();
+                const auto choices = compact->shownChoices();
+                if (choices.empty())
+                    look(tab->getButtonText());
+                for (auto* choice : choices)
+                {
+                    choice->onClick();
+                    expect(choice->getToggleState());
+                    look(tab->getButtonText() + "-" + choice->getButtonText());
+                }
+            }
+            expectEquals(views, 0);
+            logMessage("A knob's place on the pages: " + juce::String(smallest, 1) + " points");
+            // One size on every page, and Tonwerk Analog's on the same screen (78 points).
+            expectWithinAbsoluteError(largest, smallest, 0.01f);
+            expectGreaterOrEqual(smallest, 78.0f);
+            frame->setCompact(false);
+            expect(tonwerkui::innerEditor<NeuroEditor>(editor.get()) != nullptr);
         }
     }
 };

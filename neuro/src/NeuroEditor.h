@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "NeuroProcessor.h"
 #include "NightCity.h"
 
@@ -9,6 +10,12 @@
 namespace tonwerkneuro
 {
 using tonwerkui::Section;
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page; no display,
+ * since the app's own scope beside the keys stands in for the editor's.
+ */
+std::vector<tonwerkui::CompactPage> neuroPages();
 
 /** The scope over the panels, its caption naming the note and the cutoff the filter stands at. */
 class NeuroEditor : public juce::AudioProcessorEditor, private juce::Timer
