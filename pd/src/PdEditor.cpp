@@ -161,6 +161,103 @@ Section::Row envelopeRow(const juce::String& prefix)
 }
 } // namespace
 
+namespace
+{
+/** A page's bent waves, refreshed while it shows; the compact editor has no timer of its own. */
+struct LivePhaseView : PhaseView, private juce::Timer
+{
+    explicit LivePhaseView(PdProcessor& processor) : PhaseView(processor)
+    {
+        update();
+        startTimerHz(30);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            update();
+    }
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> pdPages(PdProcessor& processor)
+{
+    using Row = Section::Row;
+    const auto view = [&processor] { return std::make_unique<LivePhaseView>(processor); };
+    std::vector<tonwerkui::CompactPage> waves, envelopes;
+    for (int line = 1; line <= kLines; ++line)
+    {
+        const juce::String p = "line" + juce::String(line);
+        const auto name = "Linie " + juce::String(line);
+        waves.push_back({ name, { { name, waveRow(p) } } });
+        // DCW and DCA in one panel, as in the full editor: two side by side were wider than the page.
+        envelopes.push_back({ name, { { name, envelopeRow(p) } } });
+    }
+    tonwerkui::CompactPage wavePage { "Welle", {} };
+    wavePage.choices = std::move(waves);
+    wavePage.choiceGroup = "line";
+    tonwerkui::CompactPage envelopePage { utf8("Hüllkurven"), {} };
+    envelopePage.choices = std::move(envelopes);
+    envelopePage.choiceGroup = "line";
+    tonwerkui::CompactPage lfoPage { "LFO", {} };
+    lfoPage.choices = {
+        { "LFO 1",
+          { { "LFO 1", Row { { "lfo1Shape", "Form" },
+                             { "lfo1Sync", "Sync" },
+                             { "lfo1Rate", "Rate", 0, "lfo1Sync", false },
+                             { "lfo1Division", "Raster", 0, "lfo1Sync", true },
+                             { "lfo1Fade", utf8("Verzög.") },
+                             { "lfo1Target", "Ziel" },
+                             { "lfo1Amount", "Menge" } } } } },
+        { "LFO 2",
+          { { "LFO 2", Row { { "lfo2Shape", "Form" },
+                             { "lfo2Sync", "Sync" },
+                             { "lfo2Rate", "Rate", 0, "lfo2Sync", false },
+                             { "lfo2Division", "Raster", 0, "lfo2Sync", true },
+                             { "lfo2Target", "Ziel" },
+                             { "lfo2Amount", "Menge" } } } } },
+    };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "lines", "Linien" },
+                             { "line1Depth", "DCW 1" },
+                             { "line2Depth", "DCW 2" },
+                             { "modulation", "Modulation" },
+                             { "fxReverbMix", "Hall" },
+                             { "master", "Master" } } } },
+          view,
+          84 },
+        { "Linien",
+          { { "Linien", Row { { "lines", "Linien" },
+                              { "modulation", "Modulation" },
+                              { "detuneSemi", "Halbton 2" },
+                              { "detuneFine", "Fein 2" },
+                              { "pitchEnvAmount", utf8("Tonhöhe") },
+                              { "pitchEnvTime", "Tonh. Zeit" } } } },
+          view,
+          84 },
+        wavePage,
+        envelopePage,
+        lfoPage,
+        { "Spiel",
+          { { "Spielhilfen", Row { { "wheelTarget", "Modrad" },
+                                   { "wheelAmount", "Menge" },
+                                   { "velocityTarget", "Anschlag" },
+                                   { "velocityAmount", "Menge" },
+                                   { "dynamics", "Dynamik" } } },
+            { "Stimmen", Row { { "voiceMode", "Modus" }, { "glide", "Glide" }, { "bendRange", "Bend" }, { "width", "Breite" } } } } },
+        { "Effekte",
+          { { "Chorus", Row { { "chorusMix", "Mix" }, { "chorusRate", "Rate" }, { "chorusDepth", "Tiefe" } } },
+            { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } } } },
+    };
+}
+
 PdEditor::PdEditor(PdProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),

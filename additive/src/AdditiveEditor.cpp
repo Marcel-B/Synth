@@ -119,6 +119,104 @@ void SpectrumSection::resized()
     view.setBounds(displayArea().reduced(0, 4));
 }
 
+namespace
+{
+/** A page's partials, refreshed while it shows; the compact editor has no timer of its own. */
+struct LiveSpectrumView : SpectrumView, private juce::Timer
+{
+    explicit LiveSpectrumView(AdditiveProcessor& processor) : SpectrumView(processor)
+    {
+        update();
+        startTimerHz(30);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            update();
+    }
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> additivePages(AdditiveProcessor& processor)
+{
+    using Row = Section::Row;
+    const auto view = [&processor] { return std::make_unique<LiveSpectrumView>(processor); };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "spectrumA", "Spektrum A" },
+                             { "spectrumB", "Spektrum B" },
+                             { "morph", "Morph" },
+                             { "partials", utf8("Obertöne") },
+                             { "tilt", "Neigung" },
+                             { "master", "Master" } } } },
+          view,
+          84 },
+        { "Spektrum",
+          { { "Spektrum", Row { { "oddEven", "Ger./Unger." },
+                                { "stretch", "Spreizung" },
+                                { "beating", "Schwebung" },
+                                { "phases", "Phasen" },
+                                { "width", "Breite" } } } },
+          view,
+          84 },
+        { "Farbe",
+          { { "Formant", Row { { "vowel", "Vokal" }, { "formantDepth", utf8("Stärke") }, { "formantShift", "Verschieb." } } },
+            { "Kamm", Row { { "combDepth", "Kamm" }, { "combSpacing", "Abstand" }, { "combShift", "Verschieb." } } } } },
+        { "Filter",
+          { { "Filter", Row { { "filterOn", "An" },
+                              { "filterMode", "Typ" },
+                              { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "keytrack", "Keytrack" } } },
+            { utf8("Obertöne-Hüllkurve"), Row { { "spectralOn", "An" },
+                                               { "bloom", "Einschw." },
+                                               { "spectralDecay", "Abklingen" },
+                                               { "spectralSustain", "Halten" },
+                                               { "spectralDamping", utf8("Dämpfung") } } } } },
+        { "Spiel",
+          { { utf8("Lautstärke"), Row { { "env1Attack", "Attack" },
+                                       { "env1Decay", "Decay" },
+                                       { "env1Sustain", "Sustain" },
+                                       { "env1Release", "Release" },
+                                       { "dynamics", "Dynamik" } } },
+            { utf8("Tonhöhe"), Row { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } } } },
+        { "Modulation",
+          { { utf8("Hüllkurve 2"), Row { { "env2Attack", "Attack" },
+                                        { "env2Decay", "Decay" },
+                                        { "env2Sustain", "Sustain" },
+                                        { "env2Release", "Release" },
+                                        { "env2Target", "Ziel" },
+                                        { "env2Amount", "Menge" } } },
+            { "Spielhilfen", Row { { "wheelTarget", "Modrad" },
+                                   { "wheelAmount", "Menge" },
+                                   { "velocityTarget", "Anschlag" },
+                                   { "velocityAmount", "Menge" } } } } },
+        { "LFO",
+          { { "LFO 1", Row { { "lfo1Shape", "Form" },
+                             { "lfo1Sync", "Sync" },
+                             { "lfo1Rate", "Rate", 0, "lfo1Sync", false },
+                             { "lfo1Division", "Raster", 0, "lfo1Sync", true },
+                             { "lfo1Target", "Ziel" },
+                             { "lfo1Amount", "Menge" } } },
+            { "LFO 2", Row { { "lfo2Shape", "Form" },
+                             { "lfo2Sync", "Sync" },
+                             { "lfo2Rate", "Rate", 0, "lfo2Sync", false },
+                             { "lfo2Division", "Raster", 0, "lfo2Sync", true },
+                             { "lfo2Target", "Ziel" },
+                             { "lfo2Amount", "Menge" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } },
+            { "Stimmen", Row { { "voiceMode", "Modus" }, { "glide", "Glide" }, { "bendRange", "Bend" } } } } },
+    };
+}
+
 AdditiveEditor::AdditiveEditor(AdditiveProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),

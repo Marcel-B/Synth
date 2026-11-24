@@ -21,6 +21,23 @@ constexpr int kAnalogRowGap = 14;
 
 /** Room for the steps an envelope takes, so a short attack still shows. */
 float shareOf(float seconds, float longest) { return std::sqrt(std::max(0.0f, seconds) / longest); }
+
+/** What operator `op` (0 to 3) does in the algorithm `index` (0 to 7): carrier, the operators it modulates, feedback. */
+juce::String operatorRole(int index, int op)
+{
+    if (! juce::isPositiveAndBelow(index, (int) kAlgorithms.size()))
+        return {};
+    const auto& algorithm = kAlgorithms[(std::size_t) index];
+    juce::String role;
+    if (isCarrier(algorithm, op))
+        role = tr("TRÄGER");
+    for (int m = 0; m < algorithm.modCount; ++m)
+        if (algorithm.mods[(std::size_t) m][0] == op)
+            role += (role.isEmpty() ? juce::String(utf8("MOD → ")) : juce::String(" ")) + juce::String(algorithm.mods[(std::size_t) m][1] + 1);
+    if (op == 3)
+        role += " + FB";
+    return role;
+}
 } // namespace
 
 EnvelopeView::EnvelopeView(juce::AudioProcessorValueTreeState& state, const juce::String& prefix)
@@ -330,6 +347,106 @@ std::vector<tonwerkui::CompactPage> analogPages()
     };
 }
 
+namespace
+{
+/** A page's algorithm chart, refreshed while it shows; the compact editor has no timer of its own. */
+struct LiveAlgorithmView : AlgorithmView, private juce::Timer
+{
+    explicit LiveAlgorithmView(juce::AudioProcessorValueTreeState& state) : AlgorithmView(state)
+    {
+        update();
+        startTimerHz(30);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            update();
+    }
+};
+
+/** An operator's envelope with its role in the algorithm in the corner, as the full editor draws it. */
+struct LiveOperatorView : EnvelopeView, private juce::Timer
+{
+    LiveOperatorView(juce::AudioProcessorValueTreeState& state, int which)
+        : EnvelopeView(state, "fm.op" + juce::String(which + 1) + ".env"),
+          op(which),
+          algorithm(state.getRawParameterValue("fm.algorithm"))
+    {
+        refresh();
+        startTimerHz(30);
+    }
+    void refresh()
+    {
+        update();
+        const int index = juce::roundToInt(algorithm->load());
+        const bool carrier = juce::isPositiveAndBelow(index, (int) kAlgorithms.size()) && isCarrier(kAlgorithms[(std::size_t) index], op);
+        setCaption(operatorRole(index, op), carrier);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            refresh();
+    }
+
+    int op;
+    std::atomic<float>* algorithm;
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> fmPages(juce::AudioProcessorValueTreeState& state)
+{
+    using Row = Section::Row;
+    std::vector<tonwerkui::CompactPage> operators;
+    for (int op = 0; op < 4; ++op)
+    {
+        const juce::String p = "fm.op" + juce::String(op + 1);
+        const auto name = "OP " + juce::String(op + 1);
+        operators.push_back({ name,
+                              // One panel: two side by side were wider than the page and took a second row.
+                              { { name, Row { { p + ".ratio", "Ratio" },
+                                              { p + ".detune", "Verstimm." },
+                                              { p + ".level", "Pegel" },
+                                              { p + ".velocity", "Anschlag" },
+                                              { p + ".env.attack", "Attack" },
+                                              { p + ".env.decay", "Decay" },
+                                              { p + ".env.sustain", "Sustain" },
+                                              { p + ".env.release", "Release" } } } },
+                              [&state, op] { return std::make_unique<LiveOperatorView>(state, op); },
+                              90 });
+    }
+    tonwerkui::CompactPage operatorPage { "Operator", {} };
+    operatorPage.choices = std::move(operators);
+    operatorPage.choiceGroup = "op";
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "fm.algorithm", "Algorithmus", 2 },
+                             { "fm.feedback", "Feedback" },
+                             { "fm.lfo.depth", "LFO" },
+                             { "fx.delay.mix", "Delay" },
+                             { "fx.reverb.mix", "Hall" },
+                             { "fm.volume", utf8("Lautstärke") } } } },
+          [&state] { return std::make_unique<LiveAlgorithmView>(state); },
+          110 },
+        operatorPage,
+        { "LFO",
+          { { "LFO", Row { { "fm.lfo.wave", "Welle", 2 },
+                           { "fm.lfo.sync", "Sync" },
+                           { "fm.lfo.rate", "Rate", 1, "fm.lfo.sync", false },
+                           { "fm.lfo.division", "Notenwert", 2, "fm.lfo.sync", true },
+                           { "fm.lfo.target", "Ziel", 2 },
+                           { "fm.lfo.depth", "Tiefe" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fx.delay.mix", "Delay" },
+                               { "fx.delay.sync", "Sync" },
+                               { "fx.delay.time", "Zeit", 1, "fx.delay.sync", false },
+                               { "fx.delay.division", "Notenwert", 2, "fx.delay.sync", true },
+                               { "fx.delay.feedback", "Feedback" },
+                               { "fx.delay.tone", "Ton" },
+                               { "fx.reverb.mix", "Hall" },
+                               { "fx.reverb.decay", utf8("Länge") } } } } },
+    };
+}
+
 template <typename SectionType, typename... Args>
 SectionType& TonwerkSynthEditor::add(std::vector<std::unique_ptr<Section>>& owner, Args&&... args)
 {
@@ -624,19 +741,8 @@ void TonwerkSynthEditor::timerCallback()
     const int index = algorithmSection->view.algorithm();
     if (! juce::isPositiveAndBelow(index, (int) kAlgorithms.size()))
         return;
-    const auto& algorithm = kAlgorithms[(std::size_t) index];
     for (auto [view, op] : operatorViews)
-    {
-        juce::String role;
-        if (isCarrier(algorithm, op))
-            role = tr("TRÄGER");
-        for (int m = 0; m < algorithm.modCount; ++m)
-            if (algorithm.mods[(std::size_t) m][0] == op)
-                role += (role.isEmpty() ? juce::String(utf8("MOD → ")) : juce::String(" ")) + juce::String(algorithm.mods[(std::size_t) m][1] + 1);
-        if (op == 3)
-            role += " + FB";
-        view->setCaption(role, isCarrier(algorithm, op));
-    }
+        view->setCaption(operatorRole(index, op), isCarrier(kAlgorithms[(std::size_t) index], op));
 }
 
 void TonwerkSynthEditor::refreshPresets()

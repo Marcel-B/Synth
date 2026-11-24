@@ -69,6 +69,12 @@ public:
  */
 std::vector<tonwerkui::CompactPage> analogPages();
 
+/**
+ * Tonwerk FM's panels on pages for a phone: Haupt with the algorithm's chart above the knobs, the four operators behind
+ * one tab (OP 1 to 4, each with its envelope drawn and its role in the algorithm), LFO, effects.
+ */
+std::vector<tonwerkui::CompactPage> fmPages(juce::AudioProcessorValueTreeState& state);
+
 class TonwerkSynthEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
