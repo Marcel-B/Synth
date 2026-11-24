@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "NightCity.h"
 #include "WavetableProcessor.h"
 
@@ -71,6 +72,13 @@ public:
 private:
     std::vector<std::unique_ptr<ModRow>> rows;
 };
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page: each
+ * oscillator's table drawn above its knobs and its tuning behind the buttons A and B (one choice for both tabs), the
+ * envelopes and LFOs behind one tab, the matrix one slot at a time (1 to 8).
+ */
+std::vector<tonwerkui::CompactPage> wavetablePages(WavetableProcessor& processor);
 
 class WavetableEditor : public juce::AudioProcessorEditor, private juce::Timer
 {

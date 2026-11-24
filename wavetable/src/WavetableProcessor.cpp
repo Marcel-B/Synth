@@ -437,7 +437,9 @@ void WavetableProcessor::applyDistortion(juce::AudioBuffer<float>& buffer, const
 
 juce::AudioProcessorEditor* WavetableProcessor::createEditor()
 {
-    return tonwerkui::forHost<WavetableEditor>(*this);
+    // Pages for a phone beside the full editor, as Tonwerk Analog, Bass and the others have them.
+    return tonwerkui::forHost<WavetableEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK WAVETABLE", wavetablePages(*this)); });
 }
 
 int WavetableProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
