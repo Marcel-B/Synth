@@ -203,6 +203,136 @@ void MatrixSection::resized()
         rows[(std::size_t) i]->setBounds((i < half ? left : area).removeFromTop(kModLine));
 }
 
+namespace
+{
+/** A page's drawing of one oscillator's table, refreshed while it shows; the compact editor has no timer of its own. */
+struct LiveWavetableView : WavetableView, private juce::Timer
+{
+    LiveWavetableView(WavetableProcessor& p, int which) : synth(p), osc(which), prefix(which == 0 ? "a" : "b")
+    {
+        refresh();
+        startTimerHz(30);
+    }
+    void refresh()
+    {
+        setTable(juce::roundToInt(synth.state.getRawParameterValue(prefix + "Table")->load()));
+        const float played = synth.playedPosition[(std::size_t) osc].load();
+        const float knob = synth.state.getRawParameterValue(prefix + "Position")->load() * (float) (kFrames - 1);
+        setPosition(played >= 0.0f ? played : knob);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            refresh();
+    }
+
+    WavetableProcessor& synth;
+    int osc;
+    juce::String prefix;
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> wavetablePages(WavetableProcessor& processor)
+{
+    using Row = Section::Row;
+    tonwerkui::CompactPage oscillators { "Oszillator", {} }, tuning { "Stimmung", {} };
+    for (int osc = 0; osc < 2; ++osc)
+    {
+        const juce::String p = osc == 0 ? "a" : "b";
+        const auto name = juce::String(osc == 0 ? "A" : "B");
+        oscillators.choices.push_back({ name,
+                                        { { "Oszillator " + name, Row { { p + "On", "An" },
+                                                                        { p + "Table", "Wavetable", 2 },
+                                                                        { p + "Position", "Position" },
+                                                                        { p + "WarpMode", "Warp" },
+                                                                        { p + "Warp", "Menge" },
+                                                                        { p + "Level", "Pegel" } } } },
+                                        [&processor, osc] { return std::make_unique<LiveWavetableView>(processor, osc); },
+                                        84 });
+        tuning.choices.push_back({ name,
+                                   { { "Oszillator " + name, Row { { p + "Octave", "Oktave" },
+                                                                   { p + "Semi", "Halbton" },
+                                                                   { p + "Fine", "Fein" },
+                                                                   { p + "Unison", "Unison" },
+                                                                   { p + "Detune", "Detune" },
+                                                                   { p + "Blend", "Blend" },
+                                                                   { p + "Width", "Breite" } } } } });
+    }
+    oscillators.choiceGroup = tuning.choiceGroup = "osc";
+
+    // The three envelopes and the two LFOs behind one tab: each has only four or five controls.
+    tonwerkui::CompactPage motion { "Bewegung", {} };
+    for (int i = 1; i <= 3; ++i)
+    {
+        const juce::String p = "env" + juce::String(i);
+        motion.choices.push_back({ utf8("Hüllk. ") + juce::String(i),
+                                   { { i == 1 ? utf8("Hüllkurve 1 · Amp") : utf8("Hüllkurve ") + juce::String(i),
+                                       Row { { p + "Attack", "Attack" },
+                                             { p + "Decay", "Decay" },
+                                             { p + "Sustain", "Sustain" },
+                                             { p + "Release", "Release" } } } } });
+    }
+    for (int i = 1; i <= 2; ++i)
+    {
+        const juce::String p = "lfo" + juce::String(i);
+        motion.choices.push_back({ "LFO " + juce::String(i),
+                                   { { "LFO " + juce::String(i), Row { { p + "Shape", "Form" },
+                                                                       { p + "Sync", "Sync" },
+                                                                       { p + "Rate", "Rate", 0, p + "Sync", false },
+                                                                       { p + "Division", "Raster", 0, p + "Sync", true },
+                                                                       { p + "Retrigger", "Neustart" } } } } });
+    }
+
+    // The matrix one slot at a time: two side by side left the knobs smaller than on the other pages.
+    tonwerkui::CompactPage matrix { "Matrix", {} };
+    for (int slot = 1; slot <= kModSlots; ++slot)
+    {
+        const juce::String p = "mod" + juce::String(slot);
+        matrix.choices.push_back({ juce::String(slot),
+                                   { { "Slot " + juce::String(slot), Row { { p + "Source", "Quelle", 2 },
+                                                                           { p + "Target", "Ziel", 2 },
+                                                                           { p + "Amount", "Menge" },
+                                                                           { p + "Bipolar", "Bipolar" } } } } });
+    }
+
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "aPosition", "Position A" },
+                             { "bPosition", "Position B" },
+                             { "cutoff", "Cutoff" },
+                             { "resonance", "Resonanz" },
+                             { "distDrive", "Drive" },
+                             { "macro1", "Makro 1" },
+                             { "macro2", "Makro 2" },
+                             { "macro3", "Makro 3" },
+                             { "macro4", "Makro 4" },
+                             { "master", "Master" } } } } },
+        oscillators,
+        tuning,
+        { "Filter",
+          { { "Filter", Row { { "filterOn", "An" },
+                              { "filterMode", "Typ" },
+                              { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "filterDrive", "Drive" },
+                              { "keytrack", "Keytrack" } } },
+            { "Verzerrung", Row { { "distOn", "An" }, { "distMode", "Modus" }, { "distDrive", "Drive" }, { "distMix", "Mix" } } } } },
+        { "Sub",
+          { { "Sub", Row { { "subOn", "An" },
+                           { "subShape", "Form" },
+                           { "subOctave", "Oktave" },
+                           { "subLevel", "Pegel" },
+                           { "subDirect", "Direkt" } } },
+            { "Rauschen", Row { { "noise", "Pegel" } } },
+            { "Master", Row { { "master", "Pegel" } } } } },
+        motion,
+        matrix,
+        { "Spiel",
+          { { "Makros", Row { { "macro1", "Makro 1" }, { "macro2", "Makro 2" }, { "macro3", "Makro 3" }, { "macro4", "Makro 4" } } },
+            { "Stimmen", Row { { "voiceMode", "Modus" }, { "glide", "Glide" }, { "bendRange", "Bend" } } } } },
+    };
+}
+
 WavetableEditor::WavetableEditor(WavetableProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),

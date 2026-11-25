@@ -6,6 +6,9 @@
 
 #include <juce_core/juce_core.h>
 
+#include <functional>
+#include <set>
+
 using namespace tonwerk;
 
 namespace
@@ -272,7 +275,7 @@ public:
 
         beginTest("Tonwerk Analog has pages for a phone's screen, every knob the same size");
         {
-            TonwerkSynthProcessor analog(Edition::analog), fm(Edition::fm);
+            TonwerkSynthProcessor analog(Edition::analog), combined(Edition::combined);
             // A page names its parameters by id; one the plugin lacks would be a knob that moves nothing.
             int knobs = 0;
             for (const auto& page : analogPages())
@@ -289,8 +292,8 @@ public:
             std::unique_ptr<juce::AudioProcessorEditor> editor(analog.createEditor());
             auto* frame = dynamic_cast<tonwerkui::HostFrame*>(editor.get());
             expect(frame != nullptr && frame->hasCompact() && ! frame->isCompact());
-            // Only Tonwerk Analog has pages so far; the others keep their one editor at any size.
-            std::unique_ptr<juce::AudioProcessorEditor> other(fm.createEditor());
+            // Tonwerk Synth, with both engines, keeps its one editor at any size.
+            std::unique_ptr<juce::AudioProcessorEditor> other(combined.createEditor());
             expect(! dynamic_cast<tonwerkui::HostFrame&>(*other).hasCompact());
 
             // An iPhone in landscape beside the app's rail, without the keys: the size the pages were cut for.
@@ -332,6 +335,118 @@ public:
                 menus += dynamic_cast<juce::ComboBox*>(child) != nullptr && child->isVisible() ? 1 : 0;
             expectEquals(menus, 1);
 
+            frame->setCompact(false);
+            expect(tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get()) != nullptr);
+        }
+
+        beginTest("Tonwerk FM has pages for a phone's screen: the algorithm above Haupt, the operators behind one tab");
+        {
+            TonwerkSynthProcessor fm(Edition::fm);
+            // A page names its parameters by id; one the plugin lacks would be a knob that moves nothing.
+            std::set<juce::String> named;
+            const auto count = [&](const tonwerkui::CompactPage& page) {
+                int places = 0;
+                for (const auto& panel : page.panels)
+                    for (const auto& item : panel.row)
+                    {
+                        named.insert(item.id);
+                        // Of two controls sharing a place (a rate or its note value) only one shows.
+                        places += item.when.isNotEmpty() && item.whenOn ? 0 : 1;
+                        expect(fm.state.getParameter(item.id) != nullptr, "no parameter " + item.id);
+                        if (item.when.isNotEmpty())
+                            expect(fm.state.getParameter(item.when) != nullptr, "no parameter " + item.when);
+                    }
+                // More than ten places made Tonwerk Analog's knobs smaller on every page.
+                expectLessOrEqual(places, 10, page.title);
+            };
+            int chosen = 0;
+            for (const auto& page : fmPages(fm.state))
+            {
+                count(page);
+                for (const auto& choice : page.choices)
+                    count(choice);
+                chosen += (int) page.choices.size();
+            }
+            expectEquals(chosen, 4);
+            // Nothing of the full editor is out of reach on a phone.
+            for (auto* parameter : fm.getParameters())
+                if (auto* with = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
+                    expect(named.count(with->paramID) == 1, "no page has " + with->paramID);
+
+            std::unique_ptr<juce::AudioProcessorEditor> editor(fm.createEditor());
+            auto* frame = dynamic_cast<tonwerkui::HostFrame*>(editor.get());
+            expect(frame != nullptr && frame->hasCompact() && ! frame->isCompact());
+            if (frame == nullptr)
+                return;
+            // An iPhone in landscape beside the app's rail, without the keys: the size Tonwerk Analog's pages have.
+            frame->setCompact(true);
+            frame->setBare(true);
+            frame->setSize(666, 381);
+            auto* compact = tonwerkui::innerEditor<tonwerkui::CompactEditor>(editor.get());
+            expect(compact != nullptr && tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get()) == nullptr);
+            if (compact == nullptr)
+                return;
+            std::function<juce::Component*(juce::Component&, const std::function<bool(juce::Component&)>&)> shown =
+                [&shown](juce::Component& c, const std::function<bool(juce::Component&)>& is) -> juce::Component* {
+                if (! c.isVisible())
+                    return nullptr;
+                if (is(c))
+                    return &c;
+                for (auto* child : c.getChildren())
+                    if (auto* found = shown(*child, is))
+                        return found;
+                return nullptr;
+            };
+            const auto isChart = [](juce::Component& c) { return dynamic_cast<AlgorithmView*>(&c) != nullptr; };
+            const auto isEnvelope = [](juce::Component& c) { return dynamic_cast<EnvelopeView*>(&c) != nullptr; };
+            float smallest = 1.0e9f, largest = 0.0f;
+            int charts = 0, envelopes = 0;
+            std::vector<juce::TextButton*> tabList;
+            for (auto* child : compact->getChildren())
+                if (auto* tab = dynamic_cast<juce::TextButton*>(child); tab != nullptr && tab->getRadioGroupId() != 0)
+                    tabList.push_back(tab);
+            expectEquals((int) tabList.size(), (int) fmPages(fm.state).size());
+            for (auto* tab : tabList)
+            {
+                tab->onClick();
+                const auto measure = [&] {
+                    smallest = std::min(smallest, compact->slotWidth());
+                    largest = std::max(largest, compact->slotWidth());
+                };
+                const auto choices = compact->shownChoices();
+                if (choices.empty())
+                {
+                    measure();
+                    if (auto* chart = shown(*compact, isChart))
+                    {
+                        ++charts;
+                        // Above the knobs, across the page, high enough for the four boxes and their lines.
+                        expectGreaterOrEqual(chart->getHeight(), 110);
+                        expectGreaterOrEqual(chart->getWidth(), 600);
+                    }
+                    snapshot(*editor, "Tonwerk FM Seite " + tab->getButtonText());
+                    continue;
+                }
+                expectEquals((int) choices.size(), 4);
+                for (std::size_t i = 0; i < choices.size(); ++i)
+                {
+                    choices[i]->onClick();
+                    measure();
+                    expect(choices[i]->getToggleState());
+                    if (auto* envelope = shown(*compact, isEnvelope))
+                    {
+                        ++envelopes;
+                        expectGreaterOrEqual(envelope->getHeight(), 90);
+                    }
+                    snapshot(*editor, "Tonwerk FM Seite " + tab->getButtonText() + " " + choices[i]->getButtonText());
+                }
+            }
+            expectEquals(charts, 1);
+            expectEquals(envelopes, 4);
+            logMessage("A knob's place on the pages: " + juce::String(smallest, 1) + " points");
+            // One size on every page, and Tonwerk Analog's on the same screen (78 points).
+            expectWithinAbsoluteError(largest, smallest, 0.01f);
+            expectGreaterOrEqual(smallest, 78.0f);
             frame->setCompact(false);
             expect(tonwerkui::innerEditor<TonwerkSynthEditor>(editor.get()) != nullptr);
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "NightCity.h"
 #include "PdProcessor.h"
 
@@ -49,6 +50,13 @@ public:
 private:
     PhaseView view;
 };
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page: the bent
+ * waves above the knobs that bend them (Haupt, Linien), each line's wave and its envelopes behind a row of buttons
+ * (Linie 1, Linie 2; one choice for both tabs), the two LFOs the same way.
+ */
+std::vector<tonwerkui::CompactPage> pdPages(PdProcessor& processor);
 
 class PdEditor : public juce::AudioProcessorEditor, private juce::Timer
 {

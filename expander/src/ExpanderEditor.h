@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "ExpanderProcessor.h"
 #include "NightCity.h"
 
@@ -39,6 +40,12 @@ public:
     void resized() override;
     ResponseView view;
 };
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page: the filter's
+ * response above its knobs, the two oscillators behind one tab (VCO 1, VCO 2). The Hardware-Blatt is not on them.
+ */
+std::vector<tonwerkui::CompactPage> expanderPages(ExpanderProcessor& processor);
 
 /** The scope over the panels, its caption naming the newest note and how many voices sound. */
 class ExpanderEditor : public juce::AudioProcessorEditor, public tonwerkui::BarActions, private juce::Timer

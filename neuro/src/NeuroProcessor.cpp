@@ -357,7 +357,12 @@ void NeuroProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* NeuroProcessor::createEditor() { return tonwerkui::forHost<NeuroEditor>(*this); }
+juce::AudioProcessorEditor* NeuroProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog, Bass and the others have them.
+    return tonwerkui::forHost<NeuroEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK NEURO", neuroPages()); });
+}
 
 int NeuroProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

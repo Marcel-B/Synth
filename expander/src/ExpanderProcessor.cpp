@@ -405,7 +405,12 @@ void ExpanderProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* ExpanderProcessor::createEditor() { return tonwerkui::forHost<ExpanderEditor>(*this); }
+juce::AudioProcessorEditor* ExpanderProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog, Bass and the others have them.
+    return tonwerkui::forHost<ExpanderEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK EXPANDER", expanderPages(*this)); });
+}
 
 int ExpanderProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

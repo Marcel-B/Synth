@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AdditiveProcessor.h"
+#include "Compact.h"
 #include "NightCity.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -41,6 +42,12 @@ public:
 private:
     SpectrumView view;
 };
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page, the
+ * partials' bars above the knobs that shape them (Haupt, Spektrum), refreshed by their own timer.
+ */
+std::vector<tonwerkui::CompactPage> additivePages(AdditiveProcessor& processor);
 
 class AdditiveEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
