@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Compact.h"
 #include "NightCity.h"
 #include "PhysicalProcessor.h"
 
@@ -48,6 +49,12 @@ public:
 private:
     ModelView view;
 };
+
+/**
+ * The same controls on pages for a phone's screen (`tonwerkui::CompactEditor`), at most ten places a page, the
+ * resonator's picture above the knobs that shape it (Haupt, Resonator), refreshed by its own timer.
+ */
+std::vector<tonwerkui::CompactPage> physicalPages(PhysicalProcessor& processor);
 
 class PhysicalEditor : public juce::AudioProcessorEditor, private juce::Timer
 {

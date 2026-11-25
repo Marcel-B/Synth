@@ -411,7 +411,12 @@ void PhysicalProcessor::timerCallback()
     effects.loadRoom(tonwerk::EffectsChain::roomFor(effectsFor()));
 }
 
-juce::AudioProcessorEditor* PhysicalProcessor::createEditor() { return tonwerkui::forHost<PhysicalEditor>(*this); }
+juce::AudioProcessorEditor* PhysicalProcessor::createEditor()
+{
+    // Pages for a phone beside the full editor, as Tonwerk Analog, Bass, Granular and DX have them.
+    return tonwerkui::forHost<PhysicalEditor>(
+        *this, [this] { return new tonwerkui::CompactEditor(*this, state, "TONWERK PHYSICAL", physicalPages(*this)); });
+}
 
 int PhysicalProcessor::getNumPrograms() { return (int) factoryPresets().size(); }
 

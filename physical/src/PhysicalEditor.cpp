@@ -158,6 +158,107 @@ void ResonatorSection::resized()
     view.setBounds(displayArea().reduced(0, 4));
 }
 
+namespace
+{
+/** A page's picture of the resonator, refreshed while it shows; the compact editor has no timer of its own. */
+struct LiveModelView : ModelView, private juce::Timer
+{
+    explicit LiveModelView(PhysicalProcessor& processor) : ModelView(processor)
+    {
+        update();
+        startTimerHz(30);
+    }
+    void timerCallback() override
+    {
+        if (isShowing())
+            update();
+    }
+};
+} // namespace
+
+std::vector<tonwerkui::CompactPage> physicalPages(PhysicalProcessor& processor)
+{
+    using Row = Section::Row;
+    const auto view = [&processor] { return std::make_unique<LiveModelView>(processor); };
+    return {
+        { "Haupt",
+          { { "Haupt", Row { { "resonator", "Resonator" },
+                             { "exciter", "Erreger" },
+                             { "decay", "Abklingen" },
+                             { "damping", utf8("Dämpfung") },
+                             { "hardness", utf8("Härte") },
+                             { "position", "Position" } } } },
+          view,
+          84 },
+        { "Resonator",
+          { { "Resonator", Row { { "resonator", "Typ" },
+                                 { "decay", "Abklingen" },
+                                 { "damping", utf8("Dämpfung") },
+                                 { "inharmonicity", "Inharmonie" },
+                                 { "release", "Loslassen" } } } },
+          view,
+          84 },
+        { "Erreger",
+          { { "Erreger", Row { { "exciter", "Typ" },
+                               { "hardness", utf8("Härte") },
+                               { "pressure", "Druck" },
+                               { "noise", "Rauschen" },
+                               { "position", "Position" },
+                               { "dynamics", "Dynamik" } } },
+            { utf8("Hüllkurve 1"), Row { { "env1Attack", "Attack" },
+                                        { "env1Decay", "Decay" },
+                                        { "env1Sustain", "Sustain" },
+                                        { "env1Release", "Release" } } } } },
+        { utf8("Tonhöhe"),
+          { { utf8("Tonhöhe"), Row { { "octave", "Oktave" }, { "semi", "Halbton" }, { "fine", "Fein" } } },
+            { "Stimmen", Row { { "voiceMode", "Modus" },
+                               { "glide", "Glide" },
+                               { "bendRange", "Bend" },
+                               { "width", "Breite" } } } } },
+        { "Klang",
+          { { "Korpus", Row { { "body", "Typ" }, { "bodyMix", "Mix" } } },
+            { "Filter", Row { { "filterOn", "An" },
+                              { "filterMode", "Typ" },
+                              { "cutoff", "Cutoff" },
+                              { "resonance", "Resonanz" },
+                              { "keytrack", "Keytrack" } } } } },
+        { "Modulation",
+          { { utf8("Hüllkurve 2"), Row { { "env2Attack", "Attack" },
+                                        { "env2Decay", "Decay" },
+                                        { "env2Sustain", "Sustain" },
+                                        { "env2Release", "Release" },
+                                        { "env2Target", "Ziel" },
+                                        { "env2Amount", "Menge" } } },
+            { "Spielhilfen", Row { { "wheelTarget", "Modrad" },
+                                   { "wheelAmount", "Menge" },
+                                   { "velocityTarget", "Anschlag" },
+                                   { "velocityAmount", "Menge" } } } } },
+        { "LFO",
+          { { "LFO 1", Row { { "lfo1Shape", "Form" },
+                             { "lfo1Sync", "Sync" },
+                             { "lfo1Rate", "Rate", 0, "lfo1Sync", false },
+                             { "lfo1Division", "Raster", 0, "lfo1Sync", true },
+                             { "lfo1Target", "Ziel" },
+                             { "lfo1Amount", "Menge" } } },
+            { "LFO 2", Row { { "lfo2Shape", "Form" },
+                             { "lfo2Sync", "Sync" },
+                             { "lfo2Rate", "Rate", 0, "lfo2Sync", false },
+                             { "lfo2Division", "Raster", 0, "lfo2Sync", true },
+                             { "lfo2Target", "Ziel" },
+                             { "lfo2Amount", "Menge" } } } } },
+        { "Effekte",
+          { { "Effekte", Row { { "fxDelayMix", "Delay" },
+                               { "fxDelaySync", "Sync" },
+                               { "fxDelayTime", "Zeit", 1, "fxDelaySync", false },
+                               { "fxDelayDivision", "Notenwert", 2, "fxDelaySync", true },
+                               { "fxDelayFeedback", "Feedback" },
+                               { "fxDelayTone", "Ton" },
+                               { "fxReverbMix", "Hall" },
+                               { "fxReverbDecay", utf8("Länge") } } },
+            { "Ausgang", Row { { "master", "Master" } } } } },
+    };
+}
+
 PhysicalEditor::PhysicalEditor(PhysicalProcessor& p)
     : AudioProcessorEditor(p),
       synth(p),
